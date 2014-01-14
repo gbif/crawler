@@ -1,0 +1,39 @@
+[
+  {
+    "file_name": "org/gbif/crawler/protocol/digir/complete_results.xml",
+    "record_count": 9,
+    "end_of_records": true,
+    "hash": -3063089640727150474
+  },
+  {
+    "file_name": "org/gbif/crawler/protocol/digir/no_results.xml",
+    "record_count": 0,
+    "end_of_records": true
+  },
+  {
+    "file_name": "org/gbif/crawler/protocol/digir/partial_results.xml",
+    "record_count": 9,
+    "end_of_records": false,
+    "hash": -3063089640727150474
+  },
+  {
+    "file_name": "org/gbif/crawler/protocol/digir/response_arizona.xml",
+    "comment": "This one does not have any response or diagnostic entries."
+  },
+  {
+    "file_name": "org/gbif/crawler/protocol/digir/response_danbif.xml",
+    "record_count": 900,
+    "end_of_records": false,
+    "hash": 3592551018309548208
+  },
+  {
+    "file_name": "org/gbif/crawler/protocol/digir/response_no_records.xml",
+    "record_count": 0,
+    "end_of_records": true
+  },
+  {
+    "file_name": "org/gbif/crawler/protocol/digir/response_wrong_code.xml",
+    "exception_expected": true,
+    "comment": "This one replied with an error message that the resourceCode doesn't exist."
+  }
+]

@@ -1,0 +1,27 @@
+[
+  {
+    "file_name": "org/gbif/crawler/protocol/tapir/complete_results.xml",
+    "record_count": 2,
+    "hash": 6641502265780367411
+  },
+  {
+    "file_name": "org/gbif/crawler/protocol/tapir/no_results.xml",
+    "record_count": 0
+  },
+  {
+    "file_name": "org/gbif/crawler/protocol/tapir/partial_results.xml",
+    "record_count": 10,
+    "end_of_records": false,
+    "hash": 6701427336976277457,
+    "comment": "Contains a response with only partial results and more pages to follow"
+
+  },
+  {
+    "file_name": "org/gbif/crawler/protocol/tapir/partial_results-duplicate.xml",
+    "record_count": 10,
+    "end_of_records": false,
+    "hash": 6701427336976277457,
+    "comment": "Contains the exact same content as the partial_results.xml data just with different attributes in the summary element"
+  }
+
+]

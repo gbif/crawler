@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<response xmlns="http://rs.tdwg.org/tapir/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://rs.tdwg.org/tapir/1.0 http://rs.tdwg.org/tapir/1.0/schema/tdwg_tapir.xsd">
+  <header>
+    <source accesspoint="http://mockhost1.gbif.org/tapirlink/tapir.php/pontaurus" sendtime="2012-10-11T16:25:54+02:00">
+      <software name="TapirLink" version="0.7.1 (revision 2027)"/>
+    </source>
+    <destination>10.66.77.129</destination>
+  </header>
+  <search>
+    <dwrec:DarwinRecordSet xmlns:dwrec="http://rs.tdwg.org/dwc/dwrecord"
+                           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                           xmlns:dwcore="http://rs.tdwg.org/dwc/dwcore/"
+                           xmlns:dwgeo="http://rs.tdwg.org/dwc/geospatial/"
+      >
+      <dwrec:DarwinRecord>
+        <dwcore:GlobalUniqueIdentifier>142316223</dwcore:GlobalUniqueIdentifier>
+        <dwcore:DateLastModified>20110623</dwcore:DateLastModified>
+        <dwcore:BasisOfRecord>specimen</dwcore:BasisOfRecord>
+        <dwcore:InstitutionCode>BGBM</dwcore:InstitutionCode>
+        <dwcore:CollectionCode>Pontaurus</dwcore:CollectionCode>
+        <dwcore:CatalogNumber>307</dwcore:CatalogNumber>
+        <dwcore:ScientificName>Acantholimon lycaonicum Boiss. &amp; Heldr.</dwcore:ScientificName>
+        <dwcore:Kingdom>Plantae</dwcore:Kingdom>
+        <dwcore:Phylum>Magnoliophyta</dwcore:Phylum>
+        <dwcore:Class>Magnoliopsida</dwcore:Class>
+        <dwcore:Order>Plumbaginales</dwcore:Order>
+        <dwcore:Family>Plumbaginaceae</dwcore:Family>
+        <dwcore:Genus>Acantholimon</dwcore:Genus>
+        <dwcore:SpecificEpithet xsi:nil="true"></dwcore:SpecificEpithet>
+        <dwcore:Country>Turkey</dwcore:Country>
+        <dwcore:County xsi:nil="true"></dwcore:County>
+        <dwcore:Locality xsi:nil="true"></dwcore:Locality>
+        <dwcore:MinimumElevationInMeters>2600-3000</dwcore:MinimumElevationInMeters>
+        <dwcore:MaximumElevationInMeters xsi:nil="true"></dwcore:MaximumElevationInMeters>
+        <dwcore:MinimumDepthInMeters xsi:nil="true"></dwcore:MinimumDepthInMeters>
+        <dwcore:MaximumDepthInMeters xsi:nil="true"></dwcore:MaximumDepthInMeters>
+        <dwcore:DayOfYear xsi:nil="true"></dwcore:DayOfYear>
+        <dwcore:Collector>Markus Döring</dwcore:Collector>
+        <dwgeo:VerbatimLatitude>36.6</dwgeo:VerbatimLatitude>
+        <dwgeo:VerbatimLongitude>30.1</dwgeo:VerbatimLongitude>
+      </dwrec:DarwinRecord>
+      <dwrec:DarwinRecord>
+        <dwcore:GlobalUniqueIdentifier>142316225</dwcore:GlobalUniqueIdentifier>
+        <dwcore:DateLastModified>20110623</dwcore:DateLastModified>
+        <dwcore:BasisOfRecord>specimen</dwcore:BasisOfRecord>
+        <dwcore:InstitutionCode>BGBM</dwcore:InstitutionCode>
+        <dwcore:CollectionCode>Pontaurus</dwcore:CollectionCode>
+        <dwcore:CatalogNumber>381</dwcore:CatalogNumber>
+        <dwcore:ScientificName>Acantholimon lycaonicum Boiss. &amp; Heldr.</dwcore:ScientificName>
+        <dwcore:Kingdom>Plantae</dwcore:Kingdom>
+        <dwcore:Phylum>Magnoliophyta</dwcore:Phylum>
+        <dwcore:Class>Magnoliopsida</dwcore:Class>
+        <dwcore:Order>Plumbaginales</dwcore:Order>
+        <dwcore:Family>Plumbaginaceae</dwcore:Family>
+        <dwcore:Genus>Acantholimon</dwcore:Genus>
+        <dwcore:SpecificEpithet xsi:nil="true"></dwcore:SpecificEpithet>
+        <dwcore:Country>Turkey</dwcore:Country>
+        <dwcore:County xsi:nil="true"></dwcore:County>
+        <dwcore:Locality xsi:nil="true"></dwcore:Locality>
+        <dwcore:MinimumElevationInMeters>2500</dwcore:MinimumElevationInMeters>
+        <dwcore:MaximumElevationInMeters xsi:nil="true"></dwcore:MaximumElevationInMeters>
+        <dwcore:MinimumDepthInMeters xsi:nil="true"></dwcore:MinimumDepthInMeters>
+        <dwcore:MaximumDepthInMeters xsi:nil="true"></dwcore:MaximumDepthInMeters>
+        <dwcore:DayOfYear xsi:nil="true"></dwcore:DayOfYear>
+        <dwcore:Collector>Markus Döring</dwcore:Collector>
+        <dwgeo:VerbatimLatitude>36.824</dwgeo:VerbatimLatitude>
+        <dwgeo:VerbatimLongitude>30.337</dwgeo:VerbatimLongitude>
+      </dwrec:DarwinRecord>
+      <dwrec:DarwinRecord>
+        <dwcore:GlobalUniqueIdentifier>142316227</dwcore:GlobalUniqueIdentifier>
+        <dwcore:DateLastModified>20110623</dwcore:DateLastModified>
+        <dwcore:BasisOfRecord>specimen</dwcore:BasisOfRecord>
+        <dwcore:InstitutionCode>BGBM</dwcore:InstitutionCode>
+        <dwcore:CollectionCode>Pontaurus</dwcore:CollectionCode>
+        <dwcore:CatalogNumber>518</dwcore:CatalogNumber>
+        <dwcore:ScientificName>Acantholimon lycaonicum Boiss. &amp; Heldr.</dwcore:ScientificName>
+        <dwcore:Kingdom>Plantae</dwcore:Kingdom>
+        <dwcore:Phylum>Magnoliophyta</dwcore:Phylum>
+        <dwcore:Class>Magnoliopsida</dwcore:Class>
+        <dwcore:Order>Plumbaginales</dwcore:Order>
+        <dwcore:Family>Plumbaginaceae</dwcore:Family>
+        <dwcore:Genus>Acantholimon</dwcore:Genus>
+        <dwcore:SpecificEpithet xsi:nil="true"></dwcore:SpecificEpithet>
+        <dwcore:Country>Turkey</dwcore:Country>
+        <dwcore:County xsi:nil="true"></dwcore:County>
+        <dwcore:Locality xsi:nil="true"></dwcore:Locality>
+        <dwcore:MinimumElevationInMeters>2500</dwcore:MinimumElevationInMeters>
+        <dwcore:MaximumElevationInMeters xsi:nil="true"></dwcore:MaximumElevationInMeters>
+        <dwcore:MinimumDepthInMeters xsi:nil="true"></dwcore:MinimumDepthInMeters>
+        <dwcore:MaximumDepthInMeters xsi:nil="true"></dwcore:MaximumDepthInMeters>
+        <dwcore:DayOfYear xsi:nil="true"></dwcore:DayOfYear>
+        <dwcore:Collector>Markus Döring</dwcore:Collector>
+        <dwgeo:VerbatimLatitude>37.68</dwgeo:VerbatimLatitude>
+        <dwgeo:VerbatimLongitude>31.31</dwgeo:VerbatimLongitude>
+      </dwrec:DarwinRecord>
+      <dwrec:DarwinRecord>
+        <dwcore:GlobalUniqueIdentifier>142316206</dwcore:GlobalUniqueIdentifier>
+        <dwcore:DateLastModified>20110623</dwcore:DateLastModified>
+        <dwcore:BasisOfRecord>specimen</dwcore:BasisOfRecord>
+        <dwcore:InstitutionCode>BGBM</dwcore:InstitutionCode>
+        <dwcore:CollectionCode>Pontaurus</dwcore:CollectionCode>
+        <dwcore:CatalogNumber>813</dwcore:CatalogNumber>
+        <dwcore:ScientificName>Acantholimon lycaonicum Boiss. &amp; Heldr.</dwcore:ScientificName>
+        <dwcore:Kingdom>Plantae</dwcore:Kingdom>
+        <dwcore:Phylum>Magnoliophyta</dwcore:Phylum>
+        <dwcore:Class>Magnoliopsida</dwcore:Class>
+        <dwcore:Order>Plumbaginales</dwcore:Order>
+        <dwcore:Family>Plumbaginaceae</dwcore:Family>
+        <dwcore:Genus>Acantholimon</dwcore:Genus>
+        <dwcore:SpecificEpithet xsi:nil="true"></dwcore:SpecificEpithet>
+        <dwcore:Country>Turkey</dwcore:Country>
+        <dwcore:County xsi:nil="true"></dwcore:County>
+        <dwcore:Locality xsi:nil="true"></dwcore:Locality>
+        <dwcore:MinimumElevationInMeters>2675</dwcore:MinimumElevationInMeters>
+        <dwcore:MaximumElevationInMeters xsi:nil="true"></dwcore:MaximumElevationInMeters>
+        <dwcore:MinimumDepthInMeters xsi:nil="true"></dwcore:MinimumDepthInMeters>
+        <dwcore:MaximumDepthInMeters xsi:nil="true"></dwcore:MaximumDepthInMeters>
+        <dwcore:DayOfYear xsi:nil="true"></dwcore:DayOfYear>
+        <dwcore:Collector>Markus Döring</dwcore:Collector>
+        <dwgeo:VerbatimLatitude>37.404</dwgeo:VerbatimLatitude>
+        <dwgeo:VerbatimLongitude>34.558</dwgeo:VerbatimLongitude>
+      </dwrec:DarwinRecord>
+      <dwrec:DarwinRecord>
+        <dwcore:GlobalUniqueIdentifier>142316207</dwcore:GlobalUniqueIdentifier>
+        <dwcore:DateLastModified>20110623</dwcore:DateLastModified>
+        <dwcore:BasisOfRecord>specimen</dwcore:BasisOfRecord>
+        <dwcore:InstitutionCode>BGBM</dwcore:InstitutionCode>
+        <dwcore:CollectionCode>Pontaurus</dwcore:CollectionCode>
+        <dwcore:CatalogNumber>867</dwcore:CatalogNumber>
+        <dwcore:ScientificName>Acantholimon lycaonicum Boiss. &amp; Heldr.</dwcore:ScientificName>
+        <dwcore:Kingdom>Plantae</dwcore:Kingdom>
+        <dwcore:Phylum>Magnoliophyta</dwcore:Phylum>
+        <dwcore:Class>Magnoliopsida</dwcore:Class>
+        <dwcore:Order>Plumbaginales</dwcore:Order>
+        <dwcore:Family>Plumbaginaceae</dwcore:Family>
+        <dwcore:Genus>Acantholimon</dwcore:Genus>
+        <dwcore:SpecificEpithet xsi:nil="true"></dwcore:SpecificEpithet>
+        <dwcore:Country>Turkey</dwcore:Country>
+        <dwcore:County xsi:nil="true"></dwcore:County>
+        <dwcore:Locality xsi:nil="true"></dwcore:Locality>
+        <dwcore:MinimumElevationInMeters>2900</dwcore:MinimumElevationInMeters>
+        <dwcore:MaximumElevationInMeters xsi:nil="true"></dwcore:MaximumElevationInMeters>
+        <dwcore:MinimumDepthInMeters xsi:nil="true"></dwcore:MinimumDepthInMeters>
+        <dwcore:MaximumDepthInMeters xsi:nil="true"></dwcore:MaximumDepthInMeters>
+        <dwcore:DayOfYear xsi:nil="true"></dwcore:DayOfYear>
+        <dwcore:Collector>Markus Döring</dwcore:Collector>
+        <dwgeo:VerbatimLatitude>37.404</dwgeo:VerbatimLatitude>
+        <dwgeo:VerbatimLongitude>34.558</dwgeo:VerbatimLongitude>
+      </dwrec:DarwinRecord>
+      <dwrec:DarwinRecord>
+        <dwcore:GlobalUniqueIdentifier>142316208</dwcore:GlobalUniqueIdentifier>
+        <dwcore:DateLastModified>20110623</dwcore:DateLastModified>
+        <dwcore:BasisOfRecord>specimen</dwcore:BasisOfRecord>
+        <dwcore:InstitutionCode>BGBM</dwcore:InstitutionCode>
+        <dwcore:CollectionCode>Pontaurus</dwcore:CollectionCode>
+        <dwcore:CatalogNumber>883</dwcore:CatalogNumber>
+        <dwcore:ScientificName>Acantholimon lycaonicum Boiss. &amp; Heldr.</dwcore:ScientificName>
+        <dwcore:Kingdom>Plantae</dwcore:Kingdom>
+        <dwcore:Phylum>Magnoliophyta</dwcore:Phylum>
+        <dwcore:Class>Magnoliopsida</dwcore:Class>
+        <dwcore:Order>Plumbaginales</dwcore:Order>
+        <dwcore:Family>Plumbaginaceae</dwcore:Family>
+        <dwcore:Genus>Acantholimon</dwcore:Genus>
+        <dwcore:SpecificEpithet xsi:nil="true"></dwcore:SpecificEpithet>
+        <dwcore:Country>Turkey</dwcore:Country>
+        <dwcore:County xsi:nil="true"></dwcore:County>
+        <dwcore:Locality xsi:nil="true"></dwcore:Locality>
+        <dwcore:MinimumElevationInMeters>2700</dwcore:MinimumElevationInMeters>
+        <dwcore:MaximumElevationInMeters xsi:nil="true"></dwcore:MaximumElevationInMeters>
+        <dwcore:MinimumDepthInMeters xsi:nil="true"></dwcore:MinimumDepthInMeters>
+        <dwcore:MaximumDepthInMeters xsi:nil="true"></dwcore:MaximumDepthInMeters>
+        <dwcore:DayOfYear xsi:nil="true"></dwcore:DayOfYear>
+        <dwcore:Collector>Markus Döring</dwcore:Collector>
+        <dwgeo:VerbatimLatitude>37.397</dwgeo:VerbatimLatitude>
+        <dwgeo:VerbatimLongitude>34.584</dwgeo:VerbatimLongitude>
+      </dwrec:DarwinRecord>
+      <dwrec:DarwinRecord>
+        <dwcore:GlobalUniqueIdentifier>142316226</dwcore:GlobalUniqueIdentifier>
+        <dwcore:DateLastModified>20110623</dwcore:DateLastModified>
+        <dwcore:BasisOfRecord>specimen</dwcore:BasisOfRecord>
+        <dwcore:InstitutionCode>BGBM</dwcore:InstitutionCode>
+        <dwcore:CollectionCode>Pontaurus</dwcore:CollectionCode>
+        <dwcore:CatalogNumber>412</dwcore:CatalogNumber>
+        <dwcore:ScientificName>Acantholimon puberulum var. puberulum</dwcore:ScientificName>
+        <dwcore:Kingdom>Plantae</dwcore:Kingdom>
+        <dwcore:Phylum>Magnoliophyta</dwcore:Phylum>
+        <dwcore:Class>Magnoliopsida</dwcore:Class>
+        <dwcore:Order>Plumbaginales</dwcore:Order>
+        <dwcore:Family>Plumbaginaceae</dwcore:Family>
+        <dwcore:Genus>Acantholimon</dwcore:Genus>
+        <dwcore:SpecificEpithet xsi:nil="true"></dwcore:SpecificEpithet>
+        <dwcore:Country>Turkey</dwcore:Country>
+        <dwcore:County xsi:nil="true"></dwcore:County>
+        <dwcore:Locality xsi:nil="true"></dwcore:Locality>
+        <dwcore:MinimumElevationInMeters>2450</dwcore:MinimumElevationInMeters>
+        <dwcore:MaximumElevationInMeters xsi:nil="true"></dwcore:MaximumElevationInMeters>
+        <dwcore:MinimumDepthInMeters xsi:nil="true"></dwcore:MinimumDepthInMeters>
+        <dwcore:MaximumDepthInMeters xsi:nil="true"></dwcore:MaximumDepthInMeters>
+        <dwcore:DayOfYear xsi:nil="true"></dwcore:DayOfYear>
+        <dwcore:Collector>Markus Döring</dwcore:Collector>
+        <dwgeo:VerbatimLatitude>36.824</dwgeo:VerbatimLatitude>
+        <dwgeo:VerbatimLongitude>30.337</dwgeo:VerbatimLongitude>
+      </dwrec:DarwinRecord>
+      <dwrec:DarwinRecord>
+        <dwcore:GlobalUniqueIdentifier>142316221</dwcore:GlobalUniqueIdentifier>
+        <dwcore:DateLastModified>20110623</dwcore:DateLastModified>
+        <dwcore:BasisOfRecord>specimen</dwcore:BasisOfRecord>
+        <dwcore:InstitutionCode>BGBM</dwcore:InstitutionCode>
+        <dwcore:CollectionCode>Pontaurus</dwcore:CollectionCode>
+        <dwcore:CatalogNumber>2005</dwcore:CatalogNumber>
+        <dwcore:ScientificName>Acantholimon ulicinum s.l. (Schultes) Boiss.</dwcore:ScientificName>
+        <dwcore:Kingdom>Plantae</dwcore:Kingdom>
+        <dwcore:Phylum>Magnoliophyta</dwcore:Phylum>
+        <dwcore:Class>Magnoliopsida</dwcore:Class>
+        <dwcore:Order>Plumbaginales</dwcore:Order>
+        <dwcore:Family>Plumbaginaceae</dwcore:Family>
+        <dwcore:Genus>Acantholimon</dwcore:Genus>
+        <dwcore:SpecificEpithet xsi:nil="true"></dwcore:SpecificEpithet>
+        <dwcore:Country>Turkey</dwcore:Country>
+        <dwcore:County xsi:nil="true"></dwcore:County>
+        <dwcore:Locality xsi:nil="true"></dwcore:Locality>
+        <dwcore:MinimumElevationInMeters>2200</dwcore:MinimumElevationInMeters>
+        <dwcore:MaximumElevationInMeters xsi:nil="true"></dwcore:MaximumElevationInMeters>
+        <dwcore:MinimumDepthInMeters xsi:nil="true"></dwcore:MinimumDepthInMeters>
+        <dwcore:MaximumDepthInMeters xsi:nil="true"></dwcore:MaximumDepthInMeters>
+        <dwcore:DayOfYear xsi:nil="true"></dwcore:DayOfYear>
+        <dwcore:Collector>Markus Döring</dwcore:Collector>
+        <dwgeo:VerbatimLatitude>36.6</dwgeo:VerbatimLatitude>
+        <dwgeo:VerbatimLongitude>30.1</dwgeo:VerbatimLongitude>
+      </dwrec:DarwinRecord>
+      <dwrec:DarwinRecord>
+        <dwcore:GlobalUniqueIdentifier>142316212</dwcore:GlobalUniqueIdentifier>
+        <dwcore:DateLastModified>20110623</dwcore:DateLastModified>
+        <dwcore:BasisOfRecord>specimen</dwcore:BasisOfRecord>
+        <dwcore:InstitutionCode>BGBM</dwcore:InstitutionCode>
+        <dwcore:CollectionCode>Pontaurus</dwcore:CollectionCode>
+        <dwcore:CatalogNumber>1022</dwcore:CatalogNumber>
+        <dwcore:ScientificName>Acantholimon venustum var. laxiflorum (Boiss.ex Bunge) Bokhari</dwcore:ScientificName>
+        <dwcore:Kingdom>Plantae</dwcore:Kingdom>
+        <dwcore:Phylum>Magnoliophyta</dwcore:Phylum>
+        <dwcore:Class>Magnoliopsida</dwcore:Class>
+        <dwcore:Order>Plumbaginales</dwcore:Order>
+        <dwcore:Family>Plumbaginaceae</dwcore:Family>
+        <dwcore:Genus>Acantholimon</dwcore:Genus>
+        <dwcore:SpecificEpithet xsi:nil="true"></dwcore:SpecificEpithet>
+        <dwcore:Country>Turkey</dwcore:Country>
+        <dwcore:County xsi:nil="true"></dwcore:County>
+        <dwcore:Locality xsi:nil="true"></dwcore:Locality>
+        <dwcore:MinimumElevationInMeters>2350</dwcore:MinimumElevationInMeters>
+        <dwcore:MaximumElevationInMeters xsi:nil="true"></dwcore:MaximumElevationInMeters>
+        <dwcore:MinimumDepthInMeters xsi:nil="true"></dwcore:MinimumDepthInMeters>
+        <dwcore:MaximumDepthInMeters xsi:nil="true"></dwcore:MaximumDepthInMeters>
+        <dwcore:DayOfYear xsi:nil="true"></dwcore:DayOfYear>
+        <dwcore:Collector>Markus Döring</dwcore:Collector>
+        <dwgeo:VerbatimLatitude>37.42</dwgeo:VerbatimLatitude>
+        <dwgeo:VerbatimLongitude>34.568</dwgeo:VerbatimLongitude>
+      </dwrec:DarwinRecord>
+      <dwrec:DarwinRecord>
+        <dwcore:GlobalUniqueIdentifier>142316209</dwcore:GlobalUniqueIdentifier>
+        <dwcore:DateLastModified>20110623</dwcore:DateLastModified>
+        <dwcore:BasisOfRecord>specimen</dwcore:BasisOfRecord>
+        <dwcore:InstitutionCode>BGBM</dwcore:InstitutionCode>
+        <dwcore:CollectionCode>Pontaurus</dwcore:CollectionCode>
+        <dwcore:CatalogNumber>917</dwcore:CatalogNumber>
+        <dwcore:ScientificName>Achillea biebersteinii Afan.</dwcore:ScientificName>
+        <dwcore:Kingdom>Plantae</dwcore:Kingdom>
+        <dwcore:Phylum>Magnoliophyta</dwcore:Phylum>
+        <dwcore:Class>Magnoliopsida</dwcore:Class>
+        <dwcore:Order>Asterales</dwcore:Order>
+        <dwcore:Family>Asteraceae</dwcore:Family>
+        <dwcore:Genus>Achillea</dwcore:Genus>
+        <dwcore:SpecificEpithet xsi:nil="true"></dwcore:SpecificEpithet>
+        <dwcore:Country>Turkey</dwcore:Country>
+        <dwcore:County xsi:nil="true"></dwcore:County>
+        <dwcore:Locality xsi:nil="true"></dwcore:Locality>
+        <dwcore:MinimumElevationInMeters>2360</dwcore:MinimumElevationInMeters>
+        <dwcore:MaximumElevationInMeters xsi:nil="true"></dwcore:MaximumElevationInMeters>
+        <dwcore:MinimumDepthInMeters xsi:nil="true"></dwcore:MinimumDepthInMeters>
+        <dwcore:MaximumDepthInMeters xsi:nil="true"></dwcore:MaximumDepthInMeters>
+        <dwcore:DayOfYear xsi:nil="true"></dwcore:DayOfYear>
+        <dwcore:Collector>Markus Döring</dwcore:Collector>
+        <dwgeo:VerbatimLatitude>37.42</dwgeo:VerbatimLatitude>
+        <dwgeo:VerbatimLongitude>34.568</dwgeo:VerbatimLongitude>
+      </dwrec:DarwinRecord>
+    </dwrec:DarwinRecordSet>
+    <summary start="10" next="20" totalReturned="10"/>
+  </search>
+</response>

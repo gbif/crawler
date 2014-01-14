@@ -1,0 +1,48 @@
+[
+  {
+    "file_name": "org/gbif/crawler/protocol/biocase/complete_results.xml",
+    "record_count": 322,
+    "end_of_records": true,
+    "hash": 3784870091573896191,
+    "comment": "This response contains a complete result set with no more pages"
+  },
+  {
+    "file_name": "org/gbif/crawler/protocol/biocase/corrupt_response.xml",
+    "exception_expected": true,
+    "comment": "This is a response with invalid XML"
+  },
+  {
+    "file_name": "org/gbif/crawler/protocol/biocase/dropped_records_response.xml",
+    "record_count": 1,
+    "end_of_records": false,
+    "hash": -1725951645111443526,
+    "comment": "This is a response with a few dropped records"
+  },
+  {
+    "file_name": "org/gbif/crawler/protocol/biocase/missing_attribute_response.xml",
+    "record_count": 10,
+    "hash": -1725951645111443526,
+    "comment": "This response does not include all of the optional attributes in the content element"
+  },
+  {
+    "file_name": "org/gbif/crawler/protocol/biocase/no_results.xml",
+    "record_count": 0,
+    "end_of_records": true,
+    "comment": "This has no results at all and is technically invalid XML according to the schema but we support it anyway because this is the default behavior of the BioCASe software"
+  },
+  {
+    "file_name": "org/gbif/crawler/protocol/biocase/partial_results.xml",
+    "record_count": 10,
+    "end_of_records": false,
+    "hash": -5363019277835660318,
+    "comment": "This is a response which has more pages following it"
+  },
+  {
+    "file_name": "org/gbif/crawler/protocol/biocase/partial_results-duplicate.xml",
+    "record_count": 10,
+    "end_of_records": false,
+    "hash": -5363019277835660318,
+    "comment": "This has exactly the same content as the partial_results.xml file but different attributes in the biocase:content element. This is to check if the hashing works correctly"
+  }
+
+]

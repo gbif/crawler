@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>CRAM - Crawling Monitor</title>
+    <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
+    <link href="css/bootstrap-responsive.min.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="css/monitor.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <script type="text/javascript" language="javascript" src="js/jquery-1.8.3.min.js"></script>
+    <script type="text/javascript" language="javascript" src="js/bootstrap.min.js"></script>
+    <script type="text/javascript" language="javascript" src="js/jquery.dataTables-1.9.4.min.js"></script>
+    <script type="text/javascript" language="javascript" src="js/datatables-bootstrap-pagation.js"></script>
+    <script type="text/javascript" language="javascript" src="js/datatables-reload-ajax.js"></script>
+    <script type="text/javascript" language="javascript" src="js/safebase64.js"></script>
+    <script type="text/javascript" charset="utf-8">
+      // overwrites for bootstrap
+      $.extend( $.fn.dataTableExt.oStdClasses, {
+        "sWrapper": "dataTables_wrapper form-inline"
+      } );
+
+      // WS locations to get the data
+      var runningContentUrl = "dataset/process/running";
+      var pendingXmlContentUrl = "dataset/process/xml/pending";
+      var pendingDwcaContentUrl = "dataset/process/dwca/pending";
+      var detailUrl = "dataset/process/detail/";
+
+      // to aid development of this UI
+      // runningXmlContentUrl = "./running.json";
+
+      var oTable; // The main data table
+
+      // utility to trigger live view class
+      var click = function() {
+        // live view is monitored on the polling, the second is bootstrap styling only
+        $(this).toggleClass('row_liveview').toggleClass('success');
+      }
+
+      // decorates rows with missing pieces
+      var decorate = function(nRow, aData) {
+        // URL
+        $('td:eq(0)', nRow).addClass("url");
+        $('td:eq(0)', nRow).css("width","80px");
+
+        // colorize the columns based on the rules to showcase errors
+        $('td:eq(2)', nRow).addClass("text-info"); // pages crawled
+
+        if (aData.pagesCrawled == aData.pagesFragmentedSuccessful) $('td:eq(3)', nRow).removeClass("text-error").addClass("text-success");
+        else $('td:eq(3)', nRow).removeClass("text-success").addClass("text-error");
+
+        if (aData.pagesFragmentedError > 0) $('td:eq(4)', nRow).removeClass("text-success").addClass("text-error");
+        else $('td:eq(4)', nRow).removeClass("text-error").addClass("text-success");
+
+        $('td:eq(5)', nRow).addClass("text-info");  // fragments emitted
+
+        if (aData.fragmentsEmitted == aData.fragmentsReceived) $('td:eq(6)', nRow).removeClass("text-error").addClass("text-success");
+        else $('td:eq(6)', nRow).removeClass("text-success").addClass("text-error");
+
+        $('td:eq(7)', nRow).addClass("text-info"); // new records
+        $('td:eq(8)', nRow).addClass("text-info"); // modified records
+        $('td:eq(9)', nRow).addClass("text-info"); // unchanged records
+
+        if (aData.rawOccurrencesPersistedError > 0) $('td:eq(10)', nRow).removeClass("text-success").addClass("text-error");
+        else $('td:eq(10)', nRow).removeClass("text-error").addClass("text-success");
+
+        if (aData.fragmentsReceived == aData.fragmentsProcessed) $('td:eq(11)', nRow).removeClass("text-error").addClass("text-success");
+        else $('td:eq(11)', nRow).removeClass("text-success").addClass("text-error");
+
+        if (aData.verbatimOccurrencesPersistedSuccessful ==
+          aData.rawOccurrencesPersistedNew + aData.rawOccurrencesPersistedUpdated) $('td:eq(12)', nRow).removeClass("text-error").addClass("text-success");
+        else $('td:eq(12)', nRow).removeClass("text-success").addClass("text-error");
+
+        if (aData.verbatimOccurrencesPersistedError > 0) $('td:eq(13)', nRow).removeClass("text-success").addClass("text-error");
+        else $('td:eq(13)', nRow).removeClass("text-error").addClass("text-success");
+
+        if (aData.verbatimOccurrencesPersistedSuccessful == aData.interpretedOccurrencesPersistedSuccessful)
+          $('td:eq(14)', nRow).removeClass("text-error").addClass("text-success");
+        else $('td:eq(14)', nRow).removeClass("text-success").addClass("text-error");
+
+        if (aData.interpretedOccurrencesPersistedError > 0) $('td:eq(15)', nRow).removeClass("text-success").addClass("text-error");
+        else $('td:eq(15)', nRow).removeClass("text-error").addClass("text-success");
+
+        // if new, updated and not modified = declared count then show it
+        if (aData.declaredCount ==
+          aData.rawOccurrencesPersistedNew + aData.rawOccurrencesPersistedUpdated + aData.rawOccurrencesPersistedUnchanged)
+          $('td:eq(1)', nRow).removeClass("text-error").addClass("text-success");
+        else $('td:eq(1)', nRow).removeClass("text-success").addClass("text-error");
+
+        // The final log | detail section
+        var $log = $("<a href='#'>Logs</a>").bind('click', function() {
+          // open a tab to kibana, using the json based hashing kibana uses
+          var hash = Base64.encode('{"search":"@fields.datasetKey=\\"' + aData.datasetKey
+            +'\\"","fields":["@type","@fields.level","@message"],"offset":0,"timeframe":"86400","graphmode":"count","time":{"user_interval":0}}');
+          // TODO: configurify somehow (parameter on URL?)
+          window.open('http://b6g8.gbif.org:5601/index.html#'+ hash,'Logs');
+          return false;});
+
+        var $details = $("<a href='#'>Details</a>").bind('click', function() {
+          if ( oTable.fnIsOpen(nRow) ) {
+            oTable.fnClose( nRow );
+          } else {
+            var detailRow = oTable.fnOpen( nRow, "", "info_row" );
+            $.ajax({
+              url: detailUrl + aData.datasetKey
+            }).done(function ( data ) {
+              $('td', detailRow).html( "<textarea class='detail'>" + JSON.stringify(data, undefined, 2) + "</textarea>" );
+            });
+          }
+          return false;
+        });
+
+        $('td:eq(16)', nRow).html("");
+        $('td:eq(16)', nRow).append($log).append(" | ").append($details);
+      }
+
+
+      $(document).ready(function() {
+        /*
+         * Set up the data table
+         */
+        oTable = $('#datasetCrawls')
+          .dataTable( {
+            "sDom": "<'row'<'span6'f><'span6'p>r>t<'row'<'span6'i><'span6'l>>",
+            "aLengthMenu": [[10, 25, 50, 100, 200, -1], [10, 25, 50, 100, 200, "All"]],
+            "sAjaxSource": runningContentUrl,
+            "sAjaxDataProp": "",  // There is no field name - e.g. {[i1,i2]} not {"data":[i1,i2]}
+            "aoColumns": [
+              { "mData": "crawlJob.targetUrl", sDefaultContent: "" },  // defaults to be fail safe when omitted in JSON
+              { "mData": "declaredCount", sDefaultContent: "" },
+              { "mData": "pagesCrawled", sDefaultContent: 0 },
+              { "mData": "pagesFragmentedSuccessful", sDefaultContent: 0 },
+              { "mData": "pagesFragmentedError", sDefaultContent: 0 },
+              { "mData": "fragmentsEmitted", sDefaultContent: 0 },
+              { "mData": "fragmentsReceived", sDefaultContent: 0 },
+              { "mData": "rawOccurrencesPersistedNew", sDefaultContent: 0 },
+              { "mData": "rawOccurrencesPersistedUpdated", sDefaultContent: 0 },
+              { "mData": "rawOccurrencesPersistedUnchanged", sDefaultContent: 0 },
+              { "mData": "rawOccurrencesPersistedError", sDefaultContent: 0 },
+              { "mData": "fragmentsProcessed", sDefaultContent: 0 },
+              { "mData": "verbatimOccurrencesPersistedSuccessful", sDefaultContent: 0 },
+              { "mData": "verbatimOccurrencesPersistedError", sDefaultContent: 0 },
+              { "mData": "interpretedOccurrencesPersistedSuccessful", sDefaultContent: 0 },
+              { "mData": "interpretedOccurrencesPersistedError", sDefaultContent: 0 },
+              { sDefaultContent: " ", 'bSortable': false },  // crawl logs
+              { "mData": "datasetKey", 'bVisible': false, bSearchable: true }
+            ],
+            //"fnInfoCallback": function( oSettings, iStart, iEnd, iMax, iTotal, sPre ) {
+              //return iStart +" to "+ iEnd;
+            //},
+            "fnRowCallback" :  function(nRow, aData, iDisplayIndex) { // inject the missing fields
+              decorate(nRow, aData);
+              // row click handling by toggling a class, which enables live view
+              // we unbind to ensure only 1 event logs
+              $(nRow).unbind('click').bind('click', click);
+            },
+            "bProcessing": true, // Show processing indicator when busy
+            "bDeferRender": true, // delay rendering for performance
+            "bStateSave" : true, // save current state in cookie to help reload
+            "fnInitComplete": function() {
+              // restores saved filters on refresh
+              // http://datatables.net/forums/discussion/2864/x
+              var oSettings = $('#datasetCrawls').dataTable().fnSettings();
+              for ( var i=0 ; i<oSettings.aoPreSearchCols.length ; i++ ) {
+                if(oSettings.aoPreSearchCols[i].sSearch.length>0){
+                  $("tfoot input")[i].value = oSettings.aoPreSearchCols[i].sSearch;
+                  $("tfoot input")[i].className = "";
+                }
+              }
+
+            },
+            // There appears a bug that DT is disabling the tabs incorrectly - reenable here
+            "fnDrawCallback": function( oSettings ) {
+              $('#tabs').find('li').removeClass("disabled");
+            },
+            "oLanguage" : { // custom labels
+              "sSearch": "Search: _INPUT_ <button class='btn allLiveView'>LiveView</button>"
+            },
+            "sPaginationType": "bootstrap"
+        });
+
+        /*
+         * Support functions to provide a little bit of 'user friendlyness' to the textboxes in
+         * the footer
+         */
+        var asInitVals = [];
+        $("tfoot input").each( function (i) {
+          asInitVals[i] = this.value;
+        });
+        $("tfoot input").focus( function () {
+          if ( this.className == "search_init" ) {
+          this.className = "";
+          this.value = "";
+          }
+        });
+        $("tfoot input").blur( function (i) {
+          if ( this.value == "" ) {
+          this.className = "search_init";
+          this.value = asInitVals[$("tfoot input").index(this)];
+          }
+        });
+        $("tfoot input").keyup( function () {
+          /* Filter on the column (the index) of this element */
+          oTable.fnFilter( this.value, $("tfoot input").index(this) );
+        });
+
+        /*
+         * Tab interceptor to set url of data based on the tab
+         */
+        $("#runningTab").click(function() {
+          console.log("Switching to running: " + runningContentUrl);
+          oTable.fnReloadAjax(runningContentUrl);
+        });
+        $("#pendingXmlTab").click(function() {
+          console.log("Switching to pending XML: " + pendingXmlContentUrl);
+          oTable.fnReloadAjax(pendingXmlContentUrl);
+        });
+        $("#pendingDwcaTab").click(function() {
+          console.log("Switching to pending DwC-A: " + pendingDwcaContentUrl);
+          oTable.fnReloadAjax(pendingDwcaContentUrl);
+        });
+
+        $(function () {
+          $('#tabs').find('a:first').tab('show');
+        });
+
+        /*
+         * Live view polling
+         */
+        function liveView() {
+          //console.log("Live viewing " +oTable.$('tr.row_liveview').length + " records");
+
+          var ajaxRequests = [];
+          $.each(oTable.$('tr.row_liveview'), function(index, nRow) {
+            var aData = oTable.fnGetData(nRow);
+            ajaxRequests.push(
+              $.ajax({
+                url: detailUrl + aData.datasetKey,
+                success: function(json) {
+                  oTable.fnUpdate(json, nRow, undefined, false, false); // don't repaint the table
+                  // we just refreshed it
+                  aData = oTable.fnGetData(nRow);
+                  decorate(nRow, aData);
+
+                  // if the detail tab, is open, refresh that too
+                 if($('textarea', $(nRow).next()).length>0) {
+                   $('textarea', $(nRow).next()).text(JSON.stringify(json, undefined, 2));
+                 }
+				       }
+             })
+            );
+          });
+
+          var defer = $.when.apply($, ajaxRequests);
+          // Only when all ajax requests are complete schedule a new one
+          defer.done(function(args) {
+            //console.log("Polling");
+            setTimeout(function() {
+              liveView();
+            }, 2000); // liveview update period msecs
+          });
+        }
+        // Bulk update
+        $(".allLiveView").click(function() {
+          // If the first is set, clear them all, otherwise set them all
+          var b = oTable.$('tbody tr').length && $(oTable.$('tbody tr')[0]).hasClass('row_liveview');
+          if (b) oTable.$('tbody tr').removeClass('row_liveview success');
+          else oTable.$('tbody tr').addClass('row_liveview success');
+        });
+
+        // start the live view polling
+        liveView();
+      });
+    </script>
+  </head>
+  <body>
+    <!-- Page layout is using bootstrap -->
+    <div class="container">
+      <div>
+        <h3>CRAwling Monitor <small> ...filter, sort, click for <em>live view</em></small></h3>
+      </div>
+      <ul id="tabs" class="nav nav-tabs">
+        <li><a href="#data" data-toggle="tab" id="runningTab">Running now</a></li>
+        <li><a href="#data" data-toggle="tab" id="pendingXmlTab">Pending (XML)</a></li>
+        <li><a href="#data" data-toggle="tab" id="pendingDwcaTab">Pending (DwC-A)</a></li>
+        <li><a href="#health" data-toggle="tab">Health</a></li>
+      </ul>
+      <div class="tab-content">
+        <div class="tab-pane active" id="data">
+          <div id="tabTable">
+            <table cellpadding="0" cellspacing="0" border="0" class="table table-striped table-bordered table-condensed" id="datasetCrawls">
+              <thead>
+                <tr>
+                  <th>URL</th>
+                  <th title="Declared count">DC</th>
+                  <th title="Pages crawled">PC</th>
+                  <th title="Pages fragmented successfully">PFS</th>
+                  <th title="Pages not fragmented (error)">PFE</th>
+                  <th title="Fragments emitted">FE</th>
+                  <th title="Fragments received">FR</th>
+                  <th title="Raw occurrence records persisted (new)">RON</th>
+                  <th title="Raw occurrence records persisted (modified)">ROM</th>
+                  <th title="Raw occurrence records persisted (unchanged)">ROU</th>
+                  <th title="Raw occurrence records persisted (error)">ROE</th>
+                  <th title="Fragments processed">FP</th>
+                  <th title="Verbatim occurrence records persisted successfully">VOP</th>
+                  <th title="Verbatim occurrence records not persisted (error)">VOE</th>
+                  <th title="Occurrence records interpreted">OI</th>
+                  <th title="Occurrence records error on interpretation">OE</th>
+                  <th title="Miscellaneous" style="width:150px" colspan="2"><!-- colspan 2 hides the UUID --></th>
+                </tr>
+              </thead>
+              <tbody/>
+              <tfoot>
+                <tr>
+                  <th><input type="text" name="search_ds" value="..." class="search_init" style="width:80%"/></th>
+                  <th><input type="text" name="search_ds" value="..." class="search_init" style="width:80%"/></th>
+                  <th><input type="text" name="search_ds" value="..." class="search_init" style="width:80%"/></th>
+                  <th><input type="text" name="search_ds" value="..." class="search_init" style="width:80%"/></th>
+                  <th><input type="text" name="search_ds" value="..." class="search_init" style="width:80%"/></th>
+                  <th><input type="text" name="search_ds" value="..." class="search_init" style="width:80%"/></th>
+                  <th><input type="text" name="search_ds" value="..." class="search_init" style="width:80%"/></th>
+                  <th><input type="text" name="search_ds" value="..." class="search_init" style="width:80%"/></th>
+                  <th><input type="text" name="search_ds" value="..." class="search_init" style="width:80%"/></th>
+                  <th><input type="text" name="search_ds" value="..." class="search_init" style="width:80%"/></th>
+                  <th><input type="text" name="search_ds" value="..." class="search_init" style="width:80%"/></th>
+                  <th><input type="text" name="search_ds" value="..." class="search_init" style="width:80%"/></th>
+                  <th><input type="text" name="search_ds" value="..." class="search_init" style="width:80%"/></th>
+                  <th><input type="text" name="search_ds" value="..." class="search_init" style="width:80%"/></th>
+                  <th><input type="text" name="search_ds" value="..." class="search_init" style="width:80%"/></th>
+                  <th><input type="text" name="search_ds" value="..." class="search_init" style="width:80%"/></th>
+                  <th>
+                    <input type="text" name="search_ds" value="..." class="search_init" style="width:0px;visibility:hidden" colspan="2"/>
+                  </th>
+                </tr>
+              </tfoot>
+            </table>
+            <p/>
+            <div class="well">
+              <a target="_blank" href="http://dev.gbif.org/ganglia/?c=Misc&h=b6g8.gbif.org&m=load_one&r=hour&s=by%20name&hc=4&mc=2">Ganglia (logging server - b6g8)</a><br/>
+              <a target="_blank"  href="http://dev.gbif.org/ganglia/?c=Misc&h=b16g3.gbif.org&m=load_one&r=hour&s=by%20name&hc=4&mc=2">Ganglia (crawler, fragmenter, metrics-updater, coordinator etc - b16g3)</a>
+            </div>
+          </div>
+        </div>
+        <div class="tab-pane" id="health">
+          <div class="alert alert-error">
+            <h4>Error!</h4>
+            HBase is not responding
+          </div>
+          <div class="alert alert-warning">
+            <h4>Warning!</h4>
+            Unable to test RabbitMQ
+          </div>
+          <div class="alert alert-warning">
+            <h4>Warning!</h4>
+            Unable to test log server
+          </div>
+          <div class="alert alert-success">Web services are operational</div>
+          <div class="alert alert-success">ZooKeeper is operational</div>
+        </div>
+      </div>
+  </body>
+</html>

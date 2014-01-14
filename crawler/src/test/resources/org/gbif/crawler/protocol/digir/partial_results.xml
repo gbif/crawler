@@ -1,0 +1,460 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<response xmlns='http://digir.net/schema/protocol/2003/1.0'>
+  <header>
+    <version>$Revision: 1.21 $</version>
+    <sendTime>2010-10-07THawaiian St:andard Time</sendTime>
+    <source resource="BPBMNatSci">http://nsdb.bishopmuseum.org:80/DiGIRprov/DiGIR.php</source>
+    <destination>87.73.80.154</destination>
+    <type>search</type>
+  </header>
+  <content xmlns:darwin='http://digir.net/schema/conceptual/darwin/2003/1.0'
+           xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'>
+    <record>
+      <darwin:DateLastModified>2004-06-24THawaiian St:andard Time</darwin:DateLastModified>
+      <darwin:InstitutionCode>BPBM</darwin:InstitutionCode>
+      <darwin:CollectionCode>entTyp</darwin:CollectionCode>
+      <darwin:CatalogNumber xsi:nil='true'/>
+      <darwin:ScientificName>Aaroniella sigmoides</darwin:ScientificName>
+      <darwin:BasisOfRecord>specimen</darwin:BasisOfRecord>
+      <darwin:Kingdom>Animalia</darwin:Kingdom>
+      <darwin:Phylum>Arthropoda</darwin:Phylum>
+      <darwin:Class>INSECTA</darwin:Class>
+      <darwin:Order>Psocoptera</darwin:Order>
+      <darwin:Family>Philotarsidae</darwin:Family>
+      <darwin:Genus>Aaroniella</darwin:Genus>
+      <darwin:Species>sigmoides</darwin:Species>
+      <darwin:Subspecies xsi:nil='true'/>
+      <darwin:ScientificNameAuthor>Thornton &amp; Smithers</darwin:ScientificNameAuthor>
+      <darwin:IdentifiedBy xsi:nil='true'/>
+      <darwin:YearIdentified xsi:nil='true'/>
+      <darwin:MonthIdentified xsi:nil='true'/>
+      <darwin:DayIdentified xsi:nil='true'/>
+      <darwin:TypeStatus>Holotype</darwin:TypeStatus>
+      <darwin:CollectorNumber xsi:nil='true'/>
+      <darwin:FieldNumber xsi:nil='true'/>
+      <darwin:Collector>Gressitt &amp; Sedlacek</darwin:Collector>
+      <darwin:YearCollected xsi:nil='true'/>
+      <darwin:MonthCollected xsi:nil='true'/>
+      <darwin:DayCollected xsi:nil='true'/>
+      <darwin:JulianDay xsi:nil='true'/>
+      <darwin:TimeOfDay xsi:nil='true'/>
+      <darwin:ContinentOcean xsi:nil='true'/>
+      <darwin:Country xsi:nil='true'/>
+      <darwin:StateProvince xsi:nil='true'/>
+      <darwin:County xsi:nil='true'/>
+      <darwin:Locality xsi:nil='true'/>
+      <darwin:Longitude xsi:nil='true'/>
+      <darwin:Latitude xsi:nil='true'/>
+      <darwin:CoordinatePrecision xsi:nil='true'/>
+      <darwin:MinimumElevation xsi:nil='true'/>
+      <darwin:MaximumElevation xsi:nil='true'/>
+      <darwin:MinimumDepth xsi:nil='true'/>
+      <darwin:MaximumDepth xsi:nil='true'/>
+      <darwin:Sex xsi:nil='true'/>
+      <darwin:PreparationType xsi:nil='true'/>
+      <darwin:IndividualCount>1</darwin:IndividualCount>
+      <darwin:PreviousCatalogNumber xsi:nil='true'/>
+      <darwin:RelationshipType xsi:nil='true'/>
+      <darwin:RelatedCatalogItem xsi:nil='true'/>
+      <darwin:Notes xsi:nil='true'/>
+    </record>
+    <record>
+      <darwin:DateLastModified>2004-06-24THawaiian St:andard Time</darwin:DateLastModified>
+      <darwin:InstitutionCode>BPBM</darwin:InstitutionCode>
+      <darwin:CollectionCode>entTyp</darwin:CollectionCode>
+      <darwin:CatalogNumber xsi:nil='true'/>
+      <darwin:ScientificName>Aaroniella pseudosigma</darwin:ScientificName>
+      <darwin:BasisOfRecord>specimen</darwin:BasisOfRecord>
+      <darwin:Kingdom>Animalia</darwin:Kingdom>
+      <darwin:Phylum>Arthropoda</darwin:Phylum>
+      <darwin:Class>INSECTA</darwin:Class>
+      <darwin:Order>Psocoptera</darwin:Order>
+      <darwin:Family>Philotarsidae</darwin:Family>
+      <darwin:Genus>Aaroniella</darwin:Genus>
+      <darwin:Species>pseudosigma</darwin:Species>
+      <darwin:Subspecies xsi:nil='true'/>
+      <darwin:ScientificNameAuthor>Thornton &amp; Smithers</darwin:ScientificNameAuthor>
+      <darwin:IdentifiedBy xsi:nil='true'/>
+      <darwin:YearIdentified xsi:nil='true'/>
+      <darwin:MonthIdentified xsi:nil='true'/>
+      <darwin:DayIdentified xsi:nil='true'/>
+      <darwin:TypeStatus>Holotype</darwin:TypeStatus>
+      <darwin:CollectorNumber xsi:nil='true'/>
+      <darwin:FieldNumber xsi:nil='true'/>
+      <darwin:Collector>Gressitt, J.L.</darwin:Collector>
+      <darwin:YearCollected xsi:nil='true'/>
+      <darwin:MonthCollected xsi:nil='true'/>
+      <darwin:DayCollected xsi:nil='true'/>
+      <darwin:JulianDay xsi:nil='true'/>
+      <darwin:TimeOfDay xsi:nil='true'/>
+      <darwin:ContinentOcean xsi:nil='true'/>
+      <darwin:Country xsi:nil='true'/>
+      <darwin:StateProvince xsi:nil='true'/>
+      <darwin:County xsi:nil='true'/>
+      <darwin:Locality xsi:nil='true'/>
+      <darwin:Longitude xsi:nil='true'/>
+      <darwin:Latitude xsi:nil='true'/>
+      <darwin:CoordinatePrecision xsi:nil='true'/>
+      <darwin:MinimumElevation xsi:nil='true'/>
+      <darwin:MaximumElevation xsi:nil='true'/>
+      <darwin:MinimumDepth xsi:nil='true'/>
+      <darwin:MaximumDepth xsi:nil='true'/>
+      <darwin:Sex xsi:nil='true'/>
+      <darwin:PreparationType xsi:nil='true'/>
+      <darwin:IndividualCount>1</darwin:IndividualCount>
+      <darwin:PreviousCatalogNumber xsi:nil='true'/>
+      <darwin:RelationshipType xsi:nil='true'/>
+      <darwin:RelatedCatalogItem xsi:nil='true'/>
+      <darwin:Notes xsi:nil='true'/>
+    </record>
+    <record>
+      <darwin:DateLastModified>2004-06-24THawaiian St:andard Time</darwin:DateLastModified>
+      <darwin:InstitutionCode>BPBM</darwin:InstitutionCode>
+      <darwin:CollectionCode>entTyp</darwin:CollectionCode>
+      <darwin:CatalogNumber xsi:nil='true'/>
+      <darwin:ScientificName>Aaroniella pterosoma</darwin:ScientificName>
+      <darwin:BasisOfRecord>specimen</darwin:BasisOfRecord>
+      <darwin:Kingdom>Animalia</darwin:Kingdom>
+      <darwin:Phylum>Arthropoda</darwin:Phylum>
+      <darwin:Class>INSECTA</darwin:Class>
+      <darwin:Order>Psocoptera</darwin:Order>
+      <darwin:Family>Philotarsidae</darwin:Family>
+      <darwin:Genus>Aaroniella</darwin:Genus>
+      <darwin:Species>pterosoma</darwin:Species>
+      <darwin:Subspecies xsi:nil='true'/>
+      <darwin:ScientificNameAuthor>Thornton</darwin:ScientificNameAuthor>
+      <darwin:IdentifiedBy xsi:nil='true'/>
+      <darwin:YearIdentified xsi:nil='true'/>
+      <darwin:MonthIdentified xsi:nil='true'/>
+      <darwin:DayIdentified xsi:nil='true'/>
+      <darwin:TypeStatus>Holotype</darwin:TypeStatus>
+      <darwin:CollectorNumber xsi:nil='true'/>
+      <darwin:FieldNumber xsi:nil='true'/>
+      <darwin:Collector>Thornton, I.W.B.</darwin:Collector>
+      <darwin:YearCollected xsi:nil='true'/>
+      <darwin:MonthCollected xsi:nil='true'/>
+      <darwin:DayCollected xsi:nil='true'/>
+      <darwin:JulianDay xsi:nil='true'/>
+      <darwin:TimeOfDay xsi:nil='true'/>
+      <darwin:ContinentOcean xsi:nil='true'/>
+      <darwin:Country xsi:nil='true'/>
+      <darwin:StateProvince xsi:nil='true'/>
+      <darwin:County xsi:nil='true'/>
+      <darwin:Locality xsi:nil='true'/>
+      <darwin:Longitude xsi:nil='true'/>
+      <darwin:Latitude xsi:nil='true'/>
+      <darwin:CoordinatePrecision xsi:nil='true'/>
+      <darwin:MinimumElevation xsi:nil='true'/>
+      <darwin:MaximumElevation xsi:nil='true'/>
+      <darwin:MinimumDepth xsi:nil='true'/>
+      <darwin:MaximumDepth xsi:nil='true'/>
+      <darwin:Sex xsi:nil='true'/>
+      <darwin:PreparationType xsi:nil='true'/>
+      <darwin:IndividualCount>1</darwin:IndividualCount>
+      <darwin:PreviousCatalogNumber xsi:nil='true'/>
+      <darwin:RelationshipType xsi:nil='true'/>
+      <darwin:RelatedCatalogItem xsi:nil='true'/>
+      <darwin:Notes xsi:nil='true'/>
+    </record>
+    <record>
+      <darwin:DateLastModified>1999-11-22THawaiian St:andard Time</darwin:DateLastModified>
+      <darwin:InstitutionCode>BPBM</darwin:InstitutionCode>
+      <darwin:CollectionCode>MO</darwin:CollectionCode>
+      <darwin:CatalogNumber xsi:nil='true'/>
+      <darwin:ScientificName>Aauric.</darwin:ScientificName>
+      <darwin:BasisOfRecord>specimen</darwin:BasisOfRecord>
+      <darwin:Kingdom>Animalia</darwin:Kingdom>
+      <darwin:Phylum>Mollusca</darwin:Phylum>
+      <darwin:Class xsi:nil='true'/>
+      <darwin:Order xsi:nil='true'/>
+      <darwin:Family xsi:nil='true'/>
+      <darwin:Genus>Aauric.</darwin:Genus>
+      <darwin:Species xsi:nil='true'/>
+      <darwin:Subspecies xsi:nil='true'/>
+      <darwin:ScientificNameAuthor xsi:nil='true'/>
+      <darwin:IdentifiedBy xsi:nil='true'/>
+      <darwin:YearIdentified xsi:nil='true'/>
+      <darwin:MonthIdentified xsi:nil='true'/>
+      <darwin:DayIdentified xsi:nil='true'/>
+      <darwin:TypeStatus xsi:nil='true'/>
+      <darwin:CollectorNumber xsi:nil='true'/>
+      <darwin:FieldNumber xsi:nil='true'/>
+      <darwin:Collector>P.H. Timberlake</darwin:Collector>
+      <darwin:YearCollected>1919</darwin:YearCollected>
+      <darwin:MonthCollected>7</darwin:MonthCollected>
+      <darwin:DayCollected>19</darwin:DayCollected>
+      <darwin:JulianDay xsi:nil='true'/>
+      <darwin:TimeOfDay xsi:nil='true'/>
+      <darwin:ContinentOcean xsi:nil='true'/>
+      <darwin:Country xsi:nil='true'/>
+      <darwin:StateProvince xsi:nil='true'/>
+      <darwin:County xsi:nil='true'/>
+      <darwin:Locality>Maui; Keanae Pali region</darwin:Locality>
+      <darwin:Longitude xsi:nil='true'/>
+      <darwin:Latitude xsi:nil='true'/>
+      <darwin:CoordinatePrecision xsi:nil='true'/>
+      <darwin:MinimumElevation xsi:nil='true'/>
+      <darwin:MaximumElevation xsi:nil='true'/>
+      <darwin:MinimumDepth xsi:nil='true'/>
+      <darwin:MaximumDepth xsi:nil='true'/>
+      <darwin:Sex xsi:nil='true'/>
+      <darwin:PreparationType xsi:nil='true'/>
+      <darwin:IndividualCount>3</darwin:IndividualCount>
+      <darwin:PreviousCatalogNumber xsi:nil='true'/>
+      <darwin:RelationshipType xsi:nil='true'/>
+      <darwin:RelatedCatalogItem xsi:nil='true'/>
+      <darwin:Notes xsi:nil='true'/>
+    </record>
+    <record>
+      <darwin:DateLastModified>1999-02-02THawaiian St:andard Time</darwin:DateLastModified>
+      <darwin:InstitutionCode>BPBM</darwin:InstitutionCode>
+      <darwin:CollectionCode>MO</darwin:CollectionCode>
+      <darwin:CatalogNumber xsi:nil='true'/>
+      <darwin:ScientificName>Aauric. castanea</darwin:ScientificName>
+      <darwin:BasisOfRecord>specimen</darwin:BasisOfRecord>
+      <darwin:Kingdom>Animalia</darwin:Kingdom>
+      <darwin:Phylum>Mollusca</darwin:Phylum>
+      <darwin:Class xsi:nil='true'/>
+      <darwin:Order xsi:nil='true'/>
+      <darwin:Family xsi:nil='true'/>
+      <darwin:Genus>Aauric.</darwin:Genus>
+      <darwin:Species>castanea</darwin:Species>
+      <darwin:Subspecies xsi:nil='true'/>
+      <darwin:ScientificNameAuthor xsi:nil='true'/>
+      <darwin:IdentifiedBy xsi:nil='true'/>
+      <darwin:YearIdentified xsi:nil='true'/>
+      <darwin:MonthIdentified xsi:nil='true'/>
+      <darwin:DayIdentified xsi:nil='true'/>
+      <darwin:TypeStatus xsi:nil='true'/>
+      <darwin:CollectorNumber xsi:nil='true'/>
+      <darwin:FieldNumber xsi:nil='true'/>
+      <darwin:Collector>O. Oswald</darwin:Collector>
+      <darwin:YearCollected>1928</darwin:YearCollected>
+      <darwin:MonthCollected>3</darwin:MonthCollected>
+      <darwin:DayCollected>20</darwin:DayCollected>
+      <darwin:JulianDay xsi:nil='true'/>
+      <darwin:TimeOfDay xsi:nil='true'/>
+      <darwin:ContinentOcean xsi:nil='true'/>
+      <darwin:Country xsi:nil='true'/>
+      <darwin:StateProvince xsi:nil='true'/>
+      <darwin:County xsi:nil='true'/>
+      <darwin:Locality>Hawaiian Islands; Oahu; Nuuanu to Konahuanui; above colony 1</darwin:Locality>
+      <darwin:Longitude xsi:nil='true'/>
+      <darwin:Latitude xsi:nil='true'/>
+      <darwin:CoordinatePrecision xsi:nil='true'/>
+      <darwin:MinimumElevation xsi:nil='true'/>
+      <darwin:MaximumElevation xsi:nil='true'/>
+      <darwin:MinimumDepth xsi:nil='true'/>
+      <darwin:MaximumDepth xsi:nil='true'/>
+      <darwin:Sex xsi:nil='true'/>
+      <darwin:PreparationType xsi:nil='true'/>
+      <darwin:IndividualCount>4</darwin:IndividualCount>
+      <darwin:PreviousCatalogNumber xsi:nil='true'/>
+      <darwin:RelationshipType xsi:nil='true'/>
+      <darwin:RelatedCatalogItem xsi:nil='true'/>
+      <darwin:Notes xsi:nil='true'/>
+    </record>
+    <record>
+      <darwin:DateLastModified>2004-06-24THawaiian St:andard Time</darwin:DateLastModified>
+      <darwin:InstitutionCode>BPBM</darwin:InstitutionCode>
+      <darwin:CollectionCode>entTyp</darwin:CollectionCode>
+      <darwin:CatalogNumber xsi:nil='true'/>
+      <darwin:ScientificName>Aaroniella gressitti</darwin:ScientificName>
+      <darwin:BasisOfRecord>specimen</darwin:BasisOfRecord>
+      <darwin:Kingdom>Animalia</darwin:Kingdom>
+      <darwin:Phylum>Arthropoda</darwin:Phylum>
+      <darwin:Class>INSECTA</darwin:Class>
+      <darwin:Order>Psocoptera</darwin:Order>
+      <darwin:Family>Caecilidae</darwin:Family>
+      <darwin:Genus>Aaroniella</darwin:Genus>
+      <darwin:Species>gressitti</darwin:Species>
+      <darwin:Subspecies xsi:nil='true'/>
+      <darwin:ScientificNameAuthor>Thornton, Lee, &amp; Chui</darwin:ScientificNameAuthor>
+      <darwin:IdentifiedBy xsi:nil='true'/>
+      <darwin:YearIdentified xsi:nil='true'/>
+      <darwin:MonthIdentified xsi:nil='true'/>
+      <darwin:DayIdentified xsi:nil='true'/>
+      <darwin:TypeStatus>Holotype</darwin:TypeStatus>
+      <darwin:CollectorNumber xsi:nil='true'/>
+      <darwin:FieldNumber xsi:nil='true'/>
+      <darwin:Collector>Gressitt, J.L.</darwin:Collector>
+      <darwin:YearCollected xsi:nil='true'/>
+      <darwin:MonthCollected xsi:nil='true'/>
+      <darwin:DayCollected xsi:nil='true'/>
+      <darwin:JulianDay xsi:nil='true'/>
+      <darwin:TimeOfDay xsi:nil='true'/>
+      <darwin:ContinentOcean xsi:nil='true'/>
+      <darwin:Country xsi:nil='true'/>
+      <darwin:StateProvince xsi:nil='true'/>
+      <darwin:County xsi:nil='true'/>
+      <darwin:Locality xsi:nil='true'/>
+      <darwin:Longitude xsi:nil='true'/>
+      <darwin:Latitude xsi:nil='true'/>
+      <darwin:CoordinatePrecision xsi:nil='true'/>
+      <darwin:MinimumElevation xsi:nil='true'/>
+      <darwin:MaximumElevation xsi:nil='true'/>
+      <darwin:MinimumDepth xsi:nil='true'/>
+      <darwin:MaximumDepth xsi:nil='true'/>
+      <darwin:Sex xsi:nil='true'/>
+      <darwin:PreparationType xsi:nil='true'/>
+      <darwin:IndividualCount>1</darwin:IndividualCount>
+      <darwin:PreviousCatalogNumber xsi:nil='true'/>
+      <darwin:RelationshipType xsi:nil='true'/>
+      <darwin:RelatedCatalogItem xsi:nil='true'/>
+      <darwin:Notes xsi:nil='true'/>
+    </record>
+    <record>
+      <darwin:DateLastModified>2004-06-24THawaiian St:andard Time</darwin:DateLastModified>
+      <darwin:InstitutionCode>BPBM</darwin:InstitutionCode>
+      <darwin:CollectionCode>entTyp</darwin:CollectionCode>
+      <darwin:CatalogNumber xsi:nil='true'/>
+      <darwin:ScientificName>Aaroniella spenceri</darwin:ScientificName>
+      <darwin:BasisOfRecord>specimen</darwin:BasisOfRecord>
+      <darwin:Kingdom>Animalia</darwin:Kingdom>
+      <darwin:Phylum>Arthropoda</darwin:Phylum>
+      <darwin:Class>INSECTA</darwin:Class>
+      <darwin:Order>Psocoptera</darwin:Order>
+      <darwin:Family>Philotarsidae</darwin:Family>
+      <darwin:Genus>Aaroniella</darwin:Genus>
+      <darwin:Species>spenceri</darwin:Species>
+      <darwin:Subspecies xsi:nil='true'/>
+      <darwin:ScientificNameAuthor>Thornton</darwin:ScientificNameAuthor>
+      <darwin:IdentifiedBy xsi:nil='true'/>
+      <darwin:YearIdentified xsi:nil='true'/>
+      <darwin:MonthIdentified xsi:nil='true'/>
+      <darwin:DayIdentified xsi:nil='true'/>
+      <darwin:TypeStatus>Holotype</darwin:TypeStatus>
+      <darwin:CollectorNumber xsi:nil='true'/>
+      <darwin:FieldNumber xsi:nil='true'/>
+      <darwin:Collector xsi:nil='true'/>
+      <darwin:YearCollected xsi:nil='true'/>
+      <darwin:MonthCollected xsi:nil='true'/>
+      <darwin:DayCollected xsi:nil='true'/>
+      <darwin:JulianDay xsi:nil='true'/>
+      <darwin:TimeOfDay xsi:nil='true'/>
+      <darwin:ContinentOcean xsi:nil='true'/>
+      <darwin:Country xsi:nil='true'/>
+      <darwin:StateProvince xsi:nil='true'/>
+      <darwin:County xsi:nil='true'/>
+      <darwin:Locality xsi:nil='true'/>
+      <darwin:Longitude xsi:nil='true'/>
+      <darwin:Latitude xsi:nil='true'/>
+      <darwin:CoordinatePrecision xsi:nil='true'/>
+      <darwin:MinimumElevation xsi:nil='true'/>
+      <darwin:MaximumElevation xsi:nil='true'/>
+      <darwin:MinimumDepth xsi:nil='true'/>
+      <darwin:MaximumDepth xsi:nil='true'/>
+      <darwin:Sex xsi:nil='true'/>
+      <darwin:PreparationType xsi:nil='true'/>
+      <darwin:IndividualCount>1</darwin:IndividualCount>
+      <darwin:PreviousCatalogNumber xsi:nil='true'/>
+      <darwin:RelationshipType xsi:nil='true'/>
+      <darwin:RelatedCatalogItem xsi:nil='true'/>
+      <darwin:Notes xsi:nil='true'/>
+    </record>
+    <record>
+      <darwin:DateLastModified>2004-06-24THawaiian St:andard Time</darwin:DateLastModified>
+      <darwin:InstitutionCode>BPBM</darwin:InstitutionCode>
+      <darwin:CollectionCode>entTyp</darwin:CollectionCode>
+      <darwin:CatalogNumber xsi:nil='true'/>
+      <darwin:ScientificName>Aaroniella galapagensis</darwin:ScientificName>
+      <darwin:BasisOfRecord>specimen</darwin:BasisOfRecord>
+      <darwin:Kingdom>Animalia</darwin:Kingdom>
+      <darwin:Phylum>Arthropoda</darwin:Phylum>
+      <darwin:Class>INSECTA</darwin:Class>
+      <darwin:Order>Psocoptera</darwin:Order>
+      <darwin:Family>Philotarsidae</darwin:Family>
+      <darwin:Genus>Aaroniella</darwin:Genus>
+      <darwin:Species>galapagensis</darwin:Species>
+      <darwin:Subspecies xsi:nil='true'/>
+      <darwin:ScientificNameAuthor>Thornton &amp; Woo</darwin:ScientificNameAuthor>
+      <darwin:IdentifiedBy xsi:nil='true'/>
+      <darwin:YearIdentified xsi:nil='true'/>
+      <darwin:MonthIdentified xsi:nil='true'/>
+      <darwin:DayIdentified xsi:nil='true'/>
+      <darwin:TypeStatus>Holotype</darwin:TypeStatus>
+      <darwin:CollectorNumber xsi:nil='true'/>
+      <darwin:FieldNumber xsi:nil='true'/>
+      <darwin:Collector>Thornton, I.W.B.</darwin:Collector>
+      <darwin:YearCollected xsi:nil='true'/>
+      <darwin:MonthCollected xsi:nil='true'/>
+      <darwin:DayCollected xsi:nil='true'/>
+      <darwin:JulianDay xsi:nil='true'/>
+      <darwin:TimeOfDay xsi:nil='true'/>
+      <darwin:ContinentOcean xsi:nil='true'/>
+      <darwin:Country xsi:nil='true'/>
+      <darwin:StateProvince xsi:nil='true'/>
+      <darwin:County xsi:nil='true'/>
+      <darwin:Locality xsi:nil='true'/>
+      <darwin:Longitude xsi:nil='true'/>
+      <darwin:Latitude xsi:nil='true'/>
+      <darwin:CoordinatePrecision xsi:nil='true'/>
+      <darwin:MinimumElevation xsi:nil='true'/>
+      <darwin:MaximumElevation xsi:nil='true'/>
+      <darwin:MinimumDepth xsi:nil='true'/>
+      <darwin:MaximumDepth xsi:nil='true'/>
+      <darwin:Sex xsi:nil='true'/>
+      <darwin:PreparationType xsi:nil='true'/>
+      <darwin:IndividualCount>1</darwin:IndividualCount>
+      <darwin:PreviousCatalogNumber xsi:nil='true'/>
+      <darwin:RelationshipType xsi:nil='true'/>
+      <darwin:RelatedCatalogItem xsi:nil='true'/>
+      <darwin:Notes xsi:nil='true'/>
+    </record>
+    <record>
+      <darwin:DateLastModified>2004-06-24THawaiian St:andard Time</darwin:DateLastModified>
+      <darwin:InstitutionCode>BPBM</darwin:InstitutionCode>
+      <darwin:CollectionCode>entTyp</darwin:CollectionCode>
+      <darwin:CatalogNumber xsi:nil='true'/>
+      <darwin:ScientificName>Aaroniella trukensis</darwin:ScientificName>
+      <darwin:BasisOfRecord>specimen</darwin:BasisOfRecord>
+      <darwin:Kingdom>Animalia</darwin:Kingdom>
+      <darwin:Phylum>Arthropoda</darwin:Phylum>
+      <darwin:Class>INSECTA</darwin:Class>
+      <darwin:Order>Psocoptera</darwin:Order>
+      <darwin:Family>Caecilidae</darwin:Family>
+      <darwin:Genus>Aaroniella</darwin:Genus>
+      <darwin:Species>trukensis</darwin:Species>
+      <darwin:Subspecies xsi:nil='true'/>
+      <darwin:ScientificNameAuthor>Thornton, Lee, &amp; Chui</darwin:ScientificNameAuthor>
+      <darwin:IdentifiedBy xsi:nil='true'/>
+      <darwin:YearIdentified xsi:nil='true'/>
+      <darwin:MonthIdentified xsi:nil='true'/>
+      <darwin:DayIdentified xsi:nil='true'/>
+      <darwin:TypeStatus>Holotype</darwin:TypeStatus>
+      <darwin:CollectorNumber xsi:nil='true'/>
+      <darwin:FieldNumber xsi:nil='true'/>
+      <darwin:Collector>Gressitt, J.L.</darwin:Collector>
+      <darwin:YearCollected xsi:nil='true'/>
+      <darwin:MonthCollected xsi:nil='true'/>
+      <darwin:DayCollected xsi:nil='true'/>
+      <darwin:JulianDay xsi:nil='true'/>
+      <darwin:TimeOfDay xsi:nil='true'/>
+      <darwin:ContinentOcean xsi:nil='true'/>
+      <darwin:Country xsi:nil='true'/>
+      <darwin:StateProvince xsi:nil='true'/>
+      <darwin:County xsi:nil='true'/>
+      <darwin:Locality xsi:nil='true'/>
+      <darwin:Longitude xsi:nil='true'/>
+      <darwin:Latitude xsi:nil='true'/>
+      <darwin:CoordinatePrecision xsi:nil='true'/>
+      <darwin:MinimumElevation xsi:nil='true'/>
+      <darwin:MaximumElevation xsi:nil='true'/>
+      <darwin:MinimumDepth xsi:nil='true'/>
+      <darwin:MaximumDepth xsi:nil='true'/>
+      <darwin:Sex xsi:nil='true'/>
+      <darwin:PreparationType xsi:nil='true'/>
+      <darwin:IndividualCount>1</darwin:IndividualCount>
+      <darwin:PreviousCatalogNumber xsi:nil='true'/>
+      <darwin:RelationshipType xsi:nil='true'/>
+      <darwin:RelatedCatalogItem xsi:nil='true'/>
+      <darwin:Notes xsi:nil='true'/>
+    </record>
+  </content>
+  <diagnostics>
+    <diagnostic code="STATUS_INTERVAL" severity="info">3600</diagnostic>
+    <diagnostic code="STATUS_DATA" severity="info">15,56,0</diagnostic>
+    <diagnostic code="RECORD_COUNT" severity="info">9</diagnostic>
+    <diagnostic code="END_OF_RECORDS" severity="info">false</diagnostic>
+  </diagnostics>
+</response>

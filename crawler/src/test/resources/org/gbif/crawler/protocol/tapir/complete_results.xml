@@ -1,0 +1,108 @@
+<response xmlns='http://rs.tdwg.org/tapir/1.0' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'
+          xsi:schemaLocation='http://rs.tdwg.org/tapir/1.0 http://rs.tdwg.org/tapir/1.0/schema/tdwg_tapir.xsd'>
+  <header>
+    <source accesspoint='http://mockhost1.gbif.org/tapirlink/tapir.php/pontaurus' sendtime='2011-08-04T08:20:47+02:00'>
+      <software name='TapirLink' version='0.7.1 (revision 2027)'/>
+    </source>
+    <destination>10.66.77.17</destination>
+  </header>
+  <search>
+    <dwrec:DarwinRecordSet xmlns:dwrec='http://rs.tdwg.org/dwc/dwrecord'>
+      <dwrec:DarwinRecord>
+        <dwcore:GlobalUniqueIdentifier xmlns:dwcore='http://rs.tdwg.org/dwc/dwcore/'>142316516
+        </dwcore:GlobalUniqueIdentifier>
+        <dwcore:DateLastModified xmlns:dwcore='http://rs.tdwg.org/dwc/dwcore/'>20110623</dwcore:DateLastModified>
+        <dwcore:BasisOfRecord xmlns:dwcore='http://rs.tdwg.org/dwc/dwcore/'>specimen</dwcore:BasisOfRecord>
+        <dwcore:InstitutionCode xmlns:dwcore='http://rs.tdwg.org/dwc/dwcore/'>BGBM</dwcore:InstitutionCode>
+        <dwcore:CollectionCode xmlns:dwcore='http://rs.tdwg.org/dwc/dwcore/'>Pontaurus</dwcore:CollectionCode>
+        <dwcore:CatalogNumber xmlns:dwcore='http://rs.tdwg.org/dwc/dwcore/'>1430</dwcore:CatalogNumber>
+        <dwcore:ScientificName xmlns:dwcore='http://rs.tdwg.org/dwc/dwcore/'>Aurinia rupestris subsp. cyclocarpa
+        </dwcore:ScientificName>
+        <dwcore:Kingdom xmlns:dwcore='http://rs.tdwg.org/dwc/dwcore/'>Plantae</dwcore:Kingdom>
+        <dwcore:Phylum xmlns:dwcore='http://rs.tdwg.org/dwc/dwcore/'>Magnoliophyta</dwcore:Phylum>
+        <dwcore:Class xmlns:dwcore='http://rs.tdwg.org/dwc/dwcore/'>Magnoliopsida</dwcore:Class>
+        <dwcore:Order xmlns:dwcore='http://rs.tdwg.org/dwc/dwcore/'>Capparales</dwcore:Order>
+        <dwcore:Family xmlns:dwcore='http://rs.tdwg.org/dwc/dwcore/'>Brassicaceae</dwcore:Family>
+        <dwcore:Genus xmlns:dwcore='http://rs.tdwg.org/dwc/dwcore/'>Aurinia</dwcore:Genus>
+        <dwcore:SpecificEpithet xmlns:dwcore='http://rs.tdwg.org/dwc/dwcore/'
+                                xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:nil='true'/>
+        <dwcore:Country xmlns:dwcore='http://rs.tdwg.org/dwc/dwcore/'>Turkey</dwcore:Country>
+        <dwcore:County xmlns:dwcore='http://rs.tdwg.org/dwc/dwcore/'
+                       xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:nil='true'/>
+        <dwcore:Locality xmlns:dwcore='http://rs.tdwg.org/dwc/dwcore/'
+                         xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:nil='true'/>
+        <dwcore:MinimumElevationInMeters xmlns:dwcore='http://rs.tdwg.org/dwc/dwcore/'>2500
+        </dwcore:MinimumElevationInMeters>
+        <dwcore:MaximumElevationInMeters xmlns:dwcore='http://rs.tdwg.org/dwc/dwcore/'
+                                         xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:nil='true'/>
+        <dwcore:MinimumDepthInMeters xmlns:dwcore='http://rs.tdwg.org/dwc/dwcore/'
+                                     xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:nil='true'/>
+        <dwcore:MaximumDepthInMeters xmlns:dwcore='http://rs.tdwg.org/dwc/dwcore/'
+                                     xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:nil='true'/>
+        <dwcore:DayOfYear xmlns:dwcore='http://rs.tdwg.org/dwc/dwcore/'
+                          xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:nil='true'/>
+        <dwcore:Collector xmlns:dwcore='http://rs.tdwg.org/dwc/dwcore/'>Markus Döring</dwcore:Collector>
+        <dwgeo:VerbatimLatitude xmlns:dwgeo='http://rs.tdwg.org/dwc/geospatial/'>37.8298</dwgeo:VerbatimLatitude>
+        <dwgeo:VerbatimLongitude xmlns:dwgeo='http://rs.tdwg.org/dwc/geospatial/'>35.1299</dwgeo:VerbatimLongitude>
+      </dwrec:DarwinRecord>
+      <dwrec:DarwinRecord>
+        <dwcore:GlobalUniqueIdentifier xmlns:dwcore='http://rs.tdwg.org/dwc/dwcore/'>142316505
+        </dwcore:GlobalUniqueIdentifier>
+        <dwcore:DateLastModified xmlns:dwcore='http://rs.tdwg.org/dwc/dwcore/'>20110623</dwcore:DateLastModified>
+        <dwcore:BasisOfRecord xmlns:dwcore='http://rs.tdwg.org/dwc/dwcore/'>specimen</dwcore:BasisOfRecord>
+        <dwcore:InstitutionCode xmlns:dwcore='http://rs.tdwg.org/dwc/dwcore/'>BGBM</dwcore:InstitutionCode>
+        <dwcore:CollectionCode xmlns:dwcore='http://rs.tdwg.org/dwc/dwcore/'>Pontaurus</dwcore:CollectionCode>
+        <dwcore:CatalogNumber xmlns:dwcore='http://rs.tdwg.org/dwc/dwcore/'>807</dwcore:CatalogNumber>
+        <dwcore:ScientificName xmlns:dwcore='http://rs.tdwg.org/dwc/dwcore/'>Aurinia rupestris subsp. cyclocarpa
+        </dwcore:ScientificName>
+        <dwcore:Kingdom xmlns:dwcore='http://rs.tdwg.org/dwc/dwcore/'>Plantae</dwcore:Kingdom>
+        <dwcore:Phylum xmlns:dwcore='http://rs.tdwg.org/dwc/dwcore/'>Magnoliophyta</dwcore:Phylum>
+        <dwcore:Class xmlns:dwcore='http://rs.tdwg.org/dwc/dwcore/'>Magnoliopsida</dwcore:Class>
+        <dwcore:Order xmlns:dwcore='http://rs.tdwg.org/dwc/dwcore/'>Capparales</dwcore:Order>
+        <dwcore:Family xmlns:dwcore='http://rs.tdwg.org/dwc/dwcore/'>Brassicaceae</dwcore:Family>
+        <dwcore:Genus xmlns:dwcore='http://rs.tdwg.org/dwc/dwcore/'>Aurinia</dwcore:Genus>
+        <dwcore:SpecificEpithet xmlns:dwcore='http://rs.tdwg.org/dwc/dwcore/'
+                                xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:nil='true'/>
+        <dwcore:Country xmlns:dwcore='http://rs.tdwg.org/dwc/dwcore/'>Turkey</dwcore:Country>
+        <dwcore:County xmlns:dwcore='http://rs.tdwg.org/dwc/dwcore/'
+                       xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:nil='true'/>
+        <dwcore:Locality xmlns:dwcore='http://rs.tdwg.org/dwc/dwcore/'
+                         xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:nil='true'/>
+        <dwcore:MinimumElevationInMeters xmlns:dwcore='http://rs.tdwg.org/dwc/dwcore/'>2675
+        </dwcore:MinimumElevationInMeters>
+        <dwcore:MaximumElevationInMeters xmlns:dwcore='http://rs.tdwg.org/dwc/dwcore/'
+                                         xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:nil='true'/>
+        <dwcore:MinimumDepthInMeters xmlns:dwcore='http://rs.tdwg.org/dwc/dwcore/'
+                                     xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:nil='true'/>
+        <dwcore:MaximumDepthInMeters xmlns:dwcore='http://rs.tdwg.org/dwc/dwcore/'
+                                     xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:nil='true'/>
+        <dwcore:DayOfYear xmlns:dwcore='http://rs.tdwg.org/dwc/dwcore/'
+                          xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:nil='true'/>
+        <dwcore:Collector xmlns:dwcore='http://rs.tdwg.org/dwc/dwcore/'>Markus Döring</dwcore:Collector>
+        <dwgeo:VerbatimLatitude xmlns:dwgeo='http://rs.tdwg.org/dwc/geospatial/'>37.404</dwgeo:VerbatimLatitude>
+        <dwgeo:VerbatimLongitude xmlns:dwgeo='http://rs.tdwg.org/dwc/geospatial/'>34.558</dwgeo:VerbatimLongitude>
+      </dwrec:DarwinRecord>
+    </dwrec:DarwinRecordSet>
+    <summary start='320' totalReturned='2'/>
+  </search>
+  <diagnostics>
+    <diagnostic code='PHP Warning'
+                level='warn'>strftime(): It is not safe to rely on the system's timezone settings. You are *required* to use the date.timezone setting or the date_default_timezone_set() function. In case you used any of those methods and you are still getting this warning, you most likely misspelled the timezone identifier. We selected 'Europe/Berlin' for 'CEST/2.0/DST' instead (/var/www/html/default/tapirlink-0.7.1/classes/TpUtils.php:436)
+    </diagnostic>
+    <diagnostic code='PHP Warning'
+                level='warn'>strftime(): It is not safe to rely on the system's timezone settings. You are *required* to use the date.timezone setting or the date_default_timezone_set() function. In case you used any of those methods and you are still getting this warning, you most likely misspelled the timezone identifier. We selected 'Europe/Berlin' for 'CEST/2.0/DST' instead (/var/www/html/default/tapirlink-0.7.1/classes/TpUtils.php:444)
+    </diagnostic>
+    <diagnostic code='PHP Warning'
+                level='warn'>strftime(): It is not safe to rely on the system's timezone settings. You are *required* to use the date.timezone setting or the date_default_timezone_set() function. In case you used any of those methods and you are still getting this warning, you most likely misspelled the timezone identifier. We selected 'Europe/Berlin' for 'CEST/2.0/DST' instead (/var/www/html/default/tapirlink-0.7.1/classes/TpUtils.php:447)
+    </diagnostic>
+    <diagnostic code='PHP Warning'
+                level='warn'>mb_convert_encoding(): Illegal character encoding specified (/var/www/html/default/tapirlink-0.7.1/classes/TpServiceUtils.php:233)
+    </diagnostic>
+    <diagnostic code='PHP Warning'
+                level='warn'>mb_convert_encoding(): Illegal character encoding specified (/var/www/html/default/tapirlink-0.7.1/classes/TpServiceUtils.php:233)
+    </diagnostic>
+    <diagnostic code='PHP Warning'
+                level='warn'>strftime(): It is not safe to rely on the system's timezone settings. You are *required* to use the date.timezone setting or the date_default_timezone_set() function. In case you used any of those methods and you are still getting this warning, you most likely misspelled the timezone identifier. We selected 'Europe/Berlin' for 'CEST/2.0/DST' instead (/var/www/html/default/tapirlink-0.7.1/lib/pear/Log/file.php:291)
+    </diagnostic>
+  </diagnostics>
+</response>

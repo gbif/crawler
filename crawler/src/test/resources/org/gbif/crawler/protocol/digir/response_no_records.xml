@@ -1,0 +1,18 @@
+<response xmlns='http://digir.net/schema/protocol/2003/1.0'>
+  <header>
+    <version>$Revision: 1.21 $</version>
+    <sendTime>2011-08-18T09:26:04-04:00</sendTime>
+    <source resource='Herpetology'>
+      http://digir.ansp.org:80/digir/DiGIR.php
+    </source>
+    <destination>192.38.28.24</destination>
+    <type>search</type>
+  </header>
+  <content/>
+  <diagnostics>
+    <diagnostic code='QUERY_PRODUCED_NO_RESULTS' severity='error'></diagnostic>
+    <diagnostic code='STATUS_DATA' severity='info'>7,10,0</diagnostic>
+    <diagnostic code='RECORD_COUNT' severity='info'>0</diagnostic>
+    <diagnostic code='END_OF_RECORDS' severity='info'>true</diagnostic>
+  </diagnostics>
+</response>

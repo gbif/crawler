@@ -1,0 +1,17 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<response xmlns='http://digir.net/schema/protocol/2003/1.0'>
+  <header>
+    <version>$Revision: 1.21 $</version>
+    <sendTime>2012-10-25T20:26:36-04:00</sendTime>
+    <source resource="ent">http://peabody.research.yale.edu:80/digir/DiGIR.php</source>
+    <destination>87.60.170.2</destination>
+    <type>search</type>
+  </header>
+  <content xmlns:darwin='http://digir.net/schema/conceptual/darwin/2003/1.0' xmlns:xsd='http://www.w3.org/2001/XMLSchema' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'></content>
+  <diagnostics>
+    <diagnostic code="STATUS_INTERVAL" severity="info">3600</diagnostic>
+    <diagnostic code="STATUS_DATA" severity="info">3,2,0</diagnostic>
+    <diagnostic code="RECORD_COUNT" severity="info">0</diagnostic>
+    <diagnostic code="END_OF_RECORDS" severity="info">true</diagnostic>
+  </diagnostics>
+</response>
