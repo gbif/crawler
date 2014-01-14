@@ -28,7 +28,7 @@
     <curator.version>2.1.0-incubating</curator.version>
     <fest.version>2.0M10</fest.version>
     <gbif-api.version>0.12-SNAPSHOT</gbif-api.version>
-    <gbif-cli.version>0.4</gbif-cli.version>
+    <gbif-cli.version>0.6-SNAPSHOT</gbif-cli.version>
     <gbif-postal-service.version>0.8-SNAPSHOT</gbif-postal-service.version>
     <gbif-common.version>0.14-SNAPSHOT</gbif-common.version>
     <gbif-common-service.version>0.9-SNAPSHOT</gbif-common-service.version>
@@ -176,6 +176,12 @@
       <dependency>
         <groupId>ch.qos.logback</groupId>
         <artifactId>logback-classic</artifactId>
+        <version>${logback.version}</version>
+        <scope>runtime</scope>
+      </dependency>
+      <dependency>
+        <groupId>ch.qos.logback</groupId>
+        <artifactId>logback-core</artifactId>
         <version>${logback.version}</version>
         <scope>runtime</scope>
       </dependency>
