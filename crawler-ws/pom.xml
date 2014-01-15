@@ -141,7 +141,7 @@ http://stackoverflow.com/questions/11191346/jersey-on-jetty-on-android-throws-co
     <profile>
       <id>dev</id>
       <properties>
-        <crawler.crawl.namespace>crawlerappdev</crawler.crawl.namespace>
+        <crawler.crawl.namespace>appdev</crawler.crawl.namespace>
         <crawler.crawl.server>c1n8.gbif.org,c1n9.gbif.org,c1n10.gbif.org</crawler.crawl.server>
         <crawler.crawl.server.retryAttempts>10</crawler.crawl.server.retryAttempts>
         <crawler.crawl.server.retryDelayMs>100</crawler.crawl.server.retryDelayMs>
