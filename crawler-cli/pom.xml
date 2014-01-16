@@ -63,7 +63,7 @@
         <version>1.0-beta-4</version>
         <configuration>
           <fromFile>${project.build.directory}/${project.artifactId}.jar</fromFile>
-          <url>sftp://crap@minicrawler.gbif.org/home/crap/libtest</url>
+          <url>scp://crap@minicrawler.gbif.org/home/crap/lib</url>
         </configuration>
         <executions>
           <execution>
