@@ -66,6 +66,15 @@
           <fromFile>${project.build.directory}/${project.artifactId}.jar</fromFile>
           <url>sftp://crap@minicrawler.gbif.org/home/crap/libtest</url>
         </configuration>
+        <executions>
+          <execution>
+            <id>deploy-minicrawler</id>
+            <phase>deploy</phase>
+            <goals>
+              <goal>upload-single</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
