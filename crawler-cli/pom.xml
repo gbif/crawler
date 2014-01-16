@@ -32,7 +32,6 @@
         <version>2.4</version>
       </extension>
     </extensions>
-
     <plugins>
       <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
@@ -68,8 +67,8 @@
         </configuration>
         <executions>
           <execution>
-            <id>deploy-minicrawler</id>
-            <phase>deploy</phase>
+            <id>deploy-crawler</id>
+            <phase>install</phase>
             <goals>
               <goal>upload-single</goal>
             </goals>
