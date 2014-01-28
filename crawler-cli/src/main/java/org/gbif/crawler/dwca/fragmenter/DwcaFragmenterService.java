@@ -13,6 +13,7 @@ import org.gbif.common.messaging.api.messages.DwcaValidationFinishedMessage;
 import org.gbif.common.messaging.api.messages.OccurrenceFragmentedMessage;
 import org.gbif.crawler.constants.CrawlerNodePaths;
 import org.gbif.crawler.dwca.LenientArchiveFactory;
+import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.text.Archive;
 import org.gbif.dwc.text.StarRecord;
 import org.gbif.utils.file.ClosableIterator;
@@ -115,14 +116,6 @@ public class DwcaFragmenterService extends AbstractIdleService {
     public void handleMessage(DwcaMetasyncFinishedMessage message) {
       UUID uuid = message.getDatasetUuid();
 
-      if (message.getDatasetType() != DatasetType.OCCURRENCE) {
-        LOG.info("Ignoring DwC-A for dataset [{}] because it's not an OCCURRENCE dataset: [{}]",
-                 message.getDatasetUuid(), message.getDatasetType());
-        setPagesFragmentedSuccessful(message);
-        return;
-      }
-
-      LOG.info("Now fragmenting DwC-A for dataset [{}]", uuid);
       Archive archive;
       try {
         archive = LenientArchiveFactory.openArchive(new File(archiveRepository, uuid.toString()));
@@ -138,6 +131,23 @@ public class DwcaFragmenterService extends AbstractIdleService {
         }
         return;
       }
+
+      if (message.getDatasetType() == DatasetType.OCCURRENCE) {
+        handleOccurrenceCore(uuid, archive, message);
+
+      } else if (archive.getExtension(DwcTerm.Occurrence) != null) {
+        handleOccurrenceExtension(uuid, archive, message);
+
+      } else {
+        LOG.info("Ignoring DwC-A for dataset [{}] because it does not have Occurrence information.",
+                 message.getDatasetUuid());
+      }
+
+      setPagesFragmentedSuccessful(message);
+    }
+
+    private void handleOccurrenceCore(UUID uuid, Archive archive, DwcaMetasyncFinishedMessage message) {
+      LOG.info("Fragmenting DwC-A for dataset [{}] with occurrence core", uuid);
 
       ClosableIterator<StarRecord> iterator = archive.iteratorRaw();
       int counter = 0;
@@ -162,9 +172,13 @@ public class DwcaFragmenterService extends AbstractIdleService {
       }
 
       incrementCounters(message, counter % COUNTER_UPDATE_FREQUENCY);
-      setPagesFragmentedSuccessful(message);
-
       LOG.info("Successfully extracted [{}] records out of DwC-A for dataset [{}]", counter, uuid);
+    }
+
+    private void handleOccurrenceExtension(UUID uuid, Archive archive, DwcaMetasyncFinishedMessage message) {
+      LOG.info("Fragmenting DwC-A for dataset [{}] with occurrence extension", uuid);
+      //TODO: implement extension processing, see http://dev.gbif.org/issues/browse/POR-1722
+      LOG.warn("Processing of occurrence extension records not implemented yet. Ignoring dataset [{}]", uuid);
     }
 
     private void setPagesFragmentedSuccessful(DwcaMetasyncFinishedMessage message) {

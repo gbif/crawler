@@ -2,6 +2,7 @@ package org.gbif.crawler.dwca.validator;
 
 import org.gbif.api.model.crawler.DwcaValidationReport;
 import org.gbif.api.model.registry.Dataset;
+import org.gbif.dwc.record.Record;
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.text.Archive;
 import org.gbif.dwc.text.StarRecord;
@@ -39,10 +40,13 @@ public class DwcaValidator {
     for (StarRecord record : archive) {
       checkedRecords++;
 
+      // any content at all?
+      Record core = record.core();
+
       // triplet
-      String institutionCode = record.core().value(DwcTerm.institutionCode);
-      String collectionCode = record.core().value(DwcTerm.collectionCode);
-      String catalogNumber = record.core().value(DwcTerm.catalogNumber);
+      String institutionCode = core.value(DwcTerm.institutionCode);
+      String collectionCode = core.value(DwcTerm.collectionCode);
+      String catalogNumber = core.value(DwcTerm.catalogNumber);
       if (institutionCode == null || institutionCode.isEmpty() || collectionCode == null || collectionCode.isEmpty()
           || catalogNumber == null || catalogNumber.isEmpty()) {
         recordsWithInvalidTriplets++;

@@ -59,13 +59,13 @@ public class DwcaMetasyncService extends DwcaService {
 
     // listen to DwcaDownloadFinishedMessage messages
     listener.listen(config.queueName, config.poolSize,
-                            new DwcaDownloadFinishedMessageCallback(datasetService,
+                            new DwcaValidationFinishedMessageCallback(datasetService,
                                                                     config.archiveRepository,
                                                                     publisher,
                                                                     curator));
   }
 
-  private static class DwcaDownloadFinishedMessageCallback extends AbstractMessageCallback<DwcaValidationFinishedMessage> {
+  private static class DwcaValidationFinishedMessageCallback extends AbstractMessageCallback<DwcaValidationFinishedMessage> {
 
     private final DatasetService datasetService;
     private final File archiveRepository;
@@ -78,7 +78,7 @@ public class DwcaMetasyncService extends DwcaService {
     private final Counter constituentsDeleted = Metrics.newCounter(DwcaMetasyncService.class, "constituentsDeleted");
     private final Counter constituentsUpdated = Metrics.newCounter(DwcaMetasyncService.class, "constituentsUpdated");
 
-    private DwcaDownloadFinishedMessageCallback(
+    private DwcaValidationFinishedMessageCallback(
       DatasetService datasetService, File archiveRepository, MessagePublisher publisher, CuratorFramework curator
     ) {
       this.archiveRepository = archiveRepository;
