@@ -150,7 +150,7 @@ public class DwcaValidatorTest {
     assertEquals(100, report.getRecordsMissingOccurrenceId());
     assertFalse(report.isValid());
     assertEquals(
-      "Archive invalid because [50% invalid triplets is > than threshold of 25%; 45 duplicate triplets detected]",
+      "Archive invalid because [50% invalid triplets is > than threshold of 25%; 45 duplicate triplets detected; 100 records without an occurrence id (should be 0)]",
       report.getInvalidationReason());
 
     DwcaTestUtil.cleanupArchive(archiveDir);
@@ -169,7 +169,7 @@ public class DwcaValidatorTest {
     assertEquals(100, report.getRecordsMissingOccurrenceId());
     assertFalse(report.isValid());
     assertEquals(
-      "Archive invalid because [50% invalid triplets is > than threshold of 25%; 45 duplicate triplets detected]",
+      "Archive invalid because [50% invalid triplets is > than threshold of 25%; 45 duplicate triplets detected; 100 records without an occurrence id (should be 0)]",
       report.getInvalidationReason());
 
     DwcaTestUtil.cleanupArchive(archiveDir);
