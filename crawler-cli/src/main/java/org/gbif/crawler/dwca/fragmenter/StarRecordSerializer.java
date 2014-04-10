@@ -1,7 +1,7 @@
 package org.gbif.crawler.dwca.fragmenter;
 
 import org.gbif.dwc.record.Record;
-import org.gbif.dwc.terms.ConceptTerm;
+import org.gbif.dwc.terms.Term;
 import org.gbif.dwc.text.StarRecord;
 
 import java.io.IOException;
@@ -60,7 +60,7 @@ final class StarRecordSerializer {
     data.put("id", rec.core().id());
 
     // Put in all core terms
-    for (ConceptTerm term : rec.core().terms()) {
+    for (Term term : rec.core().terms()) {
       data.put(term.simpleName(), rec.core().value(term));
     }
 
@@ -78,7 +78,7 @@ final class StarRecordSerializer {
         for (Record erec : rec.extension(rowType)) {
           Map<String, String> edata = new LinkedHashMap<String, String>(erec.terms().size());
           records.add(edata);
-          for (ConceptTerm term : erec.terms()) {
+          for (Term term : erec.terms()) {
             edata.put(term.simpleName(), erec.value(term));
           }
         }
