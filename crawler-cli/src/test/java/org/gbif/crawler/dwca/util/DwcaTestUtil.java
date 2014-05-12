@@ -8,7 +8,21 @@ import java.util.UUID;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import com.google.common.io.Files;
+
 public class DwcaTestUtil {
+
+  public static File copyTestArchive(String archiveFilePath) throws IOException {
+    File zipFile = new File(DwcaTestUtil.class.getResource(archiveFilePath).getFile());
+
+    File outFolder= new File(zipFile.getParent(), UUID.randomUUID().toString());
+    outFolder.mkdirs();
+
+    File outFile = new File(outFolder, "archive.zip");
+
+    Files.copy(zipFile, outFile);
+    return outFile;
+  }
 
   public static String openArchive(String archiveFilePath) throws IOException {
     String outputDir = UUID.randomUUID().toString();

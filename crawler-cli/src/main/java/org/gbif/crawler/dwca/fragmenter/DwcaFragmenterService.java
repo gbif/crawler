@@ -13,6 +13,7 @@ import org.gbif.common.messaging.api.messages.DwcaValidationFinishedMessage;
 import org.gbif.common.messaging.api.messages.OccurrenceFragmentedMessage;
 import org.gbif.crawler.constants.CrawlerNodePaths;
 import org.gbif.crawler.dwca.LenientArchiveFactory;
+import org.gbif.dwc.record.Record;
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.text.Archive;
 import org.gbif.dwc.text.StarRecord;
@@ -175,10 +176,39 @@ public class DwcaFragmenterService extends AbstractIdleService {
       LOG.info("Successfully extracted [{}] records out of DwC-A for dataset [{}]", counter, uuid);
     }
 
+    /**
+     * Uses a nested iterator over the star and the occurrence extension to produce unique, falttened occurrence
+     * fragments.
+     */
     private void handleOccurrenceExtension(UUID uuid, Archive archive, DwcaMetasyncFinishedMessage message) {
       LOG.info("Fragmenting DwC-A for dataset [{}] with occurrence extension", uuid);
-      //TODO: implement extension processing, see http://dev.gbif.org/issues/browse/POR-1722
-      LOG.warn("Processing of occurrence extension records not implemented yet. Ignoring dataset [{}]", uuid);
+
+      ClosableIterator<StarRecord> iterator = archive.iteratorRaw();
+      int counter = 0;
+      while (iterator.hasNext()) {
+        StarRecord record = iterator.next();
+
+        for (Record rec : record.extension(DwcTerm.Occurrence)) {
+          counter++;
+          byte[] serializedRecord = StarRecordSerializer.toJson(record.core(), rec);
+          try {
+            publisher.send(new OccurrenceFragmentedMessage(uuid,
+                                                           message.getAttempt(),
+                                                           serializedRecord,
+                                                           OccurrenceSchemaType.DWCA,
+                                                           EndpointType.DWC_ARCHIVE,
+                                                           message.getValidationReport()));
+          } catch (IOException e) {
+            LOG.error("Could not send message for dataset [{}]", uuid, e);
+          }
+          if (counter % COUNTER_UPDATE_FREQUENCY == 0) {
+            incrementCounters(message, COUNTER_UPDATE_FREQUENCY);
+          }
+        }
+      }
+
+      incrementCounters(message, counter % COUNTER_UPDATE_FREQUENCY);
+      LOG.info("Successfully extracted [{}] records out of DwC-A for dataset [{}]", counter, uuid);
     }
 
     private void setPagesFragmentedSuccessful(DwcaMetasyncFinishedMessage message) {

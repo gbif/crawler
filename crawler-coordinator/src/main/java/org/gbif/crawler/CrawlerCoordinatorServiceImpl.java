@@ -15,7 +15,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -23,7 +22,6 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.queue.DistributedPriorityQueue;
 import org.apache.curator.framework.recipes.queue.QueueBuilder;
@@ -32,7 +30,6 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
-
 
 import static org.gbif.api.vocabulary.TagName.CRAWL_ATTEMPT;
 import static org.gbif.api.vocabulary.TagName.DECLARED_RECORD_COUNT;
@@ -64,7 +61,6 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
 
   public static final String METADATA_NAMESPACE = "metasync.gbif.org";
   private static final Logger LOG = LoggerFactory.getLogger(CrawlerCoordinatorServiceImpl.class);
-  private static final Set<EndpointType> DWCA_ENDPOINTS = Sets.immutableEnumSet(EndpointType.DWC_ARCHIVE);
   private static final Comparator<Endpoint> ENDPOINT_COMPARATOR =
     Collections.reverseOrder(new EndpointPriorityComparator());
   private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -177,7 +173,7 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
     CrawlJob crawlJob = getCrawlJob(datasetKey, dataset, endpoint.get());
 
     byte[] dataBytes = serializeCrawlJob(crawlJob);
-    queueCrawlJob(datasetKey, DWCA_ENDPOINTS.contains(endpoint.get().getType()), priority, dataBytes);
+    queueCrawlJob(datasetKey, EndpointType.DWC_ARCHIVE == endpoint.get().getType(), priority, dataBytes);
     LOG.info("Crawling endpoint [{}] for dataset [{}]", endpoint.get().getUrl(), datasetKey);
     writeDeclaredRecordCount(dataset, endpoint.get(), datasetKey);
     MDC.remove("datasetKey");

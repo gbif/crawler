@@ -93,6 +93,31 @@ final class StarRecordSerializer {
     return null;
   }
 
+  public static byte[] toJson(Record core, Record occExtension) {
+    // we need an alphabetically sorted map to guarantee that identical records have identical json
+    Map<String, Object> data = Maps.newTreeMap();
+
+    data.put("id", core.id());
+
+    // Put in all core terms
+    for (Term term : core.terms()) {
+      data.put(term.simpleName(), core.value(term));
+    }
+
+    // overlay them with extension occ terms
+    for (Term term : occExtension.terms()) {
+      data.put(term.simpleName(), occExtension.value(term));
+    }
+
+    // serialize to json
+    try {
+      return MAPPER.writeValueAsBytes(data);
+    } catch (IOException e) {
+      LOG.error("Cannot serialize star record data", e);
+    }
+    return null;
+  }
+
   private StarRecordSerializer() {
     throw new UnsupportedOperationException("Can't initialize class");
   }

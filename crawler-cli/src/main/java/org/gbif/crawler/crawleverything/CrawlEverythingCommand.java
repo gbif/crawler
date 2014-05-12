@@ -1,6 +1,5 @@
 package org.gbif.crawler.crawleverything;
 
-import org.gbif.api.model.common.paging.Pageable;
 import org.gbif.api.model.common.paging.PagingRequest;
 import org.gbif.api.model.common.paging.PagingResponse;
 import org.gbif.api.model.registry.Dataset;
@@ -58,39 +57,38 @@ public class CrawlEverythingCommand extends BaseCommand {
       Properties properties = new Properties();
       properties.setProperty("registry.ws.url", config.registryWsUrl);
 
-      Injector injector =
-        Guice.createInjector(new RegistryWsClientModule(properties), new AnonymousAuthModule());
+      Injector injector = Guice.createInjector(new RegistryWsClientModule(properties), new AnonymousAuthModule());
       DatasetService datasetService = injector.getInstance(DatasetService.class);
 
       ExecutorService executor = Executors.newFixedThreadPool(20);
 
       Random random = new Random();
-      int offset = 0;
       AtomicInteger totalCount = new AtomicInteger();
       AtomicInteger scheduledCount = new AtomicInteger();
-      boolean endOfRecords = true;
+
+      PagingRequest request = new PagingRequest(0, LIMIT);
+      PagingResponse<Dataset> response = null;
       do {
-        Pageable request = new PagingRequest(offset, LIMIT);
         Stopwatch stopwatch = Stopwatch.createStarted();
         LOG.info("Requesting batch of datasets starting at offset [{}]", request.getOffset());
-        PagingResponse<Dataset> datasets;
         try {
-          datasets = datasetService.list(request);
+          response = datasetService.list(request);
+          stopwatch.stop();
+          LOG.info("Received [{}] datasets in [{}]s",
+                   response.getResults().size(),
+                   stopwatch.elapsed(TimeUnit.SECONDS));
+
+          // we never reach the limits of integers for dataset numbers. Simple casting is fine
+          executor.submit(new SchedulingRunnable(response, random, publisher, totalCount, scheduledCount, (int) request.getOffset()));
+
         } catch (Exception e) {
-          offset += LIMIT;
-          LOG.error("Got error requesting datasets, skipping to offset [{}]", offset, e);
-          continue;
+          LOG.error("Got error requesting datasets, skipping to offset [{}]", request.getOffset(), e);
+
         }
-        stopwatch.stop();
-        LOG.info("Received [{}] datasets in [{}]s",
-                 datasets.getResults().size(),
-                 stopwatch.elapsed(TimeUnit.SECONDS));
+        // increase offset
+        request.nextPage();
 
-        endOfRecords = datasets.isEndOfRecords();
-        executor.submit(new SchedulingRunnable(datasets, random, publisher, totalCount, scheduledCount, offset));
-
-        offset += datasets.getResults().size();
-      } while (!endOfRecords);
+      } while (response == null || !response.isEndOfRecords());
 
       executor.shutdown();
       while (!executor.isTerminated()) {

@@ -2,6 +2,7 @@ package org.gbif.crawler.dwca.validator;
 
 import org.gbif.api.model.crawler.DwcaValidationReport;
 import org.gbif.api.model.registry.Dataset;
+import org.gbif.api.vocabulary.DatasetType;
 import org.gbif.crawler.dwca.util.DwcaTestUtil;
 import org.gbif.dwc.text.Archive;
 import org.gbif.dwc.text.ArchiveFactory;
@@ -26,13 +27,14 @@ public class DwcaValidatorTest {
   public void setUp() {
     dataset = new Dataset();
     dataset.setKey(UUID.randomUUID());
+    dataset.setType(DatasetType.OCCURRENCE);
   }
 
   @Test
   public void testGoodTripletsGoodIds() throws IOException {
-    String archiveDir = DwcaTestUtil.openArchive("/dwca/dwca-one-hundred-good-triplets-good-ids.zip");
+    File zip = DwcaTestUtil.copyTestArchive("/dwca/dwca-one-hundred-good-triplets-good-ids.zip");
 
-    Archive archive = ArchiveFactory.openArchive(new File(archiveDir));
+    Archive archive = ArchiveFactory.openArchive(zip, zip.getParentFile());
     DwcaValidationReport report = DwcaValidator.validate(dataset, archive);
     assertEquals(100, report.getCheckedRecords());
     assertEquals(100, report.getUniqueTriplets());
@@ -44,14 +46,35 @@ public class DwcaValidatorTest {
     assertEquals(report.getUniqueTriplets(), report.getCheckedRecords() - report.getRecordsWithInvalidTriplets());
     assertEquals(report.getUniqueOccurrenceIds(), report.getCheckedRecords() - report.getRecordsMissingOccurrenceId());
 
-    DwcaTestUtil.cleanupArchive(archiveDir);
+    DwcaTestUtil.cleanupArchive(zip.getParent());
   }
 
   @Test
-  public void testGoodTripletsNoOccurrenceId() throws IOException {
-    String archiveDir = DwcaTestUtil.openArchive("/dwca/dwca-one-thousand-good-triplets-no-id.zip");
+  public void testChecklistGoodTripletsGoodIds() throws IOException {
+    dataset.setType(DatasetType.CHECKLIST);
 
-    Archive archive = ArchiveFactory.openArchive(new File(archiveDir));
+    File zip = DwcaTestUtil.copyTestArchive("/dwca/dwca_checklist-one-hundred-good-triplets-good-ids.zip");
+    Archive archive = ArchiveFactory.openArchive(zip, zip.getParentFile());
+    DwcaValidationReport report = DwcaValidator.validate(dataset, archive);
+    assertEquals(100, report.getCheckedRecords());
+    assertEquals(100, report.getUniqueTriplets());
+    assertEquals(0, report.getRecordsWithInvalidTriplets());
+    assertEquals(100, report.getUniqueOccurrenceIds());
+    assertEquals(0, report.getRecordsMissingOccurrenceId());
+    assertTrue(report.isValid());
+    assertTrue(report.isAllRecordsChecked());
+    assertEquals(report.getUniqueTriplets(), report.getCheckedRecords() - report.getRecordsWithInvalidTriplets());
+    assertEquals(report.getUniqueOccurrenceIds(), report.getCheckedRecords() - report.getRecordsMissingOccurrenceId());
+
+    DwcaTestUtil.cleanupArchive(zip.getParent());
+  }
+
+
+  @Test
+  public void testGoodTripletsNoOccurrenceId() throws IOException {
+    File zip = DwcaTestUtil.copyTestArchive("/dwca/dwca-one-thousand-good-triplets-no-id.zip");
+
+    Archive archive = ArchiveFactory.openArchive(zip, zip.getParentFile());
     DwcaValidationReport report = DwcaValidator.validate(dataset, archive);
     assertEquals(1000, report.getCheckedRecords());
     assertEquals(1000, report.getUniqueTriplets());
@@ -63,14 +86,14 @@ public class DwcaValidatorTest {
     assertEquals(report.getUniqueTriplets(), report.getCheckedRecords() - report.getRecordsWithInvalidTriplets());
     assertEquals(report.getUniqueOccurrenceIds(), report.getCheckedRecords() - report.getRecordsMissingOccurrenceId());
 
-    DwcaTestUtil.cleanupArchive(archiveDir);
+    DwcaTestUtil.cleanupArchive(zip.getParent());
   }
 
   @Test
   public void testDupeTriplet() throws IOException {
-    String archiveDir = DwcaTestUtil.openArchive("/dwca/dwca-one-hundred-dupe-triplet.zip");
+    File zip = DwcaTestUtil.copyTestArchive("/dwca/dwca-one-hundred-dupe-triplet.zip");
 
-    Archive archive = ArchiveFactory.openArchive(new File(archiveDir));
+    Archive archive = ArchiveFactory.openArchive(zip, zip.getParentFile());
     DwcaValidationReport report = DwcaValidator.validate(dataset, archive);
     assertEquals(100, report.getCheckedRecords());
     assertEquals(10, report.getUniqueTriplets());
@@ -80,14 +103,14 @@ public class DwcaValidatorTest {
     assertFalse(report.isValid());
     assertTrue(report.isAllRecordsChecked());
 
-    DwcaTestUtil.cleanupArchive(archiveDir);
+    DwcaTestUtil.cleanupArchive(zip.getParent());
   }
 
   @Test
   public void testInvalidTripletInValidArchive() throws IOException {
-    String archiveDir = DwcaTestUtil.openArchive("/dwca/dwca-one-hundred-20-percent-invalid-triplet.zip");
+    File zip = DwcaTestUtil.copyTestArchive("/dwca/dwca-one-hundred-20-percent-invalid-triplet.zip");
 
-    Archive archive = ArchiveFactory.openArchive(new File(archiveDir));
+    Archive archive = ArchiveFactory.openArchive(zip, zip.getParentFile());
     DwcaValidationReport report = DwcaValidator.validate(dataset, archive);
     assertEquals(100, report.getCheckedRecords());
     assertEquals(80, report.getUniqueTriplets());
@@ -98,14 +121,14 @@ public class DwcaValidatorTest {
     assertTrue(report.isAllRecordsChecked());
     assertNull(report.getInvalidationReason());
 
-    DwcaTestUtil.cleanupArchive(archiveDir);
+    DwcaTestUtil.cleanupArchive(zip.getParent());
   }
 
   @Test
   public void testGoodTripletsDupedIds() throws IOException {
-    String archiveDir = DwcaTestUtil.openArchive("/dwca/dwca-one-hundred-good-triplets-dupe-ids.zip");
+    File zip = DwcaTestUtil.copyTestArchive("/dwca/dwca-one-hundred-good-triplets-dupe-ids.zip");
 
-    Archive archive = ArchiveFactory.openArchive(new File(archiveDir));
+    Archive archive = ArchiveFactory.openArchive(zip, zip.getParentFile());
     DwcaValidationReport report = DwcaValidator.validate(dataset, archive);
     assertEquals(100, report.getCheckedRecords());
     assertEquals(100, report.getUniqueTriplets());
@@ -116,14 +139,14 @@ public class DwcaValidatorTest {
     assertTrue(report.isAllRecordsChecked());
     assertNull(report.getInvalidationReason());
 
-    DwcaTestUtil.cleanupArchive(archiveDir);
+    DwcaTestUtil.cleanupArchive(zip.getParent());
   }
 
   @Test
   public void testGoodTripletsDupedAndMissingIds() throws IOException {
-    String archiveDir = DwcaTestUtil.openArchive("/dwca/dwca-one-hundred-good-triplets-dupe-and-missing-ids.zip");
+    File zip = DwcaTestUtil.copyTestArchive("/dwca/dwca-one-hundred-good-triplets-dupe-and-missing-ids.zip");
+    Archive archive = ArchiveFactory.openArchive(zip, zip.getParentFile());
 
-    Archive archive = ArchiveFactory.openArchive(new File(archiveDir));
     DwcaValidationReport report = DwcaValidator.validate(dataset, archive);
     assertEquals(100, report.getCheckedRecords());
     assertEquals(100, report.getUniqueTriplets());
@@ -134,14 +157,14 @@ public class DwcaValidatorTest {
     assertTrue(report.isAllRecordsChecked());
     assertNull(report.getInvalidationReason());
 
-    DwcaTestUtil.cleanupArchive(archiveDir);
+    DwcaTestUtil.cleanupArchive(zip.getParent());
   }
 
   @Test
   public void testInvalidAndDupeTriplet() throws IOException {
-    String archiveDir = DwcaTestUtil.openArchive("/dwca/dwca-one-hundred-50-percent-invalid-with-dupes-triplet.zip");
+    File zip = DwcaTestUtil.copyTestArchive("/dwca/dwca-one-hundred-50-percent-invalid-with-dupes-triplet.zip");
+    Archive archive = ArchiveFactory.openArchive(zip, zip.getParentFile());
 
-    Archive archive = ArchiveFactory.openArchive(new File(archiveDir));
     DwcaValidationReport report = DwcaValidator.validate(dataset, archive);
     assertEquals(100, report.getCheckedRecords());
     assertEquals(5, report.getUniqueTriplets());
@@ -153,14 +176,14 @@ public class DwcaValidatorTest {
       "Archive invalid because [50% invalid triplets is > than threshold of 25%; 45 duplicate triplets detected; 100 records without an occurrence id (should be 0)]",
       report.getInvalidationReason());
 
-    DwcaTestUtil.cleanupArchive(archiveDir);
+    DwcaTestUtil.cleanupArchive(zip.getParent());
   }
 
   @Test
   public void testDupeAndBadTripletNoOccurrenceId() throws IOException {
-    String archiveDir = DwcaTestUtil.openArchive("/dwca/dwca-one-hundred-50-percent-invalid-with-dupes-triplet.zip");
+    File zip = DwcaTestUtil.copyTestArchive("/dwca/dwca-one-hundred-50-percent-invalid-with-dupes-triplet.zip");
 
-    Archive archive = ArchiveFactory.openArchive(new File(archiveDir));
+    Archive archive = ArchiveFactory.openArchive(zip, zip.getParentFile());
     DwcaValidationReport report = DwcaValidator.validate(dataset, archive);
     assertEquals(100, report.getCheckedRecords());
     assertEquals(5, report.getUniqueTriplets());
@@ -172,14 +195,14 @@ public class DwcaValidatorTest {
       "Archive invalid because [50% invalid triplets is > than threshold of 25%; 45 duplicate triplets detected; 100 records without an occurrence id (should be 0)]",
       report.getInvalidationReason());
 
-    DwcaTestUtil.cleanupArchive(archiveDir);
+    DwcaTestUtil.cleanupArchive(zip.getParent());
   }
 
   @Test
   public void testEmptyArchive() throws IOException {
-    String archiveDir = DwcaTestUtil.openArchive("/dwca/dwca-empty.zip");
+    File zip = DwcaTestUtil.copyTestArchive("/dwca/dwca-empty.zip");
 
-    Archive archive = ArchiveFactory.openArchive(new File(archiveDir));
+    Archive archive = ArchiveFactory.openArchive(zip, zip.getParentFile());
     DwcaValidationReport report = DwcaValidator.validate(dataset, archive);
     assertEquals(0, report.getCheckedRecords());
     assertEquals(0, report.getUniqueTriplets());
@@ -189,6 +212,6 @@ public class DwcaValidatorTest {
     assertFalse(report.isValid());
     assertEquals("Archive invalid because [No readable records]", report.getInvalidationReason());
 
-    DwcaTestUtil.cleanupArchive(archiveDir);
+    DwcaTestUtil.cleanupArchive(zip.getParent());
   }
 }
