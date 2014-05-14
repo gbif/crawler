@@ -5,7 +5,6 @@ import org.gbif.api.model.registry.Dataset;
 import org.gbif.api.vocabulary.DatasetType;
 import org.gbif.dwc.record.Record;
 import org.gbif.dwc.terms.DwcTerm;
-import org.gbif.dwc.terms.GbifTerm;
 import org.gbif.dwc.terms.Term;
 import org.gbif.dwc.text.Archive;
 import org.gbif.dwc.text.StarRecord;
@@ -71,8 +70,9 @@ public class DwcaValidator {
     } else if (archive.getExtension(DwcTerm.Occurrence) != null) {
       validateExtension(archive, DwcTerm.Occurrence);
 
-    } else if (archive.getExtension(GbifTerm.TypesAndSpecimen) != null) {
-      validateExtension(archive, GbifTerm.TypesAndSpecimen);
+// COMMENTED OUT AS THIS EXTENSION ALSO CONTAINS NON OCCURRENCE RECORDS, e.g. type species
+//    } else if (archive.getExtension(GbifTerm.TypesAndSpecimen) != null) {
+//      validateExtension(archive, GbifTerm.TypesAndSpecimen);
 
     } else {
       LOG.info("Passing through DwC-A for dataset [{}] because it does not have Occurrence information to validate.",

@@ -15,7 +15,6 @@ import org.gbif.crawler.constants.CrawlerNodePaths;
 import org.gbif.crawler.dwca.LenientArchiveFactory;
 import org.gbif.dwc.record.Record;
 import org.gbif.dwc.terms.DwcTerm;
-import org.gbif.dwc.terms.GbifTerm;
 import org.gbif.dwc.terms.Term;
 import org.gbif.dwc.text.Archive;
 import org.gbif.dwc.text.StarRecord;
@@ -142,8 +141,9 @@ public class DwcaFragmenterService extends AbstractIdleService {
       } else if (archive.getExtension(DwcTerm.Occurrence) != null) {
         handleOccurrenceExtension(uuid, archive, DwcTerm.Occurrence, message);
 
-      } else if (archive.getExtension(GbifTerm.TypesAndSpecimen) != null) {
-        handleOccurrenceExtension(uuid, archive, GbifTerm.TypesAndSpecimen, message);
+// COMMENTED OUT AS THIS EXTENSION ALSO CONTAINS NON OCCURRENCE RECORDS, e.g. type species
+//      } else if (archive.getExtension(GbifTerm.TypesAndSpecimen) != null) {
+//        handleOccurrenceExtension(uuid, archive, GbifTerm.TypesAndSpecimen, message);
 
       } else {
         LOG.info("Ignoring DwC-A for dataset [{}] because it does not have Occurrence information.",

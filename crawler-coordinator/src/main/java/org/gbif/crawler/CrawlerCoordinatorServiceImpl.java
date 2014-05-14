@@ -6,11 +6,11 @@ import org.gbif.api.model.registry.Dataset;
 import org.gbif.api.model.registry.Endpoint;
 import org.gbif.api.model.registry.MachineTag;
 import org.gbif.api.service.registry.DatasetService;
+import org.gbif.api.util.MachineTagUtils;
 import org.gbif.api.vocabulary.EndpointType;
 import org.gbif.crawler.constants.CrawlerNodePaths;
 
 import java.io.IOException;
-import java.net.URI;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -184,14 +184,8 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
    * the admin console.
    */
   private void writeDeclaredRecordCount(Dataset dataset, Endpoint endpoint, UUID datasetKey) {
-    List<MachineTag> allTags = dataset.getMachineTags();
-    allTags.addAll(endpoint.getMachineTags());
-    List<MachineTag> filteredTags = Lists.newArrayList();
-    for (MachineTag tag : allTags) {
-      if (tag.getNamespace().equals(DECLARED_RECORD_COUNT.getNamespace().getNamespace()) && tag.getName().equals(DECLARED_RECORD_COUNT.getName())) {
-        filteredTags.add(tag);
-      }
-    }
+    List<MachineTag> filteredTags = MachineTagUtils.list(dataset, DECLARED_RECORD_COUNT);
+    filteredTags.addAll(MachineTagUtils.list(endpoint, DECLARED_RECORD_COUNT));
 
     if (filteredTags.size() == 1) {
       Long declaredCount = Long.parseLong(filteredTags.get(0).getValue());
@@ -346,7 +340,7 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
       */
     int attempt = getAttempt(datasetKey, dataset, endpoint);
 
-    return new CrawlJob(datasetKey, endpoint.getType(), URI.create(endpoint.getUrl().toString()), attempt, properties);
+    return new CrawlJob(datasetKey, endpoint.getType(), endpoint.getUrl(), attempt, properties);
   }
 
   /**
@@ -354,33 +348,21 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
    * returns this new number.
    */
   private int getAttempt(UUID datasetKey, Dataset dataset, Endpoint endpoint) {
-    // Find the current attempt if it exists, if it doesn't exist it will be initialized to 1
-    List<MachineTag> allTags = dataset.getMachineTags();
-    List<MachineTag> filteredTags = Lists.newArrayList();
-    for (MachineTag tag : allTags) {
-      if (tag.getNamespace().equals(CRAWL_ATTEMPT.getNamespace().getNamespace()) && tag.getName()
-        .equals(CRAWL_ATTEMPT.getName())) {
-        filteredTags.add(tag);
-      }
-    }
-
     int attempt = 0;
-    int tagKey = 0;
-    if (filteredTags.size() == 1) {
-      attempt = Integer.parseInt(filteredTags.get(0).getValue());
-      tagKey = filteredTags.get(0).getKey();
-    } else if (filteredTags.size() > 1) {
+    // Find the current attempt if it exists, if it doesn't exist it will be initialized to 1
+    List<MachineTag> attemptTags = MachineTagUtils.list(dataset, CRAWL_ATTEMPT);
+    if (attemptTags.size() == 1) {
+      attempt = Integer.parseInt(attemptTags.get(0).getValue());
+      int tagKey = attemptTags.get(0).getKey();
+      datasetService.deleteMachineTag(datasetKey, tagKey);
+    } else if (attemptTags.size() > 1) {
       throw new ServiceUnavailableException("crawl_attempt tag exists more than once, clean up first and retry"
-                                            + " ["
-                                            + datasetKey
-                                            + "]");
+                                            + " [" + datasetKey + "]");
     }
 
+    // store updated tag
     attempt++;
-
-    MachineTag tag = new MachineTag(CRAWL_ATTEMPT.getNamespace().getNamespace(), CRAWL_ATTEMPT.getName(), null);
-    datasetService.deleteMachineTag(datasetKey, tagKey);
-    tag.setValue(String.valueOf(attempt));
+    MachineTag tag = new MachineTag(CRAWL_ATTEMPT.getNamespace().getNamespace(), CRAWL_ATTEMPT.getName(), String.valueOf(attempt));
     datasetService.addMachineTag(datasetKey, tag);
 
     metrics.registerCrawl(endpoint);
@@ -402,13 +384,8 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
   ) {
     Optional<String> value = findTag(tags, namespace, predicate);
     if (!value.isPresent()) {
-      throw new IllegalArgumentException("Could not find ["
-                                         + namespace
-                                         + ":"
-                                         + predicate
-                                         + "] tag for dataset ["
-                                         + datasetKey
-                                         + "]");
+      throw new IllegalArgumentException("Could not find [" + namespace + ":" + predicate + "] tag for dataset ["
+                                         + datasetKey + "]");
     }
     properties.put(predicate, value.get());
   }
