@@ -12,17 +12,6 @@
 
   <name>Crawler :: CLI</name>
 
-  <properties>
-    <dwc-api.version>1.5</dwc-api.version>
-    <dwca-reader.version>1.16</dwca-reader.version>
-    <jackson-annotations.version>2.2.3</jackson-annotations.version>
-    <jackson-datatype-guava.version>1.9.2</jackson-datatype-guava.version>
-    <jcommander.version>1.30-gbif-20121018</jcommander.version>
-    <joda-time.version>2.3</joda-time.version>
-    <metainf-services.version>1.5</metainf-services.version>
-    <yammer-metrics.version>2.2.0</yammer-metrics.version>
-  </properties>
-
   <build>
     <extensions>
       <extension>
@@ -71,59 +60,44 @@
   </repositories>
 
   <dependencies>
-    <!-- Module specific -->
     <dependency>
       <groupId>com.yammer.metrics</groupId>
       <artifactId>metrics-core</artifactId>
-      <version>${yammer-metrics.version}</version>
     </dependency>
     <dependency>
       <groupId>com.beust</groupId>
       <artifactId>jcommander</artifactId>
-      <version>${jcommander.version}</version>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson</groupId>
       <artifactId>jackson-datatype-guava</artifactId>
-      <version>${jackson-datatype-guava.version}</version>
     </dependency>
     <dependency>
       <!-- This dependency is needed for the JsonIgnore annotations on the configuration objects. gbif-cli uses
            Jackson 2 because only that supports YAML so we have to use the annotations from Jackson 2 -->
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-annotations</artifactId>
-      <version>${jackson-annotations.version}</version>
     </dependency>
     <dependency>
       <groupId>joda-time</groupId>
       <artifactId>joda-time</artifactId>
-      <version>${joda-time.version}</version>
     </dependency>
     <dependency>
       <groupId>org.kohsuke.metainf-services</groupId>
       <artifactId>metainf-services</artifactId>
-      <version>${metainf-services.version}</version>
-      <!-- This is the proper declaration. For details see the homepage of the project. -->
-      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>org.gbif.common</groupId>
       <artifactId>gbif-cli</artifactId>
-      <version>${gbif-cli.version}</version>
     </dependency>
     <dependency>
       <groupId>org.gbif</groupId>
       <artifactId>dwc-api</artifactId>
-      <version>${dwc-api.version}</version>
     </dependency>
     <dependency>
       <groupId>org.gbif</groupId>
       <artifactId>dwca-reader</artifactId>
-      <version>${dwca-reader.version}</version>
     </dependency>
-
-
-    <!-- From parent -->
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
