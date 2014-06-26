@@ -219,7 +219,7 @@ public class DwcaMetasyncService extends DwcaService {
       // use temporary required title that will get overwritten when submitting the metadata file
       constituent.setTitle("Constituent " + datasetID + " of " + parent.getTitle());
       constituent.setParentDatasetKey(parentKey);
-      constituent.setOwningOrganizationKey(parent.getOwningOrganizationKey());
+      constituent.setPublishingOrganizationKey(parent.getPublishingOrganizationKey());
       constituent.setInstallationKey(parent.getInstallationKey());
       constituent.setType(parent.getType());
       constituent.setSubtype(parent.getSubtype());
