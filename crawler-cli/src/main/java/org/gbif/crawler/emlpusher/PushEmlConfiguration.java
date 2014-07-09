@@ -9,7 +9,7 @@ public class PushEmlConfiguration {
 
   @Parameter(names = "--registry-ws-url")
   @NotNull
-  public String registryWsUrl = "http://api.gbif.org/v0.9/";
+  public String registryWsUrl = "http://api.gbif.org/v1/";
 
   @Parameter(names = "--registry-user")
   @NotNull
