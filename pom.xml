@@ -37,7 +37,7 @@
     <gbif-common-service.version>0.10</gbif-common-service.version>
     <gbif-common-ws.version>0.15</gbif-common-ws.version>
     <gbif-httputils.version>0.5</gbif-httputils.version>
-    <gbif-occurrence.version>0.19</gbif-occurrence.version>
+    <gbif-occurrence.version>0.20</gbif-occurrence.version>
     <gbif-registry.version>2.16</gbif-registry.version>
     <gbif-wrangler.version>0.2</gbif-wrangler.version>
     <guava.version>15.0</guava.version>
