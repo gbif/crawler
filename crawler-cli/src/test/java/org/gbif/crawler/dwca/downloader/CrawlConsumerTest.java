@@ -11,8 +11,9 @@ import java.net.URI;
 import java.util.UUID;
 
 import junit.framework.TestCase;
+import org.junit.Ignore;
 
-//@Ignore("Manual tests to run downloads that fail for unknown reasons")
+@Ignore("Manual tests to run downloads that fail for unknown reasons")
 public class CrawlConsumerTest extends TestCase {
   // please adapt to personal needs when running the tests manually!
   final static File DWCA_REPO = new File("/Users/markus/crawl-storage/dwca");
