@@ -19,6 +19,7 @@ import java.util.TimeZone;
 import java.util.UUID;
 
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.io.Files;
@@ -161,26 +162,23 @@ public class CrawlConsumer implements QueueConsumer<UUID> {
     }
   }
 
-  private DwcaDownloadFinishedMessage doCrawl(CrawlJob crawlRequest) {
+  @VisibleForTesting
+  protected DwcaDownloadFinishedMessage doCrawl(CrawlJob crawlRequest) {
     Preconditions.checkNotNull("crawlRequest required", crawlRequest);
     UUID uuid = crawlRequest.getDatasetKey();
 
     startedDownloads.inc();
 
     // we keep the compressed file forever and use it to retrieve the last modified for conditional gets
-    File localFile = new File(archiveRepository, uuid + ".dwca");
+    final File localFile = new File(archiveRepository, uuid + ".dwca");
     // the decompressed archive folder is created by this consumer and then gets deleted at the very end of the processing
-    File archiveDir = new File(archiveRepository, uuid.toString());
-    if (archiveDir.exists()) {
-      // clean up any existing folder
-      LOG.debug("Deleting existing archive folder [{}]", archiveDir.getAbsolutePath());
-      FileUtils.deleteDirectoryRecursively(archiveDir);
-    }
+    final File archiveDir = new File(archiveRepository, uuid.toString());
 
     boolean modified = false;
     Date lastModified = null;
 
     try {
+      LOG.debug("Start download of dwc archive from {} to {}", crawlRequest.getTargetUrl(), localFile);
       StatusLine status = client.downloadIfModifiedSince(crawlRequest.getTargetUrl().toURL(), localFile);
 
       if (status.getStatusCode() == HttpStatus.SC_NOT_MODIFIED) {
@@ -192,6 +190,12 @@ public class CrawlConsumer implements QueueConsumer<UUID> {
         modified = true;
         lastModified = new Date();
         try {
+          if (archiveDir.exists()) {
+            // clean up any existing folder
+            LOG.debug("Deleting existing archive folder [{}]", archiveDir.getAbsolutePath());
+            FileUtils.deleteDirectoryRecursively(archiveDir);
+          }
+          org.apache.commons.io.FileUtils.forceMkdir(archiveDir);
           CompressionUtil.decompressFile(archiveDir, localFile, true);
         } catch (CompressionUtil.UnsupportedCompressionType unsupportedCompressionType) {
           LOG.debug("Could not uncompress archive for dataset [{}]", uuid, unsupportedCompressionType);
