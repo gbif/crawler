@@ -57,7 +57,7 @@ public class Crawler<CTX extends CrawlContext, REQ, RESP, RES> {
   private final CrawlClient<REQ, RESP> client;
   private final RetryPolicy retryPolicy;
   private final Lock lock;
-  private final Stopwatch stopwatch = new Stopwatch();
+  private final Stopwatch stopwatch = Stopwatch.createUnstarted();
   private final List<CrawlListener<CTX, REQ, RES>> listeners = Lists.newArrayList();
 
   public Crawler(
@@ -278,7 +278,7 @@ public class Crawler<CTX extends CrawlContext, REQ, RESP, RES> {
         stopwatch.stop();
         notifyResponse(res,
           tryCount,
-          stopwatch.elapsedMillis(),
+          stopwatch.elapsed(TimeUnit.MILLISECONDS),
           responseHandler.getRecordCount(),
           responseHandler.isEndOfRecords());
         retryPolicy.successfulRequest();
