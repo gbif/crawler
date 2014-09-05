@@ -5,4 +5,5 @@ target
 *.war
 *.ear
 *.iml
+.DS_Store
 *.idea

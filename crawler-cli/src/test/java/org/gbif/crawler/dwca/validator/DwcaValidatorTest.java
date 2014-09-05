@@ -36,15 +36,15 @@ public class DwcaValidatorTest {
 
     Archive archive = ArchiveFactory.openArchive(zip, zip.getParentFile());
     DwcaValidationReport report = DwcaValidator.validate(dataset, archive);
-    assertEquals(100, report.getCheckedRecords());
-    assertEquals(100, report.getUniqueTriplets());
-    assertEquals(0, report.getRecordsWithInvalidTriplets());
-    assertEquals(100, report.getUniqueOccurrenceIds());
-    assertEquals(0, report.getRecordsMissingOccurrenceId());
+    assertEquals(100, report.getOccurrenceReport().getCheckedRecords());
+    assertEquals(100, report.getOccurrenceReport().getUniqueTriplets());
+    assertEquals(0, report.getOccurrenceReport().getRecordsWithInvalidTriplets());
+    assertEquals(100, report.getOccurrenceReport().getUniqueOccurrenceIds());
+    assertEquals(0, report.getOccurrenceReport().getRecordsMissingOccurrenceId());
     assertTrue(report.isValid());
-    assertTrue(report.isAllRecordsChecked());
-    assertEquals(report.getUniqueTriplets(), report.getCheckedRecords() - report.getRecordsWithInvalidTriplets());
-    assertEquals(report.getUniqueOccurrenceIds(), report.getCheckedRecords() - report.getRecordsMissingOccurrenceId());
+    assertTrue(report.getOccurrenceReport().isAllRecordsChecked());
+    assertEquals(report.getOccurrenceReport().getUniqueTriplets(), report.getOccurrenceReport().getCheckedRecords() - report.getOccurrenceReport().getRecordsWithInvalidTriplets());
+    assertEquals(report.getOccurrenceReport().getUniqueOccurrenceIds(), report.getOccurrenceReport().getCheckedRecords() - report.getOccurrenceReport().getRecordsMissingOccurrenceId());
 
     DwcaTestUtil.cleanupArchive(zip.getParent());
   }
@@ -56,15 +56,15 @@ public class DwcaValidatorTest {
     File zip = DwcaTestUtil.copyTestArchive("/dwca/dwca_checklist-one-hundred-good-triplets-good-ids.zip");
     Archive archive = ArchiveFactory.openArchive(zip, zip.getParentFile());
     DwcaValidationReport report = DwcaValidator.validate(dataset, archive);
-    assertEquals(100, report.getCheckedRecords());
-    assertEquals(100, report.getUniqueTriplets());
-    assertEquals(0, report.getRecordsWithInvalidTriplets());
-    assertEquals(100, report.getUniqueOccurrenceIds());
-    assertEquals(0, report.getRecordsMissingOccurrenceId());
+    assertEquals(100, report.getOccurrenceReport().getCheckedRecords());
+    assertEquals(100, report.getOccurrenceReport().getUniqueTriplets());
+    assertEquals(0, report.getOccurrenceReport().getRecordsWithInvalidTriplets());
+    assertEquals(100, report.getOccurrenceReport().getUniqueOccurrenceIds());
+    assertEquals(0, report.getOccurrenceReport().getRecordsMissingOccurrenceId());
     assertTrue(report.isValid());
-    assertTrue(report.isAllRecordsChecked());
-    assertEquals(report.getUniqueTriplets(), report.getCheckedRecords() - report.getRecordsWithInvalidTriplets());
-    assertEquals(report.getUniqueOccurrenceIds(), report.getCheckedRecords() - report.getRecordsMissingOccurrenceId());
+    assertTrue(report.getOccurrenceReport().isAllRecordsChecked());
+    assertEquals(report.getOccurrenceReport().getUniqueTriplets(), report.getOccurrenceReport().getCheckedRecords() - report.getOccurrenceReport().getRecordsWithInvalidTriplets());
+    assertEquals(report.getOccurrenceReport().getUniqueOccurrenceIds(), report.getOccurrenceReport().getCheckedRecords() - report.getOccurrenceReport().getRecordsMissingOccurrenceId());
 
     DwcaTestUtil.cleanupArchive(zip.getParent());
   }
@@ -76,15 +76,15 @@ public class DwcaValidatorTest {
 
     Archive archive = ArchiveFactory.openArchive(zip, zip.getParentFile());
     DwcaValidationReport report = DwcaValidator.validate(dataset, archive);
-    assertEquals(1000, report.getCheckedRecords());
-    assertEquals(1000, report.getUniqueTriplets());
-    assertEquals(0, report.getRecordsWithInvalidTriplets());
-    assertEquals(0, report.getUniqueOccurrenceIds());
-    assertEquals(1000, report.getRecordsMissingOccurrenceId());
+    assertEquals(1000, report.getOccurrenceReport().getCheckedRecords());
+    assertEquals(1000, report.getOccurrenceReport().getUniqueTriplets());
+    assertEquals(0, report.getOccurrenceReport().getRecordsWithInvalidTriplets());
+    assertEquals(0, report.getOccurrenceReport().getUniqueOccurrenceIds());
+    assertEquals(1000, report.getOccurrenceReport().getRecordsMissingOccurrenceId());
     assertTrue(report.isValid());
-    assertTrue(report.isAllRecordsChecked());
-    assertEquals(report.getUniqueTriplets(), report.getCheckedRecords() - report.getRecordsWithInvalidTriplets());
-    assertEquals(report.getUniqueOccurrenceIds(), report.getCheckedRecords() - report.getRecordsMissingOccurrenceId());
+    assertTrue(report.getOccurrenceReport().isAllRecordsChecked());
+    assertEquals(report.getOccurrenceReport().getUniqueTriplets(), report.getOccurrenceReport().getCheckedRecords() - report.getOccurrenceReport().getRecordsWithInvalidTriplets());
+    assertEquals(report.getOccurrenceReport().getUniqueOccurrenceIds(), report.getOccurrenceReport().getCheckedRecords() - report.getOccurrenceReport().getRecordsMissingOccurrenceId());
 
     DwcaTestUtil.cleanupArchive(zip.getParent());
   }
@@ -95,13 +95,13 @@ public class DwcaValidatorTest {
 
     Archive archive = ArchiveFactory.openArchive(zip, zip.getParentFile());
     DwcaValidationReport report = DwcaValidator.validate(dataset, archive);
-    assertEquals(100, report.getCheckedRecords());
-    assertEquals(10, report.getUniqueTriplets());
-    assertEquals(0, report.getRecordsWithInvalidTriplets());
-    assertEquals(0, report.getUniqueOccurrenceIds());
-    assertEquals(100, report.getRecordsMissingOccurrenceId());
+    assertEquals(100, report.getOccurrenceReport().getCheckedRecords());
+    assertEquals(10, report.getOccurrenceReport().getUniqueTriplets());
+    assertEquals(0, report.getOccurrenceReport().getRecordsWithInvalidTriplets());
+    assertEquals(0, report.getOccurrenceReport().getUniqueOccurrenceIds());
+    assertEquals(100, report.getOccurrenceReport().getRecordsMissingOccurrenceId());
     assertFalse(report.isValid());
-    assertTrue(report.isAllRecordsChecked());
+    assertTrue(report.getOccurrenceReport().isAllRecordsChecked());
 
     DwcaTestUtil.cleanupArchive(zip.getParent());
   }
@@ -112,13 +112,13 @@ public class DwcaValidatorTest {
 
     Archive archive = ArchiveFactory.openArchive(zip, zip.getParentFile());
     DwcaValidationReport report = DwcaValidator.validate(dataset, archive);
-    assertEquals(100, report.getCheckedRecords());
-    assertEquals(80, report.getUniqueTriplets());
-    assertEquals(20, report.getRecordsWithInvalidTriplets());
-    assertEquals(0, report.getUniqueOccurrenceIds());
-    assertEquals(100, report.getRecordsMissingOccurrenceId());
+    assertEquals(100, report.getOccurrenceReport().getCheckedRecords());
+    assertEquals(80, report.getOccurrenceReport().getUniqueTriplets());
+    assertEquals(20, report.getOccurrenceReport().getRecordsWithInvalidTriplets());
+    assertEquals(0, report.getOccurrenceReport().getUniqueOccurrenceIds());
+    assertEquals(100, report.getOccurrenceReport().getRecordsMissingOccurrenceId());
     assertTrue(report.isValid());
-    assertTrue(report.isAllRecordsChecked());
+    assertTrue(report.getOccurrenceReport().isAllRecordsChecked());
     assertNull(report.getInvalidationReason());
 
     DwcaTestUtil.cleanupArchive(zip.getParent());
@@ -130,13 +130,13 @@ public class DwcaValidatorTest {
 
     Archive archive = ArchiveFactory.openArchive(zip, zip.getParentFile());
     DwcaValidationReport report = DwcaValidator.validate(dataset, archive);
-    assertEquals(100, report.getCheckedRecords());
-    assertEquals(100, report.getUniqueTriplets());
-    assertEquals(0, report.getRecordsWithInvalidTriplets());
-    assertEquals(90, report.getUniqueOccurrenceIds());
-    assertEquals(0, report.getRecordsMissingOccurrenceId());
+    assertEquals(100, report.getOccurrenceReport().getCheckedRecords());
+    assertEquals(100, report.getOccurrenceReport().getUniqueTriplets());
+    assertEquals(0, report.getOccurrenceReport().getRecordsWithInvalidTriplets());
+    assertEquals(90, report.getOccurrenceReport().getUniqueOccurrenceIds());
+    assertEquals(0, report.getOccurrenceReport().getRecordsMissingOccurrenceId());
     assertTrue(report.isValid());
-    assertTrue(report.isAllRecordsChecked());
+    assertTrue(report.getOccurrenceReport().isAllRecordsChecked());
     assertNull(report.getInvalidationReason());
 
     DwcaTestUtil.cleanupArchive(zip.getParent());
@@ -148,13 +148,13 @@ public class DwcaValidatorTest {
     Archive archive = ArchiveFactory.openArchive(zip, zip.getParentFile());
 
     DwcaValidationReport report = DwcaValidator.validate(dataset, archive);
-    assertEquals(100, report.getCheckedRecords());
-    assertEquals(100, report.getUniqueTriplets());
-    assertEquals(0, report.getRecordsWithInvalidTriplets());
-    assertEquals(80, report.getUniqueOccurrenceIds());
-    assertEquals(10, report.getRecordsMissingOccurrenceId());
+    assertEquals(100, report.getOccurrenceReport().getCheckedRecords());
+    assertEquals(100, report.getOccurrenceReport().getUniqueTriplets());
+    assertEquals(0, report.getOccurrenceReport().getRecordsWithInvalidTriplets());
+    assertEquals(80, report.getOccurrenceReport().getUniqueOccurrenceIds());
+    assertEquals(10, report.getOccurrenceReport().getRecordsMissingOccurrenceId());
     assertTrue(report.isValid());
-    assertTrue(report.isAllRecordsChecked());
+    assertTrue(report.getOccurrenceReport().isAllRecordsChecked());
     assertNull(report.getInvalidationReason());
 
     DwcaTestUtil.cleanupArchive(zip.getParent());
@@ -166,15 +166,15 @@ public class DwcaValidatorTest {
     Archive archive = ArchiveFactory.openArchive(zip, zip.getParentFile());
 
     DwcaValidationReport report = DwcaValidator.validate(dataset, archive);
-    assertEquals(100, report.getCheckedRecords());
-    assertEquals(5, report.getUniqueTriplets());
-    assertEquals(50, report.getRecordsWithInvalidTriplets());
-    assertEquals(0, report.getUniqueOccurrenceIds());
-    assertEquals(100, report.getRecordsMissingOccurrenceId());
+    assertEquals(100, report.getOccurrenceReport().getCheckedRecords());
+    assertEquals(5, report.getOccurrenceReport().getUniqueTriplets());
+    assertEquals(50, report.getOccurrenceReport().getRecordsWithInvalidTriplets());
+    assertEquals(0, report.getOccurrenceReport().getUniqueOccurrenceIds());
+    assertEquals(100, report.getOccurrenceReport().getRecordsMissingOccurrenceId());
     assertFalse(report.isValid());
     assertEquals(
       "Archive invalid because [50% invalid triplets is > than threshold of 25%; 45 duplicate triplets detected; 100 records without an occurrence id (should be 0)]",
-      report.getInvalidationReason());
+      report.getOccurrenceReport().getInvalidationReason());
 
     DwcaTestUtil.cleanupArchive(zip.getParent());
   }
@@ -185,15 +185,15 @@ public class DwcaValidatorTest {
 
     Archive archive = ArchiveFactory.openArchive(zip, zip.getParentFile());
     DwcaValidationReport report = DwcaValidator.validate(dataset, archive);
-    assertEquals(100, report.getCheckedRecords());
-    assertEquals(5, report.getUniqueTriplets());
-    assertEquals(50, report.getRecordsWithInvalidTriplets());
-    assertEquals(0, report.getUniqueOccurrenceIds());
-    assertEquals(100, report.getRecordsMissingOccurrenceId());
+    assertEquals(100, report.getOccurrenceReport().getCheckedRecords());
+    assertEquals(5, report.getOccurrenceReport().getUniqueTriplets());
+    assertEquals(50, report.getOccurrenceReport().getRecordsWithInvalidTriplets());
+    assertEquals(0, report.getOccurrenceReport().getUniqueOccurrenceIds());
+    assertEquals(100, report.getOccurrenceReport().getRecordsMissingOccurrenceId());
     assertFalse(report.isValid());
     assertEquals(
       "Archive invalid because [50% invalid triplets is > than threshold of 25%; 45 duplicate triplets detected; 100 records without an occurrence id (should be 0)]",
-      report.getInvalidationReason());
+      report.getOccurrenceReport().getInvalidationReason());
 
     DwcaTestUtil.cleanupArchive(zip.getParent());
   }
@@ -204,14 +204,84 @@ public class DwcaValidatorTest {
 
     Archive archive = ArchiveFactory.openArchive(zip, zip.getParentFile());
     DwcaValidationReport report = DwcaValidator.validate(dataset, archive);
-    assertEquals(0, report.getCheckedRecords());
-    assertEquals(0, report.getUniqueTriplets());
-    assertEquals(0, report.getRecordsWithInvalidTriplets());
-    assertEquals(0, report.getUniqueOccurrenceIds());
-    assertEquals(0, report.getRecordsMissingOccurrenceId());
+    assertEquals(0, report.getOccurrenceReport().getCheckedRecords());
+    assertEquals(0, report.getOccurrenceReport().getUniqueTriplets());
+    assertEquals(0, report.getOccurrenceReport().getRecordsWithInvalidTriplets());
+    assertEquals(0, report.getOccurrenceReport().getUniqueOccurrenceIds());
+    assertEquals(0, report.getOccurrenceReport().getRecordsMissingOccurrenceId());
     assertFalse(report.isValid());
-    assertEquals("Archive invalid because [No readable records]", report.getInvalidationReason());
+    assertEquals("Archive invalid because [No readable records]", report.getOccurrenceReport().getInvalidationReason());
 
     DwcaTestUtil.cleanupArchive(zip.getParent());
+  }
+
+
+  @Test
+  public void testGoodChecklistTaxonID() throws IOException {
+    dataset.setType(DatasetType.CHECKLIST);
+    File zip = DwcaTestUtil.copyTestArchive("/dwca/checklist_good_taxonid.zip");
+
+    Archive archive = ArchiveFactory.openArchive(zip, addExpandFolder(zip));
+    DwcaValidationReport report = DwcaValidator.validate(dataset, archive);
+    assertTrue("Validation failed: "+report.getInvalidationReason(), report.isValid());
+    assertEquals(15, report.getChecklistReport().getCheckedRecords());
+    assertTrue(report.getChecklistReport().getDuplicateIds().isEmpty());
+    assertTrue(report.getChecklistReport().getMissingIds().isEmpty());
+
+    DwcaTestUtil.cleanupArchive(zip.getParent());
+  }
+
+
+  @Test
+  public void testGoodChecklistCore() throws IOException {
+    dataset.setType(DatasetType.CHECKLIST);
+    File zip = DwcaTestUtil.copyTestArchive("/dwca/checklist_good_coreid.zip");
+
+    Archive archive = ArchiveFactory.openArchive(zip, addExpandFolder(zip));
+    DwcaValidationReport report = DwcaValidator.validate(dataset, archive);
+    assertTrue("Validation failed: "+report.getInvalidationReason(), report.isValid());
+    assertEquals(15, report.getChecklistReport().getCheckedRecords());
+    assertEquals(0, report.getChecklistReport().getDuplicateIds().size());
+    assertEquals(0, report.getChecklistReport().getMissingIds().size());
+
+    DwcaTestUtil.cleanupArchive(zip.getParent());
+  }
+
+
+  @Test
+  public void testBadChecklistMissing() throws IOException {
+    dataset.setType(DatasetType.CHECKLIST);
+    File zip = DwcaTestUtil.copyTestArchive("/dwca/checklist_missing_taxonid.zip");
+
+    Archive archive = ArchiveFactory.openArchive(zip, addExpandFolder(zip));
+    DwcaValidationReport report = DwcaValidator.validate(dataset, archive);
+    assertFalse("Validation succeeded", report.isValid());
+    assertEquals(15, report.getChecklistReport().getCheckedRecords());
+    assertEquals(0, report.getChecklistReport().getDuplicateIds().size());
+    assertEquals(2, report.getChecklistReport().getMissingIds().size());
+
+    DwcaTestUtil.cleanupArchive(zip.getParent());
+  }
+
+
+  @Test
+  public void testBadChecklistDupl() throws IOException {
+    dataset.setType(DatasetType.CHECKLIST);
+    File zip = DwcaTestUtil.copyTestArchive("/dwca/checklist_dupl_coreid.zip");
+
+    Archive archive = ArchiveFactory.openArchive(zip, addExpandFolder(zip));
+    DwcaValidationReport report = DwcaValidator.validate(dataset, archive);
+    assertFalse("Validation succeeded", report.isValid());
+    assertEquals(15, report.getChecklistReport().getCheckedRecords());
+    assertEquals(1, report.getChecklistReport().getDuplicateIds().size());
+    assertEquals(0, report.getChecklistReport().getMissingIds().size());
+
+    DwcaTestUtil.cleanupArchive(zip.getParent());
+  }
+
+  private File addExpandFolder(File dwca) {
+    File tmp = new File(dwca.getParentFile(), "expanded");
+    tmp.mkdir();
+    return tmp;
   }
 }

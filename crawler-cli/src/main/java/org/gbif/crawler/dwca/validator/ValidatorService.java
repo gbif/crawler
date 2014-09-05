@@ -76,7 +76,7 @@ public class ValidatorService extends DwcaService {
     public void handleMessage(DwcaDownloadFinishedMessage message) {
       messageCount.inc();
 
-      UUID uuid = message.getDatasetUuid();
+      final UUID uuid = message.getDatasetUuid();
 
       if (!message.isModified()) {
         LOG.info("DwC-A for dataset [{}] was not modified, skipping validation", uuid);
@@ -90,28 +90,22 @@ public class ValidatorService extends DwcaService {
         throw new IllegalArgumentException("The requested dataset " + uuid + " is not registered");
       }
 
-      boolean valid = false;
-
-
-      DwcaValidationReport validationReport = null;
+      DwcaValidationReport validationReport;
       try {
         Archive archive = LenientArchiveFactory.openArchive(new File(archiveRepository, uuid.toString()));
         validationReport = DwcaValidator.validate(dataset, archive);
-        valid = validationReport.isValid();
 
       } catch (UnsupportedArchiveException e) {
         LOG.warn("Invalid Dwc archive for dataset {}", uuid, e);
+        validationReport = new DwcaValidationReport(uuid, "Invalid Dwc archive");
 
       } catch (IOException e) {
         LOG.warn("IOException when reading dwc archive for dataset {}", uuid, e);
+        validationReport = new DwcaValidationReport(uuid, "IOException when reading dwc archive");
       }
 
-      if (!valid) {
+      if (!validationReport.isValid()) {
         failedValidations.inc();
-        if (validationReport == null) {
-          // archive couldn't be opened and/or read
-          validationReport = new DwcaValidationReport(dataset.getKey(), 0, 0, 0, 0, 0, false);
-        }
 
         // If invalid we also need to update ZooKeeper
         RetryPolicy retryPolicy = new RetryNTimes(5, 1000);
@@ -126,9 +120,7 @@ public class ValidatorService extends DwcaService {
       }
 
       LOG.info("Finished validating DwC-A for dataset [{}], valid? is [{}]. Full report [{}]",
-               uuid,
-               valid,
-               validationReport);
+               uuid, validationReport.isValid(), validationReport);
 
       // send validation finished message
       try {
