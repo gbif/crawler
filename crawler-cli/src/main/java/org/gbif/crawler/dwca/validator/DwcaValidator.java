@@ -76,7 +76,7 @@ public class DwcaValidator {
       if (archive.getExtension(DwcTerm.Occurrence) == null) {
         return new DwcaValidationReport(dataset.getKey(), taxonReport);
       } else {
-        return new DwcaValidationReport(dataset.getKey(), validateOccurrenceExtension(archive, DwcTerm.Occurrence), taxonReport);
+        return new DwcaValidationReport(dataset.getKey(), validateOccurrenceExtension(archive, DwcTerm.Occurrence), taxonReport, null);
       }
 
     } else {
