@@ -209,8 +209,8 @@ public class DwcaValidatorTest {
     assertEquals(0, report.getOccurrenceReport().getRecordsWithInvalidTriplets());
     assertEquals(0, report.getOccurrenceReport().getUniqueOccurrenceIds());
     assertEquals(0, report.getOccurrenceReport().getRecordsMissingOccurrenceId());
-    assertFalse(report.isValid());
-    assertEquals("Archive invalid because [No readable records]", report.getOccurrenceReport().getInvalidationReason());
+    assertTrue(report.isValid());
+    assertNull(report.getOccurrenceReport().getInvalidationReason());
 
     DwcaTestUtil.cleanupArchive(zip.getParent());
   }
