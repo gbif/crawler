@@ -8,8 +8,6 @@ import org.gbif.crawler.CrawlerCoordinatorService;
 import org.gbif.crawler.CrawlerCoordinatorServiceImpl;
 import org.gbif.crawler.StartCrawlMessageCallback;
 
-import java.util.concurrent.Executors;
-
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Injector;
 import org.apache.curator.framework.CuratorFramework;

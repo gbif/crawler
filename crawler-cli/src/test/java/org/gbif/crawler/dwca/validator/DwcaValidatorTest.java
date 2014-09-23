@@ -43,8 +43,10 @@ public class DwcaValidatorTest {
     assertEquals(0, report.getOccurrenceReport().getRecordsMissingOccurrenceId());
     assertTrue(report.isValid());
     assertTrue(report.getOccurrenceReport().isAllRecordsChecked());
-    assertEquals(report.getOccurrenceReport().getUniqueTriplets(), report.getOccurrenceReport().getCheckedRecords() - report.getOccurrenceReport().getRecordsWithInvalidTriplets());
-    assertEquals(report.getOccurrenceReport().getUniqueOccurrenceIds(), report.getOccurrenceReport().getCheckedRecords() - report.getOccurrenceReport().getRecordsMissingOccurrenceId());
+    assertEquals(report.getOccurrenceReport().getUniqueTriplets(),
+      report.getOccurrenceReport().getCheckedRecords() - report.getOccurrenceReport().getRecordsWithInvalidTriplets());
+    assertEquals(report.getOccurrenceReport().getUniqueOccurrenceIds(),
+      report.getOccurrenceReport().getCheckedRecords() - report.getOccurrenceReport().getRecordsMissingOccurrenceId());
 
     DwcaTestUtil.cleanupArchive(zip.getParent());
   }
@@ -63,8 +65,10 @@ public class DwcaValidatorTest {
     assertEquals(0, report.getOccurrenceReport().getRecordsMissingOccurrenceId());
     assertTrue(report.isValid());
     assertTrue(report.getOccurrenceReport().isAllRecordsChecked());
-    assertEquals(report.getOccurrenceReport().getUniqueTriplets(), report.getOccurrenceReport().getCheckedRecords() - report.getOccurrenceReport().getRecordsWithInvalidTriplets());
-    assertEquals(report.getOccurrenceReport().getUniqueOccurrenceIds(), report.getOccurrenceReport().getCheckedRecords() - report.getOccurrenceReport().getRecordsMissingOccurrenceId());
+    assertEquals(report.getOccurrenceReport().getUniqueTriplets(),
+      report.getOccurrenceReport().getCheckedRecords() - report.getOccurrenceReport().getRecordsWithInvalidTriplets());
+    assertEquals(report.getOccurrenceReport().getUniqueOccurrenceIds(),
+      report.getOccurrenceReport().getCheckedRecords() - report.getOccurrenceReport().getRecordsMissingOccurrenceId());
 
     DwcaTestUtil.cleanupArchive(zip.getParent());
   }
@@ -83,8 +87,10 @@ public class DwcaValidatorTest {
     assertEquals(1000, report.getOccurrenceReport().getRecordsMissingOccurrenceId());
     assertTrue(report.isValid());
     assertTrue(report.getOccurrenceReport().isAllRecordsChecked());
-    assertEquals(report.getOccurrenceReport().getUniqueTriplets(), report.getOccurrenceReport().getCheckedRecords() - report.getOccurrenceReport().getRecordsWithInvalidTriplets());
-    assertEquals(report.getOccurrenceReport().getUniqueOccurrenceIds(), report.getOccurrenceReport().getCheckedRecords() - report.getOccurrenceReport().getRecordsMissingOccurrenceId());
+    assertEquals(report.getOccurrenceReport().getUniqueTriplets(),
+      report.getOccurrenceReport().getCheckedRecords() - report.getOccurrenceReport().getRecordsWithInvalidTriplets());
+    assertEquals(report.getOccurrenceReport().getUniqueOccurrenceIds(),
+      report.getOccurrenceReport().getCheckedRecords() - report.getOccurrenceReport().getRecordsMissingOccurrenceId());
 
     DwcaTestUtil.cleanupArchive(zip.getParent());
   }
@@ -223,7 +229,7 @@ public class DwcaValidatorTest {
 
     Archive archive = ArchiveFactory.openArchive(zip, addExpandFolder(zip));
     DwcaValidationReport report = DwcaValidator.validate(dataset, archive);
-    assertTrue("Validation failed: "+report.getInvalidationReason(), report.isValid());
+    assertTrue("Validation failed: " + report.getInvalidationReason(), report.isValid());
     assertEquals(15, report.getChecklistReport().getCheckedRecords());
     assertTrue(report.getChecklistReport().getDuplicateIds().isEmpty());
     assertTrue(report.getChecklistReport().getMissingIds().isEmpty());
@@ -239,7 +245,7 @@ public class DwcaValidatorTest {
 
     Archive archive = ArchiveFactory.openArchive(zip, addExpandFolder(zip));
     DwcaValidationReport report = DwcaValidator.validate(dataset, archive);
-    assertTrue("Validation failed: "+report.getInvalidationReason(), report.isValid());
+    assertTrue("Validation failed: " + report.getInvalidationReason(), report.isValid());
     assertEquals(15, report.getChecklistReport().getCheckedRecords());
     assertEquals(0, report.getChecklistReport().getDuplicateIds().size());
     assertEquals(0, report.getChecklistReport().getMissingIds().size());

@@ -74,12 +74,12 @@ public class CrawlEverythingCommand extends BaseCommand {
         try {
           response = datasetService.list(request);
           stopwatch.stop();
-          LOG.info("Received [{}] datasets in [{}]s",
-                   response.getResults().size(),
-                   stopwatch.elapsed(TimeUnit.SECONDS));
+          LOG
+            .info("Received [{}] datasets in [{}]s", response.getResults().size(), stopwatch.elapsed(TimeUnit.SECONDS));
 
           // we never reach the limits of integers for dataset numbers. Simple casting is fine
-          executor.submit(new SchedulingRunnable(response, random, publisher, totalCount, scheduledCount, (int) request.getOffset()));
+          executor.submit(
+            new SchedulingRunnable(response, random, publisher, totalCount, scheduledCount, (int) request.getOffset()));
 
         } catch (Exception e) {
           LOG.error("Got error requesting datasets, skipping to offset [{}]", request.getOffset(), e);
@@ -116,14 +116,8 @@ public class CrawlEverythingCommand extends BaseCommand {
     private final AtomicInteger count;
     private final AtomicInteger scheduledCount;
 
-    private SchedulingRunnable(
-      PagingResponse<Dataset> datasets,
-      Random random,
-      MessagePublisher publisher,
-      AtomicInteger count,
-      AtomicInteger scheduledCount,
-      int offset
-    ) {
+    private SchedulingRunnable(PagingResponse<Dataset> datasets, Random random, MessagePublisher publisher,
+      AtomicInteger count, AtomicInteger scheduledCount, int offset) {
       this.datasets = datasets;
       this.random = random;
       this.publisher = publisher;
@@ -149,10 +143,8 @@ public class CrawlEverythingCommand extends BaseCommand {
           }
         }
       }
-      LOG.debug("[{}] out of [{}] for offset [{}] were registered and scheduled",
-                registeredCount,
-                datasets.getResults().size(),
-                offset);
+      LOG.debug("[{}] out of [{}] for offset [{}] were registered and scheduled", registeredCount,
+        datasets.getResults().size(), offset);
 
     }
   }

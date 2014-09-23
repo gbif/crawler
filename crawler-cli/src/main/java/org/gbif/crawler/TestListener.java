@@ -26,9 +26,7 @@ public class TestListener {
     ConnectionParameters connectionParameters = new ConnectionParameters("localhost", 5672, "guest", "guest", "/");
     ObjectMapper objectMapper = new ObjectMapper().configure(Feature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-    MessageListener listener =
-      new MessageListener(connectionParameters, new DefaultMessageRegistry(),
-        objectMapper);
+    MessageListener listener = new MessageListener(connectionParameters, new DefaultMessageRegistry(), objectMapper);
 
     listener.listen("testlistener", "registry.change.#", 100, new AbstractMessageCallback<RegistryChangeMessage>() {
 
@@ -46,10 +44,8 @@ public class TestListener {
             if (message.getObjectClass().equals(Dataset.class)) {
               Dataset newDataset = (Dataset) message.getNewObject();
               Dataset oldDataset = (Dataset) message.getOldObject();
-              LOG.info("Updated dataset with key [{}], old Title [{}], new Title [{}]",
-                newDataset.getKey(),
-                oldDataset.getTitle(),
-                newDataset.getTitle());
+              LOG.info("Updated dataset with key [{}], old Title [{}], new Title [{}]", newDataset.getKey(),
+                oldDataset.getTitle(), newDataset.getTitle());
             }
             break;
           case DELETED:

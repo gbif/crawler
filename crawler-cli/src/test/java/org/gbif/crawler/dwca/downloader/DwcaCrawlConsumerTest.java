@@ -14,15 +14,17 @@ import junit.framework.TestCase;
 import org.junit.Ignore;
 
 @Ignore("Manual tests to run downloads that fail for unknown reasons")
-public class CrawlConsumerTest extends TestCase {
+public class DwcaCrawlConsumerTest extends TestCase {
+
   // please adapt to personal needs when running the tests manually!
   final static File DWCA_REPO = new File("/Users/markus/crawl-storage/dwca");
 
   public void testEbi() throws Exception {
-    CrawlConsumer cc = new CrawlConsumer(null, null, DWCA_REPO);
-    CrawlJob ebi = new CrawlJob(UUID.fromString("f6978ea9-5496-4efe-a874-364dddfaaa47"), 1, EndpointType.DWC_ARCHIVE,
-                                URI.create("http://ftp.ebi.ac.uk/pub/databases/ena/biodiversity/occurrences/occurrences.tar.gz"));
-    cc.doCrawl(ebi);
+    final UUID datasetKey = UUID.fromString("f6978ea9-5496-4efe-a874-364dddfaaa47");
+    DwcaCrawlConsumer cc = new DwcaCrawlConsumer(null, null, DWCA_REPO);
+    CrawlJob ebi = new CrawlJob(datasetKey, 1, EndpointType.DWC_ARCHIVE,
+      URI.create("http://ftp.ebi.ac.uk/pub/databases/ena/biodiversity/occurrences/occurrences.tar.gz"));
+    cc.crawl(datasetKey, ebi);
   }
 
 

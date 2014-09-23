@@ -3,14 +3,14 @@ package org.gbif.crawler.dwca;
 import org.gbif.dwc.text.Archive;
 import org.gbif.dwc.text.ArchiveFactory;
 import org.gbif.dwc.text.UnsupportedArchiveException;
-import org.gbif.file.DownloadUtil;
 import org.gbif.utils.file.CompressionUtil;
+import org.gbif.utils.file.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 import java.util.regex.Pattern;
 
+import com.google.common.io.Files;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,21 +45,23 @@ public class LenientArchiveFactory {
    */
   public static Archive openArchive(File archiveFile, File archiveDir) throws IOException, UnsupportedArchiveException {
     try {
+      if (archiveDir.exists()) {
+        // clean up any existing folder
+        LOG.debug("Deleting existing archive folder [{}]", archiveDir.getAbsolutePath());
+        FileUtils.deleteDirectoryRecursively(archiveDir);
+      }
+      org.apache.commons.io.FileUtils.forceMkdir(archiveDir);
+
       CompressionUtil.decompressFile(archiveDir, archiveFile);
       return openArchive(archiveDir);
 
     } catch (CompressionUtil.UnsupportedCompressionType e) {
-      return openArchive(archiveFile);
-    }
-  }
+      LOG.debug("Could not uncompress archive [{}], try to read as single text file", archiveFile, e);
 
-  /**
-   * See {@link ArchiveFactory}
-   */
-  public static Archive openArchive(URL archiveUrl, File workingDir) throws IOException, UnsupportedArchiveException {
-    File downloadTo = new File(workingDir, "dwca-download");
-    File dwca = new File(workingDir, "dwca");
-    DownloadUtil.download(archiveUrl, downloadTo);
-    return openArchive(downloadTo, dwca);
+      Archive archive = ArchiveFactory.openArchive(archiveFile);
+      LOG.debug("Was able to read plain text file for archive {}", archiveFile);
+      Files.copy(archiveFile, new File(archiveDir, Files.getNameWithoutExtension(archiveFile.getName()) + ".txt"));
+      return archive;
+    }
   }
 }

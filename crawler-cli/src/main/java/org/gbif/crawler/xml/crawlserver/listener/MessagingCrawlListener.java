@@ -49,68 +49,48 @@ public class MessagingCrawlListener<CTX extends CrawlContext> implements CrawlLi
 
   @Override
   public void startCrawl() {
-    Message msg = new CrawlStartedMessage(configuration.getDatasetKey(),
-                                          configuration.getAttempt(),
-                                          configuration.getUrl(),
-                                          configuration.toString());
+    Message msg =
+      new CrawlStartedMessage(configuration.getDatasetKey(), configuration.getAttempt(), configuration.getUrl(),
+        configuration.toString());
     sendMessageSilently(msg);
   }
 
   @Override
   public void request(String req, int retry) {
     this.retry = retry;
-    Message msg = new CrawlRequestMessage(configuration.getDatasetKey(),
-                                          configuration.getAttempt(),
-                                          retry,
-                                          req.getBytes(Charsets.UTF_8),
-                                          lastContext.toString());
+    Message msg = new CrawlRequestMessage(configuration.getDatasetKey(), configuration.getAttempt(), retry,
+      req.getBytes(Charsets.UTF_8), lastContext.toString());
     sendMessageSilently(msg);
   }
 
   @Override
-  public void response(
-    List<Byte> response, int retry, long duration, Optional<Integer> recordCount, Optional<Boolean> endOfRecords
-  ) {
+  public void response(List<Byte> response, int retry, long duration, Optional<Integer> recordCount,
+    Optional<Boolean> endOfRecords) {
     if (recordCount.isPresent()) {
       totalRecordCount += recordCount.get();
     }
     this.retry = retry;
     this.duration = duration;
-    Message msg = new CrawlResponseMessage(configuration.getDatasetKey(),
-                                           configuration.getAttempt(),
-                                           retry,
-                                           Bytes.toArray(response),
-                                           duration,
-                                           recordCount,
-                                           lastContext.toString());
+    Message msg = new CrawlResponseMessage(configuration.getDatasetKey(), configuration.getAttempt(), retry,
+      Bytes.toArray(response), duration, recordCount, lastContext.toString());
     sendMessageSilently(msg);
   }
 
   @Override
   public void error(Throwable e) {
     // TODO: Error type
-    Message msg = new CrawlErrorMessage(configuration.getDatasetKey(),
-                                        configuration.getAttempt(),
-                                        retry,
-                                        lastContext.getOffset(),
-                                        duration,
-                                        lastContext.toString(),
-                                        CrawlErrorMessage.ErrorType.UNKNOWN,
-                                        e);
+    Message msg =
+      new CrawlErrorMessage(configuration.getDatasetKey(), configuration.getAttempt(), retry, lastContext.getOffset(),
+        duration, lastContext.toString(), CrawlErrorMessage.ErrorType.UNKNOWN, e);
     sendMessageSilently(msg);
   }
 
   @Override
   public void error(String msg) {
     // TODO: Error type
-    Message message = new CrawlErrorMessage(configuration.getDatasetKey(),
-                                            configuration.getAttempt(),
-                                            retry,
-                                            lastContext.getOffset(),
-                                            duration,
-                                            lastContext.toString(),
-                                            CrawlErrorMessage.ErrorType.UNKNOWN,
-                                            null);
+    Message message =
+      new CrawlErrorMessage(configuration.getDatasetKey(), configuration.getAttempt(), retry, lastContext.getOffset(),
+        duration, lastContext.toString(), CrawlErrorMessage.ErrorType.UNKNOWN, null);
     sendMessageSilently(message);
   }
 
@@ -130,10 +110,8 @@ public class MessagingCrawlListener<CTX extends CrawlContext> implements CrawlLi
   }
 
   private void finishCrawl(FinishReason reason) {
-    Message msg = new CrawlFinishedMessage(configuration.getDatasetKey(),
-                                           configuration.getAttempt(),
-                                           totalRecordCount,
-                                           reason);
+    Message msg =
+      new CrawlFinishedMessage(configuration.getDatasetKey(), configuration.getAttempt(), totalRecordCount, reason);
     sendMessageSilently(msg);
   }
 

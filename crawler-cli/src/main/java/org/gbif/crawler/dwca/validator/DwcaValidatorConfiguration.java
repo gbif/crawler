@@ -26,20 +26,15 @@ import com.google.common.base.Objects;
 
 public class DwcaValidatorConfiguration extends DwcaConfiguration {
 
-    @ParametersDelegate
-    @Valid
-    @NotNull
-    public ZooKeeperConfiguration zooKeeper = new ZooKeeperConfiguration();
+  @ParametersDelegate
+  @Valid
+  @NotNull
+  public ZooKeeperConfiguration zooKeeper = new ZooKeeperConfiguration();
 
-    @Override
-    public String toString() {
-      return Objects.toStringHelper(this)
-        .add("messaging", messaging)
-        .add("zooKeeper", zooKeeper)
-        .add("archiveRepository", archiveRepository)
-        .add("poolSize", poolSize)
-        .add("queueName", queueName)
-        .toString();
-    }
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this).add("messaging", messaging).add("zooKeeper", zooKeeper)
+      .add("archiveRepository", archiveRepository).add("poolSize", poolSize).add("queueName", queueName).toString();
+  }
 
 }

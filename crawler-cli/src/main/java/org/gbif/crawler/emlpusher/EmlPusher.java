@@ -44,7 +44,8 @@ public class EmlPusher {
 
     Properties p = new Properties();
     p.put("registry.ws.url", cfg.registryWsUrl);
-    Injector inj = Guice.createInjector(new SingleUserAuthModule(cfg.registryUser, cfg.registryPassword), new RegistryWsClientModule(p));
+    Injector inj = Guice
+      .createInjector(new SingleUserAuthModule(cfg.registryUser, cfg.registryPassword), new RegistryWsClientModule(p));
     datasetService = inj.getInstance(DatasetService.class);
 
     rootDirectory = cfg.archiveRepository;
@@ -58,7 +59,8 @@ public class EmlPusher {
     for (File f : archiveFiles) {
       push(f);
     }
-    LOG.info("Done. {} metadata documents from {} archives pushed to registry, {} failed", pushCounter, archiveFiles.length, failCounter);
+    LOG.info("Done. {} metadata documents from {} archives pushed to registry, {} failed", pushCounter,
+      archiveFiles.length, failCounter);
   }
 
   private void pushEMl(UUID key, File eml) throws IOException {

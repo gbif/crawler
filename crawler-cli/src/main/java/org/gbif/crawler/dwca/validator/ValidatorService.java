@@ -1,15 +1,17 @@
 package org.gbif.crawler.dwca.validator;
 
 import org.gbif.api.model.crawler.DwcaValidationReport;
+import org.gbif.api.model.crawler.FinishReason;
+import org.gbif.api.model.crawler.ProcessState;
 import org.gbif.api.model.registry.Dataset;
 import org.gbif.api.service.registry.DatasetService;
 import org.gbif.common.messaging.AbstractMessageCallback;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.DwcaDownloadFinishedMessage;
 import org.gbif.common.messaging.api.messages.DwcaValidationFinishedMessage;
-import org.gbif.crawler.constants.CrawlerNodePaths;
 import org.gbif.crawler.dwca.DwcaService;
 import org.gbif.crawler.dwca.LenientArchiveFactory;
+import org.gbif.crawler.dwca.downloader.DwcaCrawlConsumer;
 import org.gbif.dwc.text.Archive;
 import org.gbif.dwc.text.UnsupportedArchiveException;
 
@@ -19,14 +21,14 @@ import java.util.UUID;
 
 import com.yammer.metrics.Metrics;
 import com.yammer.metrics.core.Counter;
-import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.recipes.atomic.DistributedAtomicLong;
-import org.apache.curator.retry.RetryNTimes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.gbif.crawler.constants.CrawlerNodePaths.PAGES_FRAGMENTED_ERROR;
+import static org.gbif.crawler.common.ZookeeperUtils.createOrUpdate;
+import static org.gbif.crawler.constants.CrawlerNodePaths.FINISHED_REASON;
+import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_CHECKLIST;
+import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_OCCURRENCE;
 
 public class ValidatorService extends DwcaService {
 
@@ -45,15 +47,12 @@ public class ValidatorService extends DwcaService {
     CuratorFramework curator = configuration.zooKeeper.getCuratorFramework();
 
     // listen to DwcaDownloadFinishedMessage messages
-    listener.listen(config.queueName,
-                    config.poolSize,
-                    new DwcaDownloadFinishedMessageCallback(datasetService,
-                                                            config.archiveRepository,
-                                                            publisher,
-                                                            curator));
+    listener.listen(config.queueName, config.poolSize,
+      new DwcaDownloadFinishedMessageCallback(datasetService, config.archiveRepository, publisher, curator));
   }
 
-  private static class DwcaDownloadFinishedMessageCallback extends AbstractMessageCallback<DwcaDownloadFinishedMessage> {
+  private static class DwcaDownloadFinishedMessageCallback
+    extends AbstractMessageCallback<DwcaDownloadFinishedMessage> {
 
     private final DatasetService datasetService;
     private final File archiveRepository;
@@ -63,9 +62,8 @@ public class ValidatorService extends DwcaService {
     private final Counter messageCount = Metrics.newCounter(ValidatorService.class, "messageCount");
     private final Counter failedValidations = Metrics.newCounter(ValidatorService.class, "failedValidations");
 
-    private DwcaDownloadFinishedMessageCallback(
-      DatasetService datasetService, File archiveRepository, MessagePublisher publisher, CuratorFramework curator
-    ) {
+    private DwcaDownloadFinishedMessageCallback(DatasetService datasetService, File archiveRepository,
+      MessagePublisher publisher, CuratorFramework curator) {
       this.datasetService = datasetService;
       this.archiveRepository = archiveRepository;
       this.publisher = publisher;
@@ -76,63 +74,69 @@ public class ValidatorService extends DwcaService {
     public void handleMessage(DwcaDownloadFinishedMessage message) {
       messageCount.inc();
 
-      final UUID uuid = message.getDatasetUuid();
+      final UUID datasetKey = message.getDatasetUuid();
 
-      if (!message.isModified()) {
-        LOG.info("DwC-A for dataset [{}] was not modified, skipping validation", uuid);
-        return;
-      }
-
-      LOG.info("Now validating DwC-A for dataset [{}]", uuid);
-      Dataset dataset = datasetService.get(uuid);
+      LOG.info("Now validating DwC-A for dataset [{}]", datasetKey);
+      Dataset dataset = datasetService.get(datasetKey);
       if (dataset == null) {
         // exception, we don't know this dataset
-        throw new IllegalArgumentException("The requested dataset " + uuid + " is not registered");
+        throw new IllegalArgumentException("The requested dataset " + datasetKey + " is not registered");
       }
 
       DwcaValidationReport validationReport;
+      final File dwcaFile = new File(archiveRepository, datasetKey + DwcaCrawlConsumer.DWCA_SUFFIX);
+      final File archiveDir = new File(archiveRepository, datasetKey.toString());
       try {
-        Archive archive = LenientArchiveFactory.openArchive(new File(archiveRepository, uuid.toString()));
+        Archive archive = LenientArchiveFactory.openArchive(dwcaFile, archiveDir);
         validationReport = DwcaValidator.validate(dataset, archive);
 
       } catch (UnsupportedArchiveException e) {
-        LOG.warn("Invalid Dwc archive for dataset {}", uuid, e);
-        validationReport = new DwcaValidationReport(uuid, "Invalid Dwc archive");
+        LOG.warn("Invalid Dwc archive for dataset {}", datasetKey, e);
+        validationReport = new DwcaValidationReport(datasetKey, "Invalid Dwc archive");
 
       } catch (IOException e) {
-        LOG.warn("IOException when reading dwc archive for dataset {}", uuid, e);
-        validationReport = new DwcaValidationReport(uuid, "IOException when reading dwc archive");
+        LOG.warn("IOException when reading dwc archive for dataset {}", datasetKey, e);
+        validationReport = new DwcaValidationReport(datasetKey, "IOException when reading dwc archive");
       }
 
-      if (!validationReport.isValid()) {
+      if (validationReport.isValid()) {
+        updateProcessState(validationReport, ProcessState.RUNNING);
+
+      } else {
         failedValidations.inc();
-
-        // If invalid we also need to update ZooKeeper
-        RetryPolicy retryPolicy = new RetryNTimes(5, 1000);
-
-        String path = CrawlerNodePaths.getCrawlInfoPath(uuid, PAGES_FRAGMENTED_ERROR);
-        DistributedAtomicLong dal = new DistributedAtomicLong(curator, path, retryPolicy);
-        try {
-          dal.trySet(1L);
-        } catch (Exception e) {
-          LOG.error("Failed to update counter for successful DwC-A fragmenting", e);
-        }
+        createOrUpdate(curator, datasetKey, FINISHED_REASON, FinishReason.ABORT);
+        updateProcessState(validationReport, ProcessState.FINISHED);
       }
 
-      LOG.info("Finished validating DwC-A for dataset [{}], valid? is [{}]. Full report [{}]",
-               uuid, validationReport.isValid(), validationReport);
+      LOG.info("Finished validating DwC-A for dataset [{}], valid? is [{}]. Full report [{}]", datasetKey,
+        validationReport.isValid(), validationReport);
 
       // send validation finished message
       try {
-        publisher.send(new DwcaValidationFinishedMessage(uuid,
-                                                         dataset.getType(),
-                                                         message.getSource(),
-                                                         message.getAttempt(),
-                                                         validationReport));
+        publisher.send(
+          new DwcaValidationFinishedMessage(datasetKey, dataset.getType(), message.getSource(), message.getAttempt(),
+            validationReport));
       } catch (IOException e) {
-        LOG.warn("Failed to send validation finished message for dataset {}", uuid, e);
+        LOG.warn("Failed to send validation finished message for dataset {}", datasetKey, e);
       }
     }
-  }
 
+    /**
+     * For existing data types this sets the process state as given, for non existing ones it puts it always to EMPTY.
+     */
+    private void updateProcessState(DwcaValidationReport report, ProcessState state) {
+      if (report.getOccurrenceReport() == null) {
+        createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_OCCURRENCE, ProcessState.EMPTY);
+      } else {
+        createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_OCCURRENCE, state);
+      }
+
+      if (report.getChecklistReport() == null) {
+        createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_CHECKLIST, ProcessState.EMPTY);
+      } else {
+        createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_CHECKLIST, state);
+      }
+    }
+
+  }
 }

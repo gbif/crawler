@@ -33,13 +33,8 @@ public class DwcaFragmenterConfiguration extends DwcaConfiguration {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
-      .add("messaging", messaging)
-      .add("zooKeeper", zooKeeper)
-      .add("archiveRepository", archiveRepository)
-      .add("poolSize", poolSize)
-      .add("queueName", queueName)
-      .toString();
+    return Objects.toStringHelper(this).add("messaging", messaging).add("zooKeeper", zooKeeper)
+      .add("archiveRepository", archiveRepository).add("poolSize", poolSize).add("queueName", queueName).toString();
   }
 
 }

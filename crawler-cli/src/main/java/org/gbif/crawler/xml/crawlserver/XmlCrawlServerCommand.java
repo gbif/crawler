@@ -7,11 +7,11 @@ import com.google.common.util.concurrent.Service;
 import org.kohsuke.MetaInfServices;
 
 @MetaInfServices(Command.class)
-public class CrawlServerCommand extends ServiceCommand {
+public class XmlCrawlServerCommand extends ServiceCommand {
 
   private final XmlCrawlServerConfiguration config = new XmlCrawlServerConfiguration();
 
-  public CrawlServerCommand() {
+  public XmlCrawlServerCommand() {
     super("crawlserver");
   }
 
@@ -27,7 +27,7 @@ public class CrawlServerCommand extends ServiceCommand {
 
   @Override
   protected Service getService() {
-    return new CrawlServerService(config);
+    return new XmlCrawlServerService(config);
   }
 
 }

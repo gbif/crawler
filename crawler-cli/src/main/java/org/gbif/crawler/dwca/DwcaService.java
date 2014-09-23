@@ -6,7 +6,6 @@ import org.gbif.common.messaging.MessageListener;
 import org.gbif.common.messaging.api.MessagePublisher;
 
 import java.io.IOException;
-import java.util.concurrent.Executors;
 
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.AbstractIdleService;

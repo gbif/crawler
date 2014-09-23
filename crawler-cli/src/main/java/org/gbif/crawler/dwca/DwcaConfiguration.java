@@ -5,7 +5,6 @@ import org.gbif.common.messaging.config.MessagingConfiguration;
 import org.gbif.crawler.common.RegistryConfiguration;
 
 import java.io.File;
-
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
@@ -42,13 +41,8 @@ public class DwcaConfiguration {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
-      .add("registry", registry)
-      .add("messaging", messaging)
-      .add("queueName", queueName)
-      .add("poolSize", poolSize)
-      .add("archiveRepository", archiveRepository)
-      .toString();
+    return Objects.toStringHelper(this).add("registry", registry).add("messaging", messaging)
+      .add("queueName", queueName).add("poolSize", poolSize).add("archiveRepository", archiveRepository).toString();
   }
 
 }

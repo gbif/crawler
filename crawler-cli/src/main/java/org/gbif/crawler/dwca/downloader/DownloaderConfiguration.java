@@ -16,9 +16,7 @@ public class DownloaderConfiguration extends CrawlServerConfiguration {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
-      .add("super", super.toString())
-      .add("archiveRepository", archiveRepository)
+    return Objects.toStringHelper(this).add("super", super.toString()).add("archiveRepository", archiveRepository)
       .toString();
   }
 

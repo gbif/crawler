@@ -52,16 +52,11 @@ public class LoggingCrawlListener<CTX extends CrawlContext> implements CrawlList
   }
 
   @Override
-  public void response(
-    List<Byte> response, int retry, long duration, Optional<Integer> recordCount, Optional<Boolean> endOfRecords
-  ) {
+  public void response(List<Byte> response, int retry, long duration, Optional<Integer> recordCount,
+    Optional<Boolean> endOfRecords) {
     totalRecordCount += recordCount.or(0);
-    LOG.info("got response for [{}], records [{}], endOfRecords [{}], retry [{}], took [{}s]",
-             lastContext,
-             recordCount,
-             endOfRecords,
-             retry,
-             TimeUnit.MILLISECONDS.toSeconds(duration));
+    LOG.info("got response for [{}], records [{}], endOfRecords [{}], retry [{}], took [{}s]", lastContext, recordCount,
+      endOfRecords, retry, TimeUnit.MILLISECONDS.toSeconds(duration));
   }
 
   @Override
@@ -82,13 +77,9 @@ public class LoggingCrawlListener<CTX extends CrawlContext> implements CrawlList
   private void finishCrawl(FinishReason reason) {
     Date finishDate = new Date();
     long minutes = (finishDate.getTime() - startDate.getTime()) / (60 * 1000);
-        LOG.info(
+    LOG.info(
       "finished crawling with a total of [{}] records, reason [{}], started at [{}], finished at [{}], took [{}] minutes",
-      totalRecordCount,
-      reason,
-      startDate,
-      finishDate,
-      minutes);
+      totalRecordCount, reason, startDate, finishDate, minutes);
 
     MDC.remove("datasetKey");
     MDC.remove("attempt");

@@ -16,8 +16,7 @@ public class LenientArchiveFactoryTest {
   public void testNoSlash() throws IOException {
     String archiveDir = DwcaTestUtil.openArchive("/dwca/dwca-one-hundred-good-triplets-good-ids.zip");
 
-    Archive archive =
-      LenientArchiveFactory.openArchive(new File(archiveDir));
+    Archive archive = LenientArchiveFactory.openArchive(new File(archiveDir));
     assertNotNull(archive);
 
     DwcaTestUtil.cleanupArchive(archiveDir);

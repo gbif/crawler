@@ -148,8 +148,8 @@ public class FragmenterService extends AbstractIdleService {
       }
 
       if (endpointType == null) {
-        LOG.warn("EndpointType is null - this shouldn't happen. Can't send fragment messages for "
-                 + "dataset [{}]", message.getDatasetUuid());
+        LOG.warn("EndpointType is null - this shouldn't happen. Can't send fragment messages for " + "dataset [{}]",
+          message.getDatasetUuid());
         incrementCounter(message.getDatasetUuid() + "/" + PAGES_FRAGMENTED_ERROR, 1);
       } else {
         for (RawXmlOccurrence rawXmlOccurrence : list) {

@@ -14,6 +14,7 @@ package org.gbif.crawler.coordinatorcleanup;
 
 import org.gbif.api.exception.ServiceUnavailableException;
 import org.gbif.api.model.crawler.DatasetProcessStatus;
+import org.gbif.api.model.crawler.ProcessState;
 import org.gbif.api.service.crawler.DatasetProcessService;
 import org.gbif.api.service.registry.DatasetProcessStatusService;
 import org.gbif.cli.ConfigUtils;
@@ -85,7 +86,7 @@ public class CoordinatorCleanupService extends AbstractScheduledService {
       LOG.debug(MAPPER.writeValueAsString(status));
       try {
         File file = new File(configuration.archiveDirectory,
-                             status.getDatasetKey() + "_" + status.getCrawlJob().getAttempt() + "_result.json");
+          status.getDatasetKey() + "_" + status.getCrawlJob().getAttempt() + "_result.json");
         Files.createParentDirs(file);
         Files.write(MAPPER.writeValueAsBytes(status), file);
       } catch (IOException e) {
@@ -104,9 +105,8 @@ public class CoordinatorCleanupService extends AbstractScheduledService {
     props.setProperty("registry.ws.url", configuration.registry.wsUrl);
 
     Injector injector = Guice.createInjector(new CrawlerWsClientModule(ConfigUtils.toProperties(configuration)),
-                                             new RegistryWsClientModule(props),
-                                             new SingleUserAuthModule(configuration.registry.user,
-                                                                      configuration.registry.password));
+      new RegistryWsClientModule(props),
+      new SingleUserAuthModule(configuration.registry.user, configuration.registry.password));
     service = injector.getInstance(DatasetProcessService.class);
     registryService = injector.getInstance(DatasetProcessStatusService.class);
     curator = configuration.zooKeeper.getCuratorFramework();
@@ -150,8 +150,21 @@ public class CoordinatorCleanupService extends AbstractScheduledService {
    * @return {@code true} if we are done processing, {@code false} otherwise
    */
   private boolean checkDoneProcessing(DatasetProcessStatus status) {
+    // crawl finished?
     if (status.getFinishedCrawling() == null) {
       return false;
+    }
+
+    // checklist indexing running?
+    if (status.getProcessStateChecklist() != null && status.getProcessStateChecklist() == ProcessState.RUNNING) {
+      return false;
+    }
+
+    // occurrence processing done?
+    if (status.getProcessStateOccurrence() != null && (status.getProcessStateOccurrence() == ProcessState.EMPTY
+                                                       || status.getProcessStateOccurrence()
+                                                          == ProcessState.FINISHED)) {
+      return true;
     }
 
     // Done fragmenting?

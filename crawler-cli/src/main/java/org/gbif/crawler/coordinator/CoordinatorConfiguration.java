@@ -39,12 +39,7 @@ public class CoordinatorConfiguration {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
-      .add("messaging", messaging)
-      .add("zooKeeper", zooKeeper)
-      .add("registry", registry)
-      .add("poolSize", poolSize)
-      .add("queueName", queueName)
-      .toString();
+    return Objects.toStringHelper(this).add("messaging", messaging).add("zooKeeper", zooKeeper)
+      .add("registry", registry).add("poolSize", poolSize).add("queueName", queueName).toString();
   }
 }

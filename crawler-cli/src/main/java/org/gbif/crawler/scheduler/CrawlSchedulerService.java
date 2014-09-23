@@ -91,9 +91,8 @@ public class CrawlSchedulerService extends AbstractScheduledService {
 
     Properties props = ConfigUtils.toProperties(configuration);
 
-    Injector injector = Guice.createInjector(new CrawlerWsClientModule(props),
-                                             new RegistryWsClientModule(props),
-                                             new AnonymousAuthModule());
+    Injector injector = Guice
+      .createInjector(new CrawlerWsClientModule(props), new RegistryWsClientModule(props), new AnonymousAuthModule());
     datasetService = injector.getInstance(DatasetService.class);
     crawlService = injector.getInstance(DatasetProcessService.class);
     registryService = injector.getInstance(DatasetProcessStatusService.class);

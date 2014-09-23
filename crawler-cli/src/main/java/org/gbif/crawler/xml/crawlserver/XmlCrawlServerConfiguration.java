@@ -39,12 +39,8 @@ public class XmlCrawlServerConfiguration extends CrawlServerConfiguration {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
-      .add("super", super.toString())
-      .add("minLockDelay", minLockDelay)
-      .add("maxLockDelay", maxLockDelay)
-      .add("responseArchive", responseArchive)
-      .toString();
+    return Objects.toStringHelper(this).add("super", super.toString()).add("minLockDelay", minLockDelay)
+      .add("maxLockDelay", maxLockDelay).add("responseArchive", responseArchive).toString();
   }
 
 }

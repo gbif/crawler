@@ -15,7 +15,7 @@ public class DwcaTestUtil {
   public static File copyTestArchive(String archiveFilePath) throws IOException {
     File zipFile = new File(DwcaTestUtil.class.getResource(archiveFilePath).getFile());
 
-    File outFolder= new File(zipFile.getParent(), UUID.randomUUID().toString());
+    File outFolder = new File(zipFile.getParent(), UUID.randomUUID().toString());
     outFolder.mkdirs();
 
     File outFile = new File(outFolder, "archive.zip");

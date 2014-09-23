@@ -31,7 +31,6 @@ import org.slf4j.LoggerFactory;
 
 /**
  * This Crawl Listener will persist every single response we receive to disk.
- *
  * It will do so in sub folders of the given base path in a format like this:
  * /<uuid>/<attempt>/<context>/<uuid>_<attempt>_<context>_<retry>.response
  */
@@ -49,38 +48,23 @@ public class ResultPersistingListener
   }
 
   @Override
-  public void response(
-    List<Byte> response, int retry, long duration, Optional<Integer> recordCount, Optional<Boolean> endOfRecords
-  ) {
+  public void response(List<Byte> response, int retry, long duration, Optional<Integer> recordCount,
+    Optional<Boolean> endOfRecords) {
     String contextString =
       getCurrentContext().getLowerBound().or("null") + "-" + getCurrentContext().getUpperBound().or("null");
     if (response == null || response.isEmpty()) {
-      LOG.info("Received empty response for [{}] [{}] in retry [{}]",
-               configuration.getDatasetKey(),
-               contextString,
-               retry);
+      LOG.info("Received empty response for [{}] [{}] in retry [{}]", configuration.getDatasetKey(), contextString,
+        retry);
     }
     // This is guaranteed to be efficient as documented on the AbstractResponseHandler
     byte[] bytes = Bytes.toArray(response);
     try {
       // Creates a format like this: /<uuid>/<attempt>/<context>/<uuid>_<attempt>_<context>_<retry>.response
       StringBuilder path = new StringBuilder();
-      path.append(configuration.getDatasetKey())
-        .append(File.separator)
-        .append(configuration.getAttempt())
-        .append(File.separator)
-        .append(contextString)
-        .append(File.separator)
-        .append(configuration.getDatasetKey())
-        .append("_")
-        .append(configuration.getAttempt())
-        .append("_")
-        .append(contextString)
-        .append("_")
-        .append(getCurrentContext().getOffset())
-        .append("_")
-        .append(retry)
-        .append(".response");
+      path.append(configuration.getDatasetKey()).append(File.separator).append(configuration.getAttempt())
+        .append(File.separator).append(contextString).append(File.separator).append(configuration.getDatasetKey())
+        .append("_").append(configuration.getAttempt()).append("_").append(contextString).append("_")
+        .append(getCurrentContext().getOffset()).append("_").append(retry).append(".response");
 
       File file = new File(basePath, path.toString());
       Files.createParentDirs(file);

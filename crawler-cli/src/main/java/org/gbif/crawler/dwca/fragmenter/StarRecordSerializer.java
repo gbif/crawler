@@ -34,9 +34,7 @@ final class StarRecordSerializer {
    * The main object represents the core record, with the simple, unqualified term name being the key.
    * Extension records are similar objects themselves and are lists keyed on the extension rowType
    * in the main extensions.
-   * <p/>
    * Example result:
-   * <p/>
    * {"id":"100",
    * "taxonomicStatus":"valid",
    * "taxonRank":"Species",

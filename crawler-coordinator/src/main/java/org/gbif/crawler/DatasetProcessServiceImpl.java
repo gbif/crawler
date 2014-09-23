@@ -4,6 +4,7 @@ import org.gbif.api.exception.ServiceUnavailableException;
 import org.gbif.api.model.crawler.CrawlJob;
 import org.gbif.api.model.crawler.DatasetProcessStatus;
 import org.gbif.api.model.crawler.FinishReason;
+import org.gbif.api.model.crawler.ProcessState;
 import org.gbif.api.service.crawler.DatasetProcessService;
 
 import java.text.ParseException;
@@ -50,6 +51,8 @@ import static org.gbif.crawler.constants.CrawlerNodePaths.INTERPRETED_OCCURRENCE
 import static org.gbif.crawler.constants.CrawlerNodePaths.PAGES_CRAWLED;
 import static org.gbif.crawler.constants.CrawlerNodePaths.PAGES_FRAGMENTED_ERROR;
 import static org.gbif.crawler.constants.CrawlerNodePaths.PAGES_FRAGMENTED_SUCCESSFUL;
+import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_CHECKLIST;
+import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_OCCURRENCE;
 import static org.gbif.crawler.constants.CrawlerNodePaths.QUEUED_CRAWLS;
 import static org.gbif.crawler.constants.CrawlerNodePaths.RAW_OCCURRENCES_PERSISTED_ERROR;
 import static org.gbif.crawler.constants.CrawlerNodePaths.RAW_OCCURRENCES_PERSISTED_NEW;
@@ -137,6 +140,9 @@ public class DatasetProcessServiceImpl implements DatasetProcessService {
       if (curator.checkExists().forPath(path) != null) {
         byte[] responseData = curator.getData().forPath(path);
         builder.startedCrawling(asDate(responseData));
+
+        builder.processStateOccurrence(getState(datasetKey, PROCESS_STATE_OCCURRENCE));
+        builder.processStateChecklist(getState(datasetKey, PROCESS_STATE_CHECKLIST));
 
         path = getCrawlInfoPath(datasetKey, FINISHED_CRAWLING);
         if (curator.checkExists().forPath(path) != null) {
@@ -279,7 +285,19 @@ public class DatasetProcessServiceImpl implements DatasetProcessService {
     }
   }
 
-  /**
+  private ProcessState getState(UUID datasetKey, String statePath) {
+    try {
+      String path = getCrawlInfoPath(datasetKey, statePath);
+      if (curator.checkExists().forPath(path) != null) {
+        byte[] responseData = curator.getData().forPath(path);
+        return ProcessState.valueOf(new String(responseData));
+      }
+    } catch (Exception e) {
+    }
+    return null;
+  }
+
+    /**
    * Gets a list of {@link UUID} keys belonging to datasets. Each dataset key is associated to one
    * queue identifier.
    *

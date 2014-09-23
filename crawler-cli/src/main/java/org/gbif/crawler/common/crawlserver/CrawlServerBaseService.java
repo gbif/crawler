@@ -22,7 +22,6 @@ import org.apache.curator.framework.recipes.queue.QueueSerializer;
  * A crawl server base class that listens to a zookeeper queue for requested crawls and delegates these requests to a
  * crawl consumer instance which is created once on startup through
  * {@link #newConsumer(CuratorFramework, MessagePublisher, CrawlServerConfiguration)} which needs to be implemented.
- * <p/>
  * The zookeeper crawl queuing and locking queue names are passed into the constructor together with further
  * configurations.
  */
@@ -72,9 +71,7 @@ public abstract class CrawlServerBaseService<T extends CrawlServerConfiguration>
    *
    * @return the crawl consumer for this zookeeper queue
    */
-  protected abstract QueueConsumer<UUID> newConsumer(
-    CuratorFramework curator, MessagePublisher publisher, T config
-  );
+  protected abstract QueueConsumer<UUID> newConsumer(CuratorFramework curator, MessagePublisher publisher, T config);
 
   @Override
   protected void shutDown() throws Exception {

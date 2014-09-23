@@ -59,13 +59,11 @@ public class DwcaMetasyncService extends DwcaService {
 
     // listen to DwcaDownloadFinishedMessage messages
     listener.listen(config.queueName, config.poolSize,
-                            new DwcaValidationFinishedMessageCallback(datasetService,
-                                                                    config.archiveRepository,
-                                                                    publisher,
-                                                                    curator));
+      new DwcaValidationFinishedMessageCallback(datasetService, config.archiveRepository, publisher, curator));
   }
 
-  private static class DwcaValidationFinishedMessageCallback extends AbstractMessageCallback<DwcaValidationFinishedMessage> {
+  private static class DwcaValidationFinishedMessageCallback
+    extends AbstractMessageCallback<DwcaValidationFinishedMessage> {
 
     private final DatasetService datasetService;
     private final File archiveRepository;
@@ -78,9 +76,8 @@ public class DwcaMetasyncService extends DwcaService {
     private final Counter constituentsDeleted = Metrics.newCounter(DwcaMetasyncService.class, "constituentsDeleted");
     private final Counter constituentsUpdated = Metrics.newCounter(DwcaMetasyncService.class, "constituentsUpdated");
 
-    private DwcaValidationFinishedMessageCallback(
-      DatasetService datasetService, File archiveRepository, MessagePublisher publisher, CuratorFramework curator
-    ) {
+    private DwcaValidationFinishedMessageCallback(DatasetService datasetService, File archiveRepository,
+      MessagePublisher publisher, CuratorFramework curator) {
       this.archiveRepository = archiveRepository;
       this.datasetService = datasetService;
       this.publisher = publisher;
@@ -117,26 +114,22 @@ public class DwcaMetasyncService extends DwcaService {
         throw new IllegalArgumentException("The requested dataset " + message.getDatasetUuid() + " is not registered");
       }
 
-        Archive archive = LenientArchiveFactory.openArchive(new File(archiveRepository, uuid.toString()));
-        File metaFile = archive.getMetadataLocationFile();
-        if (metaFile != null && metaFile.exists()) {
-          // metadata found, put into repository thereby updating the dataset
-          setMetaDocument(metaFile, uuid);
-          datasetsUpdated.inc();
-        }
+      Archive archive = LenientArchiveFactory.openArchive(new File(archiveRepository, uuid.toString()));
+      File metaFile = archive.getMetadataLocationFile();
+      if (metaFile != null && metaFile.exists()) {
+        // metadata found, put into repository thereby updating the dataset
+        setMetaDocument(metaFile, uuid);
+        datasetsUpdated.inc();
+      }
 
-        // process dataset constituents
-        Map<String, UUID> constituents = processConstituents(dataset, archive);
+      // process dataset constituents
+      Map<String, UUID> constituents = processConstituents(dataset, archive);
 
-        LOG.info("Finished updating metadata from DwC-A for dataset [{}]", uuid);
+      LOG.info("Finished updating metadata from DwC-A for dataset [{}]", uuid);
 
-        // send success message
-        publisher.send(new DwcaMetasyncFinishedMessage(uuid,
-                                                       dataset.getType(),
-                                                       message.getSource(),
-                                                       message.getAttempt(),
-                                                       constituents,
-                                                       message.getValidationReport()));
+      // send success message
+      publisher.send(new DwcaMetasyncFinishedMessage(uuid, dataset.getType(), message.getSource(), message.getAttempt(),
+        constituents, message.getValidationReport()));
     }
 
     private Map<String, UUID> processConstituents(Dataset parent, Archive archive) {
@@ -154,7 +147,7 @@ public class DwcaMetasyncService extends DwcaService {
           String datasetId = getTagValue(constituent.getKey(), TagName.DATASET_ID);
           if (datasetId == null) {
             LOG.warn("Existing registered constituent found without a tagged datasetID. Please adjust manually {}",
-                     constituent.getKey());
+              constituent.getKey());
 
           } else {
             // do we still have this constituent in the archive?
@@ -173,8 +166,7 @@ public class DwcaMetasyncService extends DwcaService {
           }
         } catch (FileNotFoundException e) {
           LOG.error("Failed to read archive constituent metadata file for already registered dataset {}",
-                    constituent.getKey(),
-                    e);
+            constituent.getKey(), e);
         } catch (IllegalArgumentException e) {
           LOG.error("Constituent dataset with UUID key expected, but got [{}]", parent.getKey(), e);
         }
@@ -230,7 +222,8 @@ public class DwcaMetasyncService extends DwcaService {
         LOG.info("Created new constituent {} with key {} for dataset {}", datasetID, key, parentKey);
         constituentsAdded.inc();
 
-        MachineTag idTag = MachineTag.newInstance(TagName.DATASET_ID.getNamespace().getNamespace(), TagName.DATASET_ID.getName(), datasetID);
+        MachineTag idTag = MachineTag
+          .newInstance(TagName.DATASET_ID.getNamespace().getNamespace(), TagName.DATASET_ID.getName(), datasetID);
         datasetService.addMachineTag(key, idTag);
 
         setMetaDocument(metaFile, key);
@@ -264,7 +257,8 @@ public class DwcaMetasyncService extends DwcaService {
       return null;
     }
 
-    private void updateZookeeper(UUID uuid) {RetryPolicy retryPolicy = new RetryNTimes(5, 1000);
+    private void updateZookeeper(UUID uuid) {
+      RetryPolicy retryPolicy = new RetryNTimes(5, 1000);
       String path = CrawlerNodePaths.getCrawlInfoPath(uuid, PAGES_FRAGMENTED_ERROR);
       DistributedAtomicLong dal = new DistributedAtomicLong(curator, path, retryPolicy);
       try {

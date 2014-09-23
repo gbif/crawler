@@ -34,12 +34,8 @@ public class MetasyncConfiguration {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
-      .add("messaging", messaging)
-      .add("threadCount", threadCount)
-      .add("queueName", queueName)
-      .add("registry", registry)
-      .toString();
+    return Objects.toStringHelper(this).add("messaging", messaging).add("threadCount", threadCount)
+      .add("queueName", queueName).add("registry", registry).toString();
   }
 
 }

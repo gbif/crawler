@@ -23,7 +23,6 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Simple validation of the unique identifiers of a DwC-A.
- * <p/>
  * This class is verifying occurrence and taxon data and marks other datasets as invalids.
  * Occurrence records are checked whether they are in the core or as an extension.
  * Therefore the number of validated records for archives with an Occurrence extension is different to the number of
@@ -76,11 +75,13 @@ public class DwcaValidator {
       if (archive.getExtension(DwcTerm.Occurrence) == null) {
         return new DwcaValidationReport(dataset.getKey(), taxonReport);
       } else {
-        return new DwcaValidationReport(dataset.getKey(), validateOccurrenceExtension(archive, DwcTerm.Occurrence), taxonReport, null);
+        return new DwcaValidationReport(dataset.getKey(), validateOccurrenceExtension(archive, DwcTerm.Occurrence),
+          taxonReport, null);
       }
 
     } else {
-      LOG.info("Passing through DwC-A for dataset [{}] because it does not have any information to validate.", dataset.getKey());
+      LOG.info("Passing through DwC-A for dataset [{}] because it does not have any information to validate.",
+        dataset.getKey());
       return new DwcaValidationReport(dataset.getKey(), "No Occurrence or Taxon information present");
     }
   }
@@ -91,7 +92,7 @@ public class DwcaValidator {
     List<Integer> linesMissingIds = Lists.newArrayList();
     Set<String> ids = Sets.newHashSet();
     final boolean useCoreID = !archive.getCore().hasTerm(DwcTerm.taxonID);
-    for (StarRecord rec: archive) {
+    for (StarRecord rec : archive) {
       records++;
       String id = useCoreID ? rec.core().id() : rec.core().value(DwcTerm.taxonID);
       if (linesMissingIds.size() < MAX_DUPLICATES && Strings.isNullOrEmpty(id)) {
@@ -105,7 +106,7 @@ public class DwcaValidator {
         ids.add(id);
       }
     }
-    return new ChecklistValidationReport(records, records!=MAX_RECORDS, duplicateIds, linesMissingIds);
+    return new ChecklistValidationReport(records, records != MAX_RECORDS, duplicateIds, linesMissingIds);
   }
 
   private OccurrenceValidationReport validateOccurrenceCore(Archive archive) {

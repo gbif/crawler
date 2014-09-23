@@ -25,17 +25,14 @@ public class CrawlServerConfiguration {
   public ZooKeeperConfiguration zooKeeper = new ZooKeeperConfiguration();
 
   @Parameter(names = "--pool-size",
-             description = "Configures how many threads will be used to process items from the queue")
+    description = "Configures how many threads will be used to process items from the queue")
   @Min(1)
   public int poolSize = 1;
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
-      .add("messaging", messaging)
-      .add("zooKeeper", zooKeeper)
-      .add("poolSize", poolSize)
-      .toString();
+    return Objects.toStringHelper(this).add("messaging", messaging).add("zooKeeper", zooKeeper)
+      .add("poolSize", poolSize).toString();
   }
 
 }

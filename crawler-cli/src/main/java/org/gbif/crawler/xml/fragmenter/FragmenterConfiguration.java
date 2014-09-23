@@ -37,13 +37,8 @@ public class FragmenterConfiguration {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
-      .add("messaging", messaging)
-      .add("zooKeeper", zooKeeper)
-      .add("poolSize", poolSize)
-      .add("queueName", queueName)
-      .add("crawlerWsUrl", crawlerWsUrl)
-      .toString();
+    return Objects.toStringHelper(this).add("messaging", messaging).add("zooKeeper", zooKeeper)
+      .add("poolSize", poolSize).add("queueName", queueName).add("crawlerWsUrl", crawlerWsUrl).toString();
   }
 
 }

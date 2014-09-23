@@ -46,10 +46,7 @@ public class CrawlSchedulerConfiguration {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
-      .add("interval", interval)
-      .add("crawlerWsUrl", crawlerWsUrl)
-      .add("registryWsUrl", registryWsUrl)
-      .toString();
+    return Objects.toStringHelper(this).add("interval", interval).add("crawlerWsUrl", crawlerWsUrl)
+      .add("registryWsUrl", registryWsUrl).toString();
   }
 }

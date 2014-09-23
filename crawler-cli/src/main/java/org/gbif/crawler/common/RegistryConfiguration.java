@@ -35,11 +35,8 @@ public class RegistryConfiguration {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
-      .add("registryWsUrl", wsUrl)
-      .add("registryUser", user)
-      .add("registryPassword", Strings.repeat("*", Strings.nullToEmpty(password).length()))
-      .toString();
+    return Objects.toStringHelper(this).add("registryWsUrl", wsUrl).add("registryUser", user)
+      .add("registryPassword", Strings.repeat("*", Strings.nullToEmpty(password).length())).toString();
   }
 
   /**

@@ -8,7 +8,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This command iterates over all datasets in the crawling dwca directory and inserts any EML files found into the registry.
+ * This command iterates over all datasets in the crawling dwca directory and inserts any EML files found into the
+ * registry.
  */
 @MetaInfServices(Command.class)
 public class PushEmlCommand extends BaseCommand {

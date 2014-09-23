@@ -99,7 +99,7 @@ public class DynamicDelayingLockFactory extends ForwardingLockFactory {
    * Builds a delaying lock factory that delays every unlock operation by a certain amount of time. The exact delay
    * depends on three factors: The time the lock was taken out (i.e. time between acquiring the lock and releasing it),
    * but it will always be between the provided minimum and maximum delay.
-   * 
+   *
    * @param delegateFactory to forward calls to
    */
   public DynamicDelayingLockFactory(LockFactory delegateFactory) {
@@ -108,9 +108,9 @@ public class DynamicDelayingLockFactory extends ForwardingLockFactory {
 
   /**
    * Builds a delaying lock factory that delays every unlock operation by a user-specified amount of milliseconds.
-   * 
+   *
    * @param delegateFactory to forward calls to
-   * @param maxDelay in milliseconds
+   * @param maxDelay        in milliseconds
    */
   public DynamicDelayingLockFactory(LockFactory delegateFactory, long minDelay, long maxDelay) {
     this.delegateFactory = checkNotNull(delegateFactory, "delegateFactory can't be null");

@@ -28,7 +28,6 @@ import org.gbif.wrangler.lock.NoLockFactory;
 import org.gbif.wrangler.lock.zookeeper.ZooKeeperLockFactory;
 
 import java.util.List;
-
 import javax.annotation.Nullable;
 
 import com.google.common.base.Optional;
@@ -67,12 +66,8 @@ public class CrawlerBuilder {
       lockFactory = new DynamicDelayingLockFactory(lockFactory, minDelay.get(), maxDelay.get());
     }
     Lock lock = lockFactory.makeLock(crawlConfiguration.getUrl().getHost());
-    return new Crawler<ScientificNameRangeCrawlContext, String, HttpResponse, List<Byte>>(strategy,
-      requestHandler,
-      responseHandler,
-      client,
-      retryPolicy,
-      lock);
+    return new Crawler<ScientificNameRangeCrawlContext, String, HttpResponse, List<Byte>>(strategy, requestHandler,
+      responseHandler, client, retryPolicy, lock);
   }
 
   public CrawlConfiguration getCrawlConfiguration() {
@@ -123,11 +118,9 @@ public class CrawlerBuilder {
     checkNotNull(crawlJob.getProperty("conceptualSchema"));
     checkNotNull(crawlJob.getProperty("datasetTitle"));
 
-    BiocaseCrawlConfiguration job = new BiocaseCrawlConfiguration(crawlJob.getDatasetKey(),
-      crawlJob.getAttempt(),
-      crawlJob.getTargetUrl(),
-      crawlJob.getProperty("conceptualSchema"),
-      crawlJob.getProperty("datasetTitle"));
+    BiocaseCrawlConfiguration job =
+      new BiocaseCrawlConfiguration(crawlJob.getDatasetKey(), crawlJob.getAttempt(), crawlJob.getTargetUrl(),
+        crawlJob.getProperty("conceptualSchema"), crawlJob.getProperty("datasetTitle"));
 
     crawlConfiguration = job;
     requestHandler = new BiocaseScientificNameRangeRequestHandler(job);
@@ -142,11 +135,9 @@ public class CrawlerBuilder {
     checkNotNull(crawlJob.getProperty("code"));
     checkNotNull(crawlJob.getProperty("manis"));
 
-    DigirCrawlConfiguration job = new DigirCrawlConfiguration(crawlJob.getDatasetKey(),
-      crawlJob.getAttempt(),
-      crawlJob.getTargetUrl(),
-      crawlJob.getProperty("code"),
-      Boolean.valueOf(crawlJob.getProperty("manis")));
+    DigirCrawlConfiguration job =
+      new DigirCrawlConfiguration(crawlJob.getDatasetKey(), crawlJob.getAttempt(), crawlJob.getTargetUrl(),
+        crawlJob.getProperty("code"), Boolean.valueOf(crawlJob.getProperty("manis")));
 
     crawlConfiguration = job;
     requestHandler = new DigirScientificNameRangeRequestHandler(job);
@@ -172,7 +163,6 @@ public class CrawlerBuilder {
 
   /**
    * This extracts the properties from the crawl job specific to the TAPIR crawl.
-   * <p/>
    * When used with the GBIF messaging service, this is populated in the private getCrawlJob() method in
    * {@link CrawlerCoordinatorServiceImpl}. Note that in that implementation it selects a single
    * <em>conceptualSchema</em> to use as the <em>contentNamespace</em> during crawling. Should logic be required to
@@ -182,10 +172,9 @@ public class CrawlerBuilder {
   private void setupTapirCrawl(CrawlJob crawlJob) {
     checkNotNull(crawlJob.getProperty("conceptualSchema"));
 
-    TapirCrawlConfiguration job = new TapirCrawlConfiguration(crawlJob.getDatasetKey(),
-      crawlJob.getAttempt(),
-      crawlJob.getTargetUrl(),
-      crawlJob.getProperty("conceptualSchema"));
+    TapirCrawlConfiguration job =
+      new TapirCrawlConfiguration(crawlJob.getDatasetKey(), crawlJob.getAttempt(), crawlJob.getTargetUrl(),
+        crawlJob.getProperty("conceptualSchema"));
 
     crawlConfiguration = job;
     requestHandler = new TapirScientificNameRangeRequestHandler(job);

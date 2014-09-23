@@ -17,7 +17,6 @@ import org.gbif.crawler.common.RegistryConfiguration;
 import org.gbif.crawler.common.ZooKeeperConfiguration;
 
 import java.io.File;
-
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
@@ -53,11 +52,7 @@ public class CoordinatorCleanupConfiguration {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
-      .add("zooKeeper", zooKeeper)
-      .add("archiveDirectory", archiveDirectory)
-      .add("interval", interval)
-      .add("wsUrl", wsUrl)
-      .toString();
+    return Objects.toStringHelper(this).add("zooKeeper", zooKeeper).add("archiveDirectory", archiveDirectory)
+      .add("interval", interval).add("wsUrl", wsUrl).toString();
   }
 }

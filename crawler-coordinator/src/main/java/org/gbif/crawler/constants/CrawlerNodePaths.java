@@ -52,6 +52,9 @@ public class CrawlerNodePaths {
   public static final String INTERPRETED_OCCURRENCES_PERSISTED_SUCCESSFUL =
     "interpretedOccurrencesPersisted/" + SUCCESSFUL;
   public static final String INTERPRETED_OCCURRENCES_PERSISTED_ERROR = "interpretedOccurrencesPersisted/" + ERROR;
+  public static final String PROCESS_STATE_OCCURRENCE = "processState/occurrence";
+  public static final String PROCESS_STATE_CHECKLIST = "processState/checklist";
+
   private static final Joiner JOINER = Joiner.on('/').skipNulls();
 
   /**

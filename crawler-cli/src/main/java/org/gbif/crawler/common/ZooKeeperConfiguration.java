@@ -14,7 +14,6 @@ import org.apache.curator.retry.ExponentialBackoffRetry;
 /**
  * A configuration class which can be used to get all the details needed to create a connection to ZooKeeper needed by
  * the Curator Framework.
- * <p/>
  * It provides a convenience method ({@link #getCuratorFramework()} ()} to actually get a {@link CuratorFramework}
  * object when populated fully.
  */
@@ -56,23 +55,16 @@ public class ZooKeeperConfiguration {
    */
   @JsonIgnore
   public CuratorFramework getCuratorFramework() throws IOException {
-    CuratorFramework curator = CuratorFrameworkFactory.builder()
-      .namespace(namespace)
-      .retryPolicy(new ExponentialBackoffRetry(baseSleepTime, maxRetries))
-      .connectString(connectionString)
-      .build();
+    CuratorFramework curator = CuratorFrameworkFactory.builder().namespace(namespace)
+      .retryPolicy(new ExponentialBackoffRetry(baseSleepTime, maxRetries)).connectString(connectionString).build();
     curator.start();
     return curator;
   }
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
-      .add("connectionString", connectionString)
-      .add("namespace", namespace)
-      .add("baseSleepTime", baseSleepTime)
-      .add("maxRetries", maxRetries)
-      .toString();
+    return Objects.toStringHelper(this).add("connectionString", connectionString).add("namespace", namespace)
+      .add("baseSleepTime", baseSleepTime).add("maxRetries", maxRetries).toString();
 
   }
 }
