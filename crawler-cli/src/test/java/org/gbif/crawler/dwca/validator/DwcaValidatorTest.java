@@ -3,15 +3,19 @@ package org.gbif.crawler.dwca.validator;
 import org.gbif.api.model.crawler.DwcaValidationReport;
 import org.gbif.api.model.registry.Dataset;
 import org.gbif.api.vocabulary.DatasetType;
+import org.gbif.crawler.dwca.LenientArchiveFactory;
 import org.gbif.crawler.dwca.util.DwcaTestUtil;
 import org.gbif.dwc.text.Archive;
 import org.gbif.dwc.text.ArchiveFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.util.UUID;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -28,6 +32,23 @@ public class DwcaValidatorTest {
     dataset = new Dataset();
     dataset.setKey(UUID.randomUUID());
     dataset.setType(DatasetType.OCCURRENCE);
+  }
+
+  @Test
+  @Ignore("manual test to validate archives")
+  public void manualUrlTest() throws IOException {
+    URI dwca = URI.create("http://pensoft.net/dwc/bdj/checklist_980.zip");
+
+    File tmp = File.createTempFile("gbif", "dwca");
+    tmp.deleteOnExit();
+    File dwcaDir = org.gbif.utils.file.FileUtils.createTempDir();
+    dwcaDir.deleteOnExit();
+
+    FileUtils.copyURLToFile(dwca.toURL(), tmp);
+
+    Archive archive = LenientArchiveFactory.openArchive(tmp, dwcaDir);
+    DwcaValidationReport report = DwcaValidator.validate(dataset, archive);
+    System.out.println(report);
   }
 
   @Test

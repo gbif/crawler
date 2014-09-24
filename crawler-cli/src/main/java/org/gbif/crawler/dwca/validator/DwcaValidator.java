@@ -11,6 +11,7 @@ import org.gbif.dwc.terms.Term;
 import org.gbif.dwc.text.Archive;
 import org.gbif.dwc.text.StarRecord;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -110,8 +111,10 @@ public class DwcaValidator {
   }
 
   private OccurrenceValidationReport validateOccurrenceCore(Archive archive) {
-    for (StarRecord record : archive) {
-      if (checkOccurrenceRecord(record.core(), getTriplet(record.core(), null))) {
+    Iterator<Record> iter = archive.getCore().iterator();
+    while (iter.hasNext()) {
+      Record record = iter.next();
+      if (checkOccurrenceRecord(record, getTriplet(record, null))) {
         break;
       }
     }

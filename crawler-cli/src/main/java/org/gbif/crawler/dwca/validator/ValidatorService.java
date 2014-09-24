@@ -97,6 +97,10 @@ public class ValidatorService extends DwcaService {
       } catch (IOException e) {
         LOG.warn("IOException when reading dwc archive for dataset {}", datasetKey, e);
         validationReport = new DwcaValidationReport(datasetKey, "IOException when reading dwc archive");
+
+      } catch (RuntimeException e) {
+        LOG.warn("Unknown error when reading dwc archive for dataset {}", datasetKey, e);
+        validationReport = new DwcaValidationReport(datasetKey, "Unexpected error when reading dwc archive: " + e.getMessage());
       }
 
       if (validationReport.isValid()) {
