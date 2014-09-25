@@ -27,7 +27,7 @@ public class ZookeeperUtils {
     try {
       Stat stat = curator.checkExists().forPath(crawlPath);
       if (stat == null) {
-        curator.create().forPath(crawlPath, data);
+        curator.create().creatingParentsIfNeeded().forPath(crawlPath, data);
       } else {
         curator.setData().forPath(crawlPath, data);
       }
