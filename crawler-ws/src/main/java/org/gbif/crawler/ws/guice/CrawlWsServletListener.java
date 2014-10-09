@@ -1,5 +1,6 @@
 package org.gbif.crawler.ws.guice;
 
+import org.gbif.ws.app.ConfUtils;
 import org.gbif.ws.server.guice.GbifServletListener;
 
 import java.util.List;
@@ -21,7 +22,7 @@ public class CrawlWsServletListener extends GbifServletListener {
   public static final String APPLICATION_PROPERTIES = "crawler.properties";
 
   public CrawlWsServletListener() {
-    super(APPLICATION_PROPERTIES, "org.gbif.crawler.ws", false);
+    super(ConfUtils.getAppConfFile(APPLICATION_PROPERTIES), "org.gbif.crawler.ws", false);
   }
 
   @Override
