@@ -12,7 +12,7 @@
   <name>Crawler :: Web service</name>
 
   <properties>
-    <servlet-api.version>2.5</servlet-api.version>
+    <servlet-api.version>3.1.0</servlet-api.version>
     <maven-shade-plugin.version>2.3</maven-shade-plugin.version>
     <gbif-microservice.version>0.1-SNAPSHOT</gbif-microservice.version>
   </properties>
@@ -82,6 +82,10 @@
 
   <repositories>
     <repository>
+      <id>gbif-thirdparty</id>
+      <url>http://repository.gbif.org/</url>
+    </repository>
+    <repository>
       <id>gbif-all</id>
       <url>http://repository.gbif.org/content/groups/gbif</url>
     </repository>
@@ -91,9 +95,8 @@
     <!-- Module specific -->
     <dependency>
       <groupId>javax.servlet</groupId>
-      <artifactId>servlet-api</artifactId>
+      <artifactId>javax.servlet-api</artifactId>
       <version>${servlet-api.version}</version>
-      <scope>compile</scope>
     </dependency>
 
     <!-- From parent -->
