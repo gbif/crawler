@@ -33,7 +33,7 @@
     <dwc-api.version>1.8</dwc-api.version>
     <dwca-reader.version>1.19-SNAPSHOT</dwca-reader.version>
     <gbif-api.version>0.17-SNAPSHOT</gbif-api.version>
-    <gbif-cli.version>0.7-SNAPSHOT</gbif-cli.version>
+    <gbif-cli.version>0.8-SNAPSHOT</gbif-cli.version>
     <gbif-postal-service.version>0.13-SNAPSHOT</gbif-postal-service.version>
     <gbif-common.version>0.17-SNAPSHOT</gbif-common.version>
     <gbif-common-service.version>0.11-SNAPSHOT</gbif-common-service.version>

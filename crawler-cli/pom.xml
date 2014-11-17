@@ -49,6 +49,11 @@
     </plugins>
   </build>
 
+  <properties>
+    <!-- need to match gbif-cli -->
+    <guava.version>14.0.1</guava.version>
+  </properties>
+
   <repositories>
     <repository>
       <id>gbif-all</id>

@@ -69,7 +69,7 @@ public class CrawlEverythingCommand extends BaseCommand {
       PagingRequest request = new PagingRequest(0, LIMIT);
       PagingResponse<Dataset> response = null;
       do {
-        Stopwatch stopwatch = Stopwatch.createStarted();
+        Stopwatch stopwatch = new Stopwatch().start();
         LOG.info("Requesting batch of datasets starting at offset [{}]", request.getOffset());
         try {
           response = datasetService.list(request);

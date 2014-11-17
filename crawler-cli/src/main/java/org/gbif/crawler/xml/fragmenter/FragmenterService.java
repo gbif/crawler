@@ -123,7 +123,7 @@ public class FragmenterService extends AbstractIdleService {
     public void handleMessage(CrawlResponseMessage message) {
       MDC.put("datasetKey", message.getDatasetUuid().toString());
       LOG.debug("Received crawl response message for [{}]", message.getDatasetUuid());
-      Stopwatch stopwatch = Stopwatch.createStarted();
+      Stopwatch stopwatch = new Stopwatch().start();
       OccurrenceParser parser = new OccurrenceParser();
       List<RawXmlOccurrence> list = null;
       try {
