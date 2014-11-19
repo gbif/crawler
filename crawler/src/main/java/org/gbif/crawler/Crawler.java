@@ -57,7 +57,7 @@ public class Crawler<CTX extends CrawlContext, REQ, RESP, RES> {
   private final CrawlClient<REQ, RESP> client;
   private final RetryPolicy retryPolicy;
   private final Lock lock;
-  private final Stopwatch stopwatch = Stopwatch.createUnstarted();
+  private final Stopwatch stopwatch = new Stopwatch();
   private final List<CrawlListener<CTX, REQ, RES>> listeners = Lists.newArrayList();
 
   public Crawler(
