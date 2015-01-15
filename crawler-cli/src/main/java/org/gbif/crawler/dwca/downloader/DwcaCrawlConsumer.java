@@ -82,21 +82,29 @@ public class DwcaCrawlConsumer extends CrawlConsumer {
         success(datasetKey, crawlJob);
 
       } else {
-        failedDownloads.inc();
-        throw new IllegalStateException("HTTP " + status.getStatusCode() +
-                                        ". Failed to download DwC-A for dataset " + datasetKey +
-                                        " from " + crawlJob.getTargetUrl());
+        failed(datasetKey);
+        throw new IllegalStateException("HTTP " + status.getStatusCode() + ". Failed to download DwC-A for dataset "
+                                        + datasetKey + " from " + crawlJob.getTargetUrl());
       }
 
     } catch (IOException e) {
-      failedDownloads.inc();
       LOG.error("Failed to download dwc archive for dataset [{}] from [{}]", crawlJob.getDatasetKey(),
         crawlJob.getTargetUrl(), e);
+      failed(datasetKey);
       throw new RuntimeException(e);
-    }
 
-    // finished crawl
-    updateDate(curator, datasetKey, CrawlerNodePaths.FINISHED_CRAWLING);
+    } finally {
+      // finished crawl
+      updateDate(curator, datasetKey, CrawlerNodePaths.FINISHED_CRAWLING);
+    }
+  }
+
+  private void failed(UUID datasetKey) {
+    failedDownloads.inc();
+    createOrUpdate(curator, datasetKey, FINISHED_REASON, FinishReason.ABORT);
+    // we dont know the kind of dataset so we just put both states to finish
+    createOrUpdate(curator, datasetKey, PROCESS_STATE_OCCURRENCE, ProcessState.FINISHED);
+    createOrUpdate(curator, datasetKey, PROCESS_STATE_CHECKLIST, ProcessState.FINISHED);
   }
 
   private void notModified(UUID datasetKey) {
