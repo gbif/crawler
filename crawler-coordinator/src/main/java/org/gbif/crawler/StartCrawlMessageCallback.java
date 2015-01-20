@@ -29,6 +29,8 @@ public class StartCrawlMessageCallback extends AbstractMessageCallback<StartCraw
       } else {
         service.initiateCrawl(message.getDatasetUuid());
       }
+    } catch (AlreadyCrawlingException e) {
+      LOG.warn(e.getMessage());
     } catch (Exception e) {
       LOG.error("Caught exception while trying to enqueue crawl [{}]", message.getDatasetUuid(), e);
     }
