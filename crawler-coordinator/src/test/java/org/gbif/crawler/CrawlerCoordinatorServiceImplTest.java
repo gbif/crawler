@@ -101,6 +101,41 @@ public class CrawlerCoordinatorServiceImplTest {
   }
 
   @Test
+  public void testPrioritySortMultipleDwca() {
+    List<Endpoint> endpoints = Lists.newArrayList();
+
+    Endpoint endpoint1 = new Endpoint();
+    endpoint1.setType(EndpointType.DWC_ARCHIVE);
+    endpoints.add(endpoint1);
+
+    Endpoint endpoint2 = new Endpoint();
+    endpoint2.setType(EndpointType.DWC_ARCHIVE);
+    endpoints.add(endpoint2);
+
+    List<Endpoint> sortedEndpoints = service.prioritySortEndpoints(endpoints);
+
+    assertThat(sortedEndpoints.size(), equalTo(2));
+    assertThat(sortedEndpoints, contains(endpoint1, endpoint2));
+    assertThat(sortedEndpoints.get(0), equalTo(endpoint1));
+
+    // now add created dates
+    long now = System.currentTimeMillis();
+    endpoint1.setCreated(new Date(now));
+    endpoint2.setCreated(new Date(now-100000));
+
+    sortedEndpoints = service.prioritySortEndpoints(endpoints);
+    assertThat(sortedEndpoints.size(), equalTo(2));
+    assertThat(sortedEndpoints, contains(endpoint2, endpoint1));
+    assertThat(sortedEndpoints.get(0), equalTo(endpoint2));
+
+    // now add created dates
+    endpoint1.setCreated(new Date(now-200000));
+    sortedEndpoints = service.prioritySortEndpoints(endpoints);
+    assertThat(sortedEndpoints, contains(endpoint1, endpoint2));
+    assertThat(sortedEndpoints.get(0), equalTo(endpoint1));
+  }
+
+  @Test
   public void testValidation1() throws Exception {
     thrown.expect(IllegalArgumentException.class);
     thrown.expectMessage("does not exist");

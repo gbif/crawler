@@ -22,6 +22,7 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Ordering;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.queue.DistributedPriorityQueue;
 import org.apache.curator.framework.recipes.queue.QueueBuilder;
@@ -61,8 +62,10 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
 
   public static final String METADATA_NAMESPACE = "metasync.gbif.org";
   private static final Logger LOG = LoggerFactory.getLogger(CrawlerCoordinatorServiceImpl.class);
-  private static final Comparator<Endpoint> ENDPOINT_COMPARATOR =
-    Collections.reverseOrder(new EndpointPriorityComparator());
+  private static final Comparator<Endpoint> ENDPOINT_COMPARATOR = Ordering.compound(Lists.newArrayList(
+    Collections.reverseOrder(new EndpointPriorityComparator()),
+    EndpointCreatedComparator.INSTANCE
+  ));
   private static final ObjectMapper MAPPER = new ObjectMapper();
   private static final int DEFAULT_PRIORITY = 0;
   private final CuratorFramework curator;
