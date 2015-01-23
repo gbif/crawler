@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.gbif</groupId>
     <artifactId>motherpom</artifactId>
-    <version>16</version>
+    <version>19</version>
   </parent>
 
   <groupId>org.gbif.crawler</groupId>
@@ -32,8 +32,8 @@
     <fest.version>2.0M10</fest.version>
     <dwc-api.version>1.8</dwc-api.version>
     <dwca-reader.version>1.19</dwca-reader.version>
-    <gbif-api.version>0.17-SNAPSHOT</gbif-api.version>
-    <gbif-cli.version>0.8-SNAPSHOT</gbif-cli.version>
+    <gbif-api.version>0.17</gbif-api.version>
+    <gbif-cli.version>0.9</gbif-cli.version>
     <gbif-postal-service.version>0.12</gbif-postal-service.version>
     <gbif-common.version>0.17</gbif-common.version>
     <gbif-common-service.version>0.11</gbif-common-service.version>
