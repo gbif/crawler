@@ -162,14 +162,13 @@ public class CoordinatorCleanupService extends AbstractScheduledService {
 
     // occurrence processing done?
     if (status.getProcessStateOccurrence() != null && (status.getProcessStateOccurrence() == ProcessState.EMPTY
-                                                       || status.getProcessStateOccurrence()
-                                                          == ProcessState.FINISHED)) {
+                                                    || status.getProcessStateOccurrence() == ProcessState.FINISHED)) {
       return true;
     }
 
     // Done fragmenting?
     // We are done when we have as many pages fragmented (in error or successful) as we did crawl
-    if (status.getPagesCrawled() != status.getPagesFragmentedError() + status.getPagesFragmentedSuccessful()) {
+    if (status.getPagesCrawled() > status.getPagesFragmentedError() + status.getPagesFragmentedSuccessful()) {
       return false;
     }
 
