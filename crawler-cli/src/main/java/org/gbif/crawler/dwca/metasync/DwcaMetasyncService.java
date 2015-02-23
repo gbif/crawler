@@ -137,6 +137,7 @@ public class DwcaMetasyncService extends DwcaService {
       // we don't expect to reach more than a few hundred constituents - so ignore paging here by using a 2000 p size
       Pageable page = new PagingRequest(0, 2000);
       List<Dataset> existingConstituents = datasetService.listConstituents(parent.getKey(), page).getResults();
+      LOG.info("{} existing constituents registered for {}", existingConstituents.size(), parent.getKey());
       Map<String, File> archiveConstituents = archive.getConstituentMetadata();
       LOG.info("{} constituents metadata found in archive {}", archiveConstituents.size(), parent.getKey());
 
@@ -146,7 +147,8 @@ public class DwcaMetasyncService extends DwcaService {
           // we keep the datasetID as a tag, get it
           String datasetId = getTagValue(constituent.getKey(), TagName.DATASET_ID);
           if (datasetId == null) {
-            LOG.warn("Existing registered constituent found without a tagged datasetID. Please adjust manually {}",
+            LOG.warn("Existing registered constituent {} found without a tagged datasetID. "
+                     + "Please adjust manually as we will likely be creating a new constituent dataset",
               constituent.getKey());
 
           } else {
@@ -162,6 +164,7 @@ public class DwcaMetasyncService extends DwcaService {
               // constituent has been removed. Delete in registry
               datasetService.delete(constituent.getKey());
               constituentsDeleted.inc();
+              LOG.info("Existing constituent with ID={} deleted, not found in archive anymore", datasetId);
             }
           }
         } catch (FileNotFoundException e) {

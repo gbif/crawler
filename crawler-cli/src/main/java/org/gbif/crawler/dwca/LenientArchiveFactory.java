@@ -52,7 +52,8 @@ public class LenientArchiveFactory {
       }
       org.apache.commons.io.FileUtils.forceMkdir(archiveDir);
 
-      CompressionUtil.decompressFile(archiveDir, archiveFile);
+      // keep subdirectories: http://dev.gbif.org/issues/browse/POR-2671
+      CompressionUtil.decompressFile(archiveDir, archiveFile, true);
       return openArchive(archiveDir);
 
     } catch (CompressionUtil.UnsupportedCompressionType e) {
