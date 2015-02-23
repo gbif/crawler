@@ -25,7 +25,6 @@ import java.util.Map;
 import java.util.UUID;
 
 import com.google.common.collect.Maps;
-import com.google.common.io.Closeables;
 import com.yammer.metrics.Metrics;
 import com.yammer.metrics.core.Counter;
 import org.apache.curator.RetryPolicy;
@@ -187,18 +186,18 @@ public class DwcaMetasyncService extends DwcaService {
     }
 
     private boolean setMetaDocument(File metaDoc, UUID datasetKey) throws FileNotFoundException {
-      InputStream stream = new FileInputStream(metaDoc);
-      try {
+      try (InputStream stream = new FileInputStream(metaDoc)){
         datasetService.insertMetadata(datasetKey, stream);
         return true;
 
       } catch (IllegalArgumentException e) {
         LOG.warn("Metadata document {} for dataset {} not understood", metaDoc.getAbsolutePath(), datasetKey, e);
-        return false;
 
-      } finally {
-        Closeables.closeQuietly(stream);
+      } catch (Exception e) {
+        LOG.error("Failed to upload metadata file {} for dataset {}", metaDoc.getAbsoluteFile(), datasetKey, e);
+
       }
+      return false;
     }
 
     /**
@@ -219,9 +218,8 @@ public class DwcaMetasyncService extends DwcaService {
       constituent.setType(parent.getType());
       constituent.setSubtype(parent.getSubtype());
 
-      UUID key = null;
       try {
-        key = datasetService.create(constituent);
+        UUID key = datasetService.create(constituent);
         LOG.info("Created new constituent {} with key {} for dataset {}", datasetID, key, parentKey);
         constituentsAdded.inc();
 
@@ -230,16 +228,16 @@ public class DwcaMetasyncService extends DwcaService {
         datasetService.addMachineTag(key, idTag);
 
         setMetaDocument(metaFile, key);
-
-      } catch (IllegalArgumentException e) {
-        // sth went wrong with this constituent. Maybe bad metadata?
-        LOG.warn("Failed to create new constituent {} for dataset {}", datasetID, parentKey, e);
+        return key;
 
       } catch (FileNotFoundException e) {
         LOG.warn("Failed to upload metadata file for new constituent {} of dataset {}", datasetID, parentKey, e);
+
+      } catch (Exception e) {
+        LOG.error("Failed to create new constituent {} for dataset {}", datasetID, parentKey, e);
       }
 
-      return key;
+      return null;
     }
 
     /**
