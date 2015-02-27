@@ -44,33 +44,33 @@ import static org.gbif.crawler.constants.CrawlerNodePaths.PAGES_FRAGMENTED_SUCCE
 public class DwcaFragmenterService extends AbstractIdleService {
 
   private static final Logger LOG = LoggerFactory.getLogger(DwcaFragmenterService.class);
-  private final DwcaFragmenterConfiguration configuration;
+  private final DwcaFragmenterConfiguration cfg;
   private MessagePublisher publisher;
   private MessageListener listener;
   private CuratorFramework curator;
 
   public DwcaFragmenterService(DwcaFragmenterConfiguration configuration) {
-    this.configuration = configuration;
+    this.cfg = configuration;
   }
 
   @Override
   protected void startUp() throws Exception {
 
-    if (!configuration.archiveRepository.exists() && !configuration.archiveRepository.isDirectory()) {
+    if (!cfg.archiveRepository.exists() && !cfg.archiveRepository.isDirectory()) {
       throw new IllegalArgumentException(
-        "Archive repository needs to be an existing directory: " + configuration.archiveRepository.getAbsolutePath());
+        "Archive repository needs to be an existing directory: " + cfg.archiveRepository.getAbsolutePath());
     }
-    if (!configuration.archiveRepository.canWrite()) {
+    if (!cfg.archiveRepository.canWrite()) {
       throw new IllegalArgumentException(
-        "Archive repository directory not writable: " + configuration.archiveRepository.getAbsolutePath());
+        "Archive repository directory not writable: " + cfg.archiveRepository.getAbsolutePath());
     }
 
-    curator = configuration.zooKeeper.getCuratorFramework();
+    curator = cfg.zooKeeper.getCuratorFramework();
 
-    publisher = new DefaultMessagePublisher(configuration.messaging.getConnectionParameters());
-    listener = new MessageListener(configuration.messaging.getConnectionParameters());
-    listener.listen(configuration.queueName, configuration.poolSize,
-      new DwCaCallback(publisher, configuration.archiveRepository));
+    publisher = new DefaultMessagePublisher(cfg.messaging.getConnectionParameters());
+    listener = new MessageListener(cfg.messaging.getConnectionParameters());
+    listener.listen("dwca-fragmenter", cfg.poolSize,
+      new DwCaCallback(publisher, cfg.archiveRepository));
   }
 
   @Override

@@ -32,7 +32,8 @@ public abstract class DwcaService extends AbstractIdleService {
   @Override
   protected void startUp() throws Exception {
     publisher = new DefaultMessagePublisher(config.messaging.getConnectionParameters());
-    listener = new MessageListener(config.messaging.getConnectionParameters());
+    // dwca messages are rather long running processes. Only prefetch one message at a time
+    listener = new MessageListener(config.messaging.getConnectionParameters(), 1);
     datasetService = config.registry.newRegistryInjector().getInstance(DatasetService.class);
     bindListeners();
   }

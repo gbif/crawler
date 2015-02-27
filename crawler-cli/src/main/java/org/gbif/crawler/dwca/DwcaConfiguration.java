@@ -30,10 +30,6 @@ public class DwcaConfiguration {
   @Min(1)
   public int poolSize = 10;
 
-  @Parameter(names = "--queue-name")
-  @NotNull
-  public String queueName;
-
   @Parameter(names = "--archive-repository")
   @NotNull
   public File archiveRepository;
@@ -41,8 +37,12 @@ public class DwcaConfiguration {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this).add("registry", registry).add("messaging", messaging)
-      .add("queueName", queueName).add("poolSize", poolSize).add("archiveRepository", archiveRepository).toString();
+    return Objects.toStringHelper(this)
+      .add("registry", registry)
+      .add("messaging", messaging)
+      .add("poolSize", poolSize)
+      .add("archiveRepository", archiveRepository)
+      .toString();
   }
 
 }

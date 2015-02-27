@@ -47,7 +47,7 @@ public class ValidatorService extends DwcaService {
     CuratorFramework curator = configuration.zooKeeper.getCuratorFramework();
 
     // listen to DwcaDownloadFinishedMessage messages
-    listener.listen(config.queueName, config.poolSize,
+    listener.listen("dwca-validator", config.poolSize,
       new DwcaDownloadFinishedMessageCallback(datasetService, config.archiveRepository, publisher, curator));
   }
 

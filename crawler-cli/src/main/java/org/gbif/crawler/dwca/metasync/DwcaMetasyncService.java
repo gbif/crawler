@@ -57,7 +57,7 @@ public class DwcaMetasyncService extends DwcaService {
     CuratorFramework curator = configuration.zooKeeper.getCuratorFramework();
 
     // listen to DwcaDownloadFinishedMessage messages
-    listener.listen(config.queueName, config.poolSize,
+    listener.listen("dwca-metasync", config.poolSize,
       new DwcaValidationFinishedMessageCallback(datasetService, config.archiveRepository, publisher, curator));
   }
 

@@ -33,33 +33,33 @@
     <dwc-api.version>1.8</dwc-api.version>
     <dwca-reader.version>1.19</dwca-reader.version>
     <gbif-api.version>0.17</gbif-api.version>
-    <gbif-cli.version>0.8</gbif-cli.version>
-    <gbif-postal-service.version>0.12</gbif-postal-service.version>
+    <gbif-cli.version>0.9</gbif-cli.version>
+    <gbif-postal-service.version>0.14-SNAPSHOT</gbif-postal-service.version>
     <gbif-common.version>0.17</gbif-common.version>
-    <gbif-common-service.version>0.11</gbif-common-service.version>
-    <gbif-common-ws.version>0.16</gbif-common-ws.version>
-    <gbif-httputils.version>0.5</gbif-httputils.version>
-    <gbif-occurrence.version>0.24</gbif-occurrence.version>
-    <gbif-registry.version>2.19</gbif-registry.version>
+    <gbif-common-service.version>0.12</gbif-common-service.version>
+    <gbif-common-ws.version>0.18</gbif-common-ws.version>
+    <gbif-httputils.version>0.6</gbif-httputils.version>
+    <gbif-occurrence.version>0.27</gbif-occurrence.version>
+    <gbif-registry.version>2.25</gbif-registry.version>
     <gbif-wrangler.version>0.2</gbif-wrangler.version>
     <guava.version>17.0</guava.version>
     <guice.version>3.0</guice.version>
     <httpclient.version>4.2.3</httpclient.version>
     <httpcore.version>4.3</httpcore.version>
     <jackson.version>1.9.12</jackson.version>
-    <jackson-annotations.version>2.4.2</jackson-annotations.version>
+    <jackson-annotations.version>2.5.1</jackson-annotations.version>
     <jackson-datatype-guava.version>1.9.2</jackson-datatype-guava.version>
-    <jcommander.version>1.35</jcommander.version>
-    <jersey.version>1.18.1</jersey.version>
-    <joda-time.version>2.4</joda-time.version>
+    <jcommander.version>1.47</jcommander.version>
+    <jersey.version>1.18.3</jersey.version>
+    <joda-time.version>2.7</joda-time.version>
     <jsr305.version>3.0.0</jsr305.version>
-    <junit.version>4.11</junit.version>
+    <junit.version>4.12</junit.version>
     <logback.version>1.1.2</logback.version>
     <mockito.version>1.9.5</mockito.version>
     <slf4j.version>1.7.7</slf4j.version>
     <validation-api.version>1.1.0.Final</validation-api.version>
     <zookeeper.version>3.4.5</zookeeper.version><!-- Fixed to the version Curator uses, problems otherwise -->
-    <freemarker.version>2.3.20</freemarker.version>
+    <freemarker.version>2.3.21</freemarker.version>
     <stax.version>1.0-2</stax.version>
     <stax2.version>3.1.4</stax2.version>
     <woodstox.version>4.4.0</woodstox.version>
