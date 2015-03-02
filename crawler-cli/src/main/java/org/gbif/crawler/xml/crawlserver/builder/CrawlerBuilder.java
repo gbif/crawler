@@ -90,9 +90,9 @@ public class CrawlerBuilder {
     return this;
   }
 
-  public CrawlerBuilder withScientificNameRangeCrawlContext() {
+  public CrawlerBuilder withScientificNameRangeCrawlContext(ScientificNameRangeStrategy.Mode mode) {
     context = new ScientificNameRangeCrawlContext();
-    strategy = new ScientificNameRangeStrategy(context);
+    strategy = new ScientificNameRangeStrategy(context, mode);
     return this;
   }
 

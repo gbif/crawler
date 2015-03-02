@@ -58,7 +58,94 @@ public class ScientificNameRangeStrategyTest {
     assertThat(next.getLowerBound().isPresent()).isTrue();
     assertThat(next.getLowerBound().get()).isEqualTo("Zza");
     assertThat(next.getUpperBound().isPresent()).isFalse();
+
+    assertThat(strategy.hasNext()).isFalse();
   }
+
+  /**
+   * Tests that when instructed it simplified to Aaa-Baa, Baa-Caa instead of Aaa, Aba, Aca etc.
+   * Is should still use 3 characters, but broader ranges.
+   */
+  @Test
+  public void testModeABCJob() {
+    ScientificNameRangeStrategy strategy = new ScientificNameRangeStrategy(new ScientificNameRangeCrawlContext(),
+                                                                           ScientificNameRangeStrategy.Mode.ABC);
+    ScientificNameRangeCrawlContext next = strategy.next();
+
+    // Test if null...Aaa works
+    assertThat(next.getOffset()).isZero();
+    assertThat(next.getLowerBound().isPresent()).isFalse();
+    assertThat(next.getUpperBound().isPresent()).isTrue();
+    assertThat(next.getUpperBound().get()).isEqualTo("Aaa");
+
+    // Aaa...Baa
+    assertThat(strategy.hasNext()).isTrue();
+    next = strategy.next();
+    assertThat(next.getOffset()).isZero();
+    assertThat(next.getLowerBound().isPresent()).isTrue();
+    assertThat(next.getLowerBound().get()).isEqualTo("Aaa");
+    assertThat(next.getUpperBound().isPresent()).isTrue();
+    assertThat(next.getUpperBound().get()).isEqualTo("Baa");
+
+    // Xaa...Yaa, Yaa...Zaa
+    next.setLowerBound("Xaa");
+    next.setUpperBound("Yaa");
+    assertThat(strategy.hasNext()).isTrue();
+    next = strategy.next();
+    assertThat(next.getOffset()).isZero();
+    assertThat(next.getLowerBound().isPresent()).isTrue();
+    assertThat(next.getLowerBound().get()).isEqualTo("Yaa");
+    assertThat(next.getUpperBound().isPresent()).isTrue();
+    assertThat(next.getUpperBound().get()).isEqualTo("Zaa");
+
+    // Zaa...null
+    assertThat(strategy.hasNext()).isTrue();
+    next = strategy.next();
+    assertThat(next.getOffset()).isZero();
+    assertThat(next.getLowerBound().isPresent()).isTrue();
+    assertThat(next.getLowerBound().get()).isEqualTo("Zaa");
+    assertThat(next.getUpperBound().isPresent()).isFalse();
+
+    assertThat(strategy.hasNext()).isFalse();
+  }
+
+  /**
+   * Tests that when instructed it simplified to Aaa-Zaa.
+   * Is should still use 3 characters, but should result in null-Aaa, Aaa-Zaa, Zaa-null only
+   */
+  @Test
+  public void testModeAZJob() {
+    ScientificNameRangeStrategy strategy = new ScientificNameRangeStrategy(new ScientificNameRangeCrawlContext(),
+                                                                           ScientificNameRangeStrategy.Mode.AZ);
+    ScientificNameRangeCrawlContext next = strategy.next();
+
+    // Test if null...Aaa works
+    assertThat(next.getOffset()).isZero();
+    assertThat(next.getLowerBound().isPresent()).isFalse();
+    assertThat(next.getUpperBound().isPresent()).isTrue();
+    assertThat(next.getUpperBound().get()).isEqualTo("Aaa");
+
+    // Aaa...Zaa
+    assertThat(strategy.hasNext()).isTrue();
+    next = strategy.next();
+    assertThat(next.getOffset()).isZero();
+    assertThat(next.getLowerBound().isPresent()).isTrue();
+    assertThat(next.getLowerBound().get()).isEqualTo("Aaa");
+    assertThat(next.getUpperBound().isPresent()).isTrue();
+    assertThat(next.getUpperBound().get()).isEqualTo("Zaa");
+
+    // Zaa...null
+    assertThat(strategy.hasNext()).isTrue();
+    next = strategy.next();
+    assertThat(next.getOffset()).isZero();
+    assertThat(next.getLowerBound().isPresent()).isTrue();
+    assertThat(next.getLowerBound().get()).isEqualTo("Zaa");
+    assertThat(next.getUpperBound().isPresent()).isFalse();
+
+    assertThat(strategy.hasNext()).isFalse();
+  }
+
+
 
   @Test
   public void testFailure() {
