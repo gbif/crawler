@@ -299,18 +299,38 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
     Map<String, String> properties = Maps.newHashMap();
     switch (endpoint.getType()) {
       case DIGIR:
-        fillPropertyFromTags(datasetKey, dataset.getMachineTags(), properties, METADATA_NAMESPACE, "code");
-        fillPropertyFromTags(datasetKey, dataset.getMachineTags(), properties, METADATA_NAMESPACE, "declaredCount");
+        fillPropertyFromTags(datasetKey, dataset.getMachineTags(), properties, METADATA_NAMESPACE, "code", true);
+        fillPropertyFromTags(datasetKey,
+                             dataset.getMachineTags(),
+                             properties,
+                             METADATA_NAMESPACE,
+                             "declaredCount",
+                             false);
         properties.put("manis", "false");
         break;
       case DIGIR_MANIS:
-        fillPropertyFromTags(datasetKey, dataset.getMachineTags(), properties, METADATA_NAMESPACE, "code");
-        fillPropertyFromTags(datasetKey, dataset.getMachineTags(), properties, METADATA_NAMESPACE, "declaredCount");
+        fillPropertyFromTags(datasetKey, dataset.getMachineTags(), properties, METADATA_NAMESPACE, "code", true);
+        fillPropertyFromTags(datasetKey,
+                             dataset.getMachineTags(),
+                             properties,
+                             METADATA_NAMESPACE,
+                             "declaredCount",
+                             false);
         properties.put("manis", "true");
         break;
       case TAPIR:
-        fillPropertyFromTags(datasetKey, dataset.getMachineTags(), properties, METADATA_NAMESPACE, "conceptualSchema");
-        fillPropertyFromTags(datasetKey, dataset.getMachineTags(), properties, METADATA_NAMESPACE, "declaredCount");
+        fillPropertyFromTags(datasetKey,
+                             dataset.getMachineTags(),
+                             properties,
+                             METADATA_NAMESPACE,
+                             "conceptualSchema",
+                             true);
+        fillPropertyFromTags(datasetKey,
+                             dataset.getMachineTags(),
+                             properties,
+                             METADATA_NAMESPACE,
+                             "declaredCount",
+                             false);
         break;
       case BIOCASE:
         properties.put("datasetTitle", dataset.getTitle());
@@ -318,8 +338,14 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
                              endpoint.getMachineTags(),
                              properties,
                              METADATA_NAMESPACE,
-                             "conceptualSchema");
-        fillPropertyFromTags(datasetKey, dataset.getMachineTags(), properties, METADATA_NAMESPACE, "declaredCount");
+                             "conceptualSchema",
+                             true);
+        fillPropertyFromTags(datasetKey,
+                             dataset.getMachineTags(),
+                             properties,
+                             METADATA_NAMESPACE,
+                             "declaredCount",
+                             false);
         break;
       case DWC_ARCHIVE:
         break;
@@ -385,16 +411,19 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
    * @param properties  to populate
    * @param namespace   to look for in tags
    * @param predicate   to look for in tags
+   * @param required    if true, and IAE is thrown on missing tags, otherwise silently ignored
    */
   private void fillPropertyFromTags(
-    UUID datasetKey, Iterable<MachineTag> tags, Map<String, String> properties, String namespace, String predicate
+    UUID datasetKey, Iterable<MachineTag> tags, Map<String, String> properties, String namespace, String predicate,
+    boolean required
   ) {
     Optional<String> value = findTag(tags, namespace, predicate);
-    if (!value.isPresent()) {
+    if (value.isPresent()) {
+      properties.put(predicate, value.get());
+    } else if (required) {
       throw new IllegalArgumentException("Could not find [" + namespace + ":" + predicate + "] tag for dataset ["
                                          + datasetKey + "]");
     }
-    properties.put(predicate, value.get());
   }
 
   /**
