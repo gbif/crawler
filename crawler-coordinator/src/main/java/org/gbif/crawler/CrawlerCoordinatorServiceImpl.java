@@ -300,14 +300,17 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
     switch (endpoint.getType()) {
       case DIGIR:
         fillPropertyFromTags(datasetKey, dataset.getMachineTags(), properties, METADATA_NAMESPACE, "code");
+        fillPropertyFromTags(datasetKey, dataset.getMachineTags(), properties, METADATA_NAMESPACE, "declaredCount");
         properties.put("manis", "false");
         break;
       case DIGIR_MANIS:
         fillPropertyFromTags(datasetKey, dataset.getMachineTags(), properties, METADATA_NAMESPACE, "code");
+        fillPropertyFromTags(datasetKey, dataset.getMachineTags(), properties, METADATA_NAMESPACE, "declaredCount");
         properties.put("manis", "true");
         break;
       case TAPIR:
         fillPropertyFromTags(datasetKey, dataset.getMachineTags(), properties, METADATA_NAMESPACE, "conceptualSchema");
+        fillPropertyFromTags(datasetKey, dataset.getMachineTags(), properties, METADATA_NAMESPACE, "declaredCount");
         break;
       case BIOCASE:
         properties.put("datasetTitle", dataset.getTitle());
@@ -316,6 +319,7 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
                              properties,
                              METADATA_NAMESPACE,
                              "conceptualSchema");
+        fillPropertyFromTags(datasetKey, dataset.getMachineTags(), properties, METADATA_NAMESPACE, "declaredCount");
         break;
       case DWC_ARCHIVE:
         break;
