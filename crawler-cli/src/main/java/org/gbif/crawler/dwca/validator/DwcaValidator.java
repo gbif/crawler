@@ -5,11 +5,11 @@ import org.gbif.api.model.crawler.DwcaValidationReport;
 import org.gbif.api.model.crawler.OccurrenceValidationReport;
 import org.gbif.api.model.registry.Dataset;
 import org.gbif.api.vocabulary.DatasetType;
-import org.gbif.dwc.record.Record;
+import org.gbif.dwca.record.Record;
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.Term;
-import org.gbif.dwc.text.Archive;
-import org.gbif.dwc.text.StarRecord;
+import org.gbif.dwca.io.Archive;
+import org.gbif.dwca.record.StarRecord;
 
 import java.util.Iterator;
 import java.util.List;
@@ -52,7 +52,7 @@ public class DwcaValidator {
    * Produce a report with the counts of good and bad unique identifiers (triplets and occurrenceId) in the archive.
    *
    * @param dataset the parent Dataset of the archive
-   * @param archive the archive as opened by the dwca-reader project's {@link org.gbif.dwc.text.ArchiveFactory}
+   * @param archive the archive as opened by the dwca-io project's {@link org.gbif.dwca.io.ArchiveFactory}
    *
    * @return a report with the counts of good, bad and missing identifiers
    */

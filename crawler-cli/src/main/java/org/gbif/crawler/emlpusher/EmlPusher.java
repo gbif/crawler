@@ -1,9 +1,9 @@
 package org.gbif.crawler.emlpusher;
 
 import org.gbif.api.service.registry.DatasetService;
-import org.gbif.dwc.text.Archive;
-import org.gbif.dwc.text.ArchiveFactory;
-import org.gbif.dwc.text.UnsupportedArchiveException;
+import org.gbif.dwca.io.Archive;
+import org.gbif.dwca.io.ArchiveFactory;
+import org.gbif.dwca.io.UnsupportedArchiveException;
 import org.gbif.registry.ws.client.guice.RegistryWsClientModule;
 import org.gbif.ws.client.guice.SingleUserAuthModule;
 

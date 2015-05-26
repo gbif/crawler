@@ -2,7 +2,7 @@ package org.gbif.crawler.dwca.downloader;
 
 import org.gbif.api.model.crawler.CrawlJob;
 import org.gbif.api.vocabulary.EndpointType;
-import org.gbif.dwc.text.ArchiveFactory;
+import org.gbif.dwca.io.ArchiveFactory;
 import org.gbif.utils.file.CompressionUtil;
 import org.gbif.utils.file.FileUtils;
 

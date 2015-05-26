@@ -10,10 +10,10 @@ import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.DwcaDownloadFinishedMessage;
 import org.gbif.common.messaging.api.messages.DwcaValidationFinishedMessage;
 import org.gbif.crawler.dwca.DwcaService;
-import org.gbif.crawler.dwca.LenientArchiveFactory;
 import org.gbif.crawler.dwca.downloader.DwcaCrawlConsumer;
-import org.gbif.dwc.text.Archive;
-import org.gbif.dwc.text.UnsupportedArchiveException;
+import org.gbif.dwca.io.Archive;
+import org.gbif.dwca.io.ArchiveFactory;
+import org.gbif.dwca.io.UnsupportedArchiveException;
 
 import java.io.File;
 import java.io.IOException;
@@ -87,7 +87,7 @@ public class ValidatorService extends DwcaService {
       final File dwcaFile = new File(archiveRepository, datasetKey + DwcaCrawlConsumer.DWCA_SUFFIX);
       final File archiveDir = new File(archiveRepository, datasetKey.toString());
       try {
-        Archive archive = LenientArchiveFactory.openArchive(dwcaFile, archiveDir);
+        Archive archive = ArchiveFactory.openArchive(dwcaFile, archiveDir);
         validationReport = DwcaValidator.validate(dataset, archive);
 
       } catch (UnsupportedArchiveException e) {

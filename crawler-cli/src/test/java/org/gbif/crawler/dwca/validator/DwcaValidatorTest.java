@@ -3,10 +3,9 @@ package org.gbif.crawler.dwca.validator;
 import org.gbif.api.model.crawler.DwcaValidationReport;
 import org.gbif.api.model.registry.Dataset;
 import org.gbif.api.vocabulary.DatasetType;
-import org.gbif.crawler.dwca.LenientArchiveFactory;
 import org.gbif.crawler.dwca.util.DwcaTestUtil;
-import org.gbif.dwc.text.Archive;
-import org.gbif.dwc.text.ArchiveFactory;
+import org.gbif.dwca.io.Archive;
+import org.gbif.dwca.io.ArchiveFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -46,7 +45,7 @@ public class DwcaValidatorTest {
 
     FileUtils.copyURLToFile(dwca.toURL(), tmp);
 
-    Archive archive = LenientArchiveFactory.openArchive(tmp, dwcaDir);
+    Archive archive = ArchiveFactory.openArchive(tmp, dwcaDir);
     DwcaValidationReport report = DwcaValidator.validate(dataset, archive);
     System.out.println(report);
   }

@@ -12,8 +12,8 @@ import org.gbif.common.messaging.api.messages.DwcaMetasyncFinishedMessage;
 import org.gbif.common.messaging.api.messages.DwcaValidationFinishedMessage;
 import org.gbif.crawler.constants.CrawlerNodePaths;
 import org.gbif.crawler.dwca.DwcaService;
-import org.gbif.crawler.dwca.LenientArchiveFactory;
-import org.gbif.dwc.text.Archive;
+import org.gbif.dwca.io.Archive;
+import org.gbif.dwca.io.ArchiveFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -113,7 +113,7 @@ public class DwcaMetasyncService extends DwcaService {
         throw new IllegalArgumentException("The requested dataset " + message.getDatasetUuid() + " is not registered");
       }
 
-      Archive archive = LenientArchiveFactory.openArchive(new File(archiveRepository, uuid.toString()));
+      Archive archive = ArchiveFactory.openArchive(new File(archiveRepository, uuid.toString()));
       File metaFile = archive.getMetadataLocationFile();
       if (metaFile != null && metaFile.exists()) {
         // metadata found, put into repository thereby updating the dataset

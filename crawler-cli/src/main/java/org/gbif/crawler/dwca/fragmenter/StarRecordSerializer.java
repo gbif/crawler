@@ -1,8 +1,8 @@
 package org.gbif.crawler.dwca.fragmenter;
 
-import org.gbif.dwc.record.Record;
 import org.gbif.dwc.terms.Term;
-import org.gbif.dwc.text.StarRecord;
+import org.gbif.dwca.record.Record;
+import org.gbif.dwca.record.StarRecord;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -63,12 +63,12 @@ final class StarRecordSerializer {
     }
 
     if (!rec.extensions().isEmpty()) {
-      Map<String, List<Map<String, String>>> extensions =
-        new LinkedHashMap<String, List<Map<String, String>>>(rec.extensions().size());
+      Map<Term, List<Map<String, String>>> extensions =
+        new LinkedHashMap<Term, List<Map<String, String>>>(rec.extensions().size());
       data.put("extensions", extensions);
 
       // iterate over extensions
-      for (String rowType : rec.extensions().keySet()) {
+      for (Term rowType : rec.extensions().keySet()) {
         List<Map<String, String>> records = new ArrayList<Map<String, String>>(rec.extension(rowType).size());
         extensions.put(rowType, records);
 

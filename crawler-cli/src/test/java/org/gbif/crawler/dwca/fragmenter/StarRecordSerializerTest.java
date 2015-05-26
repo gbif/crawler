@@ -1,9 +1,9 @@
 package org.gbif.crawler.dwca.fragmenter;
 
 import org.gbif.crawler.dwca.util.DwcaTestUtil;
-import org.gbif.dwc.text.Archive;
-import org.gbif.dwc.text.ArchiveFactory;
-import org.gbif.dwc.text.StarRecord;
+import org.gbif.dwca.io.Archive;
+import org.gbif.dwca.io.ArchiveFactory;
+import org.gbif.dwca.record.StarRecord;
 
 import java.io.File;
 import java.io.IOException;

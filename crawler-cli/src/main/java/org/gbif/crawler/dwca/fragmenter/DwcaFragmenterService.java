@@ -10,12 +10,12 @@ import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.DwcaMetasyncFinishedMessage;
 import org.gbif.common.messaging.api.messages.DwcaValidationFinishedMessage;
 import org.gbif.common.messaging.api.messages.OccurrenceFragmentedMessage;
-import org.gbif.crawler.dwca.LenientArchiveFactory;
-import org.gbif.dwc.record.Record;
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.Term;
-import org.gbif.dwc.text.Archive;
-import org.gbif.dwc.text.StarRecord;
+import org.gbif.dwca.io.Archive;
+import org.gbif.dwca.io.ArchiveFactory;
+import org.gbif.dwca.record.Record;
+import org.gbif.dwca.record.StarRecord;
 import org.gbif.utils.file.ClosableIterator;
 
 import java.io.File;
@@ -102,7 +102,7 @@ public class DwcaFragmenterService extends AbstractIdleService {
 
       Archive archive;
       try {
-        archive = LenientArchiveFactory.openArchive(new File(archiveRepository, datasetKey.toString()));
+        archive = ArchiveFactory.openArchive(new File(archiveRepository, datasetKey.toString()));
       } catch (IOException e) {
         LOG.error("Could not open archive for dataset [{}]", datasetKey, e);
         updateCounter(curator, datasetKey, PAGES_FRAGMENTED_ERROR, 1l);
