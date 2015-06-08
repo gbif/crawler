@@ -31,8 +31,8 @@
     <curator.version>2.6.0</curator.version>
     <fest.version>2.0M10</fest.version>
     <dwc-api.version>1.8</dwc-api.version>
-    <dwca-io.version>1.22-SNAPSHOT</dwca-io.version>
-    <gbif-api.version>0.17</gbif-api.version>
+    <dwca-io.version>1.23</dwca-io.version>
+    <gbif-api.version>0.22</gbif-api.version>
     <!--
     GBIF-CLI NEEDS TO REMAIN ON 0.8 !!!
     until we solve the guava classpath issues for the service so we dont get:
@@ -42,10 +42,10 @@
     <gbif-postal-service.version>0.14</gbif-postal-service.version>
     <gbif-common.version>0.17</gbif-common.version>
     <gbif-common-service.version>0.12</gbif-common-service.version>
-    <gbif-common-ws.version>0.18</gbif-common-ws.version>
+    <gbif-common-ws.version>0.22</gbif-common-ws.version>
     <gbif-httputils.version>0.6</gbif-httputils.version>
-    <gbif-occurrence.version>0.27</gbif-occurrence.version>
-    <gbif-registry.version>2.25</gbif-registry.version>
+    <gbif-occurrence.version>0.31</gbif-occurrence.version>
+    <gbif-registry.version>2.29</gbif-registry.version>
     <gbif-wrangler.version>0.2</gbif-wrangler.version>
     <guava.version>17.0</guava.version>
     <guice.version>3.0</guice.version>

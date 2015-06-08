@@ -1,65 +1,34 @@
 package org.gbif.crawler.dwca.util;
 
+import org.gbif.dwca.io.Archive;
+import org.gbif.dwca.io.ArchiveFactory;
+
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.UUID;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 import com.google.common.io.Files;
+import org.apache.commons.io.FileUtils;
 
 public class DwcaTestUtil {
 
-  public static File copyTestArchive(String archiveFilePath) throws IOException {
-    File zipFile = new File(DwcaTestUtil.class.getResource(archiveFilePath).getFile());
+  /**
+   * Copies a zip archive from the test resources into a random uuid folder and returns the opened archive.
+   */
+  public static Archive openArchive(String archiveResourcePath) throws IOException {
+    UUID uuid = UUID.randomUUID();
 
-    File outFolder = new File(zipFile.getParent(), UUID.randomUUID().toString());
-    outFolder.mkdirs();
+    File zipFile = new File(DwcaTestUtil.class.getResource(archiveResourcePath).getFile());
+    File tmpFile = new File(zipFile.getParentFile(), uuid.toString() + ".dwca");
+    Files.copy(zipFile, tmpFile);
 
-    File outFile = new File(outFolder, "archive.zip");
-
-    Files.copy(zipFile, outFile);
-    return outFile;
+    File dwcaDir = new File(tmpFile.getParent(), uuid.toString());
+    return ArchiveFactory.openArchive(tmpFile, dwcaDir);
   }
 
-  public static String openArchive(String archiveFilePath) throws IOException {
-    String outputDir = UUID.randomUUID().toString();
-
-    File zipFile = new File(DwcaTestUtil.class.getResource(archiveFilePath).getFile());
-    FileInputStream fis = new FileInputStream(zipFile);
-    ZipInputStream zis = new ZipInputStream(fis);
-    ZipEntry ze = zis.getNextEntry();
-
-    while (ze != null) {
-      String fileName = ze.getName();
-      File newFile = new File(zipFile.getParent(), outputDir + File.separator + fileName);
-
-      new File(newFile.getParent()).mkdirs();
-      FileOutputStream fos = new FileOutputStream(newFile);
-
-      int len;
-      byte[] buffer = new byte[1024];
-      while ((len = zis.read(buffer)) > 0) {
-        fos.write(buffer, 0, len);
-      }
-
-      fos.close();
-      ze = zis.getNextEntry();
-    }
-
-    zis.closeEntry();
-    zis.close();
-    fis.close();
-
-    return zipFile.getParent() + File.separator + outputDir;
+  public static void cleanupArchive(Archive archive) {
+    File zip = archive.getLocation();
+    FileUtils.deleteQuietly(zip);
   }
 
-  public static void cleanupArchive(String dirName) {
-    File openArchive = new File(dirName);
-    for (File file : openArchive.listFiles()) {
-      file.delete();
-    }
-  }
 }
