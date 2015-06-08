@@ -52,9 +52,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * <li>{@code /runningCrawls/<queuename>} is used as a lock for {@code /queuedCrawls}. Every running crawler creates a
  * lock here as long as it's running so that in case of failure the job can be picked up</li>
  * </ul>
- * <p/>
+ * <p></p>
  * This uses a framework named Curator (by Netflix) to help implement the Queue in ZooKeeper. For more information see
- * the <a href="https://github.com/Netflix/curator/wiki/Distributed-Priority-Queue>documentation</a>. Please note that
+ * the <a href="https://github.com/Netflix/curator/wiki/Distributed-Priority-Queue">documentation</a>. Please note that
  * this means that we rely on Curator's serializationf format for the <em>queuedCrawls</em> and <em>runningCrawls</em>
  * nodes.
  */

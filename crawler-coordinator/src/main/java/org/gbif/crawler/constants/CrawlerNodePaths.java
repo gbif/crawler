@@ -73,6 +73,7 @@ public class CrawlerNodePaths {
    *
    * @param uuid of the dataset to get the path for
    * @param path if null we retrieve the path of the {@link #CRAWL_INFO} node itself otherwise we append this path
+   * @return ZK path to crawl info
    */
   public static String getCrawlInfoPath(UUID uuid, @Nullable String path) {
     checkNotNull(uuid, "uuid can't be null");
@@ -89,6 +90,7 @@ public class CrawlerNodePaths {
    * character.
    *
    * @param paths to concatenate
+   * @return a string with all the parts concatenated
    */
   public static String buildPath(String... paths) {
     return JOINER.join(paths);

@@ -2,7 +2,7 @@ package org.apache.curator.framework.recipes.queue;
 
 /**
  * This can be used to serialize and deserialize data we published as part of a Queued item using Curator.
- * <p/>
+ * <p></p>
  * It has to live in this package because {@link ItemSerializer} is package-private. This class is just a thin wrapper
  * to expose those methods.
  */

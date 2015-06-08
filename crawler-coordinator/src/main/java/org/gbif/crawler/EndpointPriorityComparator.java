@@ -12,11 +12,11 @@ import com.google.common.collect.Ordering;
 
 /**
  * Compares two Endpoints.
- * <p/>
+ * <p></p>
  * It does so by using a priority list of Endpoint Types.
  * This Comparator will throw a {@link ClassCastException} exception if a non supported EndpointType is passed in. It
  * also does not support {@code null} values.
- * <p/>
+ * <p></p>
  * The priority list is as follows (most to least important):
  * <ol>
  * <li>DwC-A</li>

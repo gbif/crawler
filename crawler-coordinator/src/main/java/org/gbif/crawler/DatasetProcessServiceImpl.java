@@ -87,6 +87,7 @@ public class DatasetProcessServiceImpl implements DatasetProcessService {
    *
    * @param curator to access ZooKeeper
    * @param mapper  to deserialize CrawlJob JSON back into an object
+   * @param executor to run the thread pool
    */
   @Inject
   public DatasetProcessServiceImpl(CuratorFramework curator, ObjectMapper mapper, Executor executor) {
