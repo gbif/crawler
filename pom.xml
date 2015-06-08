@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.gbif</groupId>
     <artifactId>motherpom</artifactId>
-    <version>19</version>
+    <version>22</version>
   </parent>
 
   <groupId>org.gbif.crawler</groupId>
@@ -25,7 +25,7 @@
   </scm>
 
   <properties>
-    <jdkLevel>1.7</jdkLevel>
+    <jdkLevel>1.8</jdkLevel>
 
     <amqp-client.version>3.1.4</amqp-client.version>
     <curator.version>2.6.0</curator.version>
