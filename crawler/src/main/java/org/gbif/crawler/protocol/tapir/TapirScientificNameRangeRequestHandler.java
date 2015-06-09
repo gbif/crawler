@@ -62,12 +62,15 @@ public class TapirScientificNameRangeRequestHandler implements RequestHandler<Sc
    * @return The atoms for the TAPIR request
    */
   private Map<String, String> buildTapirRequestParameters(ScientificNameRangeCrawlContext context) {
-    Map<String, String> params = Maps.newHashMap();
-    params.put("op", "s");
-    params.put("t", TEMPLATE_MAPPING.get(contentNamespace));
+    Map<String, String> params = Maps.newLinkedHashMap();
 
-    params.put("start", String.valueOf(context.getOffset()));
     params.put("limit", String.valueOf(MAX_RESULTS));
+
+    if (context.getUpperBound().isPresent()) {
+      params.put("upper", context.getUpperBound().get());
+    } else {
+      params.put("upper", null);
+    }
 
     if (context.getLowerBound().isPresent()) {
       params.put("lower", context.getLowerBound().get());
@@ -75,11 +78,11 @@ public class TapirScientificNameRangeRequestHandler implements RequestHandler<Sc
       params.put("lower", null);
     }
 
-    if (context.getUpperBound().isPresent()) {
-      params.put("upper", context.getUpperBound().get());
-    } else {
-      params.put("upper", null);
-    }
+    params.put("t", TEMPLATE_MAPPING.get(contentNamespace));
+
+    params.put("op", "s");
+
+    params.put("start", String.valueOf(context.getOffset()));
 
     return params;
   }
