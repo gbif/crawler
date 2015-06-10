@@ -38,14 +38,14 @@
     until we solve the guava classpath issues for the service so we dont get:
     NoSuchMethodError: com.google.common.util.concurrent.Service.startAsync()Lcom/google/common/util/concurrent/Service;
     -->
-    <gbif-cli.version>0.8</gbif-cli.version>
+    <gbif-cli.version>0.10-SNAPSHOT</gbif-cli.version>
     <gbif-postal-service.version>0.14</gbif-postal-service.version>
     <gbif-common.version>0.17</gbif-common.version>
     <gbif-common-service.version>0.12</gbif-common-service.version>
     <gbif-common-ws.version>0.22</gbif-common-ws.version>
     <gbif-httputils.version>0.6</gbif-httputils.version>
-    <gbif-occurrence.version>0.31</gbif-occurrence.version>
-    <gbif-registry.version>2.29</gbif-registry.version>
+    <gbif-occurrence.version>0.32-SNAPSHOT</gbif-occurrence.version>
+    <gbif-registry.version>2.30-SNAPSHOT</gbif-registry.version>
     <gbif-wrangler.version>0.2</gbif-wrangler.version>
     <guava.version>17.0</guava.version>
     <guice.version>3.0</guice.version>
