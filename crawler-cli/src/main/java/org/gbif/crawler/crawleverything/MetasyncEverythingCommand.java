@@ -67,7 +67,7 @@ public class MetasyncEverythingCommand extends BaseCommand {
       InstallationService installationService = injector.getInstance(InstallationService.class);
       do {
         Pageable request = new PagingRequest(offset, LIMIT);
-        Stopwatch stopwatch = new Stopwatch().start();
+        Stopwatch stopwatch = Stopwatch.createStarted();
         LOG.info("Requesting batch of installations starting at offset [{}]", request.getOffset());
         PagingResponse<Installation> installations;
         try {

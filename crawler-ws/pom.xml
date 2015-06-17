@@ -13,8 +13,8 @@
 
   <properties>
     <servlet-api.version>3.1.0</servlet-api.version>
-    <maven-shade-plugin.version>2.3</maven-shade-plugin.version>
-    <gbif-microservice.version>0.1</gbif-microservice.version>
+    <maven-shade-plugin.version>2.4</maven-shade-plugin.version>
+    <gbif-microservice.version>0.3-SNAPSHOT</gbif-microservice.version>
   </properties>
 
   <build>
@@ -123,16 +123,6 @@
       <groupId>com.sun.jersey</groupId>
       <artifactId>jersey-bundle</artifactId>
     </dependency>
-    <!--
-    This seems redundant now
-    <dependency>
-       Jersey with Guice calls for this runtime dependency:
-http://stackoverflow.com/questions/11191346/jersey-on-jetty-on-android-throws-containerexception-no-webapplication-provide
-      <groupId>com.sun.jersey</groupId>
-      <artifactId>jersey-servlet</artifactId>
-      <version>${jersey.version}</version>
-      <scope>runtime</scope>
-    </dependency> -->
     <dependency>
       <groupId>org.apache.curator</groupId>
       <artifactId>curator-client</artifactId>
@@ -189,46 +179,4 @@ http://stackoverflow.com/questions/11191346/jersey-on-jetty-on-android-throws-co
       <version>${gbif-microservice.version}</version>
     </dependency>
   </dependencies>
-
-  <profiles>
-    <!--
-     A production deploy profile. It has no missing passwords.
-    -->
-    <profile>
-      <id>prod</id>
-      <properties>
-        <crawler.crawl.namespace>prod_crawler</crawler.crawl.namespace>
-        <crawler.crawl.server>c1n8.gbif.org,c1n9.gbif.org,c1n10.gbif.org</crawler.crawl.server>
-        <crawler.crawl.server.retryAttempts>10</crawler.crawl.server.retryAttempts>
-        <crawler.crawl.server.retryDelayMs>100</crawler.crawl.server.retryDelayMs>
-        <crawler.crawl.threadCount>10</crawler.crawl.threadCount>
-      </properties>
-    </profile>
-    <!--
-     A uat deploy profile. It has no missing passwords.
-    -->
-    <profile>
-      <id>uat</id>
-      <properties>
-        <crawler.crawl.namespace>uat_crawler</crawler.crawl.namespace>
-        <crawler.crawl.server>c1n8.gbif.org,c1n9.gbif.org,c1n10.gbif.org</crawler.crawl.server>
-        <crawler.crawl.server.retryAttempts>10</crawler.crawl.server.retryAttempts>
-        <crawler.crawl.server.retryDelayMs>100</crawler.crawl.server.retryDelayMs>
-        <crawler.crawl.threadCount>10</crawler.crawl.threadCount>
-      </properties>
-    </profile>
-    <!--
-     A dev deploy profile. It has no missing passwords.
-    -->
-    <profile>
-      <id>dev</id>
-      <properties>
-        <crawler.crawl.namespace>dev_crawler</crawler.crawl.namespace>
-        <crawler.crawl.server>c1n1.gbif.org,c1n2.gbif.org,c1n3.gbif.org</crawler.crawl.server>
-        <crawler.crawl.server.retryAttempts>10</crawler.crawl.server.retryAttempts>
-        <crawler.crawl.server.retryDelayMs>100</crawler.crawl.server.retryDelayMs>
-        <crawler.crawl.threadCount>10</crawler.crawl.threadCount>
-      </properties>
-    </profile>
-  </profiles>
 </project>

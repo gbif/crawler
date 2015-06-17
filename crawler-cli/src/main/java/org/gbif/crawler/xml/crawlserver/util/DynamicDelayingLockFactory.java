@@ -39,7 +39,7 @@ public class DynamicDelayingLockFactory extends ForwardingLockFactory {
 
     private final Lock delegateLock;
 
-    private final Stopwatch stopwatch = new Stopwatch();
+    private final Stopwatch stopwatch = Stopwatch.createUnstarted();
 
     private DynamicDelayingLock(Lock delegateLock) {
       this.delegateLock = delegateLock;
