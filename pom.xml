@@ -31,16 +31,11 @@
     <curator.version>2.6.0</curator.version>
     <fest.version>2.0M10</fest.version>
     <dwc-api.version>1.8</dwc-api.version>
-    <dwca-io.version>1.23</dwca-io.version>
+    <dwca-io.version>1.24-SNAPSHOT</dwca-io.version>
     <gbif-api.version>0.22</gbif-api.version>
-    <!--
-    GBIF-CLI NEEDS TO REMAIN ON 0.8 !!!
-    until we solve the guava classpath issues for the service so we dont get:
-    NoSuchMethodError: com.google.common.util.concurrent.Service.startAsync()Lcom/google/common/util/concurrent/Service;
-    -->
     <gbif-cli.version>0.10-SNAPSHOT</gbif-cli.version>
     <gbif-postal-service.version>0.14</gbif-postal-service.version>
-    <gbif-common.version>0.17</gbif-common.version>
+    <gbif-common.version>0.18-SNAPSHOT</gbif-common.version>
     <gbif-common-service.version>0.12</gbif-common-service.version>
     <gbif-common-ws.version>0.22</gbif-common-ws.version>
     <gbif-httputils.version>0.6</gbif-httputils.version>
