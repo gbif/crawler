@@ -25,20 +25,20 @@
   </scm>
 
   <properties>
-    <jdkLevel>1.8</jdkLevel>
+    <jdkLevel>1.7</jdkLevel>
 
     <amqp-client.version>3.1.4</amqp-client.version>
     <curator.version>2.6.0</curator.version>
     <fest.version>2.0M10</fest.version>
     <dwc-api.version>1.8</dwc-api.version>
     <dwca-io.version>1.24-SNAPSHOT</dwca-io.version>
-    <gbif-api.version>0.22</gbif-api.version>
+    <gbif-api.version>0.23-SNAPSHOT</gbif-api.version>
     <gbif-cli.version>0.10-SNAPSHOT</gbif-cli.version>
-    <gbif-postal-service.version>0.14</gbif-postal-service.version>
+    <gbif-postal-service.version>0.15-SNAPSHOT</gbif-postal-service.version>
     <gbif-common.version>0.18-SNAPSHOT</gbif-common.version>
     <gbif-common-service.version>0.12</gbif-common-service.version>
     <gbif-common-ws.version>0.22</gbif-common-ws.version>
-    <gbif-httputils.version>0.6</gbif-httputils.version>
+    <gbif-httputils.version>0.7-SNAPSHOT</gbif-httputils.version>
     <gbif-occurrence.version>0.32-SNAPSHOT</gbif-occurrence.version>
     <gbif-registry.version>2.30-SNAPSHOT</gbif-registry.version>
     <gbif-wrangler.version>0.2</gbif-wrangler.version>
