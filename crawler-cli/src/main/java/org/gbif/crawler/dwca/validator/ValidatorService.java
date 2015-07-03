@@ -5,6 +5,7 @@ import org.gbif.api.model.crawler.FinishReason;
 import org.gbif.api.model.crawler.ProcessState;
 import org.gbif.api.model.registry.Dataset;
 import org.gbif.api.service.registry.DatasetService;
+import org.gbif.api.vocabulary.DatasetType;
 import org.gbif.common.messaging.AbstractMessageCallback;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.DwcaDownloadFinishedMessage;
@@ -29,6 +30,7 @@ import static org.gbif.crawler.common.ZookeeperUtils.createOrUpdate;
 import static org.gbif.crawler.constants.CrawlerNodePaths.FINISHED_REASON;
 import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_CHECKLIST;
 import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_OCCURRENCE;
+import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_SAMPLE;
 
 public class ValidatorService extends DwcaService {
 
@@ -129,18 +131,24 @@ public class ValidatorService extends DwcaService {
      * For existing data types this sets the process state as given, for non existing ones it puts it always to EMPTY.
      */
     private void updateProcessState(DwcaValidationReport report, ProcessState state) {
+      // update the state of the occurrence indexing
       if (report.getOccurrenceReport() == null) {
         createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_OCCURRENCE, ProcessState.EMPTY);
       } else {
         createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_OCCURRENCE, state);
       }
 
-      if (report.getChecklistReport() == null) {
-        createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_CHECKLIST, ProcessState.EMPTY);
-      } else {
-        createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_CHECKLIST, state);
-      }
-    }
+      // if there is no report, we record empty, otherwise we record the given state
+      ProcessState genericState = report.getGenericReport() == null ? ProcessState.EMPTY : state;
 
+      Dataset dataset = datasetService.get(report.getDatasetKey());
+
+      if (dataset.getType() == DatasetType.CHECKLIST) {
+        createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_CHECKLIST, genericState);
+      } else if (dataset.getType() == DatasetType.SAMPLING_EVENT) {
+        createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_SAMPLE, genericState);
+      }
+      // otherwise, we do nothing
+    }
   }
 }

@@ -99,8 +99,16 @@ public class DatasetProcessServiceImplTest {
       .forPath(buildPath(DWCA_CRAWL, CrawlerNodePaths.RUNNING_CRAWLS));
 
     curator.create()
-      .creatingParentsIfNeeded()
-      .forPath(buildPath(DWCA_CRAWL, CrawlerNodePaths.QUEUED_CRAWLS));
+           .creatingParentsIfNeeded()
+           .forPath(buildPath(DWCA_CRAWL, CrawlerNodePaths.QUEUED_CRAWLS));
+
+    curator.create()
+           .creatingParentsIfNeeded()
+           .forPath(buildPath(XML_CRAWL, CrawlerNodePaths.RUNNING_CRAWLS));
+
+    curator.create()
+           .creatingParentsIfNeeded()
+           .forPath(buildPath(XML_CRAWL, CrawlerNodePaths.QUEUED_CRAWLS));
 
     for (int i = 0; i < 10; i++) {
       UUID uuid = UUID.randomUUID();

@@ -51,9 +51,11 @@ public class DwcaValidator {
      DatasetType.CHECKLIST, DwcTerm.taxonID,
      DatasetType.SAMPLING_EVENT, DwcTerm.eventID);
 
-  // limit the numner of checked records to protect against memory exhaustion
+  // limit the number of checked records to protect against memory exhaustion
   private static final int MAX_RECORDS = 2000000;
-  private static final int MAX_DUPLICATES = 100;
+
+  // the number of samples to store to illustrate issues
+  private static final int MAX_EXAMPLE_ERRORS = 100;
 
   private int checkedRecords;
   private int recordsWithInvalidTriplets;
@@ -125,10 +127,10 @@ public class DwcaValidator {
     for (StarRecord rec : archive) {
       records++;
       String id = useCoreID ? rec.core().id() : rec.core().value(term);
-      if (linesMissingIds.size() < MAX_DUPLICATES && Strings.isNullOrEmpty(id)) {
+      if (linesMissingIds.size() < MAX_EXAMPLE_ERRORS && Strings.isNullOrEmpty(id)) {
         linesMissingIds.add(records);
       }
-      if (duplicateIds.size() < MAX_DUPLICATES && ids.contains(id)) {
+      if (duplicateIds.size() < MAX_EXAMPLE_ERRORS && ids.contains(id)) {
         duplicateIds.add(id);
       }
 
