@@ -52,6 +52,7 @@ import static org.gbif.crawler.constants.CrawlerNodePaths.PAGES_CRAWLED;
 import static org.gbif.crawler.constants.CrawlerNodePaths.PAGES_FRAGMENTED_ERROR;
 import static org.gbif.crawler.constants.CrawlerNodePaths.PAGES_FRAGMENTED_SUCCESSFUL;
 import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_CHECKLIST;
+import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_SAMPLE;
 import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_OCCURRENCE;
 import static org.gbif.crawler.constants.CrawlerNodePaths.QUEUED_CRAWLS;
 import static org.gbif.crawler.constants.CrawlerNodePaths.RAW_OCCURRENCES_PERSISTED_ERROR;
@@ -144,6 +145,7 @@ public class DatasetProcessServiceImpl implements DatasetProcessService {
 
         builder.processStateOccurrence(getState(datasetKey, PROCESS_STATE_OCCURRENCE));
         builder.processStateChecklist(getState(datasetKey, PROCESS_STATE_CHECKLIST));
+        builder.processStateSample(getState(datasetKey, PROCESS_STATE_SAMPLE));
 
         path = getCrawlInfoPath(datasetKey, FINISHED_CRAWLING);
         if (curator.checkExists().forPath(path) != null) {
