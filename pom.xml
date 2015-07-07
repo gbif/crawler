@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.gbif</groupId>
     <artifactId>motherpom</artifactId>
-    <version>23-SNAPSHOT</version>
+    <version>23</version>
   </parent>
 
   <groupId>org.gbif.crawler</groupId>
@@ -31,16 +31,16 @@
     <curator.version>2.6.0</curator.version>
     <fest.version>2.0M10</fest.version>
     <dwc-api.version>1.8</dwc-api.version>
-    <dwca-io.version>1.24-SNAPSHOT</dwca-io.version>
-    <gbif-api.version>0.23-SNAPSHOT</gbif-api.version>
-    <gbif-cli.version>0.10-SNAPSHOT</gbif-cli.version>
-    <gbif-postal-service.version>0.15-SNAPSHOT</gbif-postal-service.version>
-    <gbif-common.version>0.18-SNAPSHOT</gbif-common.version>
+    <dwca-io.version>1.24</dwca-io.version>
+    <gbif-api.version>0.24</gbif-api.version>
+    <gbif-cli.version>0.10</gbif-cli.version>
+    <gbif-postal-service.version>0.15</gbif-postal-service.version>
+    <gbif-common.version>0.18</gbif-common.version>
     <gbif-common-service.version>0.12</gbif-common-service.version>
     <gbif-common-ws.version>0.22</gbif-common-ws.version>
-    <gbif-httputils.version>0.7-SNAPSHOT</gbif-httputils.version>
-    <gbif-occurrence.version>0.32-SNAPSHOT</gbif-occurrence.version>
-    <gbif-registry.version>2.30-SNAPSHOT</gbif-registry.version>
+    <gbif-httputils.version>0.7</gbif-httputils.version>
+    <gbif-occurrence.version>0.32</gbif-occurrence.version>
+    <gbif-registry.version>2.30</gbif-registry.version>
     <gbif-wrangler.version>0.2</gbif-wrangler.version>
     <guava.version>17.0</guava.version>
     <guice.version>3.0</guice.version>
