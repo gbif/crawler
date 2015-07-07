@@ -1,7 +1,7 @@
 package org.gbif.crawler.dwca.validator;
 
-import org.gbif.api.model.crawler.ChecklistValidationReport;
 import org.gbif.api.model.crawler.DwcaValidationReport;
+import org.gbif.api.model.crawler.GenericValidationReport;
 import org.gbif.api.model.crawler.OccurrenceValidationReport;
 import org.gbif.api.model.registry.Dataset;
 import org.gbif.api.vocabulary.DatasetType;
@@ -13,33 +13,53 @@ import org.gbif.dwca.record.StarRecord;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
 
 import com.beust.jcommander.internal.Lists;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Simple validation of the unique identifiers of a DwC-A.
- * This class is verifying occurrence and taxon data and marks other datasets as invalids.
- * Occurrence records are checked whether they are in the core or as an extension.
- * Therefore the number of validated records for archives with an Occurrence extension is different to the number of
- * core records or rows in the core data file.
+ * This performs the validity checking for DwC-A for the purposes <em>of deciding if the archive
+ * is valid to continue in GBIF indexing only</em>.  It is not intended to be a validity checker for a wider community who should impose
+ * stricter checking than this offers.
+ * <p/>
+ * This verifies:
+ * <ul>
+ *   <li>Verification that core identifiers are present and unique in the core file</li>
+ *   <li>Verification that the contract is respected for uniqueness of either occurrenceID or the holy triplet (where
+ *   applicable)</li>
+ * </ul>
+ * Please note that:
+ * <ul>
+ *   <li>This class is validating only Occurrence, Taxon and Sample based datasets, marking others as invalid.</li>
+ *   <li>The number of validated records can differ to the number of core records when Occurrence extensions are
+ *   used</li>
+ * </ul>
  */
 public class DwcaValidator {
 
   private static final Logger LOG = LoggerFactory.getLogger(DwcaValidator.class);
 
-  // to conserve memory we won't read more than this
-  private static final int MAX_RECORDS = 2000000;
-  private static final int MAX_DUPLICATES = 100;
+  // The mapping of dataset type to primary key term in the core
+  private static final Map<DatasetType, DwcTerm> DATASET_TYPE_CORE_ID = ImmutableMap.of(
+     DatasetType.CHECKLIST, DwcTerm.taxonID,
+     DatasetType.SAMPLING_EVENT, DwcTerm.eventID);
 
-  private int checkedRecords = 0;
-  private int recordsWithInvalidTriplets = 0;
-  private int recordsMissingOccurrenceId = 0;
+  // limit the number of checked records to protect against memory exhaustion
+  private static final int MAX_RECORDS = 2000000;
+
+  // the number of samples to store to illustrate issues
+  private static final int MAX_EXAMPLE_ERRORS = 100;
+
+  private int checkedRecords;
+  private int recordsWithInvalidTriplets;
+  private int recordsMissingOccurrenceId;
   // unique occurrenceIds
   private Set<String> uniqueOccurrenceIds = Sets.newHashSet();
   // unique triplets
@@ -71,35 +91,46 @@ public class DwcaValidator {
     if (dataset.getType() == DatasetType.OCCURRENCE) {
       return new DwcaValidationReport(dataset.getKey(), validateOccurrenceCore(archive));
 
-    } else if (dataset.getType() == DatasetType.CHECKLIST) {
-      ChecklistValidationReport taxonReport = validateTaxonCore(archive);
+    } else if (DATASET_TYPE_CORE_ID.keySet().contains(dataset.getType())) {
+      GenericValidationReport report = validateGenericCore(archive, DATASET_TYPE_CORE_ID.get(dataset.getType()));
+
+      // validate any occurrence extension
       if (archive.getExtension(DwcTerm.Occurrence) == null) {
-        return new DwcaValidationReport(dataset.getKey(), taxonReport);
+        LOG.info("Dataset [{}] of type[{}] has an archive with no mapped occurrence extension", dataset.getKey(),
+                 dataset.getType());
+        return new DwcaValidationReport(dataset.getKey(), report);
       } else {
         return new DwcaValidationReport(dataset.getKey(), validateOccurrenceExtension(archive, DwcTerm.Occurrence),
-          taxonReport, null);
+                                        report, null);
       }
 
     } else {
-      LOG.info("Passing through DwC-A for dataset [{}] because it does not have any information to validate.",
-        dataset.getKey());
-      return new DwcaValidationReport(dataset.getKey(), "No Occurrence or Taxon information present");
+      LOG.info("DwC-A for dataset[{}] of type[{}] is INVALID because it is not a supported type",
+        dataset.getKey(), dataset.getType());
+      return new DwcaValidationReport(dataset.getKey(), "Dataset type[" + dataset.getType() +
+                                                        "] is not supported in indexing");
     }
   }
 
-  private ChecklistValidationReport validateTaxonCore(Archive archive) {
+  /**
+   * Performs basic checking that the primary key constraints are satisfied (present and unique).
+   * @param archive To check
+   * @param term To use to verify the uniqueness (e.g. DwcTerm.taxonID for taxon core)
+   * @return The report produced
+   */
+  private GenericValidationReport validateGenericCore(Archive archive, Term term) {
     int records = 0;
     List<String> duplicateIds = Lists.newArrayList();
     List<Integer> linesMissingIds = Lists.newArrayList();
     Set<String> ids = Sets.newHashSet();
-    final boolean useCoreID = !archive.getCore().hasTerm(DwcTerm.taxonID);
+    final boolean useCoreID = !archive.getCore().hasTerm(term);
     for (StarRecord rec : archive) {
       records++;
-      String id = useCoreID ? rec.core().id() : rec.core().value(DwcTerm.taxonID);
-      if (linesMissingIds.size() < MAX_DUPLICATES && Strings.isNullOrEmpty(id)) {
+      String id = useCoreID ? rec.core().id() : rec.core().value(term);
+      if (linesMissingIds.size() < MAX_EXAMPLE_ERRORS && Strings.isNullOrEmpty(id)) {
         linesMissingIds.add(records);
       }
-      if (duplicateIds.size() < MAX_DUPLICATES && ids.contains(id)) {
+      if (duplicateIds.size() < MAX_EXAMPLE_ERRORS && ids.contains(id)) {
         duplicateIds.add(id);
       }
 
@@ -107,7 +138,7 @@ public class DwcaValidator {
         ids.add(id);
       }
     }
-    return new ChecklistValidationReport(records, records != MAX_RECORDS, duplicateIds, linesMissingIds);
+    return new GenericValidationReport(records, records != MAX_RECORDS, duplicateIds, linesMissingIds);
   }
 
   private OccurrenceValidationReport validateOccurrenceCore(Archive archive) {

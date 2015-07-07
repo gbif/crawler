@@ -235,51 +235,51 @@ public class DwcaValidatorTest {
     Archive archive = DwcaTestUtil.openArchive("/dwca/checklist_good_taxonid.zip");
     DwcaValidationReport report = DwcaValidator.validate(dataset, archive);
     assertTrue("Validation failed: " + report.getInvalidationReason(), report.isValid());
-    assertEquals(15, report.getChecklistReport().getCheckedRecords());
-    assertTrue(report.getChecklistReport().getDuplicateIds().isEmpty());
-    assertTrue(report.getChecklistReport().getMissingIds().isEmpty());
+    assertEquals(15, report.getGenericReport().getCheckedRecords());
+    assertTrue(report.getGenericReport().getDuplicateIds().isEmpty());
+    assertTrue(report.getGenericReport().getRowNumbersMissingId().isEmpty());
 
     DwcaTestUtil.cleanupArchive(archive);
   }
 
 
   @Test
-  public void testGoodChecklistCore() throws IOException {
+  public void testGoodGenericCore() throws IOException {
     dataset.setType(DatasetType.CHECKLIST);
     Archive archive = DwcaTestUtil.openArchive("/dwca/checklist_good_coreid.zip");
     DwcaValidationReport report = DwcaValidator.validate(dataset, archive);
     assertTrue("Validation failed: " + report.getInvalidationReason(), report.isValid());
-    assertEquals(15, report.getChecklistReport().getCheckedRecords());
-    assertEquals(0, report.getChecklistReport().getDuplicateIds().size());
-    assertEquals(0, report.getChecklistReport().getMissingIds().size());
+    assertEquals(15, report.getGenericReport().getCheckedRecords());
+    assertEquals(0, report.getGenericReport().getDuplicateIds().size());
+    assertEquals(0, report.getGenericReport().getRowNumbersMissingId().size());
 
     DwcaTestUtil.cleanupArchive(archive);
   }
 
 
   @Test
-  public void testBadChecklistMissing() throws IOException {
+  public void testBadGenericMissing() throws IOException {
     dataset.setType(DatasetType.CHECKLIST);
     Archive archive = DwcaTestUtil.openArchive("/dwca/checklist_missing_taxonid.zip");
     DwcaValidationReport report = DwcaValidator.validate(dataset, archive);
     assertFalse("Validation succeeded", report.isValid());
-    assertEquals(15, report.getChecklistReport().getCheckedRecords());
-    assertEquals(0, report.getChecklistReport().getDuplicateIds().size());
-    assertEquals(2, report.getChecklistReport().getMissingIds().size());
+    assertEquals(15, report.getGenericReport().getCheckedRecords());
+    assertEquals(0, report.getGenericReport().getDuplicateIds().size());
+    assertEquals(2, report.getGenericReport().getRowNumbersMissingId().size());
 
     DwcaTestUtil.cleanupArchive(archive);
   }
 
 
   @Test
-  public void testBadChecklistDupl() throws IOException {
+  public void testBadGenericDupl() throws IOException {
     dataset.setType(DatasetType.CHECKLIST);
     Archive archive = DwcaTestUtil.openArchive("/dwca/checklist_dupl_coreid.zip");
     DwcaValidationReport report = DwcaValidator.validate(dataset, archive);
     assertFalse("Validation succeeded", report.isValid());
-    assertEquals(15, report.getChecklistReport().getCheckedRecords());
-    assertEquals(1, report.getChecklistReport().getDuplicateIds().size());
-    assertEquals(0, report.getChecklistReport().getMissingIds().size());
+    assertEquals(15, report.getGenericReport().getCheckedRecords());
+    assertEquals(1, report.getGenericReport().getDuplicateIds().size());
+    assertEquals(0, report.getGenericReport().getRowNumbersMissingId().size());
 
     DwcaTestUtil.cleanupArchive(archive);
   }

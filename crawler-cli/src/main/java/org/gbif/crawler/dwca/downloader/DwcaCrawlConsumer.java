@@ -31,6 +31,7 @@ import static org.gbif.crawler.constants.CrawlerNodePaths.FINISHED_REASON;
 import static org.gbif.crawler.constants.CrawlerNodePaths.PAGES_CRAWLED;
 import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_CHECKLIST;
 import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_OCCURRENCE;
+import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_SAMPLE;
 
 /**
  * Consumer of the crawler queue that runs the actual dwc archive download and emits a DwcaDownloadFinishedMessage
@@ -102,9 +103,10 @@ public class DwcaCrawlConsumer extends CrawlConsumer {
   private void failed(UUID datasetKey) {
     failedDownloads.inc();
     createOrUpdate(curator, datasetKey, FINISHED_REASON, FinishReason.ABORT);
-    // we dont know the kind of dataset so we just put both states to finish
+    // we dont know the kind of dataset so we just put all states to finish
     createOrUpdate(curator, datasetKey, PROCESS_STATE_OCCURRENCE, ProcessState.FINISHED);
     createOrUpdate(curator, datasetKey, PROCESS_STATE_CHECKLIST, ProcessState.FINISHED);
+    createOrUpdate(curator, datasetKey, PROCESS_STATE_SAMPLE, ProcessState.FINISHED);
   }
 
   private void notModified(UUID datasetKey) {
@@ -112,9 +114,10 @@ public class DwcaCrawlConsumer extends CrawlConsumer {
     LOG.info("DwC-A for dataset [{}] not modified. Crawl finished", datasetKey);
     // If the archive wasn't modified we are done processing so we need to update ZooKeeper to reflect this
     createOrUpdate(curator, datasetKey, FINISHED_REASON, FinishReason.NOT_MODIFIED);
-    // we dont know the kind of dataset so we just put both states to finish
+    // we dont know the kind of dataset so we just put all states to finish
     createOrUpdate(curator, datasetKey, PROCESS_STATE_OCCURRENCE, ProcessState.FINISHED);
     createOrUpdate(curator, datasetKey, PROCESS_STATE_CHECKLIST, ProcessState.FINISHED);
+    createOrUpdate(curator, datasetKey, PROCESS_STATE_SAMPLE, ProcessState.FINISHED);
   }
 
   private void success(UUID datasetKey, CrawlJob crawlJob) {

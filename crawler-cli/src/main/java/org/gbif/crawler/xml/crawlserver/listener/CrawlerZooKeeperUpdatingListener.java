@@ -29,6 +29,7 @@ import static org.gbif.crawler.constants.CrawlerNodePaths.FINISHED_REASON;
 import static org.gbif.crawler.constants.CrawlerNodePaths.PAGES_CRAWLED;
 import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_CHECKLIST;
 import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_OCCURRENCE;
+import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_SAMPLE;
 import static org.gbif.crawler.constants.CrawlerNodePaths.STARTED_CRAWLING;
 
 @NotThreadSafe
@@ -54,8 +55,9 @@ public class CrawlerZooKeeperUpdatingListener<CTX extends CrawlContext>
   @Override
   public void startCrawl() {
     updateDate(curator, configuration.getDatasetKey(), STARTED_CRAWLING);
-    // xml crawls are never for checklists, so set state to empty
+    // xml crawls are never for checklists or sample based, so set state to empty
     createOrUpdate(curator, configuration.getDatasetKey(), PROCESS_STATE_CHECKLIST, ProcessState.EMPTY);
+    createOrUpdate(curator, configuration.getDatasetKey(), PROCESS_STATE_SAMPLE, ProcessState.EMPTY);
     createOrUpdate(curator, configuration.getDatasetKey(), PROCESS_STATE_OCCURRENCE, ProcessState.RUNNING);
   }
 

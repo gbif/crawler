@@ -113,6 +113,7 @@ public class DwcaFragmenterService extends AbstractIdleService {
         handleOccurrenceCore(datasetKey, archive, message);
 
       } else if (archive.getExtension(DwcTerm.Occurrence) != null) {
+        // e.g. Sample and Taxon archives can have occurrences
         handleOccurrenceExtension(datasetKey, archive, DwcTerm.Occurrence, message);
 
       } else {
