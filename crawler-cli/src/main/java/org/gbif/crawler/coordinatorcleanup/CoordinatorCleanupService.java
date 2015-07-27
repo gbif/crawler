@@ -58,7 +58,21 @@ public class CoordinatorCleanupService extends AbstractScheduledService {
   }
 
   @Override
-  protected void runOneIteration() throws Exception {
+  protected void runOneIteration() {
+    try {
+      runOnce();
+    } catch (Exception e) {
+      LOG.error("Unexpected exception running loop to clean ZK cause by [{}].  Restarting curator, and continuing...",
+                e.getMessage(), e);
+      try {
+        initializeCurator();
+      } catch(Exception e2) {
+        LOG.error("Unexpected exception initializing curator.  Continuing...", e);
+      }
+    }
+  }
+
+  private void runOnce() throws Exception {
     LOG.info("Checking if any crawls have finished now.");
     Set<DatasetProcessStatus> statuses;
     try {
@@ -86,7 +100,7 @@ public class CoordinatorCleanupService extends AbstractScheduledService {
       LOG.debug(MAPPER.writeValueAsString(status));
       try {
         File file = new File(configuration.archiveDirectory,
-          status.getDatasetKey() + "_" + status.getCrawlJob().getAttempt() + "_result.json");
+                             status.getDatasetKey() + "_" + status.getCrawlJob().getAttempt() + "_result.json");
         Files.createParentDirs(file);
         Files.write(MAPPER.writeValueAsBytes(status), file);
       } catch (IOException e) {
@@ -109,12 +123,27 @@ public class CoordinatorCleanupService extends AbstractScheduledService {
       new SingleUserAuthModule(configuration.registry.user, configuration.registry.password));
     service = injector.getInstance(DatasetProcessService.class);
     registryService = injector.getInstance(DatasetProcessStatusService.class);
-    curator = configuration.zooKeeper.getCuratorFramework();
+    curator = initializeCurator();
     MAPPER.configure(SerializationConfig.Feature.INDENT_OUTPUT, true);
+  }
+
+  /**
+   * Initializes the curator framework, attempting to close it first if it is already established.
+   * If Zookeeper connectivity is disrupted for example, curator needs reconfigured.
+   */
+  private CuratorFramework initializeCurator() throws IOException {
+    if (curator != null) {
+      try {
+        curator.close();
+      } catch (Exception e) {}
+    }
+    curator = configuration.zooKeeper.getCuratorFramework();
+    return curator;
   }
 
   @Override
   protected void shutDown() throws Exception {
+    LOG.info("Shutting down");
     if (curator != null) {
       curator.close();
     }
