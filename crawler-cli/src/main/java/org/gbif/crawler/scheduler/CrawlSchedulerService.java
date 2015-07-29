@@ -89,6 +89,7 @@ public class CrawlSchedulerService extends AbstractScheduledService {
     do {
       if (numberInitiated >= configuration.maximumCrawlsPerRun) {
         LOG.info("Reached limit of how many crawls to initiate per iteration [{}]", numberInitiated);
+        break;
       }
       datasets = datasetService.list(pageable);
       for (Dataset dataset : datasets.getResults()) {
