@@ -12,46 +12,61 @@
  */
 package org.gbif.crawler.scheduler;
 
+import org.gbif.api.exception.ServiceUnavailableException;
 import org.gbif.api.model.common.paging.PagingRequest;
 import org.gbif.api.model.common.paging.PagingResponse;
 import org.gbif.api.model.crawler.DatasetProcessStatus;
 import org.gbif.api.model.registry.Dataset;
+import org.gbif.api.model.registry.Endpoint;
+import org.gbif.api.model.registry.MachineTag;
 import org.gbif.api.service.crawler.DatasetProcessService;
 import org.gbif.api.service.registry.DatasetProcessStatusService;
 import org.gbif.api.service.registry.DatasetService;
+import org.gbif.api.util.MachineTagUtils;
 import org.gbif.cli.ConfigUtils;
 import org.gbif.common.messaging.DefaultMessagePublisher;
 import org.gbif.common.messaging.api.Message;
 import org.gbif.common.messaging.api.messages.StartCrawlMessage;
+import org.gbif.crawler.constants.CrawlerNodePaths;
 import org.gbif.crawler.ws.client.guice.CrawlerWsClientModule;
 import org.gbif.registry.ws.client.guice.RegistryWsClientModule;
 import org.gbif.ws.client.guice.AnonymousAuthModule;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 import java.util.Properties;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import com.google.common.base.Charsets;
+import com.google.common.base.Optional;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.joda.time.DateTime;
+import org.joda.time.Days;
 import org.joda.time.ReadableInstant;
 import org.joda.time.Weeks;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static org.gbif.api.vocabulary.TagName.DECLARED_RECORD_COUNT;
+
 /**
- * This service scans the registry at a configurable interval and schedules a crawl for all Datasets that fulfill a few
- * conditions:
+ * This service scans the registry at a configurable interval and schedules a crawl for Datasets that fulfill a few
+ * conditions, up to a configured maximum number of datasets per run:
  * <ul>
  * <li>The dataset is not deleted</li>
  * <li>The dataset is not external</li>
  * <li>The dataset has never been crawled before</li>
- * <li>The dataset hasn't been crawled in a week</li>
+ * <li>The dataset hasn't been crawled within the permissible time window</li>
+ * <li>The dataset is not tagged in a way that prevent auto-scheduled crawling</li>
  * </ul>
  */
 public class CrawlSchedulerService extends AbstractScheduledService {
-
+  public static final String CRAWLER_NAMESPACE = "crawler.gbif.org";
+  public static final String TAG_EXCLUDE_FROM_SCHEDULED_CRAWL = "noScheduledCrawl";
   private static final Logger LOG = LoggerFactory.getLogger(CrawlSchedulerService.class);
   private final CrawlSchedulerConfiguration configuration;
   private DefaultMessagePublisher publisher;
@@ -70,19 +85,24 @@ public class CrawlSchedulerService extends AbstractScheduledService {
 
     PagingRequest pageable = new PagingRequest();
     PagingResponse<Dataset> datasets;
+    int numberInitiated = 0;
     do {
+      if (numberInitiated >= configuration.maximumCrawlsPerRun) {
+        LOG.info("Reached limit of how many crawls to initiate per iteration [{}]", numberInitiated);
+      }
       datasets = datasetService.list(pageable);
       for (Dataset dataset : datasets.getResults()) {
         if (isDatasetEligibleToCrawl(dataset, now)) {
           LOG.debug("Eligible to crawl [{}]", dataset.getKey());
           startCrawl(dataset);
+          numberInitiated++;
         } else {
           LOG.debug("Not eligible to crawl [{}]", dataset.getKey());
         }
       }
       pageable.nextPage();
     } while (!datasets.isEndOfRecords());
-    LOG.info("Finished checking for datasets");
+    LOG.info("Finished checking for datasets, having initiated {} crawls", numberInitiated);
   }
 
   @Override
@@ -120,15 +140,20 @@ public class CrawlSchedulerService extends AbstractScheduledService {
     PagingResponse<DatasetProcessStatus> list = registryService.listDatasetProcessStatus(dataset.getKey(), null);
 
     // We always crawl datasets that haven't been crawled before
-    if (list.getResults().isEmpty()) {
+    if (list.getResults().isEmpty() ) {
       return true;
     }
 
     DatasetProcessStatus status = list.getResults().get(0);
     ReadableInstant lastCrawlDate = new DateTime(status.getFinishedCrawling());
 
-    // Check whether less than a week has passed since the last crawl
-    if (Weeks.weeksBetween(lastCrawlDate, now).getWeeks() < 1) {
+    // Check whether if it was last crawled in the permissible window
+    if (Days.daysBetween(lastCrawlDate, now).getDays() < configuration.maxLastCrawledInDays) {
+      return false;
+    }
+
+    // Check whether there is a machine tag that omits this dataset from crawling
+    if (tagsExcludeFromScheduledCrawling(dataset)) {
       return false;
     }
 
@@ -144,7 +169,20 @@ public class CrawlSchedulerService extends AbstractScheduledService {
     } catch (IOException e) {
       LOG.error("Caught exception while sending crawl message", e);
     }
-
   }
 
+  /**
+   * Returns true if there is a machine tag on the registry that excludes the dataset from being crawled on a schedule.
+   */
+  private boolean tagsExcludeFromScheduledCrawling(Dataset dataset) {
+    List<MachineTag> filteredTags = MachineTagUtils.list(dataset, CRAWLER_NAMESPACE, TAG_EXCLUDE_FROM_SCHEDULED_CRAWL);
+    for (MachineTag tag : filteredTags) {
+      if (Boolean.parseBoolean(tag.getValue())) {
+        LOG.info("Dataset [{}] has been tagged [{}:{}] to be excluded from scheduled crawling", dataset.getKey(),
+                 CRAWLER_NAMESPACE, TAG_EXCLUDE_FROM_SCHEDULED_CRAWL);
+        return true;
+      }
+    }
+    return false;
+  }
 }

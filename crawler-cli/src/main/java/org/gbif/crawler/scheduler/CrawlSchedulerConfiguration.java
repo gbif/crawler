@@ -39,6 +39,17 @@ public class CrawlSchedulerConfiguration {
   @Min(1)
   public int interval = 6000;
 
+  @Parameter(names = "--last-crawled", description = "The number of days that must have expired since the last crawl "
+                                                     + "to make a dataset eligible for a recrawl (e.g. 90 would trigger"
+                                                     + "crawls of datasets that have not been crawled in the last 90 "
+                                                     + "days)")
+  @Min(1)
+  public int maxLastCrawledInDays = 90;
+
+  @Parameter(names = "--max-crawls", description = "Number of crawls that can be submitted in any one cycle")
+  @Min(1)
+  public int maximumCrawlsPerRun = 50;
+
   @ParametersDelegate
   @Valid
   @NotNull
