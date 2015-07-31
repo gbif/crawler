@@ -126,46 +126,56 @@ public class FragmenterService extends AbstractIdleService {
       Stopwatch stopwatch = Stopwatch.createStarted();
       OccurrenceParser parser = new OccurrenceParser();
       List<RawXmlOccurrence> list = null;
+
       try {
-        list = parser.parseStream(new ByteArrayInputStream(message.getResponse()));
-      } catch (ParsingException e) {
-        LOG.warn("Error while parsing response for dataset [{}], status [{}]", message.getDatasetUuid(),
-          message.getStatus(), e);
-        incrementCounter(message.getDatasetUuid() + "/" + PAGES_FRAGMENTED_ERROR, 1);
-      }
-
-      if (list == null || list.isEmpty()) {
-        incrementCounter(message.getDatasetUuid() + "/" + PAGES_FRAGMENTED_SUCCESSFUL, 1);
-        return;
-      }
-
-      LOG.info("Sending [{}] occurrences for dataset [{}]", list.size(), message.getDatasetUuid());
-
-      DatasetProcessStatus status = crawlerWsClient.getDatasetProcessStatus(message.getDatasetUuid());
-      EndpointType endpointType = null;
-      if (status != null && status.getCrawlJob() != null) {
-        endpointType = status.getCrawlJob().getEndpointType();
-      }
-
-      if (endpointType == null) {
-        LOG.warn("EndpointType is null - this shouldn't happen. Can't send fragment messages for " + "dataset [{}]",
-          message.getDatasetUuid());
-        incrementCounter(message.getDatasetUuid() + "/" + PAGES_FRAGMENTED_ERROR, 1);
-      } else {
-        for (RawXmlOccurrence rawXmlOccurrence : list) {
-          byte[] bytes = rawXmlOccurrence.getXml().getBytes(Charsets.UTF_8);
-          OccurrenceFragmentedMessage resultMessage =
-            new OccurrenceFragmentedMessage(message.getDatasetUuid(), message.getAttempt(), bytes,
-              rawXmlOccurrence.getSchemaType(), endpointType, null);
-
-          try {
-            publisher.send(resultMessage);
-          } catch (IOException e) {
-            LOG.error("Error sending message", e);
-          }
+        try {
+          list = parser.parseStream(new ByteArrayInputStream(message.getResponse()));
+        } catch (ParsingException e) {
+          LOG.warn("Error while parsing response for dataset [{}], status [{}]", message.getDatasetUuid(),
+            message.getStatus(), e);
+          incrementCounter(message.getDatasetUuid() + "/" + PAGES_FRAGMENTED_ERROR, 1);
         }
-        incrementCounter(message.getDatasetUuid() + "/" + PAGES_FRAGMENTED_SUCCESSFUL, 1);
-        incrementCounter(message.getDatasetUuid() + "/" + FRAGMENTS_EMITTED, list.size());
+
+        if (list == null || list.isEmpty()) {
+          incrementCounter(message.getDatasetUuid() + "/" + PAGES_FRAGMENTED_SUCCESSFUL, 1);
+          return;
+        }
+
+        LOG.info("Sending [{}] occurrences for dataset [{}]", list.size(), message.getDatasetUuid());
+
+        DatasetProcessStatus status = crawlerWsClient.getDatasetProcessStatus(message.getDatasetUuid());
+        EndpointType endpointType = null;
+        if (status != null && status.getCrawlJob() != null) {
+          endpointType = status.getCrawlJob().getEndpointType();
+        }
+
+        if (endpointType == null) {
+          LOG.warn("EndpointType is null - this shouldn't happen. Can't send fragment messages for " + "dataset [{}]",
+            message.getDatasetUuid());
+          incrementCounter(message.getDatasetUuid() + "/" + PAGES_FRAGMENTED_ERROR, 1);
+        } else {
+          for (RawXmlOccurrence rawXmlOccurrence : list) {
+            byte[] bytes = rawXmlOccurrence.getXml().getBytes(Charsets.UTF_8);
+            OccurrenceFragmentedMessage resultMessage =
+              new OccurrenceFragmentedMessage(message.getDatasetUuid(), message.getAttempt(), bytes,
+                rawXmlOccurrence.getSchemaType(), endpointType, null);
+
+            try {
+              publisher.send(resultMessage);
+            } catch (IOException e) {
+              LOG.error("Error sending message", e);
+            }
+          }
+          incrementCounter(message.getDatasetUuid() + "/" + PAGES_FRAGMENTED_SUCCESSFUL, 1);
+          incrementCounter(message.getDatasetUuid() + "/" + FRAGMENTS_EMITTED, list.size());
+        }
+      } catch (Exception e) {
+        // We are consistently seeing ZK report crawled pages higher than fragmented pages, but never any
+        // errors.  This catch all is an attempt to address that, accepting that we would not NACK messages
+        // and not retry.  This is acceptable as it might help keep ZK clean, at a cost of perhaps dropping
+        // pages.
+        LOG.error("Unhandled error fragmenting page", e);
+        incrementCounter(message.getDatasetUuid() + "/" + PAGES_FRAGMENTED_ERROR, 1);
       }
 
       stopwatch.stop();
