@@ -23,6 +23,8 @@ import org.gbif.api.service.crawler.DatasetProcessService;
 import org.gbif.api.service.registry.DatasetProcessStatusService;
 import org.gbif.api.service.registry.DatasetService;
 import org.gbif.api.util.MachineTagUtils;
+import org.gbif.api.vocabulary.DatasetType;
+import org.gbif.api.vocabulary.EndpointType;
 import org.gbif.cli.ConfigUtils;
 import org.gbif.common.messaging.DefaultMessagePublisher;
 import org.gbif.common.messaging.api.Message;
@@ -66,7 +68,7 @@ import static org.gbif.api.vocabulary.TagName.DECLARED_RECORD_COUNT;
  */
 public class CrawlSchedulerService extends AbstractScheduledService {
   public static final String CRAWLER_NAMESPACE = "crawler.gbif.org";
-  public static final String TAG_EXCLUDE_FROM_SCHEDULED_CRAWL = "noScheduledCrawl";
+  public static final String TAG_EXCLUDE_FROM_SCHEDULED_CRAWL = "omitFromScheduledCrawl";
   private static final Logger LOG = LoggerFactory.getLogger(CrawlSchedulerService.class);
   private final CrawlSchedulerConfiguration configuration;
   private DefaultMessagePublisher publisher;
@@ -74,13 +76,14 @@ public class CrawlSchedulerService extends AbstractScheduledService {
   private DatasetProcessService crawlService;
   private DatasetProcessStatusService registryService;
 
+
   public CrawlSchedulerService(CrawlSchedulerConfiguration configuration) {
     this.configuration = configuration;
   }
 
   @Override
   protected void runOneIteration() throws Exception {
-    LOG.info("Checking for datasets to crawl now");
+    LOG.info("Starting checks for datasets eligible to be crawled");
     ReadableInstant now = new DateTime();
 
     PagingRequest pageable = new PagingRequest();
@@ -93,16 +96,26 @@ public class CrawlSchedulerService extends AbstractScheduledService {
       }
       datasets = datasetService.list(pageable);
       for (Dataset dataset : datasets.getResults()) {
-        if (isDatasetEligibleToCrawl(dataset, now)) {
-          LOG.debug("Eligible to crawl [{}]", dataset.getKey());
+        boolean eligibleToCrawl = false;
+        try {
+          eligibleToCrawl = isDatasetEligibleToCrawl(dataset, now);
+        } catch (Exception e) {
+          LOG.error("Unexpected exception determining crawl eligibility for dataset[{}].  Swallowing and continuing",
+                    dataset.getKey(), e);
+        }
+
+        if (eligibleToCrawl) {
           startCrawl(dataset);
           numberInitiated++;
-        } else {
-          LOG.debug("Not eligible to crawl [{}]", dataset.getKey());
+          if (numberInitiated >= configuration.maximumCrawlsPerRun) {
+            LOG.info("Reached limit of how many crawls to initiate per iteration [{}]", numberInitiated);
+            break;
+          }
         }
       }
+
       pageable.nextPage();
-    } while (!datasets.isEndOfRecords());
+    } while (!datasets.isEndOfRecords() && numberInitiated < configuration.maximumCrawlsPerRun);
     LOG.info("Finished checking for datasets, having initiated {} crawls", numberInitiated);
   }
 
@@ -126,48 +139,100 @@ public class CrawlSchedulerService extends AbstractScheduledService {
 
   /**
    * This method checks whether a dataset should automatically be scheduled to crawl or not.
+   * NOTE: This method is structured for simple readability, and not minimum number of lines of code.
    *
    * @return {@code true} if the dataset should be crawled
    */
   private boolean isDatasetEligibleToCrawl(Dataset dataset, ReadableInstant now) {
     if (dataset.getDeleted() != null) {
+      LOG.debug("Not eligible to crawl [{}] - deleted dataset of type [{}]", dataset.getKey(), dataset.getType());
       return false;
     }
 
     if (dataset.isExternal()) {
+      LOG.debug("Not eligible to crawl [{}] - external dataset of type [{}]", dataset.getKey(), dataset.getType());
+      return false;
+    }
+
+    // TODO: REMOVE THIS
+    if (dataset.getType() == DatasetType.CHECKLIST) {
+      LOG.debug("Not eligible to crawl [{}] - Checklists are temporarily omitted from auto-scheduled crawling",
+                dataset.getKey());
+      return false;
+    }
+
+    // TODO: REMOVE THIS
+    if(dataset.getPublishingOrganizationKey().equals(UUID.fromString("d5778510-eb28-11da-8629-b8a03c50a862"))) {
+      LOG.debug("Not eligible to crawl [{}] - PANGAEA temporarily omitted from auto-scheduled crawling",
+                dataset.getKey());
+      return false;
+    }
+
+    // TODO: REMOVE THIS
+    if(dataset.getPublishingOrganizationKey().equals(UUID.fromString("07f617d0-c688-11d8-bf62-b8a03c50a862"))) {
+      LOG.debug("Not eligible to crawl [{}] - UK NBN temporarily omitted from auto-scheduled crawling",
+                dataset.getKey());
+      return false;
+    }
+
+    if (dataset.getType() == DatasetType.METADATA) {
+      LOG.debug("Not eligible to crawl [{}] - Metadata datasets are omitted from auto-scheduled crawling",
+                dataset.getKey());
+      return false;
+    }
+
+    // Datasets that are constituents are ignored (e.g. checklists that span multiple datasets)
+    if (dataset.getParentDatasetKey() != null) {
+      LOG.debug("Not eligible to crawl [{}] - is a constituent dataset of type [{}]", dataset.getKey(),
+                dataset.getType());
       return false;
     }
 
     PagingResponse<DatasetProcessStatus> list = registryService.listDatasetProcessStatus(dataset.getKey(), null);
 
-    // We always crawl datasets that haven't been crawled before
+    // We always try to crawl datasets that have NEVER been successfully crawled
     if (list.getResults().isEmpty() ) {
-      return true;
+      LOG.debug("Crawling dataset [{}] of type [{}] - never been successfully crawled", dataset.getKey(),
+                  dataset.getType());
+      //return true;
+      return false; // TODO REMOVE THIS
     }
 
-    DatasetProcessStatus status = list.getResults().get(0);
-    ReadableInstant lastCrawlDate = new DateTime(status.getFinishedCrawling());
-
     // Check whether if it was last crawled in the permissible window
+    DatasetProcessStatus status = list.getResults().get(0); // last crawl
+    // TODO: do we want last finished, or last tried?
+    // Finished ideally, but... many start and break
+    //ReadableInstant lastCrawlDate = new DateTime(status.getFinishedCrawling());
+    ReadableInstant lastCrawlDate = new DateTime(status.getStartedCrawling());
     if (Days.daysBetween(lastCrawlDate, now).getDays() < configuration.maxLastCrawledInDays) {
+      LOG.debug("Not eligible to crawl [{}] - already crawled within {} days", dataset.getKey(),
+                configuration.maxLastCrawledInDays);
+      return false;
+    }
+
+    // Check whether the Dataset is currently being crawled
+    if (crawlService.getDatasetProcessStatus(dataset.getKey()) != null) {
+      LOG.debug("Not eligible to crawl [{}] - already crawling", dataset.getKey());
       return false;
     }
 
     // Check whether there is a machine tag that omits this dataset from crawling
     if (tagsExcludeFromScheduledCrawling(dataset)) {
+      LOG.debug("Not eligible to crawl [{}] - tagged to be omitted from scheduled crawling [{}:{}]", dataset.getKey(),
+                CRAWLER_NAMESPACE, TAG_EXCLUDE_FROM_SCHEDULED_CRAWL);
       return false;
     }
 
-    // Check whether the Dataset is currently being crawled
-    return crawlService.getDatasetProcessStatus(dataset.getKey()) == null;
+    LOG.debug("Crawling dataset [{}] of type [{}]", dataset.getKey(), dataset.getType());
+    return true;
+
   }
 
   private void startCrawl(Dataset dataset) {
     try {
       Message message = new StartCrawlMessage(dataset.getKey(), StartCrawlMessage.Priority.LOW);
       publisher.send(message);
-      LOG.info("Sent message to crawl [{}]", dataset.getKey());
-    } catch (IOException e) {
+    }  catch (Exception e) {
       LOG.error("Caught exception while sending crawl message", e);
     }
   }
@@ -179,8 +244,6 @@ public class CrawlSchedulerService extends AbstractScheduledService {
     List<MachineTag> filteredTags = MachineTagUtils.list(dataset, CRAWLER_NAMESPACE, TAG_EXCLUDE_FROM_SCHEDULED_CRAWL);
     for (MachineTag tag : filteredTags) {
       if (Boolean.parseBoolean(tag.getValue())) {
-        LOG.info("Dataset [{}] has been tagged [{}:{}] to be excluded from scheduled crawling", dataset.getKey(),
-                 CRAWLER_NAMESPACE, TAG_EXCLUDE_FROM_SCHEDULED_CRAWL);
         return true;
       }
     }

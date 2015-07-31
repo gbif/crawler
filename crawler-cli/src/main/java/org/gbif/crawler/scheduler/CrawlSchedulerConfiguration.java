@@ -57,7 +57,13 @@ public class CrawlSchedulerConfiguration {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this).add("interval", interval).add("crawlerWsUrl", crawlerWsUrl)
-      .add("registryWsUrl", registryWsUrl).toString();
+    return Objects.toStringHelper(this)
+                  .add("crawlerWsUrl", crawlerWsUrl)
+                  .add("registryWsUrl", registryWsUrl)
+                  .add("interval", interval)
+                  .add("maxLastCrawledInDays", maxLastCrawledInDays)
+                  .add("maximumCrawlsPerRun", maximumCrawlsPerRun)
+                  .add("messaging", messaging)
+                  .toString();
   }
 }
