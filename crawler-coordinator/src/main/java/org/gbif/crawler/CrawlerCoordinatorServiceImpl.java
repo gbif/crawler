@@ -382,20 +382,22 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
    */
   private int getAttempt(UUID datasetKey, Dataset dataset, Endpoint endpoint) {
     int attempt = 0;
-    // Find the current attempt if it exists, if it doesn't exist it will be initialized to 1
-    List<MachineTag> attemptTags = MachineTagUtils.list(dataset, CRAWL_ATTEMPT);
-    if (attemptTags.size() == 1) {
-      attempt = Integer.parseInt(attemptTags.get(0).getValue());
-      int tagKey = attemptTags.get(0).getKey();
-      datasetService.deleteMachineTag(datasetKey, tagKey);
-    } else if (attemptTags.size() > 1) {
-      throw new ServiceUnavailableException("crawl_attempt tag exists more than once, clean up first and retry"
-                                            + " [" + datasetKey + "]");
-    }
 
+    // Find the maximum last attempt ID if any exist, deleting all others
+    for (MachineTag tag : MachineTagUtils.list(dataset, CRAWL_ATTEMPT)) {
+      int tagKey = tag.getKey();
+      try {
+        int taggedAttempt = Integer.parseInt(tag.getValue());
+        attempt = (taggedAttempt > attempt) ? taggedAttempt : attempt;
+      } catch (NumberFormatException e) {
+        // Swallow it - the tag is corrupt and should be removed
+      }
+      datasetService.deleteMachineTag(datasetKey, tagKey);
+    }
     // store updated tag
     attempt++;
-    MachineTag tag = new MachineTag(CRAWL_ATTEMPT.getNamespace().getNamespace(), CRAWL_ATTEMPT.getName(), String.valueOf(attempt));
+    MachineTag tag = new MachineTag(CRAWL_ATTEMPT.getNamespace().getNamespace(), CRAWL_ATTEMPT.getName(),
+                                    String.valueOf(attempt));
     datasetService.addMachineTag(datasetKey, tag);
 
     metrics.registerCrawl(endpoint);
