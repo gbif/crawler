@@ -199,8 +199,7 @@ public class CrawlSchedulerService extends AbstractScheduledService {
     if (list.getResults().isEmpty() ) {
       LOG.debug("Crawling dataset [{}] of type [{}] - never been successfully crawled", dataset.getKey(),
                   dataset.getType());
-      //return true;
-      return false; // TODO REMOVE THIS
+      return true;
     }
 
     // Check whether if it was last crawled in the permissible window.
@@ -209,9 +208,10 @@ public class CrawlSchedulerService extends AbstractScheduledService {
     ReadableInstant lastCrawlDate = (status.getFinishedCrawling() == null) ?
       new DateTime(status.getStartedCrawling()) :
       new DateTime(status.getFinishedCrawling()); // prefer end date if given
-    if (Days.daysBetween(lastCrawlDate, now).getDays() < configuration.maxLastCrawledInDays) {
-      LOG.debug("Not eligible to crawl [{}] - already crawled within {} days", dataset.getKey(),
-                configuration.maxLastCrawledInDays);
+    int days = Days.daysBetween(lastCrawlDate, now).getDays();
+    if (days < configuration.maxLastCrawledInDays) {
+      LOG.debug("Not eligible to crawl [{}] - crawled {} days ago, which is within threshold of {} days",
+                dataset.getKey(), days, configuration.maxLastCrawledInDays);
       return false;
     }
 
@@ -247,7 +247,7 @@ public class CrawlSchedulerService extends AbstractScheduledService {
     for (UUID uuid : uuids) {
       if (uuid != null) {
         if (configuration.omittedKeys.containsKey(uuid.toString())) {
-          LOG.debug("Not eligible to crawl [{}]", dataset.getKey(), configuration.omittedKeys.get(uuid.toString()));
+          LOG.debug("Not eligible to crawl [{}] - {}", dataset.getKey(), configuration.omittedKeys.get(uuid.toString()));
           return true;
         }
       }
