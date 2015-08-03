@@ -38,11 +38,15 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Charsets;
+import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -84,6 +88,17 @@ public class CrawlSchedulerService extends AbstractScheduledService {
   @Override
   protected void runOneIteration() throws Exception {
     LOG.info("Starting checks for datasets eligible to be crawled");
+
+    if (LOG.isInfoEnabled()) {
+      LOG.info("Omitting the following entities from auto-scheduled crawling:");
+      Joiner.MapJoiner mapJoiner = Joiner.on("\n\t - ").withKeyValueSeparator("=");
+      LOG.info("\t - {}", mapJoiner.join(configuration.omittedKeys));
+
+      LOG.info("Supported types:");
+      LOG.info("\t - {}", Joiner.on("\n\t - ").join(configuration.supportedTypes));
+    }
+
+
     ReadableInstant now = new DateTime();
 
     PagingRequest pageable = new PagingRequest();
@@ -154,30 +169,20 @@ public class CrawlSchedulerService extends AbstractScheduledService {
       return false;
     }
 
-    // TODO: REMOVE THIS
-    if (dataset.getType() == DatasetType.CHECKLIST) {
-      LOG.debug("Not eligible to crawl [{}] - Checklists are temporarily omitted from auto-scheduled crawling",
-                dataset.getKey());
+    if (dataset.getDuplicateOfDatasetKey() != null) {
+      LOG.debug("Not eligible to crawl [{}] - dataset [{}] is marked as a duplicate", dataset.getKey());
       return false;
     }
 
-    // TODO: REMOVE THIS
-    if(dataset.getPublishingOrganizationKey().equals(UUID.fromString("d5778510-eb28-11da-8629-b8a03c50a862"))) {
-      LOG.debug("Not eligible to crawl [{}] - PANGAEA temporarily omitted from auto-scheduled crawling",
-                dataset.getKey());
+    String type = dataset.getType().name();
+    if (!configuration.supportedTypes.contains(type)) {
+      LOG.debug("Not eligible to crawl [{}] - type [{}] is not supported in configuration {}",
+                dataset.getKey(), dataset.getType(), configuration.supportedTypes);
       return false;
     }
 
-    // TODO: REMOVE THIS
-    if(dataset.getPublishingOrganizationKey().equals(UUID.fromString("07f617d0-c688-11d8-bf62-b8a03c50a862"))) {
-      LOG.debug("Not eligible to crawl [{}] - UK NBN temporarily omitted from auto-scheduled crawling",
-                dataset.getKey());
-      return false;
-    }
-
-    if (dataset.getType() == DatasetType.METADATA) {
-      LOG.debug("Not eligible to crawl [{}] - Metadata datasets are omitted from auto-scheduled crawling",
-                dataset.getKey());
+    // configuration can be provided that means the dataset has keys that omit it from scheduled crawling
+    if (configurationOmitsDataset(dataset)) {
       return false;
     }
 
@@ -198,12 +203,12 @@ public class CrawlSchedulerService extends AbstractScheduledService {
       return false; // TODO REMOVE THIS
     }
 
-    // Check whether if it was last crawled in the permissible window
+    // Check whether if it was last crawled in the permissible window.
+    // We prefer looking at when the last crawl finished, but resort to started if needed
     DatasetProcessStatus status = list.getResults().get(0); // last crawl
-    // TODO: do we want last finished, or last tried?
-    // Finished ideally, but... many start and break
-    //ReadableInstant lastCrawlDate = new DateTime(status.getFinishedCrawling());
-    ReadableInstant lastCrawlDate = new DateTime(status.getStartedCrawling());
+    ReadableInstant lastCrawlDate = (status.getFinishedCrawling() == null) ?
+      new DateTime(status.getStartedCrawling()) :
+      new DateTime(status.getFinishedCrawling()); // prefer end date if given
     if (Days.daysBetween(lastCrawlDate, now).getDays() < configuration.maxLastCrawledInDays) {
       LOG.debug("Not eligible to crawl [{}] - already crawled within {} days", dataset.getKey(),
                 configuration.maxLastCrawledInDays);
@@ -226,6 +231,28 @@ public class CrawlSchedulerService extends AbstractScheduledService {
     LOG.debug("Crawling dataset [{}] of type [{}]", dataset.getKey(), dataset.getType());
     return true;
 
+  }
+
+  /**
+   * Returns true if the installation, organization, parentDataset or key for the given dataset is listed as one to
+   * omit in the configuration.
+   */
+  private boolean configurationOmitsDataset(Dataset dataset) {
+    UUID[] uuids = new UUID[]{
+      dataset.getKey(),
+      dataset.getInstallationKey(),
+      dataset.getParentDatasetKey(),
+      dataset.getPublishingOrganizationKey(),
+    };
+    for (UUID uuid : uuids) {
+      if (uuid != null) {
+        if (configuration.omittedKeys.containsKey(uuid.toString())) {
+          LOG.debug("Not eligible to crawl [{}]", dataset.getKey(), configuration.omittedKeys.get(uuid.toString()));
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   private void startCrawl(Dataset dataset) {

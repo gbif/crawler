@@ -15,13 +15,21 @@ package org.gbif.crawler.scheduler;
 import org.gbif.cli.PropertyName;
 import org.gbif.common.messaging.config.MessagingConfiguration;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
+import com.beust.jcommander.DynamicParameter;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParametersDelegate;
 import com.google.common.base.Objects;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 public class CrawlSchedulerConfiguration {
 
@@ -54,6 +62,14 @@ public class CrawlSchedulerConfiguration {
   @Valid
   @NotNull
   public MessagingConfiguration messaging = new MessagingConfiguration();
+
+  @DynamicParameter(names = "--omissions", description = "Unique keys of installations, datasets or publishers which will"
+                                                  + "be omitted from crawling.  To aid usability, a sensible "
+                                                  + "description is given which each key")
+  public Map<String, String> omittedKeys = Maps.newHashMap();
+
+  @Parameter(names = "--supportedTypes", description = "Types of dataset that can be crawled")
+  public List<String> supportedTypes = Lists.newArrayList();
 
   @Override
   public String toString() {
