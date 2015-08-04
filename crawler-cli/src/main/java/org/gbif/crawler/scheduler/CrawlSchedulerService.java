@@ -89,6 +89,23 @@ public class CrawlSchedulerService extends AbstractScheduledService {
   protected void runOneIteration() throws Exception {
     LOG.info("Starting checks for datasets eligible to be crawled");
 
+    // first determine if the crawler is already heavily loaded
+    int crawlerLoad =
+      crawlService.getPendingDwcaDatasetProcesses().size() +
+      crawlService.getPendingXmlDatasetProcesses().size() +
+      crawlService.getRunningDatasetProcesses().size();
+
+    if (crawlerLoad >= configuration.maximumCrawls) {
+      LOG.info("Load on crawler [{}] exceeds target load [{}] - not scheduling any crawling in this iteration",
+               crawlerLoad, configuration.maximumCrawls);
+      return;
+    } else {
+      LOG.info("Load on crawler [{}] is below target load [{}] leaving capacity for [{}] new crawls",
+               crawlerLoad, configuration.maximumCrawls, configuration.maximumCrawls-crawlerLoad);
+
+    }
+    int availableCapacity = configuration.maximumCrawls-crawlerLoad;
+
     if (LOG.isInfoEnabled()) {
       LOG.info("Omitting the following entities from auto-scheduled crawling:");
       Joiner.MapJoiner mapJoiner = Joiner.on("\n\t - ").withKeyValueSeparator("=");
@@ -105,8 +122,9 @@ public class CrawlSchedulerService extends AbstractScheduledService {
     PagingResponse<Dataset> datasets;
     int numberInitiated = 0;
     do {
-      if (numberInitiated >= configuration.maximumCrawlsPerRun) {
-        LOG.info("Reached limit of how many crawls to initiate per iteration [{}]", numberInitiated);
+      if (numberInitiated >= availableCapacity) {
+        LOG.info("Reached limit of how many crawls to initiate per iteration - capacity was calculated at [{}]",
+                 availableCapacity);
         break;
       }
       datasets = datasetService.list(pageable);
@@ -122,15 +140,16 @@ public class CrawlSchedulerService extends AbstractScheduledService {
         if (eligibleToCrawl) {
           startCrawl(dataset);
           numberInitiated++;
-          if (numberInitiated >= configuration.maximumCrawlsPerRun) {
-            LOG.info("Reached limit of how many crawls to initiate per iteration [{}]", numberInitiated);
+          if (numberInitiated >= availableCapacity) {
+            LOG.info("Reached limit of how many crawls to initiate per iteration - capacity was calculated at [{}]",
+                     availableCapacity);
             break;
           }
         }
       }
 
       pageable.nextPage();
-    } while (!datasets.isEndOfRecords() && numberInitiated < configuration.maximumCrawlsPerRun);
+    } while (!datasets.isEndOfRecords() && numberInitiated < availableCapacity);
     LOG.info("Finished checking for datasets, having initiated {} crawls", numberInitiated);
   }
 

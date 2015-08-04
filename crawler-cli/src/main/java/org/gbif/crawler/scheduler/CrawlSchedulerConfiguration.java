@@ -54,9 +54,10 @@ public class CrawlSchedulerConfiguration {
   @Min(1)
   public int maxLastCrawledInDays = 90;
 
-  @Parameter(names = "--max-crawls", description = "Number of crawls that can be submitted in any one cycle")
+  @Parameter(names = "--max-crawls", description = "Number of crawls that we limit to in the crawler (approximate "
+                                                   + "value)")
   @Min(1)
-  public int maximumCrawlsPerRun = 50;
+  public int maximumCrawls = 50;
 
   @ParametersDelegate
   @Valid
@@ -78,7 +79,7 @@ public class CrawlSchedulerConfiguration {
                   .add("registryWsUrl", registryWsUrl)
                   .add("interval", interval)
                   .add("maxLastCrawledInDays", maxLastCrawledInDays)
-                  .add("maximumCrawlsPerRun", maximumCrawlsPerRun)
+                  .add("maximumCrawls", maximumCrawls)
                   .add("messaging", messaging)
                   .toString();
   }
