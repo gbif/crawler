@@ -163,7 +163,7 @@ public class CoordinatorCleanupService extends AbstractScheduledService {
     UUID datasetKey = status.getDatasetKey();
     int attempt = status.getCrawlJob().getAttempt();
     DatasetProcessStatus persisted = registryService.getDatasetProcessStatus(datasetKey, attempt);
-    LOG.info(MAPPER.writeValueAsString(status));
+    LOG.debug(MAPPER.writeValueAsString(status));
     if (persisted == null) {
       registryService.createDatasetProcessStatus(status);
     } else {
@@ -229,25 +229,14 @@ public class CoordinatorCleanupService extends AbstractScheduledService {
 
   private void delete(UUID datasetKey) {
     LOG.info("Done with [{}]", datasetKey);
-    String path = CrawlerNodePaths.getCrawlInfoPath(datasetKey);
     try {
-      recursiveDelete(path, curator.getChildren().forPath(path));
-      curator.delete().forPath("crawls/" + datasetKey);
+      // This will retry since we provide guaranteed() which could potentially cause issues on race conditions.
+      // However, this is seen as highly unlikely, and a cleaned ZK will be operationally easier to manage then
+      // the alternative.  Any failed crawls due to some unlikely race condition (which includes a failure to delete)
+      // will be picked up quickly in a scheduled recrawl anyway.
+      curator.delete().guaranteed().deletingChildrenIfNeeded().forPath(CrawlerNodePaths.getCrawlInfoPath(datasetKey));
     } catch (Exception e) {
-      LOG.info("Couldn't delete [{}]", datasetKey, e);
+      LOG.error("Couldn't delete [{}] - note that a background thread will retry this", datasetKey, e);
     }
   }
-
-  private void recursiveDelete(String parentPath, Collection<String> paths) throws Exception {
-    if (paths.isEmpty()) {
-      return;
-    }
-
-    for (String path : paths) {
-      String fullPath = parentPath + "/" + path;
-      recursiveDelete(fullPath, curator.getChildren().forPath(fullPath));
-      curator.delete().forPath(fullPath);
-    }
-  }
-
 }
