@@ -46,7 +46,7 @@ public class DwcaCrawlConsumer extends CrawlConsumer {
   private final Counter startedDownloads = Metrics.newCounter(DownloaderService.class, "startedDownloads");
   private final Counter failedDownloads = Metrics.newCounter(DownloaderService.class, "failedDownloads");
   private final Counter notModified = Metrics.newCounter(DownloaderService.class, "notModified");
-  private final HttpUtil client = new HttpUtil(HttpUtil.newMultithreadedClient(10 * 60 * 1000, 100, 2));
+  private final HttpUtil client = new HttpUtil(HttpUtil.newMultithreadedClient(10 * 60 * 1000, 25, 2));
   private final RetryPolicy retryPolicy = new ExponentialBackoffRetry(100, 10);
 
   public DwcaCrawlConsumer(CuratorFramework curator, MessagePublisher publisher, File archiveRepository) {
