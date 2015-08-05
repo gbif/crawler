@@ -38,6 +38,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -46,6 +47,7 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Guice;
@@ -61,7 +63,7 @@ import static org.gbif.api.vocabulary.TagName.DECLARED_RECORD_COUNT;
 
 /**
  * This service scans the registry at a configurable interval and schedules a crawl for Datasets that fulfill a few
- * conditions, up to a configured maximum number of datasets per run:
+ * conditions:
  * <ul>
  * <li>The dataset is not deleted</li>
  * <li>The dataset is not external</li>
@@ -69,11 +71,14 @@ import static org.gbif.api.vocabulary.TagName.DECLARED_RECORD_COUNT;
  * <li>The dataset hasn't been crawled within the permissible time window</li>
  * <li>The dataset is not tagged in a way that prevent auto-scheduled crawling</li>
  * </ul>
+ * <p/>
+ * This reads the load on the crawler before initiating any crawls, allowing self throttling behaviour.
  */
 public class CrawlSchedulerService extends AbstractScheduledService {
   public static final String CRAWLER_NAMESPACE = "crawler.gbif.org";
   public static final String TAG_EXCLUDE_FROM_SCHEDULED_CRAWL = "omitFromScheduledCrawl";
   private static final Logger LOG = LoggerFactory.getLogger(CrawlSchedulerService.class);
+  private static final Random RANDOM = new Random();
   private final CrawlSchedulerConfiguration configuration;
   private DefaultMessagePublisher publisher;
   private DatasetService datasetService;
@@ -94,7 +99,6 @@ public class CrawlSchedulerService extends AbstractScheduledService {
       crawlService.getPendingDwcaDatasetProcesses().size() +
       crawlService.getPendingXmlDatasetProcesses().size() +
       crawlService.getRunningDatasetProcesses().size();
-
     if (crawlerLoad >= configuration.maximumCrawls) {
       LOG.info("Load on crawler [{}] exceeds target load [{}] - not scheduling any crawling in this iteration",
                crawlerLoad, configuration.maximumCrawls);
@@ -102,10 +106,11 @@ public class CrawlSchedulerService extends AbstractScheduledService {
     } else {
       LOG.info("Load on crawler [{}] is below target load [{}] leaving capacity for [{}] new crawls",
                crawlerLoad, configuration.maximumCrawls, configuration.maximumCrawls-crawlerLoad);
-
     }
+
     int availableCapacity = configuration.maximumCrawls-crawlerLoad;
 
+    // Log information useful to aid quick diagnostics during operation (e.g. why isn't dataset X scheduling?)
     if (LOG.isInfoEnabled()) {
       LOG.info("Omitting the following entities from auto-scheduled crawling:");
       Joiner.MapJoiner mapJoiner = Joiner.on("\n\t - ").withKeyValueSeparator("=");
@@ -115,12 +120,17 @@ public class CrawlSchedulerService extends AbstractScheduledService {
       LOG.info("\t - {}", Joiner.on("\n\t - ").join(configuration.supportedTypes));
     }
 
-
     ReadableInstant now = new DateTime();
 
     PagingRequest pageable = new PagingRequest();
     PagingResponse<Dataset> datasets;
     int numberInitiated = 0;
+    // datasets that have never been crawled are attempted on each run, but only if there is spare capacity.
+    // we do this because they typically fail immediately, and we don't want to waste slots on those when accessible
+    // data can be found.  At the end of a run, any available slots will be used on these datasets.
+    // Remember that new datasets are always attempted on first registration and should be crawled then, so this
+    // really represents a list of "bad" datasets.
+    List<Dataset> neverCrawledDatasets = Lists.newArrayList();
     do {
       if (numberInitiated >= availableCapacity) {
         LOG.info("Reached limit of how many crawls to initiate per iteration - capacity was calculated at [{}]",
@@ -128,10 +138,11 @@ public class CrawlSchedulerService extends AbstractScheduledService {
         break;
       }
       datasets = datasetService.list(pageable);
+
       for (Dataset dataset : datasets.getResults()) {
         boolean eligibleToCrawl = false;
         try {
-          eligibleToCrawl = isDatasetEligibleToCrawl(dataset, now);
+          eligibleToCrawl = isDatasetEligibleToCrawl(dataset, now, neverCrawledDatasets);
         } catch (Exception e) {
           LOG.error("Unexpected exception determining crawl eligibility for dataset[{}].  Swallowing and continuing",
                     dataset.getKey(), e);
@@ -150,6 +161,27 @@ public class CrawlSchedulerService extends AbstractScheduledService {
 
       pageable.nextPage();
     } while (!datasets.isEndOfRecords() && numberInitiated < availableCapacity);
+
+    if (!neverCrawledDatasets.isEmpty()) {
+      if (numberInitiated < availableCapacity) {
+        int remainingSlots = availableCapacity-numberInitiated;
+        LOG.info("There remains {} available slots having crawled all eligible datasets.  Attempting crawls "
+                 + "which have never been crawled before [total {}]", remainingSlots, neverCrawledDatasets.size());
+
+        // launch them randomly until we are exhausted
+        for (int i=0; i<remainingSlots && i<neverCrawledDatasets.size(); i++) {
+          // randomly select a dataset to ensure all are attempted over time
+          int random = RANDOM.nextInt(neverCrawledDatasets.size());
+          Dataset dataset = neverCrawledDatasets.get(random);
+          startCrawl(dataset);
+          neverCrawledDatasets.remove(random);
+          LOG.debug("Crawling dataset [{}] of type [{}] - has never been successfully crawled",
+                    dataset.getKey(), dataset.getType());
+          numberInitiated++;
+        }
+      }
+    }
+
     LOG.info("Finished checking for datasets, having initiated {} crawls", numberInitiated);
   }
 
@@ -173,11 +205,12 @@ public class CrawlSchedulerService extends AbstractScheduledService {
 
   /**
    * This method checks whether a dataset should automatically be scheduled to crawl or not.
+   * Datasets that have never been crawled are added to the supplied list.
    * NOTE: This method is structured for simple readability, and not minimum number of lines of code.
    *
    * @return {@code true} if the dataset should be crawled
    */
-  private boolean isDatasetEligibleToCrawl(Dataset dataset, ReadableInstant now) {
+  private boolean isDatasetEligibleToCrawl(Dataset dataset, ReadableInstant now, List<Dataset> neverCrawled) {
     if (dataset.getDeleted() != null) {
       LOG.debug("Not eligible to crawl [{}] - deleted dataset of type [{}]", dataset.getKey(), dataset.getType());
       return false;
@@ -214,11 +247,12 @@ public class CrawlSchedulerService extends AbstractScheduledService {
 
     PagingResponse<DatasetProcessStatus> list = registryService.listDatasetProcessStatus(dataset.getKey(), null);
 
-    // We always try to crawl datasets that have NEVER been successfully crawled
+    // We accumulate datasets that have NEVER been successfully crawled
     if (list.getResults().isEmpty() ) {
-      LOG.debug("Crawling dataset [{}] of type [{}] - never been successfully crawled", dataset.getKey(),
+      neverCrawled.add(dataset);
+      LOG.debug("Deferring dataset [{}] of type [{}] - never been successfully crawled", dataset.getKey(),
                   dataset.getType());
-      return true;
+      return false; // if there is capacity it'll be attempted anyway
     }
 
     // Check whether if it was last crawled in the permissible window.
