@@ -9,7 +9,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * This implements a crawling strategy that iterates over scientific name ranges (even though scientific name is not
- * hardcoded in this class).  This class can run in one of 3 modes as documented below.  The default mode is the
+ * hardcoded in this class).  This class can run in one of 3 modes as documented below. The AAAB mode is the
  * original, "tried and tested" safe strategy using small ranges from Aaa-Aba, Aba-Abb etc.  For cases where one wishes
  * to be more aggressive, the ABC mode with do Aaa-Baa, Baa-Caa etc and to be super eager the AZ mode will try and do
  * Aaa-Zaa in one call.
@@ -28,14 +28,14 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @NotThreadSafe
 public class ScientificNameRangeStrategy extends AbstractStrategy<ScientificNameRangeCrawlContext> {
 
-  public enum Mode {DEFAULT, ABC, AZ};
+  public enum Mode {AAAB, ABC, AZ};
   private boolean isFirst = true;
   private final Mode mode;
 
   private final ScientificNameRangeCrawlContext context;
 
   public ScientificNameRangeStrategy(ScientificNameRangeCrawlContext context) {
-    this(context,Mode.DEFAULT);
+    this(context,Mode.AAAB);
   }
 
   public ScientificNameRangeStrategy(ScientificNameRangeCrawlContext context, Mode mode) {
@@ -60,17 +60,17 @@ public class ScientificNameRangeStrategy extends AbstractStrategy<ScientificName
     context.setLowerBound(context.getUpperBound().get());
 
     // If we are at the very end we still need to search:
-    // default mode: zza..null
+    // AAAB mode: zza..null
     // others: zaa..null
-    if ((mode == Mode.DEFAULT && context.getLowerBound().get().equals("Zza"))
-      || (mode != Mode.DEFAULT && context.getLowerBound().get().equals("Zaa"))) {
+    if ((mode == Mode.AAAB && context.getLowerBound().get().equals("Zza"))
+      || (mode != Mode.AAAB && context.getLowerBound().get().equals("Zaa"))) {
       context.setUpperBound(null);
       return context;
     }
 
     // Otherwise increment normally as per Javadoc
     char[] chars = context.getUpperBound().get().toCharArray();
-    if (mode == Mode.DEFAULT) {
+    if (mode == Mode.AAAB) {
       for (int pos = 1; pos >= 0; pos--) {
         if (chars[pos] == 'z') {
           chars[pos] = 'a';

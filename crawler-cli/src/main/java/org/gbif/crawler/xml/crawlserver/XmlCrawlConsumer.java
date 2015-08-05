@@ -37,7 +37,7 @@ class XmlCrawlConsumer extends CrawlConsumer {
   // Less than 1000 records will be requested in a single range
   private static final int SINGLE_PAGE_THRESHOLD = 1000;
 
-  // Less 1000->10000 records will be requested in pages by Letter (A,B,C etc)
+  // Between 1000->10000 records will be requested in pages by Letter (A,B,C etc)
   private static final int ABC_THRESHOLD = 10000;
 
   /**
@@ -88,7 +88,6 @@ class XmlCrawlConsumer extends CrawlConsumer {
 
   /**
    * Determines the mode of name range paging to use, based on any declared record count in the crawlJob.
-   * Thresholds are used
    */
   private static ScientificNameRangeStrategy.Mode determineMode(CrawlJob crawlJob) {
     String declaredCount = crawlJob.getProperty(KEY_DECLARED_COUNT);
@@ -99,22 +98,22 @@ class XmlCrawlConsumer extends CrawlConsumer {
           LOG.info("Using SINGLE PAGE crawl mode as declared count of {} is below threshold of {}",
                    count, SINGLE_PAGE_THRESHOLD);
           return ScientificNameRangeStrategy.Mode.AZ;
-        } else if (count < ABC_THRESHOLD) {
-          LOG.info("Using A,B,C crawl mode as declared count of {} is below threshold of {}",
+        } else if (count > ABC_THRESHOLD) {
+          LOG.info("Using Aa,Ab crawl mode as declared count of {} is above threshold of {}",
+                   count, ABC_THRESHOLD);
+          return ScientificNameRangeStrategy.Mode.AAAB;
+        } else {
+          LOG.info("Using ABC crawl mode as declared count of {} is below threshold of {}",
                    count, ABC_THRESHOLD);
           return ScientificNameRangeStrategy.Mode.ABC;
-        } else {
-          LOG.info("Using DEFAULT crawl mode as declared count of {} is above threshold of {}",
-                   count, ABC_THRESHOLD);
-          return ScientificNameRangeStrategy.Mode.DEFAULT;
         }
       } catch (NumberFormatException e) {
-        LOG.info("Using DEFAULT crawl mode due to unreadable count, which is not an integer: {}", declaredCount);
-        return ScientificNameRangeStrategy.Mode.DEFAULT;
+        LOG.info("Using ABC crawl mode due to unreadable count, which is not an integer: {}", declaredCount);
+        return ScientificNameRangeStrategy.Mode.ABC;
 
       }
     }
-    LOG.info("Using DEFAULT crawl mode as no declared count found");
-    return ScientificNameRangeStrategy.Mode.DEFAULT;
+    LOG.info("Using ABC crawl mode as no declared count found");
+    return ScientificNameRangeStrategy.Mode.ABC;
   }
 }
