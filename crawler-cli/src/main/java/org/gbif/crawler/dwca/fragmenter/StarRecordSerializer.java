@@ -10,7 +10,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
+import org.apache.commons.lang.StringUtils;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.SerializationConfig;
 import org.slf4j.Logger;
@@ -104,7 +106,11 @@ final class StarRecordSerializer {
 
     // overlay them with extension occ terms
     for (Term term : occExtension.terms()) {
-      data.put(term.simpleName(), occExtension.value(term));
+      // do not overwrite values with a NULL.  It can be the case that e.g. Taxon core has values, while the extension
+      // declares the same terms, but provides no value.
+      if (!StringUtils.isBlank(occExtension.value(term))) {
+        data.put(term.simpleName(), occExtension.value(term));
+      }
     }
 
     // serialize to json
