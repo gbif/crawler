@@ -1,9 +1,6 @@
-# crawler-ws
+# GBIF Crawler Coordinator
 
-The Crawler Coordinator provides :
- * Listening to messages containing UUIDs of Datasets to crawl and adds them to ZooKeeper
- * Notifications sending for finished crawls
-
+The Crawler Coordinator tracks crawls from beginning to end using counts updated in zookeeper. Those counts are what the crawler-ws displays. The coordinator listens for messages to start crawls and then adds the crawl to zookeeper and waits for updates to that entry. There is logic to ensure datasets can't be crawled multiple times concurrently as well as setting priority when multiple crawlable endpoints are available for a given dataset. This is a library, run by crawler-cli services.  
 
 ## To build the project
 ```

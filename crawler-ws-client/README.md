@@ -1,8 +1,6 @@
-# crawler-ws-client
+# GBIF Crawler WebServices Client
 
-The Crawler Web Service client library provides:
- * Client implementation of Crawler API (DatasetProcessService)
-
+A simple Java client to read the status of crawling from the crawler ws.
 
 ## To build the project
 ```
