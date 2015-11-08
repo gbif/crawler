@@ -282,7 +282,6 @@
         <li><a href="#data" data-toggle="tab" id="runningTab">Running now</a></li>
         <li><a href="#data" data-toggle="tab" id="pendingXmlTab">Pending (XML)</a></li>
         <li><a href="#data" data-toggle="tab" id="pendingDwcaTab">Pending (DwC-A)</a></li>
-        <li><a href="#health" data-toggle="tab">Health</a></li>
       </ul>
       <div class="tab-content">
         <div class="tab-pane active" id="data">
@@ -340,22 +339,6 @@
               <a target="_blank"  href="http://dev.gbif.org/ganglia/?c=Misc&h=b16g3.gbif.org&m=load_one&r=hour&s=by%20name&hc=4&mc=2">Ganglia (crawler, fragmenter, metrics-updater, coordinator etc - b16g3)</a>
             </div>
           </div>
-        </div>
-        <div class="tab-pane" id="health">
-          <div class="alert alert-error">
-            <h4>Error!</h4>
-            HBase is not responding
-          </div>
-          <div class="alert alert-warning">
-            <h4>Warning!</h4>
-            Unable to test RabbitMQ
-          </div>
-          <div class="alert alert-warning">
-            <h4>Warning!</h4>
-            Unable to test log server
-          </div>
-          <div class="alert alert-success">Web services are operational</div>
-          <div class="alert alert-success">ZooKeeper is operational</div>
         </div>
       </div>
   </body>
