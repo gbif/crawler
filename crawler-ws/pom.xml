@@ -15,6 +15,8 @@
   <properties>
     <servlet-api.version>3.1.0</servlet-api.version>
     <maven-shade-plugin.version>2.4</maven-shade-plugin.version>
+    <!-- This version it's required by the gbif-microservice project -->
+    <curator-ws.version>2.9.0</curator-ws.version>
   </properties>
 
   <build>
@@ -128,10 +130,12 @@
     <dependency>
       <groupId>org.apache.curator</groupId>
       <artifactId>curator-client</artifactId>
+      <version>${curator-ws.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.curator</groupId>
       <artifactId>curator-framework</artifactId>
+      <version>${curator-ws.version}</version>
     </dependency>
     <dependency>
       <groupId>org.gbif</groupId>
@@ -162,6 +166,10 @@
         <exclusion>
           <artifactId>slf4j-log4j12</artifactId>
           <groupId>org.slf4j</groupId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.apache.curator</groupId>
+          <artifactId>curator-recipes</artifactId>
         </exclusion>
       </exclusions>
     </dependency>
