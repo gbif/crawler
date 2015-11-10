@@ -42,7 +42,7 @@
     <gbif-httputils.version>0.8</gbif-httputils.version>
     <gbif-occurrence.version>0.36-SNAPSHOT</gbif-occurrence.version>
     <gbif-registry.version>2.38-SNAPSHOT</gbif-registry.version>
-    <gbif-wrangler.version>0.3-SNAPSHOT</gbif-wrangler.version>
+    <gbif-wrangler.version>0.2</gbif-wrangler.version>
     <gbif-microservice.version>0.4</gbif-microservice.version>
     <guava.version>17.0</guava.version>
     <guice.version>3.0</guice.version>
