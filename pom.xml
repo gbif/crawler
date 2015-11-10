@@ -29,7 +29,7 @@
     <jdkLevel>1.7</jdkLevel>
 
     <amqp-client.version>3.5.4</amqp-client.version>
-    <curator.version>2.6.0</curator.version>
+    <curator.version>2.9.0</curator.version>
     <fest.version>2.0M10</fest.version>
     <dwc-api.version>1.13</dwc-api.version>
     <dwca-io.version>1.24</dwca-io.version>
@@ -43,7 +43,7 @@
     <gbif-occurrence.version>0.36-SNAPSHOT</gbif-occurrence.version>
     <gbif-registry.version>2.38-SNAPSHOT</gbif-registry.version>
     <gbif-wrangler.version>0.2</gbif-wrangler.version>
-    <gbif-microservice.version>0.4-SNAPSHOT</gbif-microservice.version>
+    <gbif-microservice.version>0.4</gbif-microservice.version>
     <guava.version>17.0</guava.version>
     <guice.version>3.0</guice.version>
     <!-- Match the GBIF http-client! -->
