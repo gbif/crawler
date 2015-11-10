@@ -134,6 +134,11 @@
       <artifactId>curator-framework</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.apache.curator</groupId>
+      <artifactId>curator-x-discovery</artifactId>
+      <version>${curator.version}</version>
+    </dependency>
+    <dependency>
       <groupId>org.gbif</groupId>
       <artifactId>gbif-api</artifactId>
     </dependency>
@@ -190,6 +195,10 @@
         <exclusion>
           <groupId>org.apache.curator</groupId>
           <artifactId>curator-framework</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.apache.curator</groupId>
+          <artifactId>curator-x-discovery</artifactId>
         </exclusion>
       </exclusions>
     </dependency>
