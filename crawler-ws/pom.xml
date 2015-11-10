@@ -186,6 +186,13 @@
     <dependency>
       <groupId>org.gbif</groupId>
       <artifactId>gbif-microservice</artifactId>
+      <exclusions>
+        <!-- excluding curator-recipes, strangely was reported by maven to be 2.6.0 instead 2.9.0 -->
+        <exclusion>
+          <groupId>org.apache.curator</groupId>
+          <artifactId>curator-recipes</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
   </dependencies>
 </project>
