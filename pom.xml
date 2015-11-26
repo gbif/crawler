@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.gbif</groupId>
     <artifactId>motherpom</artifactId>
-    <version>26</version>
+    <version>34</version>
   </parent>
 
   <groupId>org.gbif.crawler</groupId>
@@ -25,6 +25,13 @@
     <tag>HEAD</tag>
   </scm>
 
+  <distributionManagement>
+    <site>
+      <id>gh-pages</id>
+      <url>http://gbif.github.io/crawler/</url>
+    </site>
+  </distributionManagement>
+
   <properties>
     <jdkLevel>1.7</jdkLevel>
 
@@ -41,7 +48,7 @@
     <gbif-common-ws.version>0.26</gbif-common-ws.version>
     <gbif-httputils.version>0.8</gbif-httputils.version>
     <gbif-occurrence.version>0.36-SNAPSHOT</gbif-occurrence.version>
-    <gbif-registry.version>2.38</gbif-registry.version>
+    <gbif-registry.version>2.42</gbif-registry.version>
     <gbif-wrangler.version>0.2</gbif-wrangler.version>
     <gbif-microservice.version>0.4</gbif-microservice.version>
     <guava.version>18.0</guava.version>

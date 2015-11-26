@@ -13,6 +13,13 @@
   <name>Crawler :: Crawler</name>
   <url>http://sites.gbif.org/crawler/crawler</url>
 
+  <distributionManagement>
+    <site>
+      <id>gh-pages</id>
+      <url>http://gbif.github.io/crawler/${project.artifactId}/</url>
+    </site>
+  </distributionManagement>
+
   <repositories>
     <repository>
       <id>gbif-thirdparty</id>

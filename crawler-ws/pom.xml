@@ -12,6 +12,13 @@
   <packaging>jar</packaging>
   <name>Crawler :: Web service</name>
 
+  <distributionManagement>
+    <site>
+      <id>gh-pages</id>
+      <url>http://gbif.github.io/crawler/${project.artifactId}/</url>
+    </site>
+  </distributionManagement>
+
   <properties>
     <servlet-api.version>3.1.0</servlet-api.version>
     <maven-shade-plugin.version>2.4</maven-shade-plugin.version>

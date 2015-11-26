@@ -12,6 +12,13 @@
 
   <name>Crawler :: CLI</name>
 
+  <distributionManagement>
+    <site>
+      <id>gh-pages</id>
+      <url>http://gbif.github.io/crawler/${project.artifactId}/</url>
+    </site>
+  </distributionManagement>
+
   <build>
     <extensions>
       <extension>
