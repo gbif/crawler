@@ -4,7 +4,7 @@ The Crawler Web Service provides the CRAwling Monitor (CRAM) which shows running
 
 ## To build the project
 
-The following properties need to be set for running the webservice, typically provided in a properties file. For developing locally run with -Pdev using the profile from http://github.com/gbif/gbif-configuration/maven/settings.xml.
+The following properties need to be set for running the webservice, typically provided in a properties file. For developing locally run with -Pdev using the profile from https://github.com/gbif/gbif-configuration/blob/master/maven/settings.xml.
 
 - crawler.crawl.namespace
 - crawler.crawl.server
