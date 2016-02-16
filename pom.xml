@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.gbif</groupId>
     <artifactId>motherpom</artifactId>
-    <version>34</version>
+    <version>35</version>
   </parent>
 
   <groupId>org.gbif.crawler</groupId>
@@ -38,19 +38,19 @@
     <curator.version>2.6.0</curator.version>
     <fest.version>2.0M10</fest.version>
     <dwc-api.version>1.13</dwc-api.version>
-    <dwca-io.version>1.24</dwca-io.version>
-    <gbif-api.version>0.31</gbif-api.version>
+    <dwca-io.version>1.26</dwca-io.version>
+    <gbif-api.version>0.36</gbif-api.version>
     <gbif-cli.version>0.10</gbif-cli.version>
-    <gbif-postal-service.version>0.17</gbif-postal-service.version>
-    <gbif-common.version>0.21</gbif-common.version>
-    <gbif-common-service.version>0.14</gbif-common-service.version>
-    <gbif-common-ws.version>0.27</gbif-common-ws.version>
-    <gbif-httputils.version>0.8</gbif-httputils.version>
-    <gbif-occurrence.version>0.35.5</gbif-occurrence.version>
-    <gbif-registry.version>2.46</gbif-registry.version>
+    <gbif-postal-service.version>0.19</gbif-postal-service.version>
+    <gbif-common.version>0.23</gbif-common.version>
+    <gbif-common-service.version>0.16</gbif-common-service.version>
+    <gbif-common-ws.version>0.30</gbif-common-ws.version>
+    <gbif-httputils.version>0.9</gbif-httputils.version>
+    <gbif-occurrence.version>0.36-SNAPSHOT</gbif-occurrence.version>
+    <gbif-registry.version>2.47</gbif-registry.version>
     <gbif-wrangler.version>0.2</gbif-wrangler.version>
     <gbif-microservice.version>0.4</gbif-microservice.version>
-    <guava.version>18.0</guava.version>
+    <guava.version>19.0</guava.version>
     <guice.version>4.0</guice.version>
     <!-- Match the GBIF http-client! -->
     <httpclient.version>4.3.6</httpclient.version>
@@ -61,12 +61,12 @@
     <jackson-datatype-guava.version>1.9.2</jackson-datatype-guava.version>
     <jcommander.version>1.48</jcommander.version>
     <jersey.version>1.19</jersey.version>
-    <joda-time.version>2.9.1</joda-time.version>
+    <joda-time.version>2.9.2</joda-time.version>
     <jsr305.version>3.0.1</jsr305.version>
     <junit.version>4.12</junit.version>
-    <logback.version>1.1.3</logback.version>
+    <logback.version>1.1.5</logback.version>
     <mockito.version>1.9.5</mockito.version>
-    <slf4j.version>1.7.13</slf4j.version>
+    <slf4j.version>1.7.16</slf4j.version>
     <validation-api.version>1.1.0.Final</validation-api.version>
     <zookeeper.version>3.4.5</zookeeper.version>
     <!-- Fixed to the version Curator uses, problems otherwise -->
