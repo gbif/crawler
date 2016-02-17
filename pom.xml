@@ -41,15 +41,15 @@
     <dwca-io.version>1.26</dwca-io.version>
     <gbif-api.version>0.36</gbif-api.version>
     <gbif-cli.version>0.10</gbif-cli.version>
-    <gbif-postal-service.version>0.19</gbif-postal-service.version>
+    <gbif-postal-service.version>0.20</gbif-postal-service.version>
     <gbif-common.version>0.23</gbif-common.version>
     <gbif-common-service.version>0.16</gbif-common-service.version>
     <gbif-common-ws.version>0.30</gbif-common-ws.version>
     <gbif-httputils.version>0.9</gbif-httputils.version>
-    <gbif-occurrence.version>0.36-SNAPSHOT</gbif-occurrence.version>
+    <gbif-occurrence.version>0.36</gbif-occurrence.version>
     <gbif-registry.version>2.47</gbif-registry.version>
     <gbif-wrangler.version>0.2</gbif-wrangler.version>
-    <gbif-microservice.version>0.4</gbif-microservice.version>
+    <gbif-microservice.version>0.5</gbif-microservice.version>
     <guava.version>19.0</guava.version>
     <guice.version>4.0</guice.version>
     <!-- Match the GBIF http-client! -->
