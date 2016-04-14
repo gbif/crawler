@@ -92,7 +92,7 @@
           var hash = Base64.encode('{"search":"@fields.datasetKey=\\"' + aData.datasetKey
             +'\\"","fields":["@type","@fields.level","@message"],"offset":0,"timeframe":"86400","graphmode":"count","time":{"user_interval":0}}');
           // TODO: configurify somehow (parameter on URL?)
-          window.open('http://b6g8.gbif.org:5601/index.html#'+ hash,'Logs');
+          window.open('http://crawlerlog-vh.gbif.org:5601/index.html#'+ hash,'Logs');
           return false;});
 
         var $details = $("<a href='#'>Details</a>").bind('click', function() {
