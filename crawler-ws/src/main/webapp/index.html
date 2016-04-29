@@ -87,13 +87,12 @@
         else $('td:eq(1)', nRow).removeClass("text-success").addClass("text-error");
 
         // The final log | detail section
-        var $log = $("<a href='#'>Logs</a>").bind('click', function() {
-          // open a tab to kibana, using the json based hashing kibana uses
-          var hash = Base64.encode('{"search":"@fields.datasetKey=\\"' + aData.datasetKey
-            +'\\"","fields":["@type","@fields.level","@message"],"offset":0,"timeframe":"86400","graphmode":"count","time":{"user_interval":0}}');
-          // TODO: configurify somehow (parameter on URL?)
-          window.open('http://crawlerlog-vh.gbif.org:5601/index.html#'+ hash,'Logs');
-          return false;});
+        var url = 'http://kibana2.gbif.org/#/dashboard/file/default.json?query=fields.datasetKey%3D%5C%22'+aData.datasetKey+'%5C%22';
+        var $log = $("<a href='"+url+"'>Logs</a>").bind('click', function() {
+          // open a tab to Kibana
+          window.open(url,'Logs');
+          return false;
+        });
 
         var $details = $("<a href='#'>Details</a>").bind('click', function() {
           if ( oTable.fnIsOpen(nRow) ) {
