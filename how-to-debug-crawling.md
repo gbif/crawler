@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This page is designed to empower the GBIFS technical staff to debug crawling by him or herself. 
+This page is designed to empower the GBIFS technical staff member to debug crawling by him or herself. 
 
 It starts with an overview of all the services and infrastructure that can be utilized in debugging crawling:
 
