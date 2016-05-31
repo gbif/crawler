@@ -2,7 +2,9 @@
 
 ## Introduction
 
-Debugging crawling is a complicated process requiring you to familiarise yourself with the following services and infrastructure:
+This page is designed to empower the GBIFS technical staff to debug crawling by him or herself. 
+
+It starts with an overview of all the services and infrastructure that can be utilized in debugging crawling:
 
 * [Registry Console](how-to-debug-crawling.md#registry-console)
 * [CRAwling Monitor (CRAM)](how-to-debug-crawling.md#crawling-monitor-cram)
@@ -10,25 +12,11 @@ Debugging crawling is a complicated process requiring you to familiarise yoursel
 * [RabbitMQ (Queues)](how-to-debug-crawling.md#rabbitmq-queues)
 * [Crawling Server](how-to-debug-crawling.md#crawling-server)
 
-A [Case Study](how-to-debug-crawling.md#case-study) below can be used to illustrate how the various services and infrastructure can be used collectively to debug crawling when it goes wrong. 
+Note all services above are internal (not publicly accessible) except for [Kibana](how-to-debug-crawling.md#kibana).
 
-Note: these instructions are aimed at GBIFS technical staff only. All services are internal (not publicly accessible) unless otherwise stated.
+Lastly, it gives a [case study](how-to-debug-crawling.md#case-study) illustrating how these services can collectively be used to debug crawling when it goes wrong. 
 
-### Case Study
-
-Imagine a crawling job is stalled at the stage of validating the downloaded DwC-A. 
-
-To debug this case:
-
-* start by checking the [Registry Console](how-to-debug-crawling.md#registry-console) to see if the crawl finished. 
-* use the [CRAwling Monitor (CRAM)](how-to-debug-crawling.md#crawling-monitor-cram) to check the job is still running. 
-* check the [RabbitMQ (Queues)](how-to-debug-crawling.md#rabbitmq-queues) to see if messages are building up in some queues (in this example, imagine the dwca-validator queue is backed-up).
-* open the queue to see if the consumers are actually operating and listening to the queue (in this example, imagine they aren't).
-* SSH onto the [Crawling Server](how-to-debug-crawling.md#crawling-server) and quickly change to user "crap"
-* check the crawling processes are up, specifically check the validator process is running: ```ps -ef | grep valid```
-* tail the validator service's logs to determine if it's failed for some particular reason: ```tail -f crawler-dwca-validator.log``` (in this example, imagine it is idle and thus needs to be restarted)
-* restart the crawling services: ```./stop-all.sh``` & ```./start-all.sh```
-* use [Kibana](how-to-debug-crawling.md#kibana) to monitor crawling is moving through the various stages
+Debugging crawling is a complicated process. For finer details about the services' underlying components such as Zookeeper's structure, please refer to the section in GBIF's Confluence entitled [New GBIF Crawling and Occurrence Architecture](http://dev.gbif.org/wiki/display/DEV/New+GBIF+Crawling+and+Occurrence+Architecture).  
 
 ### Registry Console
 |Environment| Address|
@@ -72,3 +60,19 @@ Use RabbitMQ to monitor what stage a crawling job is at, and to ensure queues ar
 |DEV| devcrawler-vh.gbif.org| /home/crap/logs| /mnt/auto/crawler/dwca| /home/crap/bin| /home/crap/util|
 
 Use the Crawling Server to monitor what crawling processes are running, start and stop the crawling (see Scripts Directory), delete crawling jobs (Crawl-Cleaner Script Directory), monitor logs of various crawling processes (see Logs Directory) and investigate the content downloaded from crawling (see Downloaded Content Directory). Warning: after SSH-ing onto the server, change to user crap ```su - crap``` before running any scripts. Warning2: the zookeeper-cleanup.jar on UAT needs to be rebuilt from the new [crawler-cleanup module](https://github.com/gbif/crawler/tree/master/crawler-cleanup). 
+
+### Case Study
+
+Imagine a crawling job is stalled at the stage of validating the downloaded DwC-A. 
+
+To debug this case:
+
+* start by checking the [Registry Console](how-to-debug-crawling.md#registry-console) to see if the crawl finished. 
+* use the [CRAwling Monitor (CRAM)](how-to-debug-crawling.md#crawling-monitor-cram) to check the job is still running. 
+* check the [RabbitMQ (Queues)](how-to-debug-crawling.md#rabbitmq-queues) to see if messages are building up in some queues (in this example, imagine the dwca-validator queue is backed-up).
+* open the queue to see if the consumers are actually operating and listening to the queue (in this example, imagine they aren't).
+* SSH onto the [Crawling Server](how-to-debug-crawling.md#crawling-server) and quickly change to user "crap"
+* check the crawling processes are up, specifically check the validator process is running: ```ps -ef | grep valid```
+* tail the validator service's logs to determine if it's failed for some particular reason: ```tail -f crawler-dwca-validator.log``` (in this example, imagine it is idle and thus needs to be restarted)
+* restart the crawling services: ```./stop-all.sh``` & ```./start-all.sh```
+* use [Kibana](how-to-debug-crawling.md#kibana) to monitor crawling is moving through the various stages
