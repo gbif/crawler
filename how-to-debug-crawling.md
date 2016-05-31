@@ -25,9 +25,9 @@ To debug this case:
 * check the [RabbitMQ (Queues)](how-to-debug-crawling.md#rabbitmq-queues) to see if messages are building up in some queues (in this example, imagine the dwca-validator queue is backed-up).
 * open the queue to see if the consumers are actually operating and listening to the queue (in this example, imagine they aren't).
 * SSH onto the [Crawling Server](how-to-debug-crawling.md#crawling-server) and quickly change to user "crap"
-* check the crawling processes are up, specifically check the validator process is running. 
-* tail the validator service's logs to determine if it's failed for some particular reason (in this example, imagine it is idle and thus needs to be restarted)
-* restart the crawling services
+* check the crawling processes are up, specifically check the validator process is running: ```ps -ef | grep valid```
+* tail the validator service's logs to determine if it's failed for some particular reason: ```tail -f crawler-dwca-validator.log``` (in this example, imagine it is idle and thus needs to be restarted)
+* restart the crawling services: ```./stop-all.sh``` & ```./start-all.sh```
 * use [Kibana](how-to-debug-crawling.md#kibana) to monitor crawling is moving through the various stages
 
 ### Registry Console
