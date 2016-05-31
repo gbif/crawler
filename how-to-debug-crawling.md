@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Debegging crawling is a complicated process. It requires you to familiarise yourself with the following services and infrastructure:
+Debugging crawling is a complicated process requiring you to familiarise yourself with the following services and infrastructure:
 
 * [Registry Console](how-to-debug-crawling.md#registry-console)
 * [CRAwling Monitor (CRAM)](how-to-debug-crawling.md#crawling-monitor-cram)
@@ -10,7 +10,7 @@ Debegging crawling is a complicated process. It requires you to familiarise your
 * [RabbitMQ (Queues)](how-to-debug-crawling.md#rabbitmq-queues)
 * [Crawling Server](how-to-debug-crawling.md#crawling-server)
 
-A [Case Study](how-to-debug-crawling.md#case-study) below can be used to illustrate how the various services and infrastructure can be used collectively to debug crawling when it goes wrong. And it does go wrong! 
+A [Case Study](how-to-debug-crawling.md#case-study) below can be used to illustrate how the various services and infrastructure can be used collectively to debug crawling when it goes wrong. 
 
 Note: these instructions are aimed at GBIFS technical staff only. All services are internal (not publicly accessible) unless otherwise stated.
 
@@ -62,7 +62,7 @@ Use Kibana to monitor what stage a crawling job is at, or to discover more detai
 |UAT| http://mq.gbif.org:15672/#/queues|/uat|
 |DEV| http://mq.gbif.org:15672/#/queues|/dev|
 
-Use RabbitMQ to monitor what stage a crawling job is at, and to ensure queues are being properly consued - a sign the underlying crawling service is operating properly. Filter queues by environment (virtual host). Be careful queues don't get overloaded. For example if the mapping queue ```maps_z09``` gets backed-up, check its corresponding log file on the crawling server to make sure it hasn't blown memory: ```/home/crap/logs/maps_z09_stdout.log``` If memory has been blown, it may be necessary to delete all messages in the queues, otherwise the PROD environment can inadvertantly be brought down.
+Use RabbitMQ to monitor what stage a crawling job is at, and to ensure queues are being properly consumed - a sign the underlying crawling service is operating properly. Filter queues by environment (virtual host). Be careful queues don't get overloaded. For example if the mapping queue ```maps_z09``` gets backed-up, check its corresponding log file on the crawling server to make sure it hasn't blown memory: ```/home/crap/logs/maps_z09_stdout.log``` If memory has been blown, it may be necessary to delete all messages in the queues, otherwise the PROD environment can inadvertently be brought down.
 
 ### Crawling Server
 |Environment| Address| Logs Directory| Downloaded Content Directory| Scripts Directory| Crawl-Cleaner Script Directory|
@@ -71,4 +71,4 @@ Use RabbitMQ to monitor what stage a crawling job is at, and to ensure queues ar
 |UAT| uatcrawler-vh.gbif.org| /home/crap/logs| /mnt/auto/crawler/dwca| /home/crap/bin| /home/crap/util|
 |DEV| devcrawler-vh.gbif.org| /home/crap/logs| /mnt/auto/crawler/dwca| /home/crap/bin| /home/crap/util|
 
-Use the Crawling Server to monitor what crawling processes are running, start and stop the crawling (see Scripts Directory), delete crawling jobs (Crawl-Cleaner Script Directory), monitor logs of various crawling processes (see Logs Directory) and investigate the content downloaded from crawling (see Downloaded Content Directory). Warning: after SSH-ing onto the server, change to user crap ```su - crap``` before runnning any scripts. Warning2: the zookeeper-cleanup.jar on UAT needs to be rebuilt from the new [crawler-cleanup module](https://github.com/gbif/crawler/tree/master/crawler-cleanup). 
+Use the Crawling Server to monitor what crawling processes are running, start and stop the crawling (see Scripts Directory), delete crawling jobs (Crawl-Cleaner Script Directory), monitor logs of various crawling processes (see Logs Directory) and investigate the content downloaded from crawling (see Downloaded Content Directory). Warning: after SSH-ing onto the server, change to user crap ```su - crap``` before running any scripts. Warning2: the zookeeper-cleanup.jar on UAT needs to be rebuilt from the new [crawler-cleanup module](https://github.com/gbif/crawler/tree/master/crawler-cleanup). 
