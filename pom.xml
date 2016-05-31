@@ -99,6 +99,7 @@
   <modules>
     <module>crawler-coordinator</module>
     <module>crawler</module>
+    <module>crawler-cleanup</module>
     <module>crawler-cli</module>
     <module>crawler-ws</module>
     <module>crawler-ws-client</module>
@@ -125,6 +126,11 @@
       <dependency>
         <groupId>org.gbif.crawler</groupId>
         <artifactId>crawler-ws-client</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.gbif.crawler</groupId>
+        <artifactId>crawler-cleanup</artifactId>
         <version>${project.version}</version>
       </dependency>
 

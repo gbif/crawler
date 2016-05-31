@@ -1,0 +1,85 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.gbif.crawler</groupId>
+    <artifactId>crawler-motherpom</artifactId>
+    <version>0.24-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>crawler-cleanup</artifactId>
+  <packaging>jar</packaging>
+
+  <name>Crawler :: Cleanup</name>
+  <description>This tool deletes crawls in ZooKeeper.</description>
+  <url>http://sites.gbif.org/crawler/crawler-cleanup</url>
+
+  <distributionManagement>
+    <site>
+      <id>gh-pages</id>
+      <url>http://gbif.github.io/crawler/${project.artifactId}/</url>
+    </site>
+  </distributionManagement>
+
+  <properties/>
+
+  <repositories>
+    <repository>
+      <id>gbif-all</id>
+      <url>http://repository.gbif.org/content/groups/gbif</url>
+    </repository>
+  </repositories>
+
+  <dependencies>
+    <!-- Module specific -->
+
+    <!-- From parent -->
+    <dependency>
+      <groupId>org.apache.zookeeper</groupId>
+      <artifactId>zookeeper</artifactId>
+      <exclusions>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.beust</groupId>
+      <artifactId>jcommander</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>log4j-over-slf4j</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+  </dependencies>
+
+  <!-- Set JAR name (without version number) so bash script calling JAR does not have to keep changing: -->
+  <!-- https://github.com/gbif/gbif-configuration/blob/db721a709c2358c4b9c17f2f5f2da2fcc7bb85f2/cli/common/util/crawl-cleanup -->
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>2.6</version>
+        <configuration>
+          <finalName>zookeeper-cleanup</finalName>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>
