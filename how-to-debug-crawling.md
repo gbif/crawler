@@ -62,7 +62,7 @@ Use RabbitMQ to monitor what stage a crawling job is at, and to ensure queues ar
 
 Use the Crawling Server to monitor what crawling processes are running, start and stop the crawling (see Scripts Directory), delete crawling jobs (Crawl-Cleaner Script Directory), monitor logs of various crawling processes (see Logs Directory) and investigate the content downloaded from crawling (see Downloaded Content Directory). Warning: after SSH-ing onto the server, change to user crap ```su - crap``` before running any scripts. Warning2: the zookeeper-cleanup.jar on UAT needs to be rebuilt from the new [crawler-cleanup module](https://github.com/gbif/crawler/tree/master/crawler-cleanup). 
 
-### RabbitMQ (Queues)
+### Hue
 |Environment| Address| Database|
 |---|---|---|
 |PROD| http://hue.gbif.org:8888/beeswax/#query| prod_a/b|
