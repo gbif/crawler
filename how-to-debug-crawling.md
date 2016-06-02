@@ -11,6 +11,7 @@ It starts with an overview of all the services and infrastructure that can be ut
 * [Kibana](how-to-debug-crawling.md#kibana)
 * [RabbitMQ (Queues)](how-to-debug-crawling.md#rabbitmq-queues)
 * [Crawling Server](how-to-debug-crawling.md#crawling-server)
+* [Hue](how-to-debug-crawling.md#hue)
 
 Note all services above are internal (not publicly accessible) except for [Kibana](how-to-debug-crawling.md#kibana).
 
@@ -60,6 +61,15 @@ Use RabbitMQ to monitor what stage a crawling job is at, and to ensure queues ar
 |DEV| devcrawler-vh.gbif.org| /home/crap/logs| /mnt/auto/crawler/dwca| /home/crap/bin| /home/crap/util|
 
 Use the Crawling Server to monitor what crawling processes are running, start and stop the crawling (see Scripts Directory), delete crawling jobs (Crawl-Cleaner Script Directory), monitor logs of various crawling processes (see Logs Directory) and investigate the content downloaded from crawling (see Downloaded Content Directory). Warning: after SSH-ing onto the server, change to user crap ```su - crap``` before running any scripts. Warning2: the zookeeper-cleanup.jar on UAT needs to be rebuilt from the new [crawler-cleanup module](https://github.com/gbif/crawler/tree/master/crawler-cleanup). 
+
+### RabbitMQ (Queues)
+|Environment| Address| Database|
+|---|---|---|
+|PROD| http://hue.gbif.org:8888/beeswax/#query| prod_a/b|
+|UAT| http://hue.gbif.org:8888/beeswax/#query|uat|
+|DEV| http://hue.gbif.org:8888/beeswax/#query|dev|
+
+Use Hue to interact with the Hadoop cluster. Run Hive queries to ensure data was persisted properly in HBase for example. This can help find discrepancies between the Cube, Solr, and HBase for example. 
 
 ### Case Study
 
