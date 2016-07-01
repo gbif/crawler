@@ -1,6 +1,7 @@
 package org.gbif.crawler;
 
 import org.gbif.api.exception.ServiceUnavailableException;
+import org.gbif.api.model.Constants;
 import org.gbif.api.model.crawler.CrawlJob;
 import org.gbif.api.model.registry.Dataset;
 import org.gbif.api.model.registry.Endpoint;
@@ -233,6 +234,10 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
 
     if (dataset.getDeleted() != null) {
       throw new IllegalArgumentException("Dataset [" + datasetKey + "] is deleted");
+    }
+
+    if (Constants.NUB_DATASET_KEY.equals(dataset.getKey())) {
+      throw new IllegalArgumentException("Backbone dataset [" + datasetKey + "] cannot be indexed");
     }
 
     // Is the dataset already scheduled to be crawled or currently being crawled?
