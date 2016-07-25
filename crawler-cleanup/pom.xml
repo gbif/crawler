@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.gbif.crawler</groupId>
     <artifactId>crawler-motherpom</artifactId>
-    <version>0.24-SNAPSHOT</version>
+    <version>0.24</version>
   </parent>
 
   <artifactId>crawler-cleanup</artifactId>
@@ -21,7 +21,7 @@
     </site>
   </distributionManagement>
 
-  <properties/>
+  <properties />
 
   <repositories>
     <repository>
