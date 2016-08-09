@@ -3,6 +3,7 @@ package org.gbif.crawler.crawleverything;
 import org.gbif.api.model.common.paging.Pageable;
 import org.gbif.api.model.common.paging.PagingRequest;
 import org.gbif.api.model.common.paging.PagingResponse;
+import org.gbif.api.model.registry.Dataset;
 import org.gbif.api.model.registry.Installation;
 import org.gbif.api.service.registry.InstallationService;
 import org.gbif.cli.BaseCommand;
@@ -15,6 +16,7 @@ import org.gbif.registry.ws.client.guice.RegistryWsClientModule;
 import org.gbif.ws.client.guice.AnonymousAuthModule;
 
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -35,7 +37,7 @@ import org.slf4j.LoggerFactory;
 @MetaInfServices(Command.class)
 public class MetasyncEverythingCommand extends BaseCommand {
 
-  private static final Logger LOG = LoggerFactory.getLogger(CrawlEverythingCommand.class);
+  private static final Logger LOG = LoggerFactory.getLogger(MetasyncEverythingCommand.class);
   private static final int LIMIT = 1000;
   private final EverythingConfiguration config = new EverythingConfiguration();
 
@@ -80,8 +82,20 @@ public class MetasyncEverythingCommand extends BaseCommand {
         stopwatch.stop();
         LOG.info("Received [{}] installations in [{}]s", installations.getResults().size(),
           stopwatch.elapsed(TimeUnit.SECONDS));
-        executor
-          .submit(new InstallationSchedulingRunnable(installations, publisher, totalCount, scheduledCount, offset));
+
+        // skip installations that don't serve any datasets!
+        Iterator<Installation> iter = installations.getResults().iterator();
+        while (iter.hasNext()) {
+          Installation i = iter.next();
+          PagingResponse<Dataset> datasets = installationService.getHostedDatasets(i.getKey(), new PagingRequest(0, 1));
+          if (datasets.getResults().isEmpty()) {
+            LOG.warn("Excluding installation [key={}] because it serves 0 datasets!", i.getKey());
+            iter.remove();
+          }
+        }
+
+        executor.submit(
+          new InstallationSchedulingRunnable(installations, publisher, totalCount, scheduledCount, offset));
 
         endOfRecords = installations.isEndOfRecords();
         offset += installations.getResults().size();
