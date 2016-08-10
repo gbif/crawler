@@ -16,8 +16,8 @@ mvn clean install
 * Publishes `StartCrawlMessage` messages (routing key: "crawl.start").
 
 ### coordinator
-* Listen to `StartCrawlMessage` messages.
-* Creates add crawling jobs to crawling queues in ZooKeeper.
+* Listens to `StartCrawlMessage` messages.
+* Creates and adds crawling jobs to crawling queues in ZooKeeper.
 
 ### crawlserver (XML)
 * XML crawl server that listens to a Zookeeper queue ("xml").
@@ -26,7 +26,7 @@ mvn clean install
 * Publishes `CrawlErrorMessage` (routing key: "crawl.error" + errorType) on error.
 
 ### fragmenter (XML)
-* Listen to `CrawlResponseMessage` messages.
+* Listens to `CrawlResponseMessage` messages.
 * Publishes `OccurrenceFragmentedMessage` (routing key: "crawler.fragment.new") on success.
 
 ### downloader (Dwc-A)
@@ -34,24 +34,22 @@ mvn clean install
 * Publishes `DwcaDownloadFinishedMessage` (routing key: "crawl.dwca.download.finished") on success.
 
 ### validator (Dwc-A)
-* Listen to `DwcaDownloadFinishedMessage` messages.
+* Listens to `DwcaDownloadFinishedMessage` messages.
 * Publishes `DwcaValidationFinishedMessage` (routing key: "crawl.dwca.validation.finished") on success.
 
 ### dwca-metasync (Dwc-A)
-* Listen to `DwcaValidationFinishedMessage` messages.
+* Listens to `DwcaValidationFinishedMessage` messages.
 * Publishes `DwcaMetasyncFinishedMessage` (routing key: "crawl.dwca.metasync.finished") on success.
 
 ### dwcafragmenter (Dwc-A)
-* Listen to `DwcaMetasyncFinishedMessage` messages.
+* Listens to `DwcaMetasyncFinishedMessage` messages.
 * Publishes `OccurrenceFragmentedMessage` (routing key: "crawler.fragment.new") on success.
 
-
 ### metasynceverything
-Publishes `StartMetasyncMessage` messages (routing key: "metasync.start").
+* Publishes `StartMetasyncMessage` messages (routing key: "metasync.start").
 
 ### metasync
-Listen to `StartMetasyncMessage` messages.
-
-Supported protocols are: Digir, Tapir and Biocase.
+* Listen to `StartMetasyncMessage` messages.
+* Supported protocols are: Digir, Tapir and Biocase.
 
 
