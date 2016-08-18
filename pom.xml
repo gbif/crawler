@@ -39,15 +39,15 @@
     <fest.version>2.0M10</fest.version>
     <dwc-api.version>1.16</dwc-api.version>
     <dwca-io.version>1.27</dwca-io.version>
-    <gbif-api.version>0.42-SNAPSHOT</gbif-api.version>
+    <gbif-api.version>0.42</gbif-api.version>
     <gbif-cli.version>0.10</gbif-cli.version>
     <gbif-postal-service.version>0.22</gbif-postal-service.version>
     <gbif-common.version>0.28</gbif-common.version>
     <gbif-common-service.version>0.16</gbif-common-service.version>
-    <gbif-common-ws.version>0.34-SNAPSHOT</gbif-common-ws.version>
+    <gbif-common-ws.version>0.34</gbif-common-ws.version>
     <gbif-httputils.version>0.10</gbif-httputils.version>
     <gbif-occurrence.version>0.49</gbif-occurrence.version>
-    <gbif-registry.version>2.54-SNAPSHOT</gbif-registry.version>
+    <gbif-registry.version>2.54</gbif-registry.version>
     <gbif-wrangler.version>0.2</gbif-wrangler.version>
     <gbif-microservice.version>0.5</gbif-microservice.version>
     <guava.version>18.0</guava.version>
