@@ -47,7 +47,7 @@
     <gbif-common-ws.version>0.34</gbif-common-ws.version>
     <gbif-httputils.version>0.10</gbif-httputils.version>
     <gbif-occurrence.version>0.49</gbif-occurrence.version>
-    <gbif-registry.version>2.54</gbif-registry.version>
+    <gbif-registry.version>2.55</gbif-registry.version>
     <gbif-wrangler.version>0.2</gbif-wrangler.version>
     <gbif-microservice.version>0.5</gbif-microservice.version>
     <guava.version>18.0</guava.version>
