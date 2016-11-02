@@ -87,7 +87,7 @@
         else $('td:eq(1)', nRow).removeClass("text-success").addClass("text-error");
 
         // The final log | detail section
-        var url = 'http://kibana2.gbif.org/#/dashboard/file/default.json?query=fields.datasetKey%3D%5C%22'+aData.datasetKey+'%5C%22';
+        var url = "http://elk.gbif.org:5601/app/kibana#/discover?_a=(filters:!((meta:(alias:!n,disabled:!f,index:'prod-crawl-*',key:datasetKey,negate:!f,value:" + aData.datasetKey + "),query:(match:(datasetKey:(query:" + aData.datasetKey + ",type:phrase))))),index:'prod-crawl-*')"
         var $log = $("<a href='"+url+"'>Logs</a>").bind('click', function() {
           // open a tab to Kibana
           window.open(url,'Logs');
