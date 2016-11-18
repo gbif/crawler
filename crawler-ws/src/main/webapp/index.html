@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="UTF-8" />
     <title>CRAM - Crawling Monitor</title>
     <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
     <link href="css/bootstrap-responsive.min.css" rel="stylesheet">
@@ -24,6 +24,14 @@
       var pendingXmlContentUrl = "dataset/process/xml/pending";
       var pendingDwcaContentUrl = "dataset/process/dwca/pending";
       var detailUrl = "dataset/process/detail/";
+
+      // Environment, used to construct the Kibana URL
+      var env = 'prod';
+      if (window.location.hostname.match(/uat/)) {
+        env = 'uat';
+      } else if (window.location.hostname.match(/dev/)) {
+        env = 'dev';
+      }
 
       // to aid development of this UI
       // runningXmlContentUrl = "./running.json";
@@ -87,7 +95,8 @@
         else $('td:eq(1)', nRow).removeClass("text-success").addClass("text-error");
 
         // The final log | detail section
-        var url = "http://elk.gbif.org:5601/app/kibana#/discover?_a=(filters:!((meta:(alias:!n,disabled:!f,index:'prod-crawl-*',key:datasetKey,negate:!f,value:" + aData.datasetKey + "),query:(match:(datasetKey:(query:" + aData.datasetKey + ",type:phrase))))),index:'prod-crawl-*')"
+        var url = "http://elk.gbif.org:5601/app/kibana#/discover?_a=(filters:!((meta:(alias:!n,disabled:!f,index:'" + env + "-crawl-*',key:datasetKey,negate:!f,value:'" + aData.datasetKey + "'),query:(match:(datasetKey:(query:'" + aData.datasetKey + "',type:phrase))))),index:'" + env + "-crawl-*')&_g=(time:(from:now-7d,mode:quick,to:now))"
+
         var $log = $("<a href='"+url+"'>Logs</a>").bind('click', function() {
           // open a tab to Kibana
           window.open(url,'Logs');
