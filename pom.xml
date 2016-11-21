@@ -36,47 +36,48 @@
 
     <amqp-client.version>3.5.6</amqp-client.version>
     <curator.version>2.6.0</curator.version>
-    <fest.version>2.0M10</fest.version>
     <dwc-api.version>1.16</dwc-api.version>
-    <dwca-io.version>1.27</dwca-io.version>
-    <gbif-api.version>0.42</gbif-api.version>
+    <dwca-io.version>1.28</dwca-io.version>
+    <fest.version>2.0M10</fest.version>
+    <!-- Fixed to the version Curator uses, problems otherwise -->
+    <freemarker.version>2.3.23</freemarker.version>
+    <gbif-api.version>0.47</gbif-api.version>
     <gbif-cli.version>0.10</gbif-cli.version>
-    <gbif-postal-service.version>0.22</gbif-postal-service.version>
-    <gbif-common.version>0.28</gbif-common.version>
     <gbif-common-service.version>0.16</gbif-common-service.version>
-    <gbif-common-ws.version>0.34</gbif-common-ws.version>
+    <gbif-common-ws.version>0.37</gbif-common-ws.version>
+    <gbif-common.version>0.28</gbif-common.version>
     <gbif-httputils.version>0.10</gbif-httputils.version>
-    <gbif-occurrence.version>0.49</gbif-occurrence.version>
-    <gbif-registry.version>2.55</gbif-registry.version>
-    <gbif-wrangler.version>0.2</gbif-wrangler.version>
     <gbif-microservice.version>0.5</gbif-microservice.version>
+    <gbif-occurrence.version>0.58.2</gbif-occurrence.version>
+    <gbif-postal-service.version>0.22</gbif-postal-service.version>
+    <gbif-registry.version>2.59</gbif-registry.version>
+    <gbif-wrangler.version>0.2</gbif-wrangler.version>
     <guava.version>18.0</guava.version>
     <guice.version>4.0</guice.version>
     <!-- Match the GBIF http-client! -->
     <httpclient.version>4.3.6</httpclient.version>
     <!-- Match the GBIF http-client! -->
     <httpcore.version>4.3.3</httpcore.version>
-    <jackson.version>1.9.12</jackson.version>
     <jackson-annotations.version>2.6.0</jackson-annotations.version>
     <jackson-datatype-guava.version>1.9.2</jackson-datatype-guava.version>
-    <jcommander.version>1.48</jcommander.version>
+    <jackson.version>1.9.12</jackson.version>
+    <jcommander.version>1.58</jcommander.version>
     <jersey.version>1.19</jersey.version>
-    <joda-time.version>2.9.4</joda-time.version>
+    <joda-time.version>2.9.6</joda-time.version>
     <jsr305.version>3.0.1</jsr305.version>
     <junit.version>4.12</junit.version>
-    <logback.version>1.1.5</logback.version>
+    <logback.version>1.1.7</logback.version>
+    <metainf-services.version>1.7</metainf-services.version>
     <mockito.version>1.9.5</mockito.version>
-    <slf4j.version>1.7.16</slf4j.version>
-    <validation-api.version>1.1.0.Final</validation-api.version>
-    <zookeeper.version>3.4.5</zookeeper.version>
-    <!-- Fixed to the version Curator uses, problems otherwise -->
-    <freemarker.version>2.3.23</freemarker.version>
+    <slf4j.version>1.7.21</slf4j.version>
     <stax.version>1.0-2</stax.version>
     <stax2.version>4.0.0</stax2.version>
+    <validation-api.version>1.1.0.Final</validation-api.version>
     <woodstox.version>4.4.1</woodstox.version>
-    <metainf-services.version>1.6</metainf-services.version>
     <yammer-metrics.version>2.2.0</yammer-metrics.version>
+    <zookeeper.version>3.4.5</zookeeper.version>
   </properties>
+
 
   <repositories>
     <repository>
