@@ -12,54 +12,39 @@
  */
 package org.gbif.crawler.scheduler;
 
-import org.gbif.api.exception.ServiceUnavailableException;
 import org.gbif.api.model.common.paging.PagingRequest;
 import org.gbif.api.model.common.paging.PagingResponse;
 import org.gbif.api.model.crawler.DatasetProcessStatus;
 import org.gbif.api.model.registry.Dataset;
-import org.gbif.api.model.registry.Endpoint;
 import org.gbif.api.model.registry.MachineTag;
 import org.gbif.api.service.crawler.DatasetProcessService;
 import org.gbif.api.service.registry.DatasetProcessStatusService;
 import org.gbif.api.service.registry.DatasetService;
 import org.gbif.api.util.MachineTagUtils;
-import org.gbif.api.vocabulary.DatasetType;
-import org.gbif.api.vocabulary.EndpointType;
 import org.gbif.cli.ConfigUtils;
 import org.gbif.common.messaging.DefaultMessagePublisher;
 import org.gbif.common.messaging.api.Message;
 import org.gbif.common.messaging.api.messages.StartCrawlMessage;
-import org.gbif.crawler.constants.CrawlerNodePaths;
 import org.gbif.crawler.ws.client.guice.CrawlerWsClientModule;
 import org.gbif.registry.ws.client.guice.RegistryWsClientModule;
 import org.gbif.ws.client.guice.AnonymousAuthModule;
 
-import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 import java.util.Random;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
-import com.google.common.base.Optional;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.joda.time.DateTime;
 import org.joda.time.Days;
 import org.joda.time.ReadableInstant;
-import org.joda.time.Weeks;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import static org.gbif.api.vocabulary.TagName.DECLARED_RECORD_COUNT;
 
 /**
  * This service scans the registry at a configurable interval and schedules a crawl for Datasets that fulfill a few
@@ -245,45 +230,50 @@ public class CrawlSchedulerService extends AbstractScheduledService {
       return false;
     }
 
-    PagingResponse<DatasetProcessStatus> list = registryService.listDatasetProcessStatus(dataset.getKey(), null);
+    try {
+      PagingResponse<DatasetProcessStatus> list = registryService.listDatasetProcessStatus(dataset.getKey(), null);
 
-    // We accumulate datasets that have NEVER been successfully crawled
-    if (list.getResults().isEmpty() ) {
-      neverCrawled.add(dataset);
-      LOG.debug("Deferring dataset [{}] of type [{}] - never been successfully crawled", dataset.getKey(),
-                  dataset.getType());
-      return false; // if there is capacity it'll be attempted anyway
-    }
+      // We accumulate datasets that have NEVER been successfully crawled
+      if (list.getResults().isEmpty() ) {
+        neverCrawled.add(dataset);
+        LOG.debug("Deferring dataset [{}] of type [{}] - never been successfully crawled", dataset.getKey(),
+            dataset.getType());
+        return false; // if there is capacity it'll be attempted anyway
+      }
 
-    // Check whether if it was last crawled in the permissible window.
-    // We prefer looking at when the last crawl finished, but resort to started if needed
-    DatasetProcessStatus status = list.getResults().get(0); // last crawl
-    ReadableInstant lastCrawlDate = (status.getFinishedCrawling() == null) ?
-      new DateTime(status.getStartedCrawling()) :
-      new DateTime(status.getFinishedCrawling()); // prefer end date if given
-    int days = Days.daysBetween(lastCrawlDate, now).getDays();
-    if (days < configuration.maxLastCrawledInDays) {
-      LOG.debug("Not eligible to crawl [{}] - crawled {} days ago, which is within threshold of {} days",
-                dataset.getKey(), days, configuration.maxLastCrawledInDays);
+      // Check whether if it was last crawled in the permissible window.
+      // We prefer looking at when the last crawl finished, but resort to started if needed
+      DatasetProcessStatus status = list.getResults().get(0); // last crawl
+      ReadableInstant lastCrawlDate = (status.getFinishedCrawling() == null) ?
+          new DateTime(status.getStartedCrawling()) :
+          new DateTime(status.getFinishedCrawling()); // prefer end date if given
+      int days = Days.daysBetween(lastCrawlDate, now).getDays();
+      if (days < configuration.maxLastCrawledInDays) {
+        LOG.debug("Not eligible to crawl [{}] - crawled {} days ago, which is within threshold of {} days",
+            dataset.getKey(), days, configuration.maxLastCrawledInDays);
+        return false;
+      }
+
+      // Check whether the Dataset is currently being crawled
+      if (crawlService.getDatasetProcessStatus(dataset.getKey()) != null) {
+        LOG.debug("Not eligible to crawl [{}] - already crawling", dataset.getKey());
+        return false;
+      }
+
+      // Check whether there is a machine tag that omits this dataset from crawling
+      if (tagsExcludeFromScheduledCrawling(dataset)) {
+        LOG.debug("Not eligible to crawl [{}] - tagged to be omitted from scheduled crawling [{}:{}]", dataset.getKey(),
+            CRAWLER_NAMESPACE, TAG_EXCLUDE_FROM_SCHEDULED_CRAWL);
+        return false;
+      }
+
+      LOG.debug("Crawling dataset [{}] of type [{}]", dataset.getKey(), dataset.getType());
+      return true;
+
+    } catch (RuntimeException e) {
+      LOG.error("Error determining crawl eligibility for dataset [{}] of type [{}]. Ignore dataset", dataset.getKey(), dataset.getType(), e);
       return false;
     }
-
-    // Check whether the Dataset is currently being crawled
-    if (crawlService.getDatasetProcessStatus(dataset.getKey()) != null) {
-      LOG.debug("Not eligible to crawl [{}] - already crawling", dataset.getKey());
-      return false;
-    }
-
-    // Check whether there is a machine tag that omits this dataset from crawling
-    if (tagsExcludeFromScheduledCrawling(dataset)) {
-      LOG.debug("Not eligible to crawl [{}] - tagged to be omitted from scheduled crawling [{}:{}]", dataset.getKey(),
-                CRAWLER_NAMESPACE, TAG_EXCLUDE_FROM_SCHEDULED_CRAWL);
-      return false;
-    }
-
-    LOG.debug("Crawling dataset [{}] of type [{}]", dataset.getKey(), dataset.getType());
-    return true;
-
   }
 
   /**
