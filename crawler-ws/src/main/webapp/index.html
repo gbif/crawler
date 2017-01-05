@@ -27,11 +27,15 @@
 
       // Environment, used to construct the Kibana URL
       var env = 'prod';
+      var domain = 'gbif';
       if (window.location.hostname.match(/uat/)) {
         env = 'uat';
+        domain = domain + '-uat';
       } else if (window.location.hostname.match(/dev/)) {
         env = 'dev';
+        domain = domain + '-dev';
       }
+      domain = domain + '.org';
 
       // to aid development of this UI
       // runningXmlContentUrl = "./running.json";
@@ -117,8 +121,15 @@
           return false;
         });
 
+        var portalUrl = "http://www."+domain+"/dataset/"+aData.datasetKey;
+        var $portal = $("<a href='"+portalUrl+"'>Portal</a>").bind('click', function() {
+          // open a tab to the dataset page in the portal
+          window.open(portalUrl,'Portal');
+          return false;
+        });
+
         $('td:eq(16)', nRow).html("");
-        $('td:eq(16)', nRow).append($log).append(" | ").append($details);
+        $('td:eq(16)', nRow).append($log).append(" | ").append($details).append(" | ").append($portal);
       }
 
 
@@ -243,18 +254,20 @@
             ajaxRequests.push(
               $.ajax({
                 url: detailUrl + aData.datasetKey,
-                success: function(json) {
-                  oTable.fnUpdate(json, nRow, undefined, false, false); // don't repaint the table
-                  // we just refreshed it
-                  aData = oTable.fnGetData(nRow);
-                  decorate(nRow, aData);
+                success: function(json, textStatus, jqXHR) {
+                  if (jqXHR.status == "200") {
+                    oTable.fnUpdate(json, nRow, undefined, false, false); // don't repaint the table
+                    // we just refreshed it
+                    aData = oTable.fnGetData(nRow);
+                    decorate(nRow, aData);
 
-                  // if the detail tab, is open, refresh that too
-                 if($('textarea', $(nRow).next()).length>0) {
-                   $('textarea', $(nRow).next()).text(JSON.stringify(json, undefined, 2));
-                 }
-				       }
-             })
+                    // if the detail tab, is open, refresh that too
+                    if($('textarea', $(nRow).next()).length>0) {
+                      $('textarea', $(nRow).next()).text(JSON.stringify(json, undefined, 2));
+                    }
+                  }
+                }
+              })
             );
           });
 
