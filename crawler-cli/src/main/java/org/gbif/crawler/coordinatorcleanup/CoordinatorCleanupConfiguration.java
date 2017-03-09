@@ -50,9 +50,14 @@ public class CoordinatorCleanupConfiguration {
   @Min(1)
   public int interval = 1;
 
+  @Parameter(names = "--http-timeout", description = "Timeout from HTTP REST calls, milliseconds")
+  @Min(1 * 1000)
+  @PropertyName("httpTimeout")
+  public int httpTimeout = 3 * 60 * 1000;
+
   @Override
   public String toString() {
     return Objects.toStringHelper(this).add("zooKeeper", zooKeeper).add("archiveDirectory", archiveDirectory)
-      .add("interval", interval).add("wsUrl", wsUrl).toString();
+      .add("interval", interval).add("wsUrl", wsUrl).add("httpTimeout", httpTimeout).toString();
   }
 }
