@@ -12,6 +12,12 @@
  */
 package org.gbif.crawler.coordinatorcleanup;
 
+import com.google.common.util.concurrent.AbstractScheduledService;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import org.apache.curator.framework.CuratorFramework;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.map.SerializationConfig;
 import org.gbif.api.exception.ServiceUnavailableException;
 import org.gbif.api.model.crawler.DatasetProcessStatus;
 import org.gbif.api.model.crawler.ProcessState;
@@ -22,24 +28,14 @@ import org.gbif.crawler.constants.CrawlerNodePaths;
 import org.gbif.crawler.ws.client.guice.CrawlerWsClientModule;
 import org.gbif.registry.ws.client.guice.RegistryWsClientModule;
 import org.gbif.ws.client.guice.SingleUserAuthModule;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-
-import com.google.common.io.Files;
-import com.google.common.util.concurrent.AbstractScheduledService;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import org.apache.curator.framework.CuratorFramework;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.map.SerializationConfig;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * This services starts the Crawler Coordinator by listening for messages.
@@ -97,18 +93,8 @@ public class CoordinatorCleanupService extends AbstractScheduledService {
         continue;
       }
 
-      LOG.debug(MAPPER.writeValueAsString(status));
-      try {
-        File file = new File(configuration.archiveDirectory,
-                             status.getDatasetKey() + "_" + status.getCrawlJob().getAttempt() + "_result.json");
-        Files.createParentDirs(file);
-        Files.write(MAPPER.writeValueAsBytes(status), file);
-      } catch (IOException e) {
-        LOG.warn("Could not write status due to exception. [{}]", status.getDatasetKey(), e);
-      }
-
       // If all of these things are true we can delete this dataset from ZK and dump info to disc
-      delete(status.getDatasetKey());
+      delete(status);
     }
     LOG.info("Done checking for finished crawls");
   }
@@ -227,16 +213,25 @@ public class CoordinatorCleanupService extends AbstractScheduledService {
     return true;
   }
 
-  private void delete(UUID datasetKey) {
-    LOG.info("Done with [{}]", datasetKey);
+  private void delete(DatasetProcessStatus status) {
+    String statusString;
+    try {
+      statusString = MAPPER.writeValueAsString(status);
+    } catch (IOException e) {
+      LOG.warn("Failed to serialize processing status for [{}].", status.getDatasetKey());
+      statusString = "failed to serialize";
+    }
+    
+    LOG.info("Done with [{}]. Status: {}", status.getDatasetKey(), statusString);
+
     try {
       // This will retry since we provide guaranteed() which could potentially cause issues on race conditions.
       // However, this is seen as highly unlikely, and a cleaned ZK will be operationally easier to manage then
       // the alternative.  Any failed crawls due to some unlikely race condition (which includes a failure to delete)
       // will be picked up quickly in a scheduled recrawl anyway.
-      curator.delete().guaranteed().deletingChildrenIfNeeded().forPath(CrawlerNodePaths.getCrawlInfoPath(datasetKey));
+      curator.delete().guaranteed().deletingChildrenIfNeeded().forPath(CrawlerNodePaths.getCrawlInfoPath(status.getDatasetKey()));
     } catch (Exception e) {
-      LOG.error("Couldn't delete [{}] - note that a background thread will retry this", datasetKey, e);
+      LOG.error("Couldn't delete [{}] - note that a background thread will retry this", status.getDatasetKey(), e);
     }
   }
 }
