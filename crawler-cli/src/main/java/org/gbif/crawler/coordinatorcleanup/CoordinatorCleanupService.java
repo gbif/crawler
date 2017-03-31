@@ -183,6 +183,7 @@ public class CoordinatorCleanupService extends AbstractScheduledService {
 
     // Done fragmenting?
     // We are done when we have as many pages fragmented (in error or successful) as we did crawl
+    // this is only really used for xml protocols, dwca will have 1 page fragmented by the downloader
     if (status.getPagesCrawled() > status.getPagesFragmentedError() + status.getPagesFragmentedSuccessful()) {
       return false;
     }
@@ -190,23 +191,23 @@ public class CoordinatorCleanupService extends AbstractScheduledService {
     // Done persisting fragments?
     // We are done when we have processed as many fragments as the fragmenter emitted. During this processing we could
     // generate more raw occurrence records than we got fragments due to ABCD2
-    if (status.getFragmentsProcessed() != status.getFragmentsEmitted()) {
+    if (status.getFragmentsProcessed() == 0 || status.getFragmentsProcessed() != status.getFragmentsEmitted()) {
       return false;
     }
 
     // Are we done persisting verbatim occurrences?
     // We are done when we have persisted (in error or successful) as many verbatim records as there were new or
     // updated raw occurrences in the previous steps
-    if (status.getVerbatimOccurrencesPersistedSuccessful() + status.getVerbatimOccurrencesPersistedError()
-        != status.getRawOccurrencesPersistedNew() + status.getRawOccurrencesPersistedUpdated()) {
+    long persistedCnt = status.getVerbatimOccurrencesPersistedSuccessful() + status.getVerbatimOccurrencesPersistedError();
+    if (persistedCnt == 0 || persistedCnt != status.getRawOccurrencesPersistedNew() + status.getRawOccurrencesPersistedUpdated()) {
       return false;
     }
 
     // Are we done interpreting occurrences?
     // We are done when we have interpreted (in error or successful) as many occurrences as there were successful
     // verbatim occurrences persisted
-    if (status.getInterpretedOccurrencesPersistedSuccessful() + status.getInterpretedOccurrencesPersistedError()
-        != status.getVerbatimOccurrencesPersistedSuccessful()) {
+    long interpretedCnt = status.getInterpretedOccurrencesPersistedSuccessful() + status.getInterpretedOccurrencesPersistedError();
+    if (interpretedCnt == 0 || interpretedCnt != status.getVerbatimOccurrencesPersistedSuccessful()) {
       return false;
     }
 
