@@ -1,5 +1,10 @@
 package org.gbif.crawler.dwca.downloader;
 
+import com.yammer.metrics.Metrics;
+import com.yammer.metrics.core.Counter;
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.http.HttpStatus;
+import org.apache.http.StatusLine;
 import org.gbif.api.model.crawler.CrawlJob;
 import org.gbif.api.model.crawler.FinishReason;
 import org.gbif.api.model.crawler.ProcessState;
@@ -8,30 +13,16 @@ import org.gbif.common.messaging.api.messages.DwcaDownloadFinishedMessage;
 import org.gbif.crawler.common.CrawlConsumer;
 import org.gbif.crawler.constants.CrawlerNodePaths;
 import org.gbif.utils.HttpUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Date;
 import java.util.UUID;
 
-import com.yammer.metrics.Metrics;
-import com.yammer.metrics.core.Counter;
-import org.apache.curator.RetryPolicy;
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.retry.ExponentialBackoffRetry;
-import org.apache.http.HttpStatus;
-import org.apache.http.StatusLine;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import static org.gbif.crawler.common.ZookeeperUtils.createOrUpdate;
-import static org.gbif.crawler.common.ZookeeperUtils.updateCounter;
-import static org.gbif.crawler.common.ZookeeperUtils.updateDate;
-import static org.gbif.crawler.constants.CrawlerNodePaths.FINISHED_REASON;
-import static org.gbif.crawler.constants.CrawlerNodePaths.PAGES_CRAWLED;
-import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_CHECKLIST;
-import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_OCCURRENCE;
-import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_SAMPLE;
+import static org.gbif.crawler.common.ZookeeperUtils.*;
+import static org.gbif.crawler.constants.CrawlerNodePaths.*;
 
 /**
  * Consumer of the crawler queue that runs the actual dwc archive download and emits a DwcaDownloadFinishedMessage
@@ -47,7 +38,6 @@ public class DwcaCrawlConsumer extends CrawlConsumer {
   private final Counter failedDownloads = Metrics.newCounter(DownloaderService.class, "failedDownloads");
   private final Counter notModified = Metrics.newCounter(DownloaderService.class, "notModified");
   private final HttpUtil client = new HttpUtil(HttpUtil.newMultithreadedClient(10 * 60 * 1000, 25, 2));
-  private final RetryPolicy retryPolicy = new ExponentialBackoffRetry(100, 10);
 
   public DwcaCrawlConsumer(CuratorFramework curator, MessagePublisher publisher, File archiveRepository) {
     super(curator, publisher);
