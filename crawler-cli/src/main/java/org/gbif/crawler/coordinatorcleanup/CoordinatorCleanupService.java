@@ -191,6 +191,11 @@ public class CoordinatorCleanupService extends AbstractScheduledService {
     // Done persisting fragments?
     // We are done when we have processed as many fragments as the fragmenter emitted. During this processing we could
     // generate more raw occurrence records than we got fragments due to ABCD2
+    // We also make sure here that at least one fragment was already processed.
+    // In case the fragmenting is delayed cause its queued the coordinator cleanup would otherwise erroneously
+    // believe the crawl has finished and remove it. That was leading to empty ZK nodes in previous versions
+    // when the fragmenter started its work and updated the deleted ZK crawl.
+    // It often happened with mixed Plazi checklists containing occurrences.
     if (status.getFragmentsProcessed() == 0 || status.getFragmentsProcessed() != status.getFragmentsEmitted()) {
       return false;
     }
@@ -199,7 +204,7 @@ public class CoordinatorCleanupService extends AbstractScheduledService {
     // We are done when we have persisted (in error or successful) as many verbatim records as there were new or
     // updated raw occurrences in the previous steps
     long persistedCnt = status.getVerbatimOccurrencesPersistedSuccessful() + status.getVerbatimOccurrencesPersistedError();
-    if (persistedCnt == 0 || persistedCnt != status.getRawOccurrencesPersistedNew() + status.getRawOccurrencesPersistedUpdated()) {
+    if (persistedCnt != status.getRawOccurrencesPersistedNew() + status.getRawOccurrencesPersistedUpdated()) {
       return false;
     }
 
@@ -207,11 +212,7 @@ public class CoordinatorCleanupService extends AbstractScheduledService {
     // We are done when we have interpreted (in error or successful) as many occurrences as there were successful
     // verbatim occurrences persisted
     long interpretedCnt = status.getInterpretedOccurrencesPersistedSuccessful() + status.getInterpretedOccurrencesPersistedError();
-    if (interpretedCnt == 0 || interpretedCnt != status.getVerbatimOccurrencesPersistedSuccessful()) {
-      return false;
-    }
-
-    return true;
+    return interpretedCnt == status.getVerbatimOccurrencesPersistedSuccessful();
   }
 
   private void delete(DatasetProcessStatus status) {
