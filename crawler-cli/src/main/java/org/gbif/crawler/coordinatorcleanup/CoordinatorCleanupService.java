@@ -192,18 +192,21 @@ public class CoordinatorCleanupService extends AbstractScheduledService {
     }
 
     // Done persisting fragments?
-    // We are done when we have processed as many fragments as the fragmenter emitted. During this processing we could
-    // generate more raw occurrence records than we got fragments due to ABCD2
 
+    // There are legal cases when no fragments are emitted at all when the dataset is empty.
+    // Abort after 24h in such cases.
+    if (status.getFragmentsProcessed() == 0 && crawlingStartedBefore24h(status)) {
+      return true;
+    }
+
+    // Otherwise we are done when we have processed as many fragments as the fragmenter emitted.
+    // During this processing we could generate more raw occurrence records than we got fragments due to ABCD2
     // We also make sure here that at least one fragment was already processed.
     // In case the fragmenting is delayed cause its queued the coordinator cleanup would otherwise erroneously
     // believe the crawl has finished and remove it. That was leading to empty ZK nodes in previous versions
     // when the fragmenter started its work and updated the deleted ZK crawl.
     // It often happened with mixed Plazi checklists containing occurrences.
-    // There are legal cases when no fragments are emitted when the dataset is empty.
-    // Abort after 24h in such cases.
-    boolean fragmentationStarted = status.getFragmentsProcessed() > 0 || crawlingStartedBefore24h(status);
-    if (!fragmentationStarted || status.getFragmentsProcessed() != status.getFragmentsEmitted()) {
+    if (status.getFragmentsProcessed() == 0 || status.getFragmentsProcessed() != status.getFragmentsEmitted()) {
       return false;
     }
 
