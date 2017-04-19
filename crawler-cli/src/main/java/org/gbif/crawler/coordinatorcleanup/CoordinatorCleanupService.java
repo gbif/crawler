@@ -32,6 +32,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
@@ -44,6 +46,7 @@ public class CoordinatorCleanupService extends AbstractScheduledService {
 
   private static final Logger LOG = LoggerFactory.getLogger(CoordinatorCleanupService.class);
   private static final ObjectMapper MAPPER = new ObjectMapper();
+  private static final long MILLIS_PER_DAY = TimeUnit.DAYS.toMillis(1);
   private final CoordinatorCleanupConfiguration configuration;
   private CuratorFramework curator;
   private DatasetProcessService service;
@@ -191,12 +194,16 @@ public class CoordinatorCleanupService extends AbstractScheduledService {
     // Done persisting fragments?
     // We are done when we have processed as many fragments as the fragmenter emitted. During this processing we could
     // generate more raw occurrence records than we got fragments due to ABCD2
+
     // We also make sure here that at least one fragment was already processed.
     // In case the fragmenting is delayed cause its queued the coordinator cleanup would otherwise erroneously
     // believe the crawl has finished and remove it. That was leading to empty ZK nodes in previous versions
     // when the fragmenter started its work and updated the deleted ZK crawl.
     // It often happened with mixed Plazi checklists containing occurrences.
-    if (status.getFragmentsProcessed() == 0 || status.getFragmentsProcessed() != status.getFragmentsEmitted()) {
+    // There are legal cases when no fragments are emitted when the dataset is empty.
+    // Abort after 24h in such cases.
+    boolean fragmentationStarted = status.getFragmentsProcessed() > 0 || crawlingStartedBefore24h(status);
+    if (!fragmentationStarted || status.getFragmentsProcessed() != status.getFragmentsEmitted()) {
       return false;
     }
 
@@ -213,6 +220,14 @@ public class CoordinatorCleanupService extends AbstractScheduledService {
     // verbatim occurrences persisted
     long interpretedCnt = status.getInterpretedOccurrencesPersistedSuccessful() + status.getInterpretedOccurrencesPersistedError();
     return interpretedCnt == status.getVerbatimOccurrencesPersistedSuccessful();
+  }
+
+  private boolean crawlingStartedBefore24h(DatasetProcessStatus status) {
+    if (status.getStartedCrawling() == null) return false;
+
+    Instant start = status.getStartedCrawling().toInstant();
+    Instant yesterday = Instant.now().minus( 24 , ChronoUnit.HOURS );
+    return start.isBefore( yesterday);
   }
 
   private void delete(DatasetProcessStatus status) {
