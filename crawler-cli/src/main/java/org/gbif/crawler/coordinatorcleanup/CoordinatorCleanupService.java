@@ -199,30 +199,39 @@ public class CoordinatorCleanupService extends AbstractScheduledService {
       return true;
     }
 
-    // Otherwise we are done when we have processed as many fragments as the fragmenter emitted.
+    // Verify that all fragments have been fully processed, i.e. when we have processed as many fragments as the fragmenter emitted.
     // During this processing we could generate more raw occurrence records than we got fragments due to ABCD2
     // We also make sure here that at least one fragment was already processed.
-    // In case the fragmenting is delayed cause its queued the coordinator cleanup would otherwise erroneously
-    // believe the crawl has finished and remove it. That was leading to empty ZK nodes in previous versions
-    // when the fragmenter started its work and updated the deleted ZK crawl.
-    // It often happened with mixed Plazi checklists containing occurrences.
-    if (status.getFragmentsProcessed() == 0 || status.getFragmentsProcessed() != status.getFragmentsEmitted()) {
+    //
+    // In case the fragmenting is delayed cause its queued no fragments are emitted at all and we should wait,
+    // otherwise the cleanup would too eagerly kick in and we see broken or empty ZK nodes.
+    // This has often happened with mixed Plazi checklists containing also occurrences.
+    if (status.getFragmentsEmitted() == 0 || status.getFragmentsEmitted() > status.getFragmentsProcessed()) {
       return false;
     }
 
-    // Are we done persisting verbatim occurrences?
-    // We are done when we have persisted (in error or successful) as many verbatim records as there were new or
-    // updated raw occurrences in the previous steps
-    long persistedCnt = status.getVerbatimOccurrencesPersistedSuccessful() + status.getVerbatimOccurrencesPersistedError();
-    if (persistedCnt != status.getRawOccurrencesPersistedNew() + status.getRawOccurrencesPersistedUpdated()) {
+    // Are we done persisting all verbatim occurrences?
+    // We are done when we have persisted (in error or successful) as many verbatim records
+    // as there were new or updated raw occurrences in the previous steps
+    long rawPersistedCnt = status.getRawOccurrencesPersistedNew() + status.getRawOccurrencesPersistedUpdated();
+    long verbatimPersistedCnt = status.getVerbatimOccurrencesPersistedSuccessful() + status.getVerbatimOccurrencesPersistedError();
+    // At this point rawPersistedCnt should never be zero as we have made sure we at least processed one fragment
+    if (rawPersistedCnt > verbatimPersistedCnt) {
       return false;
     }
 
     // Are we done interpreting occurrences?
-    // We are done when we have interpreted (in error or successful) as many occurrences as there were successful
-    // verbatim occurrences persisted
+    // We are done when we have interpreted (in error or successful) as many occurrences
+    // as there were successful verbatim occurrences persisted
+    // Again also check that the interpretation is not just queued and we have at least one verbatim record persisted
     long interpretedCnt = status.getInterpretedOccurrencesPersistedSuccessful() + status.getInterpretedOccurrencesPersistedError();
-    return interpretedCnt == status.getVerbatimOccurrencesPersistedSuccessful();
+    // At this point verbatimPersistedCnt should never be zero, but we could have zero successful verbatim records
+    if (status.getVerbatimOccurrencesPersistedSuccessful() > interpretedCnt) {
+      return false;
+    }
+
+    // the crawl is finally done!
+    return true;
   }
 
   private boolean crawlingStartedBefore24h(DatasetProcessStatus status) {
