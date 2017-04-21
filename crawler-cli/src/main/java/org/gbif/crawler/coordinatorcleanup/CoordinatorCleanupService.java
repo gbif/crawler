@@ -195,7 +195,7 @@ public class CoordinatorCleanupService extends AbstractScheduledService {
 
     // There are legal cases when no fragments are emitted at all when the dataset is empty.
     // Abort after 24h in such cases.
-    if (status.getFragmentsProcessed() == 0 && crawlingStartedBefore24h(status)) {
+    if (status.getFragmentsEmitted() == 0 && crawlingStartedBefore24h(status)) {
       return true;
     }
 
@@ -241,7 +241,7 @@ public class CoordinatorCleanupService extends AbstractScheduledService {
       LOG.warn("Failed to serialize processing status for [{}].", status.getDatasetKey());
       statusString = "failed to serialize";
     }
-    
+
     LOG.info("Done with [{}]. Status: {}", status.getDatasetKey(), statusString);
 
     try {
