@@ -29,7 +29,7 @@ public class ZookeeperCleanupFromFile {
    */
   public static void main(String[] args) throws IOException, KeeperException, InterruptedException {
     LOG.debug("ZookeeperCleanupFromFile starting");
-    if (args.length != 3) {
+    if (args.length != 2) {
       LOG.error("Usage: ZookeeperCleanupFromFile <filename> <environment: prod, uat, or dev>");
       System.exit(1);
     }

@@ -42,6 +42,10 @@
           <artifactId>log4j</artifactId>
           <groupId>log4j</groupId>
         </exclusion>
+        <exclusion>
+          <artifactId>slf4j-log4j12</artifactId>
+          <groupId>org.slf4j</groupId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
@@ -68,18 +72,78 @@
     </dependency>
   </dependencies>
 
-  <!-- Set JAR name (without version number) so bash script calling JAR does not have to keep changing: -->
-  <!-- https://github.com/gbif/gbif-configuration/blob/db721a709c2358c4b9c17f2f5f2da2fcc7bb85f2/cli/common/util/crawl-cleanup -->
   <build>
+    <extensions>
+      <extension>
+        <groupId>org.apache.maven.wagon</groupId>
+        <artifactId>wagon-ssh</artifactId>
+        <version>2.4</version>
+      </extension>
+    </extensions>
     <plugins>
+      <!-- Set JAR name (without version number) so bash script calling JAR does not have to keep changing: -->
+      <!-- https://github.com/gbif/gbif-configuration/blob/master/cli/common/util/crawl-cleanup -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
         <version>2.6</version>
         <configuration>
-          <finalName>zookeeper-cleanup</finalName>
+          <finalName>crawler-cleanup</finalName>
         </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <configuration>
+          <appendAssemblyId>false</appendAssemblyId>
+          <finalName>${project.artifactId}</finalName>
+          <archive>
+            <manifest>
+              <mainClass>org.gbif.cli.Application</mainClass>
+            </manifest>
+          </archive>
+          <descriptorRefs>
+            <descriptorRef>jar-with-dependencies</descriptorRef>
+          </descriptorRefs>
+        </configuration>
+        <executions>
+          <execution>
+            <id>make-assembly</id>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
+
+  <profiles>
+    <profile>
+      <id>crawler-dev</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>wagon-maven-plugin</artifactId>
+            <version>1.0-beta-4</version>
+            <configuration>
+              <fromFile>${project.build.directory}/${project.artifactId}.jar</fromFile>
+              <url>scp://crap@devcrawler-vh.gbif.org/home/crap/lib</url>
+            </configuration>
+            <executions>
+              <execution>
+                <id>deploy-crawler</id>
+                <phase>install</phase>
+                <goals>
+                  <goal>upload-single</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+
 </project>

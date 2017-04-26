@@ -312,7 +312,7 @@
             <version>1.0-beta-4</version>
             <configuration>
               <fromFile>${project.build.directory}/${project.artifactId}.jar</fromFile>
-              <url>scp://crap@crawler.gbif-dev.org/home/crap/lib</url>
+              <url>scp://crap@devcrawler-vh.gbif.org/home/crap/lib</url>
             </configuration>
             <executions>
               <execution>
