@@ -1,5 +1,7 @@
 package org.gbif.crawler.client;
 
+import org.apache.http.conn.HttpClientConnectionManager;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.gbif.crawler.ResponseHandler;
 import org.gbif.crawler.exception.FatalCrawlException;
 import org.gbif.crawler.exception.ProtocolException;
@@ -32,9 +34,9 @@ import static org.mockito.Mockito.when;
 @SuppressWarnings("unchecked")
 public class HttpCrawlClientTest {
 
-  private static final String TEST_URL = "http://www.gbif.org";
+  private static final String TEST_URL = "http://www.gbif-uat.org";
 
-  @Mock ClientConnectionManager connectionManager;
+  @Mock HttpClientConnectionManager connectionManager;
   @Mock HttpClient httpClient;
   @Mock ResponseHandler<HttpResponse, String> innerResponseHandler = mock(ResponseHandler.class);
 
@@ -108,7 +110,7 @@ public class HttpCrawlClientTest {
     }
 
     try {
-      new HttpCrawlClient(mock(ClientConnectionManager.class), null);
+      new HttpCrawlClient(mock(HttpClientConnectionManager.class), null);
       fail();
     } catch (Exception e) {
     }

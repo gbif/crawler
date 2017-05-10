@@ -16,27 +16,12 @@ import org.apache.http.params.HttpParams;
 
 public class HttpCrawlClientProvider {
 
-  private static final int DEFAULT_HTTP_PORT = 80;
-
   private static final int CONNECTION_TIMEOUT_MSEC = 600000; // 10 mins
   private static final int MAX_TOTAL_CONNECTIONS = 500;
   private static final int MAX_TOTAL_PER_ROUTE = 20;
 
   public static HttpCrawlClient newHttpCrawlClient() {
-    SchemeRegistry schemeRegistry = new SchemeRegistry();
-    schemeRegistry.register(new Scheme("http", DEFAULT_HTTP_PORT, PlainSocketFactory.getSocketFactory()));
-
-    PoolingClientConnectionManager connectionManager = new PoolingClientConnectionManager(schemeRegistry);
-    connectionManager.setMaxTotal(MAX_TOTAL_CONNECTIONS);
-    connectionManager.setDefaultMaxPerRoute(MAX_TOTAL_PER_ROUTE);
-
-    HttpParams params = new BasicHttpParams();
-    HttpConnectionParams.setConnectionTimeout(params, CONNECTION_TIMEOUT_MSEC);
-    HttpConnectionParams.setSoTimeout(params, CONNECTION_TIMEOUT_MSEC);
-    params.setLongParameter(ClientPNames.CONN_MANAGER_TIMEOUT, CONNECTION_TIMEOUT_MSEC);
-    HttpClient httpClient = new DecompressingHttpClient(new DefaultHttpClient(connectionManager, params));
-
-    return new HttpCrawlClient(connectionManager, httpClient);
+    return HttpCrawlClient.newInstance(CONNECTION_TIMEOUT_MSEC, MAX_TOTAL_CONNECTIONS, MAX_TOTAL_PER_ROUTE);
   }
 
   private HttpCrawlClientProvider() {

@@ -1,5 +1,16 @@
 package org.gbif.crawler.client;
 
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.config.Registry;
+import org.apache.http.config.RegistryBuilder;
+import org.apache.http.conn.HttpClientConnectionManager;
+import org.apache.http.conn.socket.ConnectionSocketFactory;
+import org.apache.http.conn.socket.PlainConnectionSocketFactory;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.conn.ssl.SSLContexts;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.gbif.crawler.CrawlClient;
 import org.gbif.crawler.ResponseHandler;
 import org.gbif.crawler.exception.FatalCrawlException;
@@ -8,6 +19,7 @@ import org.gbif.crawler.exception.TransportException;
 
 import java.io.IOException;
 import javax.annotation.concurrent.ThreadSafe;
+import javax.net.ssl.SSLContext;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -18,17 +30,6 @@ import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.client.params.ClientPNames;
-import org.apache.http.conn.ClientConnectionManager;
-import org.apache.http.conn.scheme.PlainSocketFactory;
-import org.apache.http.conn.scheme.Scheme;
-import org.apache.http.conn.scheme.SchemeRegistry;
-import org.apache.http.impl.client.DecompressingHttpClient;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.conn.PoolingClientConnectionManager;
-import org.apache.http.params.BasicHttpParams;
-import org.apache.http.params.HttpConnectionParams;
-import org.apache.http.params.HttpParams;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,8 +37,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 /**
  * Executes HTTP GET requests in String form using Apache HttpClient.
- * <p/>
- * This client does not support HTTPS.
  * <p/>
  * {@link ResponseHandler}s must understand how to process a {@link HttpResponse} but they do not need to handle stream
  * closing as this is done by this class. When not needed anymore {@link #shutdown()} should be called so underlying
@@ -47,18 +46,18 @@ import static com.google.common.base.Preconditions.checkArgument;
  */
 // TODO: Log redirects - implement a RedirectStrategy
 // TODO: Automatic retries
-// TODO: Add HTTPS support
 @ThreadSafe
 public class HttpCrawlClient implements CrawlClient<String, HttpResponse> {
 
   private static final Logger LOG = LoggerFactory.getLogger(HttpCrawlClient.class);
 
-  private final ClientConnectionManager connectionManager;
+  private final HttpClientConnectionManager connectionManager;
   private final HttpClient httpClient;
 
   /**
    * Factory method to create a new instance of this client with a few default settings. This creates an instance that
-   * works with HTTP only (no HTTPS), uses multi-threading for its connections, supports compressed content and sets
+   * works with HTTP and HTTPS, uses multi-threading for its connections, supports compressed content (as is the default
+   * with HttpClientBuilderand sets
    * some user provided timeouts.
    *
    * @param connectionTimeout   this timeout in milliseconds is used for establishing a connection and for waiting for
@@ -73,23 +72,32 @@ public class HttpCrawlClient implements CrawlClient<String, HttpResponse> {
     checkArgument(maxTotalConnections > 0, "maxTotalConnections has to be greater than zero");
     checkArgument(maxTotalPerRoute > 0, "maxTotalPerRoute has to be greater than zero");
 
-    SchemeRegistry schemeRegistry = new SchemeRegistry();
-    schemeRegistry.register(new Scheme("http", 80, PlainSocketFactory.getSocketFactory()));
+    SSLContext sslcontext = SSLContexts.createSystemDefault();
 
-    PoolingClientConnectionManager connectionManager = new PoolingClientConnectionManager(schemeRegistry);
+    Registry<ConnectionSocketFactory> socketFactoryRegistry = RegistryBuilder.<ConnectionSocketFactory>create()
+      .register("http", PlainConnectionSocketFactory.INSTANCE)
+      .register("https", new SSLConnectionSocketFactory(sslcontext))
+      .build();
+
+    PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager(socketFactoryRegistry);
     connectionManager.setMaxTotal(maxTotalConnections);
     connectionManager.setDefaultMaxPerRoute(maxTotalPerRoute);
 
-    HttpParams params = new BasicHttpParams();
-    HttpConnectionParams.setConnectionTimeout(params, connectionTimeout);
-    HttpConnectionParams.setSoTimeout(params, connectionTimeout);
-    params.setLongParameter(ClientPNames.CONN_MANAGER_TIMEOUT, connectionTimeout);
-    HttpClient httpClient = new DecompressingHttpClient(new DefaultHttpClient(connectionManager, params));
+    RequestConfig defaultRequestConfig = RequestConfig.custom()
+      .setConnectTimeout(connectionTimeout)
+      .setSocketTimeout(connectionTimeout)
+      .build();
+
+    CloseableHttpClient httpClient = HttpClients.custom()
+      .setUserAgent("GBIF-Crawler")
+      .setConnectionManager(connectionManager)
+      .setDefaultRequestConfig(defaultRequestConfig)
+      .build();
 
     return new HttpCrawlClient(connectionManager, httpClient);
   }
 
-  public HttpCrawlClient(ClientConnectionManager connectionManager, HttpClient httpClient) {
+  public HttpCrawlClient(HttpClientConnectionManager connectionManager, HttpClient httpClient) {
     Preconditions.checkNotNull(connectionManager);
     Preconditions.checkNotNull(httpClient);
 
