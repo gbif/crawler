@@ -1,6 +1,6 @@
-# GBIF Crawler WebService
+# GBIF Crawler Webservice
 
-The Crawler Web Service provides the CRAwling Monitor (CRAM) which shows running crawls, their status, and gives links to logs in kibana. All of the count data comes from Zookeeper.
+The Crawler Web Service provides the [Crawling Monitor](https://crawler.gbif.org/) which shows running crawls, their status, and gives links to logs in Kibana. All of the count data comes from Zookeeper.
 
 ## To build the project
 
@@ -23,5 +23,3 @@ mvn -Pdev jetty:run
 ````
 
 and check on http://localhost:8080
-
-
