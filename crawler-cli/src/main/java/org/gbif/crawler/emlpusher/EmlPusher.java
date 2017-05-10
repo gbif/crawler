@@ -22,6 +22,7 @@ import org.apache.commons.io.IOCase;
 import org.apache.commons.io.filefilter.SuffixFileFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 /**
  * A utility that will inspect a crawling filesystem and push all metadata documents found into the registry.
@@ -65,7 +66,7 @@ public class EmlPusher {
 
   private void pushEMl(UUID key, File eml) throws IOException {
     InputStream in = new FileInputStream(eml);
-    try {
+    try (MDC.MDCCloseable closeable = MDC.putCloseable("datasetKey", key.toString())) {
       datasetService.insertMetadata(key, in);
       LOG.info("Pushed metadata document for dataset {} into registry", key);
       pushCounter++;
@@ -76,7 +77,7 @@ public class EmlPusher {
 
   private void push(File archiveFile) {
     UUID key = getDatasetKey(archiveFile);
-    try {
+    try (MDC.MDCCloseable closeable = MDC.putCloseable("datasetKey", key.toString())) {
       Archive arch = open(archiveFile);
       File eml = arch.getMetadataLocationFile();
       if (eml != null && eml.exists()) {

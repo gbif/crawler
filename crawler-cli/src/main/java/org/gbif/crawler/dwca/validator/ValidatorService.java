@@ -20,6 +20,7 @@ import org.gbif.dwca.io.ArchiveFactory;
 import org.gbif.dwca.io.UnsupportedArchiveException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import java.io.File;
 import java.io.IOException;
@@ -73,53 +74,55 @@ public class ValidatorService extends DwcaService {
       messageCount.inc();
 
       final UUID datasetKey = message.getDatasetUuid();
+      try (MDC.MDCCloseable closeable = MDC.putCloseable("datasetKey", datasetKey.toString())) {
 
-      LOG.info("Now validating DwC-A for dataset [{}]", datasetKey);
-      Dataset dataset = datasetService.get(datasetKey);
-      if (dataset == null) {
-        // exception, we don't know this dataset
-        throw new IllegalArgumentException("The requested dataset " + datasetKey + " is not registered");
-      }
+        LOG.info("Now validating DwC-A for dataset [{}]", datasetKey);
+        Dataset dataset = datasetService.get(datasetKey);
+        if (dataset == null) {
+          // exception, we don't know this dataset
+          throw new IllegalArgumentException("The requested dataset " + datasetKey + " is not registered");
+        }
 
-      DwcaValidationReport validationReport;
-      final File dwcaFile = new File(archiveRepository, datasetKey + DwcaCrawlConsumer.DWCA_SUFFIX);
-      final File archiveDir = new File(archiveRepository, datasetKey.toString());
-      try {
-        Archive archive = ArchiveFactory.openArchive(dwcaFile, archiveDir);
-        validationReport = DwcaValidator.validate(dataset, archive);
+        DwcaValidationReport validationReport;
+        final File dwcaFile = new File(archiveRepository, datasetKey + DwcaCrawlConsumer.DWCA_SUFFIX);
+        final File archiveDir = new File(archiveRepository, datasetKey.toString());
+        try {
+          Archive archive = ArchiveFactory.openArchive(dwcaFile, archiveDir);
+          validationReport = DwcaValidator.validate(dataset, archive);
 
-      } catch (UnsupportedArchiveException e) {
-        LOG.warn("Invalid Dwc archive for dataset {}", datasetKey, e);
-        validationReport = new DwcaValidationReport(datasetKey, "Invalid Dwc archive");
+        } catch (UnsupportedArchiveException e) {
+          LOG.warn("Invalid DwC archive for dataset [{}]", datasetKey, e);
+          validationReport = new DwcaValidationReport(datasetKey, "Invalid Dwc archive");
 
-      } catch (IOException e) {
-        LOG.warn("IOException when reading dwc archive for dataset {}", datasetKey, e);
-        validationReport = new DwcaValidationReport(datasetKey, "IOException when reading dwc archive");
+        } catch (IOException e) {
+          LOG.error("IOException when reading DwC archive for dataset [{}]", datasetKey, e);
+          validationReport = new DwcaValidationReport(datasetKey, "IOException when reading DwC archive");
 
-      } catch (RuntimeException e) {
-        LOG.warn("Unknown error when reading dwc archive for dataset {}", datasetKey, e);
-        validationReport = new DwcaValidationReport(datasetKey, "Unexpected error when reading dwc archive: " + e.getMessage());
-      }
+        } catch (RuntimeException e) {
+          LOG.error("Unknown error when reading DwC archive for dataset [{}]", datasetKey, e);
+          validationReport = new DwcaValidationReport(datasetKey, "Unexpected error when reading DwC archive: " + e.getMessage());
+        }
 
-      if (validationReport.isValid()) {
-        updateProcessState(dataset, validationReport, ProcessState.RUNNING);
+        if (validationReport.isValid()) {
+          updateProcessState(dataset, validationReport, ProcessState.RUNNING);
 
-      } else {
-        failedValidations.inc();
-        createOrUpdate(curator, datasetKey, FINISHED_REASON, FinishReason.ABORT);
-        updateProcessState(dataset, validationReport, ProcessState.FINISHED);
-      }
+        } else {
+          failedValidations.inc();
+          createOrUpdate(curator, datasetKey, FINISHED_REASON, FinishReason.ABORT);
+          updateProcessState(dataset, validationReport, ProcessState.FINISHED);
+        }
 
-      LOG.info("Finished validating DwC-A for dataset [{}], valid? is [{}]. Full report [{}]", datasetKey,
-        validationReport.isValid(), validationReport);
+        LOG.info("Finished validating DwC-A for dataset [{}], valid? is [{}]. Full report [{}]", datasetKey,
+            validationReport.isValid(), validationReport);
 
-      // send validation finished message
-      try {
-        publisher.send(
-          new DwcaValidationFinishedMessage(datasetKey, dataset.getType(), message.getSource(), message.getAttempt(),
-            validationReport));
-      } catch (IOException e) {
-        LOG.warn("Failed to send validation finished message for dataset {}", datasetKey, e);
+        // send validation finished message
+        try {
+          publisher.send(
+              new DwcaValidationFinishedMessage(datasetKey, dataset.getType(), message.getSource(), message.getAttempt(),
+                  validationReport));
+        } catch (IOException e) {
+          LOG.error("Failed to send validation finished message for dataset [{}]", datasetKey, e);
+        }
       }
     }
 

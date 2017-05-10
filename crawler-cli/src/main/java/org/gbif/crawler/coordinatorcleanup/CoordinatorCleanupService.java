@@ -30,6 +30,7 @@ import org.gbif.registry.ws.client.guice.RegistryWsClientModule;
 import org.gbif.ws.client.guice.SingleUserAuthModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -83,21 +84,23 @@ public class CoordinatorCleanupService extends AbstractScheduledService {
     }
 
     for (DatasetProcessStatus status : statuses) {
-      LOG.info("Checking DatasetProcessStatus with UUID [{}] now", status.getDatasetKey());
+      try (MDC.MDCCloseable closeable = MDC.putCloseable("datasetKey", status.getDatasetKey().toString())) {
+        LOG.info("Checking DatasetProcessStatus with UUID [{}] now", status.getDatasetKey());
 
-      try {
-        updateRegistry(status);
-      } catch (Exception e) {
-        LOG.error("Unable to callback and update the registry. Aborting this cleanup round, will try again later.", e);
-        return;
+        try {
+          updateRegistry(status);
+        } catch (Exception e) {
+          LOG.error("Unable to callback and update the registry. Aborting this cleanup round, will try again later.", e);
+          return;
+        }
+
+        if (!checkDoneProcessing(status)) {
+          continue;
+        }
+
+        // If all of these things are true we can delete this dataset from ZK and dump info to disc
+        delete(status);
       }
-
-      if (!checkDoneProcessing(status)) {
-        continue;
-      }
-
-      // If all of these things are true we can delete this dataset from ZK and dump info to disc
-      delete(status);
     }
     LOG.info("Done checking for finished crawls");
   }

@@ -29,6 +29,7 @@ import org.apache.curator.framework.recipes.atomic.AtomicValue;
 import org.apache.curator.framework.recipes.atomic.DistributedAtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import static org.gbif.crawler.common.ZookeeperUtils.getCounter;
 import static org.gbif.crawler.common.ZookeeperUtils.updateCounter;
@@ -99,6 +100,7 @@ public class DwcaFragmenterService extends AbstractIdleService {
     @Override
     public void handleMessage(DwcaMetasyncFinishedMessage message) {
       UUID datasetKey = message.getDatasetUuid();
+      MDC.put("datasetKey", datasetKey.toString());
 
       Archive archive;
       try {
@@ -120,7 +122,9 @@ public class DwcaFragmenterService extends AbstractIdleService {
         LOG.info("Ignoring DwC-A for dataset [{}] because it does not have Occurrence information.",
           message.getDatasetUuid());
       }
+
       updateCounter(curator, datasetKey, PAGES_FRAGMENTED_SUCCESSFUL, 1l);
+      MDC.remove("datasetKey");
     }
 
     private void handleOccurrenceCore(UUID datasetKey, Archive archive, DwcaMetasyncFinishedMessage message) {

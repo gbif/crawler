@@ -15,6 +15,7 @@ import org.gbif.crawler.constants.CrawlerNodePaths;
 import org.gbif.utils.HttpUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import java.io.File;
 import java.io.IOException;
@@ -62,8 +63,8 @@ public class DwcaCrawlConsumer extends CrawlConsumer {
     // we keep the compressed file forever and use it to retrieve the last modified for conditional gets
     final File localFile = new File(archiveRepository, datasetKey + DWCA_SUFFIX);
 
-    try {
-      LOG.debug("Start download of dwc archive from {} to {}", crawlJob.getTargetUrl(), localFile);
+    try (MDC.MDCCloseable closeable = MDC.putCloseable("datasetKey", datasetKey.toString())) {
+      LOG.info("Start download of DwC archive from {} to {}", crawlJob.getTargetUrl(), localFile);
       StatusLine status = client.downloadIfModifiedSince(crawlJob.getTargetUrl().toURL(), localFile);
 
       if (status.getStatusCode() == HttpStatus.SC_NOT_MODIFIED) {
@@ -79,7 +80,7 @@ public class DwcaCrawlConsumer extends CrawlConsumer {
       }
 
     } catch (IOException e) {
-      LOG.error("Failed to download dwc archive for dataset [{}] from [{}]", crawlJob.getDatasetKey(),
+      LOG.error("Failed to download DwC archive for dataset [{}] from [{}]", crawlJob.getDatasetKey(),
         crawlJob.getTargetUrl(), e);
       failed(datasetKey);
       throw new RuntimeException(e);
@@ -104,7 +105,7 @@ public class DwcaCrawlConsumer extends CrawlConsumer {
     LOG.info("DwC-A for dataset [{}] not modified. Crawl finished", datasetKey);
     // If the archive wasn't modified we are done processing so we need to update ZooKeeper to reflect this
     createOrUpdate(curator, datasetKey, FINISHED_REASON, FinishReason.NOT_MODIFIED);
-    // we dont know the kind of dataset so we just put all states to finish
+    // we don't know the kind of dataset so we just put all states to finish
     createOrUpdate(curator, datasetKey, PROCESS_STATE_OCCURRENCE, ProcessState.FINISHED);
     createOrUpdate(curator, datasetKey, PROCESS_STATE_CHECKLIST, ProcessState.FINISHED);
     createOrUpdate(curator, datasetKey, PROCESS_STATE_SAMPLE, ProcessState.FINISHED);

@@ -45,6 +45,7 @@ import org.joda.time.Days;
 import org.joda.time.ReadableInstant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 /**
  * This service scans the registry at a configurable interval and schedules a crawl for Datasets that fulfill a few
@@ -97,12 +98,13 @@ public class CrawlSchedulerService extends AbstractScheduledService {
 
     // Log information useful to aid quick diagnostics during operation (e.g. why isn't dataset X scheduling?)
     if (LOG.isInfoEnabled()) {
-      LOG.info("Omitting the following entities from auto-scheduled crawling:");
-      Joiner.MapJoiner mapJoiner = Joiner.on("\n\t - ").withKeyValueSeparator("=");
-      LOG.info("\t - {}", mapJoiner.join(configuration.omittedKeys));
+      for (String datasetKey : configuration.omittedKeys.keySet()) {
+        MDC.put("datasetKey", datasetKey);
+        LOG.info("Omitting [{}] from auto-scheduled crawling because '{}'.", datasetKey, configuration.omittedKeys.get(datasetKey));
+        MDC.remove("datasetKey");
+      }
 
-      LOG.info("Supported types:");
-      LOG.info("\t - {}", Joiner.on("\n\t - ").join(configuration.supportedTypes));
+      LOG.info("Supported types: {}", Joiner.on("; ").join(configuration.supportedTypes));
     }
 
     ReadableInstant now = new DateTime();
@@ -125,21 +127,23 @@ public class CrawlSchedulerService extends AbstractScheduledService {
       datasets = datasetService.list(pageable);
 
       for (Dataset dataset : datasets.getResults()) {
-        boolean eligibleToCrawl = false;
-        try {
-          eligibleToCrawl = isDatasetEligibleToCrawl(dataset, now, neverCrawledDatasets);
-        } catch (Exception e) {
-          LOG.error("Unexpected exception determining crawl eligibility for dataset[{}].  Swallowing and continuing",
-                    dataset.getKey(), e);
-        }
+        try (MDC.MDCCloseable closeable = MDC.putCloseable("datasetKey", dataset.getKey().toString())) {
+          boolean eligibleToCrawl = false;
+          try {
+            eligibleToCrawl = isDatasetEligibleToCrawl(dataset, now, neverCrawledDatasets);
+          } catch (Exception e) {
+            LOG.error("Unexpected exception determining crawl eligibility for dataset[{}].  Swallowing and continuing",
+                dataset.getKey(), e);
+          }
 
-        if (eligibleToCrawl) {
-          startCrawl(dataset);
-          numberInitiated++;
-          if (numberInitiated >= availableCapacity) {
-            LOG.info("Reached limit of how many crawls to initiate per iteration - capacity was calculated at [{}]",
-                     availableCapacity);
-            break;
+          if (eligibleToCrawl) {
+            startCrawl(dataset);
+            numberInitiated++;
+            if (numberInitiated >= availableCapacity) {
+              LOG.info("Reached limit of how many crawls to initiate per iteration - capacity was calculated at [{}]",
+                  availableCapacity);
+              break;
+            }
           }
         }
       }
@@ -158,10 +162,12 @@ public class CrawlSchedulerService extends AbstractScheduledService {
           // randomly select a dataset to ensure all are attempted over time
           int random = RANDOM.nextInt(neverCrawledDatasets.size());
           Dataset dataset = neverCrawledDatasets.get(random);
-          startCrawl(dataset);
-          neverCrawledDatasets.remove(random);
-          LOG.debug("Crawling dataset [{}] of type [{}] - has never been successfully crawled",
-                    dataset.getKey(), dataset.getType());
+          try (MDC.MDCCloseable closeable = MDC.putCloseable("datasetKey", dataset.getKey().toString())) {
+            startCrawl(dataset);
+            neverCrawledDatasets.remove(random);
+            LOG.debug("Crawling dataset [{}] of type [{}] - has never been successfully crawled",
+                dataset.getKey(), dataset.getType());
+          }
           numberInitiated++;
         }
       }

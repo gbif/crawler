@@ -184,10 +184,11 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
   }
 
   /**
-   * Some of our datatsets declare how many records they hold. We save this count in ZooKeeper to later display it on
+   * Some of our datasets declare how many records they hold. We save this count in ZooKeeper to later display it on
    * the admin console.
    */
   private void writeDeclaredRecordCount(Dataset dataset, Endpoint endpoint, UUID datasetKey) {
+    MDC.put("datasetKey", datasetKey.toString());
     List<MachineTag> filteredTags = MachineTagUtils.list(dataset, DECLARED_RECORD_COUNT);
     filteredTags.addAll(MachineTagUtils.list(endpoint, DECLARED_RECORD_COUNT));
 
@@ -204,6 +205,7 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
     } else if (filteredTags.size() > 1) {
       LOG.warn("Found more than one declaredRecordCount for dataset [{}]. Ignoring.", dataset.getKey());
     }
+    MDC.remove("datasetKey");
   }
 
   /**
