@@ -41,7 +41,7 @@
     <fest.version>2.0M10</fest.version>
     <!-- Fixed to the version Curator uses, problems otherwise -->
     <freemarker.version>2.3.23</freemarker.version>
-    <gbif-api.version>0.50</gbif-api.version>
+    <gbif-api.version>0.53</gbif-api.version>
     <gbif-cli.version>0.10</gbif-cli.version>
     <gbif-common-service.version>0.16</gbif-common-service.version>
     <gbif-common-ws.version>0.38</gbif-common-ws.version>
@@ -50,7 +50,7 @@
     <gbif-microservice.version>0.6</gbif-microservice.version>
     <gbif-occurrence.version>0.61</gbif-occurrence.version>
     <gbif-postal-service.version>0.24</gbif-postal-service.version>
-    <gbif-registry.version>2.63</gbif-registry.version>
+    <gbif-registry.version>2.65-SNAPSHOT</gbif-registry.version>
     <gbif-wrangler.version>0.2</gbif-wrangler.version>
     <guava.version>18.0</guava.version>
     <guice.version>4.0</guice.version>
