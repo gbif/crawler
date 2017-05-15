@@ -50,7 +50,7 @@
     <gbif-microservice.version>0.6</gbif-microservice.version>
     <gbif-occurrence.version>0.61</gbif-occurrence.version>
     <gbif-postal-service.version>0.24</gbif-postal-service.version>
-    <gbif-registry.version>2.65-SNAPSHOT</gbif-registry.version>
+    <gbif-registry.version>2.66</gbif-registry.version>
     <gbif-wrangler.version>0.2</gbif-wrangler.version>
     <guava.version>18.0</guava.version>
     <guice.version>4.0</guice.version>
