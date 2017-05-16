@@ -154,7 +154,7 @@ public class DwcaFragmenterService extends AbstractIdleService {
     }
 
     /**
-     * Uses a nested iterator over the star and the occurrence extension to produce unique, falttened occurrence
+     * Uses a nested iterator over the star and the occurrence extension to produce unique, flattened occurrence
      * fragments.
      */
     private void handleOccurrenceExtension(UUID datasetKey, Archive archive, Term rowType,

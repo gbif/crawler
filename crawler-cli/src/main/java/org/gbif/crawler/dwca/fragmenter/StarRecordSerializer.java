@@ -5,13 +5,8 @@ import org.gbif.dwca.record.Record;
 import org.gbif.dwca.record.StarRecord;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-import com.google.common.base.Strings;
-import com.google.common.collect.Maps;
 import org.apache.commons.lang.StringUtils;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.SerializationConfig;
@@ -19,7 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Utility class to serialize a dwca reader StarRecord into a simple json object.
+ * Utility class to serialize a DwCA reader StarRecord into a simple json object.
  */
 final class StarRecordSerializer {
 
@@ -54,8 +49,8 @@ final class StarRecordSerializer {
    * @return the json string
    */
   public static byte[] toJson(StarRecord rec) {
-    // we need an alphabetically sorted map to guarantee that identical records have identical json
-    Map<String, Object> data = Maps.newTreeMap();
+    // we need alphabetically sorted maps to guarantee that identical records have identical JSON
+    Map<String, Object> data = new TreeMap<>();
 
     data.put("id", rec.core().id());
 
@@ -65,18 +60,17 @@ final class StarRecordSerializer {
     }
 
     if (!rec.extensions().isEmpty()) {
-      Map<Term, List<Map<String, String>>> extensions =
-        new LinkedHashMap<Term, List<Map<String, String>>>(rec.extensions().size());
+      SortedMap<Term, List<Map<String, String>>> extensions = new TreeMap<>(Comparator.comparing(Term::qualifiedName));
       data.put("extensions", extensions);
 
       // iterate over extensions
       for (Term rowType : rec.extensions().keySet()) {
-        List<Map<String, String>> records = new ArrayList<Map<String, String>>(rec.extension(rowType).size());
+        List<Map<String, String>> records = new ArrayList<>(rec.extension(rowType).size());
         extensions.put(rowType, records);
 
         // iterate over extension records
         for (Record erec : rec.extension(rowType)) {
-          Map<String, String> edata = new LinkedHashMap<String, String>(erec.terms().size());
+          Map<String, String> edata = new TreeMap<>();
           records.add(edata);
           for (Term term : erec.terms()) {
             edata.put(term.simpleName(), erec.value(term));
@@ -94,8 +88,8 @@ final class StarRecordSerializer {
   }
 
   public static byte[] toJson(Record core, Record occExtension) {
-    // we need an alphabetically sorted map to guarantee that identical records have identical json
-    Map<String, Object> data = Maps.newTreeMap();
+    // we need alphabetically sorted maps to guarantee that identical records have identical JSON
+    Map<String, Object> data = new TreeMap<>();
 
     data.put("id", core.id());
 
