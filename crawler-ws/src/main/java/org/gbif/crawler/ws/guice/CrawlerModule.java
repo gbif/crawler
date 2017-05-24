@@ -13,6 +13,7 @@ import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
+import com.google.inject.name.Names;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.ExponentialBackoffRetry;
@@ -36,6 +37,9 @@ class CrawlerModule extends PrivateServiceModule {
     expose(DatasetProcessService.class);
     expose(Executor.class);
     expose(CuratorFramework.class);
+
+    expose(String.class)
+            .annotatedWith(Names.named("overcrawledReportFilePath"));
   }
 
   CrawlerModule(Properties properties) {
