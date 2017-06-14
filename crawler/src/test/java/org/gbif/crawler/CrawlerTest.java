@@ -113,9 +113,6 @@ public class CrawlerTest {
 
   @Test
   public void testAbortFatalCrawlException() throws Exception {
-    when(responseHandler.isEndOfRecords()).thenReturn(Optional.<Boolean>absent());
-    when(responseHandler.getRecordCount()).thenReturn(Optional.<Integer>absent());
-    when(responseHandler.getContentHash()).thenReturn(Optional.<Long>absent());
     when(client.execute(anyString(), eq(responseHandler))).thenThrow(new FatalCrawlException("foo"));
     crawler.crawl();
     verify(client, times(1)).execute(anyString(), eq(responseHandler));
