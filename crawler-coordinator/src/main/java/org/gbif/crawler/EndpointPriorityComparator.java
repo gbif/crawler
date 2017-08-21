@@ -32,7 +32,8 @@ public class EndpointPriorityComparator implements Comparator<Endpoint>, Seriali
    It should be easy to remove this class or change it into a factory */
 
   // Priorities from lowest to highest
-  public static final List<EndpointType> PRIORITIES = ImmutableList.of(EndpointType.DIGIR_MANIS,
+  public static final List<EndpointType> PRIORITIES = ImmutableList.of(EndpointType.EML,
+                                                                       EndpointType.DIGIR_MANIS,
                                                                        EndpointType.DIGIR,
                                                                        EndpointType.BIOCASE,
                                                                        EndpointType.TAPIR,

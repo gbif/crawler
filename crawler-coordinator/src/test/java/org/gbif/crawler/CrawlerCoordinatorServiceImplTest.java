@@ -37,6 +37,7 @@ import static org.gbif.api.vocabulary.TagName.DECLARED_RECORD_COUNT;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -94,10 +95,15 @@ public class CrawlerCoordinatorServiceImplTest {
     endpoint4.setType(EndpointType.BIOCASE);
     endpoints.add(endpoint4);
 
+    Endpoint endpoint5 = new Endpoint();
+    endpoint5.setType(EndpointType.EML);
+    endpoints.add(endpoint5);
+
     List<Endpoint> sortedEndpoints = service.prioritySortEndpoints(endpoints);
 
-    assertThat(sortedEndpoints.size(), equalTo(3));
-    assertThat(sortedEndpoints, contains(endpoint1, endpoint4, endpoint3));
+    assertThat(sortedEndpoints.size(), equalTo(4));
+    assertThat(sortedEndpoints, contains(endpoint1, endpoint4, endpoint3, endpoint5));
+    assertTrue("Priority of Dwc-A is higher than its EML", sortedEndpoints.indexOf(endpoint1) < sortedEndpoints.indexOf(endpoint5));
   }
 
   @Test
