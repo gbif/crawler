@@ -91,6 +91,17 @@ public class DwcaValidatorTest {
     DwcaTestUtil.cleanupArchive(archive);
   }
 
+  @Test
+  public void testEmlOnly() throws IOException {
+    Archive archive = DwcaTestUtil.openArchive("/dwca/eml.xml");
+    DwcaValidationReport report = DwcaValidator.validate(dataset, archive);
+    assertTrue(report.isValid());
+    assertEquals(0, report.getOccurrenceReport().getCheckedRecords());
+    assertEquals(0, report.getOccurrenceReport().getUniqueTriplets());
+    assertEquals(0, report.getOccurrenceReport().getRecordsWithInvalidTriplets());
+    assertEquals(0, report.getOccurrenceReport().getUniqueOccurrenceIds());
+    assertEquals(0, report.getOccurrenceReport().getRecordsMissingOccurrenceId());
+  }
 
   @Test
   public void testGoodTripletsNoOccurrenceId() throws IOException {

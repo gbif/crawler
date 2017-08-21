@@ -177,10 +177,21 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
     CrawlJob crawlJob = getCrawlJob(datasetKey, dataset, endpoint.get());
 
     byte[] dataBytes = serializeCrawlJob(crawlJob);
-    queueCrawlJob(datasetKey, EndpointType.DWC_ARCHIVE == endpoint.get().getType(), priority, dataBytes);
+    queueCrawlJob(datasetKey, isDarwinCoreArchive(endpoint.get()), priority, dataBytes);
     LOG.info("Crawling endpoint [{}] for dataset [{}]", endpoint.get().getUrl(), datasetKey);
     writeDeclaredRecordCount(dataset, endpoint.get(), datasetKey);
     MDC.remove("datasetKey");
+  }
+
+  /**
+   * Determine if an endpoint should be handled as a DarwinCore archive or not.
+   * Note: EML are handled as DarwinCore archive with no data (aka metadata only).
+   * @param endpoint
+   * @return
+   */
+  private static boolean isDarwinCoreArchive(Endpoint endpoint) {
+    return EndpointType.DWC_ARCHIVE == endpoint.getType() ||
+            EndpointType.EML == endpoint.getType();
   }
 
   /**
