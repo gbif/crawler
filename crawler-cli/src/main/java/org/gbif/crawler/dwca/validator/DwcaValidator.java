@@ -103,7 +103,9 @@ public class DwcaValidator {
         return new DwcaValidationReport(dataset.getKey(), validateOccurrenceExtension(archive, DwcTerm.Occurrence),
                                         report, null);
       }
-
+    } else if (dataset.getType() == DatasetType.METADATA) {
+      return new DwcaValidationReport(dataset.getKey(),
+              new OccurrenceValidationReport(0, 0, 0, 0, 0, true));
     } else {
       LOG.info("DwC-A for dataset[{}] of type[{}] is INVALID because it is not a supported type",
         dataset.getKey(), dataset.getType());

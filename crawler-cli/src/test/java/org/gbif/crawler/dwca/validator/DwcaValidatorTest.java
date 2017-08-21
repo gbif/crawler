@@ -94,6 +94,7 @@ public class DwcaValidatorTest {
   @Test
   public void testEmlOnly() throws IOException {
     Archive archive = DwcaTestUtil.openArchive("/dwca/eml.xml");
+    dataset.setType(DatasetType.METADATA);
     DwcaValidationReport report = DwcaValidator.validate(dataset, archive);
     assertTrue(report.isValid());
     assertEquals(0, report.getOccurrenceReport().getCheckedRecords());
