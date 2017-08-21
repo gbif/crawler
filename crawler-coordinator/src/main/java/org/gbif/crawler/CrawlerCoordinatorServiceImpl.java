@@ -366,6 +366,7 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
                              false);
         break;
       case DWC_ARCHIVE:
+      case EML:
         break;
       default:
         // This should never happen as it should've been caught earlier in the process
