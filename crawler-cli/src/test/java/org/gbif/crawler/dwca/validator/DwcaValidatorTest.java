@@ -97,11 +97,6 @@ public class DwcaValidatorTest {
     dataset.setType(DatasetType.METADATA);
     DwcaValidationReport report = DwcaValidator.validate(dataset, archive);
     assertTrue(report.isValid());
-    assertEquals(0, report.getOccurrenceReport().getCheckedRecords());
-    assertEquals(0, report.getOccurrenceReport().getUniqueTriplets());
-    assertEquals(0, report.getOccurrenceReport().getRecordsWithInvalidTriplets());
-    assertEquals(0, report.getOccurrenceReport().getUniqueOccurrenceIds());
-    assertEquals(0, report.getOccurrenceReport().getRecordsMissingOccurrenceId());
   }
 
   @Test

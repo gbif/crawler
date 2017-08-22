@@ -5,12 +5,13 @@ import org.gbif.api.model.crawler.GenericValidationReport;
 import org.gbif.api.model.crawler.OccurrenceValidationReport;
 import org.gbif.api.model.registry.Dataset;
 import org.gbif.api.vocabulary.DatasetType;
-import org.gbif.dwca.record.Record;
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.Term;
 import org.gbif.dwca.io.Archive;
+import org.gbif.dwca.record.Record;
 import org.gbif.dwca.record.StarRecord;
 
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -104,8 +105,9 @@ public class DwcaValidator {
                                         report, null);
       }
     } else if (dataset.getType() == DatasetType.METADATA) {
+      //TODO validate the EML (requires the new validator library)
       return new DwcaValidationReport(dataset.getKey(),
-              new OccurrenceValidationReport(0, 0, 0, 0, 0, true));
+              new GenericValidationReport(0, true, Collections.emptyList(), Collections.emptyList()));
     } else {
       LOG.info("DwC-A for dataset[{}] of type[{}] is INVALID because it is not a supported type",
         dataset.getKey(), dataset.getType());
