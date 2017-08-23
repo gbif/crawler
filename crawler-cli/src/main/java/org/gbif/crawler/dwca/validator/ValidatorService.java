@@ -1,8 +1,5 @@
 package org.gbif.crawler.dwca.validator;
 
-import com.yammer.metrics.Metrics;
-import com.yammer.metrics.core.Counter;
-import org.apache.curator.framework.CuratorFramework;
 import org.gbif.api.model.crawler.DwcaValidationReport;
 import org.gbif.api.model.crawler.FinishReason;
 import org.gbif.api.model.crawler.ProcessState;
@@ -18,16 +15,24 @@ import org.gbif.crawler.dwca.downloader.DwcaCrawlConsumer;
 import org.gbif.dwca.io.Archive;
 import org.gbif.dwca.io.ArchiveFactory;
 import org.gbif.dwca.io.UnsupportedArchiveException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.UUID;
 
+import com.yammer.metrics.Metrics;
+import com.yammer.metrics.core.Counter;
+import org.apache.curator.framework.CuratorFramework;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
+
 import static org.gbif.crawler.common.ZookeeperUtils.createOrUpdate;
-import static org.gbif.crawler.constants.CrawlerNodePaths.*;
+import static org.gbif.crawler.constants.CrawlerNodePaths.FINISHED_REASON;
+import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_CHECKLIST;
+import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_OCCURRENCE;
+import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_SAMPLE;
+import static org.gbif.dwc.terms.GbifTerm.datasetKey;
 
 public class ValidatorService extends DwcaService {
 
@@ -127,27 +132,37 @@ public class ValidatorService extends DwcaService {
     }
 
     /**
-     * For existing data types this sets the process state as given, for non existing ones it puts it always to EMPTY.
+     * For existing dataset types (that contains data) this sets the process state as given.
+     * For METADATA, this method will simply return. DwcaMetasyncService will handle them.
+     *
      */
     private void updateProcessState(Dataset dataset, DwcaValidationReport report, ProcessState state) {
-      if (dataset.getType() == DatasetType.OCCURRENCE) {
-        // we only deal with occurrences
-        createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_OCCURRENCE, state);
 
-      } else if (dataset.getType() == DatasetType.CHECKLIST || dataset.getType() == DatasetType.SAMPLING_EVENT) {
-        // we might have a mixed dataset with taxa or events and optionally also occurrences
-
-        // update core status
-        // if there is no report, we record empty, otherwise we record the given state
-        ProcessState coreState = report.getGenericReport() == null ? ProcessState.EMPTY : state;
-        createOrUpdate(curator, report.getDatasetKey(), dataset.getType() == DatasetType.CHECKLIST ? PROCESS_STATE_CHECKLIST : PROCESS_STATE_SAMPLE, coreState);
-
-        // update occurrence status
-        if (report.getOccurrenceReport() == null || report.getOccurrenceReport().getCheckedRecords() == 0) {
-          createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_OCCURRENCE, ProcessState.EMPTY);
-        } else {
+      switch(dataset.getType()){
+        case OCCURRENCE:
           createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_OCCURRENCE, state);
-        }
+          break;
+        case CHECKLIST:
+        case SAMPLING_EVENT:
+          // we might have a mixed dataset with taxa or events and optionally also occurrences
+
+          // update core status
+          // if there is no report, we record empty, otherwise we record the given state
+          ProcessState coreState = report.getGenericReport() == null ? ProcessState.EMPTY : state;
+          createOrUpdate(curator, report.getDatasetKey(), dataset.getType() == DatasetType.CHECKLIST ? PROCESS_STATE_CHECKLIST : PROCESS_STATE_SAMPLE, coreState);
+
+          // update occurrence status
+          if (report.getOccurrenceReport() == null || report.getOccurrenceReport().getCheckedRecords() == 0) {
+            createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_OCCURRENCE, ProcessState.EMPTY);
+          } else {
+            createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_OCCURRENCE, state);
+          }
+          break;
+        case METADATA:
+          // no-op, DwcaMetasyncService will set PROCESS_STATE_OCCURRENCE and PROCESS_STATE_CHECKLIST to EMPTY
+          break;
+        default:
+          LOG.error("Can't updateProcessState dataset [{}]: unknown type -> {}", datasetKey, dataset.getType());
       }
     }
   }

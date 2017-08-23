@@ -2,9 +2,11 @@ package org.gbif.crawler.dwca.metasync;
 
 import org.gbif.api.model.common.paging.Pageable;
 import org.gbif.api.model.common.paging.PagingRequest;
+import org.gbif.api.model.crawler.ProcessState;
 import org.gbif.api.model.registry.Dataset;
 import org.gbif.api.model.registry.MachineTag;
 import org.gbif.api.service.registry.DatasetService;
+import org.gbif.api.vocabulary.DatasetType;
 import org.gbif.api.vocabulary.TagName;
 import org.gbif.common.messaging.AbstractMessageCallback;
 import org.gbif.common.messaging.api.MessagePublisher;
@@ -35,7 +37,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
+import static org.gbif.crawler.common.ZookeeperUtils.createOrUpdate;
 import static org.gbif.crawler.constants.CrawlerNodePaths.PAGES_FRAGMENTED_ERROR;
+import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_CHECKLIST;
+import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_OCCURRENCE;
 
 /**
  * Service that listens to DwcaDownloadFinishedMessages and puts found metadata documents into the metadata
@@ -100,34 +105,39 @@ public class DwcaMetasyncService extends DwcaService {
       }
     }
 
-    private void handleMessageInternal(DwcaValidationFinishedMessage message, UUID uuid) throws IOException {
+    private void handleMessageInternal(DwcaValidationFinishedMessage message, UUID datasetKey) throws IOException {
       if (!message.getValidationReport().isValid()) {
-        LOG.info("Ignoring message for invalid DwC-A for dataset [{}]", uuid);
+        LOG.info("Ignoring message for invalid DwC-A for dataset [{}]", datasetKey);
         return;
       }
 
-      Dataset dataset = datasetService.get(uuid);
-
+      Dataset dataset = datasetService.get(datasetKey);
       if (dataset == null) {
         // exception, we don't know this dataset
         throw new IllegalArgumentException("The requested dataset " + message.getDatasetUuid() + " is not registered");
       }
 
-      Archive archive = ArchiveFactory.openArchive(new File(archiveRepository, uuid.toString()));
+      Archive archive = ArchiveFactory.openArchive(new File(archiveRepository, datasetKey.toString()));
       File metaFile = archive.getMetadataLocationFile();
       if (metaFile != null && metaFile.exists()) {
         // metadata found, put into repository thereby updating the dataset
-        setMetaDocument(metaFile, uuid);
+        setMetaDocument(metaFile, datasetKey);
         datasetsUpdated.inc();
       }
 
       // process dataset constituents
       Map<String, UUID> constituents = processConstituents(dataset, archive);
+      LOG.info("Finished updating metadata from DwC-A for dataset [{}]", datasetKey);
 
-      LOG.info("Finished updating metadata from DwC-A for dataset [{}]", uuid);
+      // for metadata only dataset this is the last step
+      // explicitly declare that no content is expected so the CoordinatorCleanup can pick it
+      if(DatasetType.METADATA == dataset.getType()) {
+        createOrUpdate(curator, datasetKey, PROCESS_STATE_OCCURRENCE, ProcessState.EMPTY);
+        createOrUpdate(curator, datasetKey, PROCESS_STATE_CHECKLIST, ProcessState.EMPTY);
+      }
 
       // send success message
-      publisher.send(new DwcaMetasyncFinishedMessage(uuid, dataset.getType(), message.getSource(), message.getAttempt(),
+      publisher.send(new DwcaMetasyncFinishedMessage(datasetKey, dataset.getType(), message.getSource(), message.getAttempt(),
         constituents, message.getValidationReport()));
     }
 
@@ -189,13 +199,10 @@ public class DwcaMetasyncService extends DwcaService {
       try (InputStream stream = new FileInputStream(metaDoc)){
         datasetService.insertMetadata(datasetKey, stream);
         return true;
-
       } catch (IllegalArgumentException e) {
         LOG.warn("Metadata document {} for dataset {} not understood", metaDoc.getAbsolutePath(), datasetKey, e);
-
       } catch (Exception e) {
         LOG.error("Failed to upload metadata file {} for dataset {}", metaDoc.getAbsoluteFile(), datasetKey, e);
-
       }
       return false;
     }

@@ -12,12 +12,6 @@
  */
 package org.gbif.crawler.coordinatorcleanup;
 
-import com.google.common.util.concurrent.AbstractScheduledService;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import org.apache.curator.framework.CuratorFramework;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.map.SerializationConfig;
 import org.gbif.api.exception.ServiceUnavailableException;
 import org.gbif.api.model.crawler.DatasetProcessStatus;
 import org.gbif.api.model.crawler.ProcessState;
@@ -28,9 +22,6 @@ import org.gbif.crawler.constants.CrawlerNodePaths;
 import org.gbif.crawler.ws.client.guice.CrawlerWsClientModule;
 import org.gbif.registry.ws.client.guice.RegistryWsClientModule;
 import org.gbif.ws.client.guice.SingleUserAuthModule;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -39,6 +30,16 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+
+import com.google.common.util.concurrent.AbstractScheduledService;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import org.apache.curator.framework.CuratorFramework;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.map.SerializationConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 /**
  * This services starts the Crawler Coordinator by listening for messages.
@@ -174,6 +175,11 @@ public class CoordinatorCleanupService extends AbstractScheduledService {
     // crawl finished?
     if (status.getFinishedCrawling() == null) {
       return false;
+    }
+
+    // if metadata only, these are set to empty once the metadata is synchronized
+    if (ProcessState.EMPTY == status.getProcessStateOccurrence() && ProcessState.EMPTY == status.getProcessStateChecklist()) {
+      return true;
     }
 
     // checklist indexing running?
