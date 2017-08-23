@@ -15,6 +15,9 @@ import com.google.common.base.Objects;
 
 public class DwcaConfiguration {
 
+  public static final String DWCA_SUFFIX = ".dwca";
+  public static final String METADATA_FILE = "metadata.xml";
+
   @ParametersDelegate
   @Valid
   @NotNull

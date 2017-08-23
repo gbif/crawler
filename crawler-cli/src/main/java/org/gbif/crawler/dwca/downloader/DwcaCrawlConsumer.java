@@ -1,10 +1,5 @@
 package org.gbif.crawler.dwca.downloader;
 
-import com.yammer.metrics.Metrics;
-import com.yammer.metrics.core.Counter;
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.http.HttpStatus;
-import org.apache.http.StatusLine;
 import org.gbif.api.model.crawler.CrawlJob;
 import org.gbif.api.model.crawler.FinishReason;
 import org.gbif.api.model.crawler.ProcessState;
@@ -12,18 +7,31 @@ import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.DwcaDownloadFinishedMessage;
 import org.gbif.crawler.common.CrawlConsumer;
 import org.gbif.crawler.constants.CrawlerNodePaths;
+import org.gbif.crawler.dwca.DwcaConfiguration;
 import org.gbif.utils.HttpUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Date;
 import java.util.UUID;
 
-import static org.gbif.crawler.common.ZookeeperUtils.*;
-import static org.gbif.crawler.constants.CrawlerNodePaths.*;
+import com.yammer.metrics.Metrics;
+import com.yammer.metrics.core.Counter;
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.http.HttpStatus;
+import org.apache.http.StatusLine;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
+
+import static org.gbif.crawler.common.ZookeeperUtils.createOrUpdate;
+import static org.gbif.crawler.common.ZookeeperUtils.updateCounter;
+import static org.gbif.crawler.common.ZookeeperUtils.updateDate;
+import static org.gbif.crawler.constants.CrawlerNodePaths.FINISHED_REASON;
+import static org.gbif.crawler.constants.CrawlerNodePaths.PAGES_CRAWLED;
+import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_CHECKLIST;
+import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_OCCURRENCE;
+import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_SAMPLE;
 
 /**
  * Consumer of the crawler queue that runs the actual dwc archive download and emits a DwcaDownloadFinishedMessage
@@ -32,7 +40,6 @@ import static org.gbif.crawler.constants.CrawlerNodePaths.*;
 public class DwcaCrawlConsumer extends CrawlConsumer {
 
   private static final Logger LOG = LoggerFactory.getLogger(DwcaCrawlConsumer.class);
-  public static final String DWCA_SUFFIX = ".dwca";
 
   private final File archiveRepository;
   private final Counter startedDownloads = Metrics.newCounter(DownloaderService.class, "startedDownloads");
@@ -60,8 +67,8 @@ public class DwcaCrawlConsumer extends CrawlConsumer {
     updateDate(curator, datasetKey, CrawlerNodePaths.STARTED_CRAWLING);
     startedDownloads.inc();
 
-    // we keep the compressed file forever and use it to retrieve the last modified for conditional gets
-    final File localFile = new File(archiveRepository, datasetKey + DWCA_SUFFIX);
+    // we keep the file (potentially compressed) forever and use it to retrieve the last modified for conditional gets
+    final File localFile = new File(archiveRepository, datasetKey + DwcaConfiguration.DWCA_SUFFIX);
 
     try (MDC.MDCCloseable closeable = MDC.putCloseable("datasetKey", datasetKey.toString())) {
       LOG.info("Start download of DwC archive from {} to {}", crawlJob.getTargetUrl(), localFile);
@@ -69,16 +76,13 @@ public class DwcaCrawlConsumer extends CrawlConsumer {
 
       if (status.getStatusCode() == HttpStatus.SC_NOT_MODIFIED) {
         notModified(datasetKey);
-
       } else if (HttpUtil.success(status)) {
         success(datasetKey, crawlJob);
-
       } else {
         failed(datasetKey);
         throw new IllegalStateException("HTTP " + status.getStatusCode() + ". Failed to download DwC-A for dataset "
                                         + datasetKey + " from " + crawlJob.getTargetUrl());
       }
-
     } catch (IOException e) {
       LOG.error("Failed to download DwC archive for dataset [{}] from [{}]", crawlJob.getDatasetKey(),
         crawlJob.getTargetUrl(), e);

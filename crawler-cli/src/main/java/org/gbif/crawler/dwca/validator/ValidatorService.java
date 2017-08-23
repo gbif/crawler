@@ -10,18 +10,23 @@ import org.gbif.common.messaging.AbstractMessageCallback;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.DwcaDownloadFinishedMessage;
 import org.gbif.common.messaging.api.messages.DwcaValidationFinishedMessage;
+import org.gbif.crawler.dwca.DwcaConfiguration;
 import org.gbif.crawler.dwca.DwcaService;
-import org.gbif.crawler.dwca.downloader.DwcaCrawlConsumer;
 import org.gbif.dwca.io.Archive;
 import org.gbif.dwca.io.ArchiveFactory;
 import org.gbif.dwca.io.UnsupportedArchiveException;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.util.Objects;
 import java.util.UUID;
 
 import com.yammer.metrics.Metrics;
 import com.yammer.metrics.core.Counter;
+import org.apache.commons.io.FileUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -88,26 +93,10 @@ public class ValidatorService extends DwcaService {
           throw new IllegalArgumentException("The requested dataset " + datasetKey + " is not registered");
         }
 
-        DwcaValidationReport validationReport;
-        final File dwcaFile = new File(archiveRepository, datasetKey + DwcaCrawlConsumer.DWCA_SUFFIX);
-        final File archiveDir = new File(archiveRepository, datasetKey.toString());
-        try {
-          Archive archive = ArchiveFactory.openArchive(dwcaFile, archiveDir);
-          validationReport = DwcaValidator.validate(dataset, archive);
+        final File dwcaFile = new File(archiveRepository, datasetKey + DwcaConfiguration.DWCA_SUFFIX);
+        final File destinationDir = new File(archiveRepository, datasetKey.toString());
 
-        } catch (UnsupportedArchiveException e) {
-          LOG.warn("Invalid DwC archive for dataset [{}]", datasetKey, e);
-          validationReport = new DwcaValidationReport(datasetKey, "Invalid Dwc archive");
-
-        } catch (IOException e) {
-          LOG.error("IOException when reading DwC archive for dataset [{}]", datasetKey, e);
-          validationReport = new DwcaValidationReport(datasetKey, "IOException when reading DwC archive");
-
-        } catch (RuntimeException e) {
-          LOG.error("Unknown error when reading DwC archive for dataset [{}]", datasetKey, e);
-          validationReport = new DwcaValidationReport(datasetKey, "Unexpected error when reading DwC archive: " + e.getMessage());
-        }
-
+        DwcaValidationReport validationReport = prepareAndRunValidation(dataset, dwcaFile, destinationDir);
         if (validationReport.isValid()) {
           updateProcessState(dataset, validationReport, ProcessState.RUNNING);
 
@@ -129,6 +118,46 @@ public class ValidatorService extends DwcaService {
           LOG.error("Failed to send validation finished message for dataset [{}]", datasetKey, e);
         }
       }
+    }
+
+    /**
+     * Prepare the file(s) and run the validation on the resulting file(s).
+     * @param dataset
+     * @param downloadedFile
+     * @param destinationFolder
+     * @return
+     */
+    private DwcaValidationReport prepareAndRunValidation(Dataset dataset, File downloadedFile, File destinationFolder) {
+
+      Objects.requireNonNull(dataset, "dataset shall be provided");
+      DwcaValidationReport validationReport;
+
+      try {
+        Archive archive;
+        if(DatasetType.METADATA == dataset.getType()) {
+          Path destinationPath = destinationFolder.toPath().resolve(DwcaConfiguration.METADATA_FILE);
+          FileUtils.forceMkdir(destinationFolder);
+          //not an archive so copy the file alone
+          //we copy the file (instead of using the .dwca directly) in case the dataset is transformed into a more concrete type eventually
+          Files.copy(downloadedFile.toPath(), destinationPath, StandardCopyOption.REPLACE_EXISTING);
+          archive = ArchiveFactory.openArchiveDataFile(destinationPath.toFile());
+        }
+        else{
+          archive = ArchiveFactory.openArchive(downloadedFile, destinationFolder);
+        }
+        validationReport = DwcaValidator.validate(dataset, archive);
+      } catch (UnsupportedArchiveException e) {
+        LOG.warn("Invalid DwC archive for dataset [{}]", dataset.getKey(), e);
+        validationReport = new DwcaValidationReport(dataset.getKey(), "Invalid Dwc archive");
+      } catch (IOException e) {
+        LOG.error("IOException when reading DwC archive for dataset [{}]", dataset.getKey(), e);
+        validationReport = new DwcaValidationReport(dataset.getKey(), "IOException when reading DwC archive");
+      } catch (RuntimeException e) {
+        LOG.error("Unknown error when reading DwC archive for dataset [{}]", dataset.getKey(), e);
+        validationReport = new DwcaValidationReport(dataset.getKey(), "Unexpected error when reading DwC archive: " + e.getMessage());
+      }
+
+      return validationReport;
     }
 
     /**
