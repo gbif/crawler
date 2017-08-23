@@ -33,6 +33,7 @@
 
   <properties>
     <jdkLevel>1.8</jdkLevel>
+    <release.tagNameBase>crawler</release.tagNameBase>
 
     <amqp-client.version>3.5.6</amqp-client.version>
     <curator.version>2.6.0</curator.version>
