@@ -7,7 +7,6 @@ import org.gbif.api.model.crawler.FinishReason;
 import org.gbif.api.model.crawler.ProcessState;
 import org.gbif.api.service.crawler.DatasetProcessService;
 
-import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
@@ -53,8 +52,8 @@ import static org.gbif.crawler.constants.CrawlerNodePaths.PAGES_CRAWLED;
 import static org.gbif.crawler.constants.CrawlerNodePaths.PAGES_FRAGMENTED_ERROR;
 import static org.gbif.crawler.constants.CrawlerNodePaths.PAGES_FRAGMENTED_SUCCESSFUL;
 import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_CHECKLIST;
-import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_SAMPLE;
 import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_OCCURRENCE;
+import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_SAMPLE;
 import static org.gbif.crawler.constants.CrawlerNodePaths.QUEUED_CRAWLS;
 import static org.gbif.crawler.constants.CrawlerNodePaths.RAW_OCCURRENCES_PERSISTED_ERROR;
 import static org.gbif.crawler.constants.CrawlerNodePaths.RAW_OCCURRENCES_PERSISTED_NEW;
@@ -113,26 +112,16 @@ public class DatasetProcessServiceImpl implements DatasetProcessService {
     }
 
     DatasetProcessStatus.Builder builder = DatasetProcessStatus.builder();
-
     String crawlPath = getCrawlInfoPath(datasetKey);
     builder.datasetKey(datasetKey);
 
-    //FIXME moved outside the try/catch for debug purpose
     String path = null;
-
     // Here we're trying to load all information from Zookeeper into the DatasetProcessStatus object
     try {
+      // this can return an empty string which will throw an exception on mapper.readValue
+      // linked to https://github.com/gbif/crawler/issues/2
       byte[] crawlJobBytes = curator.getData().forPath(crawlPath);
-      CrawlJob crawlJob;
-
-      try {
-        crawlJob = mapper.readValue(crawlJobBytes, CrawlJob.class);
-      }
-      catch (IOException ioEx){
-        //probably wrong, debugging
-        LOG.warn("ZooKeeper crawlPath {} exists but contains nothing or invalid json", crawlPath);
-        return null;
-      }
+      CrawlJob crawlJob = mapper.readValue(crawlJobBytes, CrawlJob.class);
       builder.crawlJob(crawlJob);
 
       path = getCrawlInfoPath(datasetKey, CRAWL_CONTEXT);
@@ -257,6 +246,7 @@ public class DatasetProcessServiceImpl implements DatasetProcessService {
   private List<DatasetProcessStatus> getDatasetProcessStatuses(Collection<UUID> queueKeys) {
     CompletionService<DatasetProcessStatus> completionService =
       new ExecutorCompletionService<DatasetProcessStatus>(executor);
+
     for (final UUID queueKey : queueKeys) {
       completionService.submit(new Callable<DatasetProcessStatus>() {
         @Override
