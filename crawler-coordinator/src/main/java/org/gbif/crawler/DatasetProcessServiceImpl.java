@@ -7,6 +7,7 @@ import org.gbif.api.model.crawler.FinishReason;
 import org.gbif.api.model.crawler.ProcessState;
 import org.gbif.api.service.crawler.DatasetProcessService;
 
+import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
@@ -122,7 +123,16 @@ public class DatasetProcessServiceImpl implements DatasetProcessService {
     // Here we're trying to load all information from Zookeeper into the DatasetProcessStatus object
     try {
       byte[] crawlJobBytes = curator.getData().forPath(crawlPath);
-      CrawlJob crawlJob = mapper.readValue(crawlJobBytes, CrawlJob.class);
+      CrawlJob crawlJob;
+
+      try {
+        crawlJob = mapper.readValue(crawlJobBytes, CrawlJob.class);
+      }
+      catch (IOException ioEx){
+        //probably wrong, debugging
+        LOG.warn("ZooKeeper crawlPath {} exists but contains nothing or invalid json", crawlPath);
+        return null;
+      }
       builder.crawlJob(crawlJob);
 
       path = getCrawlInfoPath(datasetKey, CRAWL_CONTEXT);
