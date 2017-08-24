@@ -10,6 +10,8 @@ import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.DwcaMetasyncFinishedMessage;
 import org.gbif.common.messaging.api.messages.DwcaValidationFinishedMessage;
 import org.gbif.common.messaging.api.messages.OccurrenceFragmentedMessage;
+import org.gbif.dwc.DwcFiles;
+import org.gbif.dwc.NormalizedDwcArchive;
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.Term;
 import org.gbif.dwca.io.Archive;
@@ -39,8 +41,8 @@ import static org.gbif.crawler.constants.CrawlerNodePaths.PAGES_FRAGMENTED_SUCCE
 
 /**
  * This service will listen for {@link DwcaValidationFinishedMessage} from RabbitMQ and for every valid archive it will
- * extract all {@link StarRecord} and hand them back to RabbitMQ as {@link OccurrenceFragmentedMessage}s. While it does
- * this it'll update appropriate counters in ZooKeeper.
+ * extract all {@link StarRecord} and hand them back to RabbitMQ as {@link OccurrenceFragmentedMessage}s.
+ * While it does this it'll update appropriate counters in ZooKeeper.
  */
 public class DwcaFragmenterService extends AbstractIdleService {
 
@@ -79,7 +81,6 @@ public class DwcaFragmenterService extends AbstractIdleService {
     publisher.close();
     listener.close();
     curator.close();
-
   }
 
   /**
@@ -105,25 +106,23 @@ public class DwcaFragmenterService extends AbstractIdleService {
       Archive archive;
       try {
         archive = ArchiveFactory.openArchive(new File(archiveRepository, datasetKey.toString()));
-      } catch (IOException e) {
-        LOG.error("Could not open archive for dataset [{}]", datasetKey, e);
-        updateCounter(curator, datasetKey, PAGES_FRAGMENTED_ERROR, 1l);
+      } catch (IOException ioEx) {
+        LOG.error("Could not open archive for dataset [{}] : {}", datasetKey, ioEx.getMessage());
+        updateCounter(curator, datasetKey, PAGES_FRAGMENTED_ERROR, 1L);
         return;
       }
 
       if (message.getDatasetType() == DatasetType.OCCURRENCE) {
         handleOccurrenceCore(datasetKey, archive, message);
-
       } else if (archive.getExtension(DwcTerm.Occurrence) != null) {
         // e.g. Sample and Taxon archives can have occurrences
         handleOccurrenceExtension(datasetKey, archive, DwcTerm.Occurrence, message);
-
       } else {
         LOG.info("Ignoring DwC-A for dataset [{}] because it does not have Occurrence information.",
           message.getDatasetUuid());
       }
 
-      updateCounter(curator, datasetKey, PAGES_FRAGMENTED_SUCCESSFUL, 1l);
+      updateCounter(curator, datasetKey, PAGES_FRAGMENTED_SUCCESSFUL, 1L);
       MDC.remove("datasetKey");
     }
 
@@ -132,25 +131,35 @@ public class DwcaFragmenterService extends AbstractIdleService {
 
       int counter = 0;
       final DistributedAtomicLong zCounter = getCounter(curator, datasetKey, FRAGMENTS_EMITTED);
-      ClosableIterator<StarRecord> iterator = archive.iteratorRaw();
-      while (iterator.hasNext()) {
-        StarRecord record = iterator.next();
-        counter++;
 
-        byte[] serializedRecord = StarRecordSerializer.toJson(record);
-        try {
-          publisher.send(
-            new OccurrenceFragmentedMessage(datasetKey, message.getAttempt(), serializedRecord, OccurrenceSchemaType.DWCA,
-              EndpointType.DWC_ARCHIVE, message.getValidationReport()));
-        } catch (IOException e) {
-          LOG.error("Could not send message for dataset [{}]", datasetKey, e);
-        }
-        if (counter % COUNTER_UPDATE_FREQUENCY == 0) {
-          incrementCounter(datasetKey, zCounter, COUNTER_UPDATE_FREQUENCY);
-        }
+      NormalizedDwcArchive normalizedDwcArchive;
+      try {
+        //this can take some time if the archive includes extension(s)
+        normalizedDwcArchive = DwcFiles.prepareArchive(archive, false, false);
+      } catch (IOException e) {
+        LOG.error("Error extracting DwC-A for dataset [{}]", datasetKey);
+        return;
       }
-      incrementCounter(datasetKey, zCounter, counter % COUNTER_UPDATE_FREQUENCY);
-      LOG.info("Successfully extracted [{}] records out of DwC-A for dataset [{}]", counter, datasetKey);
+
+      try (ClosableIterator<StarRecord> iterator = normalizedDwcArchive.iterator()) {
+        while (iterator.hasNext()) {
+          StarRecord record = iterator.next();
+          counter++;
+
+          try {
+            sendOccurrenceRecord(StarRecordSerializer.toJson(record), message);
+          } catch (IOException ioEx) {
+            LOG.error("Could not send message for dataset [{}] : {}", datasetKey, ioEx.getMessage());
+          }
+          if (counter % COUNTER_UPDATE_FREQUENCY == 0) {
+            incrementCounter(datasetKey, zCounter, COUNTER_UPDATE_FREQUENCY);
+          }
+        }
+        incrementCounter(datasetKey, zCounter, counter % COUNTER_UPDATE_FREQUENCY);
+        LOG.info("Successfully extracted [{}] records out of DwC-A for dataset [{}]", counter, datasetKey);
+      } catch (Exception e) {
+        LOG.error("Error iterating DwC-A for dataset [{}]", datasetKey, e);
+      }
     }
 
     /**
@@ -158,26 +167,31 @@ public class DwcaFragmenterService extends AbstractIdleService {
      * fragments.
      */
     private void handleOccurrenceExtension(UUID datasetKey, Archive archive, Term rowType,
-      DwcaMetasyncFinishedMessage message) {
+                                           DwcaMetasyncFinishedMessage message) {
       LOG.info("Fragmenting DwC-A for dataset [{}] with {} extension", datasetKey, rowType);
 
-      ClosableIterator<StarRecord> iterator = archive.iteratorRaw();
+      NormalizedDwcArchive normalizedDwcArchive;
       try {
+        //this can take some time if the archive includes extension(s)
+        normalizedDwcArchive = DwcFiles.prepareArchive(archive, false, false);
+      } catch (IOException ioEx) {
+        LOG.error("Error extracting DwC-A for dataset [{}] : {}", datasetKey, ioEx.getMessage());
+        return;
+      }
+
+      try (ClosableIterator<StarRecord> iterator = normalizedDwcArchive.iterator()) {
         int counter = 0;
         final DistributedAtomicLong zCounter = getCounter(curator, datasetKey, FRAGMENTS_EMITTED);
         while (iterator.hasNext()) {
           StarRecord record = iterator.next();
-
           List<Record> records = record.extension(rowType);
           if (records != null) {
             for (Record rec : record.extension(rowType)) {
               counter++;
-              byte[] serializedRecord = StarRecordSerializer.toJson(record.core(), rec);
               try {
-                publisher.send(new OccurrenceFragmentedMessage(datasetKey, message.getAttempt(), serializedRecord,
-                  OccurrenceSchemaType.DWCA, EndpointType.DWC_ARCHIVE, message.getValidationReport()));
+                sendOccurrenceRecord(StarRecordSerializer.toJson(record.core(), rec), message);
               } catch (IOException e) {
-                LOG.error("Could not send message for dataset [{}]", datasetKey, e);
+                LOG.error("Could not send message for dataset [{}] : {}", datasetKey, e.getMessage());
               }
               if (counter % COUNTER_UPDATE_FREQUENCY == 0) {
                 incrementCounter(datasetKey, zCounter, COUNTER_UPDATE_FREQUENCY);
@@ -188,9 +202,22 @@ public class DwcaFragmenterService extends AbstractIdleService {
         incrementCounter(datasetKey, zCounter, counter % COUNTER_UPDATE_FREQUENCY);
         LOG.info("Successfully extracted [{}] records out of DwC-A for dataset [{}]", counter, datasetKey);
 
-      } finally {
-        iterator.close();
+      } catch (Exception e) {
+        LOG.error("Error iterating DwC-A for dataset [{}]", datasetKey);
       }
+    }
+
+    /**
+     * Mostly to improve code readability.
+     *
+     * @param serializedRecord
+     * @param message
+     * @throws IOException
+     */
+    private void sendOccurrenceRecord(byte[] serializedRecord, DwcaMetasyncFinishedMessage message) throws IOException {
+      publisher.send(
+              new OccurrenceFragmentedMessage(message.getDatasetUuid(), message.getAttempt(), serializedRecord,
+                      OccurrenceSchemaType.DWCA, EndpointType.DWC_ARCHIVE, message.getValidationReport()));
     }
 
     private void incrementCounter(UUID datasetKey, DistributedAtomicLong counter, long count) {

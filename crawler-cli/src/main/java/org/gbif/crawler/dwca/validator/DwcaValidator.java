@@ -5,14 +5,17 @@ import org.gbif.api.model.crawler.GenericValidationReport;
 import org.gbif.api.model.crawler.OccurrenceValidationReport;
 import org.gbif.api.model.registry.Dataset;
 import org.gbif.api.vocabulary.DatasetType;
+import org.gbif.dwc.DwcFiles;
+import org.gbif.dwc.NormalizedDwcArchive;
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.Term;
 import org.gbif.dwca.io.Archive;
 import org.gbif.dwca.record.Record;
 import org.gbif.dwca.record.StarRecord;
+import org.gbif.utils.file.ClosableIterator;
 
+import java.io.IOException;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -77,7 +80,7 @@ public class DwcaValidator {
    *
    * @return a report with the counts of good, bad and missing identifiers
    */
-  public static DwcaValidationReport validate(Dataset dataset, Archive archive) {
+  public static DwcaValidationReport validate(Dataset dataset, Archive archive) throws IOException {
     DwcaValidator validator = new DwcaValidator();
     return validator.check(dataset, archive);
   }
@@ -88,7 +91,7 @@ public class DwcaValidator {
    * Otherwise extension records from either dwc:Occurrence or gbif:TypesAndSpecimen are validated
    * with Occurrence being the preferred extension.
    */
-  private DwcaValidationReport check(Dataset dataset, Archive archive) {
+  private DwcaValidationReport check(Dataset dataset, Archive archive) throws IOException {
     if (dataset.getType() == DatasetType.OCCURRENCE) {
       return new DwcaValidationReport(dataset.getKey(), validateOccurrenceCore(archive));
 
@@ -122,15 +125,17 @@ public class DwcaValidator {
    * @param term To use to verify the uniqueness (e.g. DwcTerm.taxonID for taxon core)
    * @return The report produced
    */
-  private GenericValidationReport validateGenericCore(Archive archive, Term term) {
+  private GenericValidationReport validateGenericCore(Archive archive, Term term) throws IOException {
     int records = 0;
     List<String> duplicateIds = Lists.newArrayList();
     List<Integer> linesMissingIds = Lists.newArrayList();
     Set<String> ids = Sets.newHashSet();
     final boolean useCoreID = !archive.getCore().hasTerm(term);
-    for (StarRecord rec : archive) {
+
+    try (ClosableIterator<Record> it = DwcFiles.iterator(archive.getCore(), true, true)) {
+      Record rec = it.next();
       records++;
-      String id = useCoreID ? rec.core().id() : rec.core().value(term);
+      String id = useCoreID ? rec.id() : rec.value(term);
       if (linesMissingIds.size() < MAX_EXAMPLE_ERRORS && Strings.isNullOrEmpty(id)) {
         linesMissingIds.add(records);
       }
@@ -141,39 +146,60 @@ public class DwcaValidator {
       if (!Strings.isNullOrEmpty(id) && ids.size() < MAX_RECORDS) {
         ids.add(id);
       }
+    } catch (Exception e) {
+      throw new IOException(e);
     }
     return new GenericValidationReport(records, records != MAX_RECORDS, duplicateIds, linesMissingIds);
   }
 
-  private OccurrenceValidationReport validateOccurrenceCore(Archive archive) {
-    Iterator<Record> iter = archive.getCore().iterator();
-    while (iter.hasNext()) {
-      Record record = iter.next();
-      if (checkOccurrenceRecord(record, getTriplet(record, null))) {
-        break;
+  private OccurrenceValidationReport validateOccurrenceCore(Archive archive) throws IOException {
+    try(ClosableIterator<Record> iter = DwcFiles.iterator(archive.getCore(), true, true)){
+      while (iter.hasNext()) {
+        Record record = iter.next();
+        if (checkOccurrenceRecord(record, getTriplet(record, null))) {
+          break;
+        }
       }
+    } catch (Exception e) {
+      throw new IOException(e);
     }
+
     return new OccurrenceValidationReport(checkedRecords, uniqueTriplets.size(), recordsWithInvalidTriplets,
       uniqueOccurrenceIds.size(), recordsMissingOccurrenceId, checkedRecords != MAX_RECORDS);
   }
 
-  private OccurrenceValidationReport validateOccurrenceExtension(Archive archive, final Term rowType) {
+  private OccurrenceValidationReport validateOccurrenceExtension(Archive archive, final Term rowType) throws IOException {
+
+    // this can take some time if the archive includes extension(s)
+    NormalizedDwcArchive normalizedDwcArchive = DwcFiles.prepareArchive(archive, true, true);
+
     // outer loop over core records, e.g. taxa or samples
-    for (StarRecord star : archive) {
-      // inner loop over extension records
-      List<Record> records = star.extension(rowType);
-      if (records != null) {
-        for (Record ext : records) {
-          if (checkOccurrenceRecord(ext, getTriplet(star.core(), ext))) {
-            break;
+    try(ClosableIterator<StarRecord> iterator = normalizedDwcArchive.iterator()) {
+      while (iterator.hasNext()) {
+        StarRecord star = iterator.next();
+        // inner loop over extension records
+        List<Record> records = star.extension(rowType);
+        if (records != null) {
+          for (Record ext : records) {
+            if (checkOccurrenceRecord(ext, getTriplet(star.core(), ext))) {
+              break;
+            }
           }
         }
       }
+    } catch (Exception e) {
+      throw new IOException(e);
     }
     return new OccurrenceValidationReport(checkedRecords, uniqueTriplets.size(), recordsWithInvalidTriplets,
       uniqueOccurrenceIds.size(), recordsMissingOccurrenceId, checkedRecords != MAX_RECORDS);
   }
 
+  /**
+   *
+   * @param rec
+   * @param triplet
+   * @return should we continue or not
+   */
   private boolean checkOccurrenceRecord(Record rec, String triplet) {
     checkedRecords++;
 

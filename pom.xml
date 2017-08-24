@@ -37,29 +37,32 @@
 
     <amqp-client.version>3.5.6</amqp-client.version>
     <curator.version>2.6.0</curator.version>
-    <dwc-api.version>1.16</dwc-api.version>
-    <dwca-io.version>1.28</dwca-io.version>
     <fest.version>2.0M10</fest.version>
     <!-- Fixed to the version Curator uses, problems otherwise -->
     <freemarker.version>2.3.23</freemarker.version>
-    <gbif-api.version>0.53</gbif-api.version>
-    <gbif-cli.version>0.10</gbif-cli.version>
+
+    <dwc-api.version>1.16</dwc-api.version>
+    <dwca-io.version>1.31</dwca-io.version>
+    <gbif-api.version>0.55</gbif-api.version>
+    <gbif-cli.version>0.13</gbif-cli.version>
     <gbif-common-service.version>0.16</gbif-common-service.version>
-    <gbif-common-ws.version>0.38</gbif-common-ws.version>
-    <gbif-common.version>0.32</gbif-common.version>
+    <gbif-common-ws.version>0.40</gbif-common-ws.version>
+    <gbif-common.version>0.35</gbif-common.version>
     <gbif-httputils.version>0.10</gbif-httputils.version>
-    <gbif-microservice.version>0.6</gbif-microservice.version>
-    <gbif-occurrence.version>0.61</gbif-occurrence.version>
+    <gbif-microservice.version>0.7</gbif-microservice.version>
+    <gbif-occurrence.version>0.69</gbif-occurrence.version>
     <gbif-postal-service.version>0.24</gbif-postal-service.version>
-    <gbif-registry.version>2.66</gbif-registry.version>
+    <gbif-registry.version>2.70</gbif-registry.version>
     <gbif-wrangler.version>0.2</gbif-wrangler.version>
-    <guava.version>18.0</guava.version>
+
+    <guava.version>17.0</guava.version>
     <guice.version>4.0</guice.version>
     <!-- Match the GBIF http-client! -->
     <httpclient.version>4.3.6</httpclient.version>
     <!-- Match the GBIF http-client! -->
     <httpcore.version>4.3.3</httpcore.version>
-    <jackson-annotations.version>2.6.0</jackson-annotations.version>
+    <!-- Match the version used by gbif-cli -->
+    <jackson2-annotations.version>2.8.7</jackson2-annotations.version>
     <jackson-datatype-guava.version>1.9.2</jackson-datatype-guava.version>
     <jackson.version>1.9.12</jackson.version>
     <jcommander.version>1.58</jcommander.version>
@@ -247,7 +250,7 @@
              Jackson 2 because only that supports YAML so we have to use the annotations from Jackson 2 -->
         <groupId>com.fasterxml.jackson.core</groupId>
         <artifactId>jackson-annotations</artifactId>
-        <version>${jackson-annotations.version}</version>
+        <version>${jackson2-annotations.version}</version>
       </dependency>
       <dependency>
         <groupId>joda-time</groupId>
