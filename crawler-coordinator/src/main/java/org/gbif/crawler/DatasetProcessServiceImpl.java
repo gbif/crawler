@@ -116,13 +116,16 @@ public class DatasetProcessServiceImpl implements DatasetProcessService {
     String crawlPath = getCrawlInfoPath(datasetKey);
     builder.datasetKey(datasetKey);
 
+    //FIXME moved outside the try/catch for debug purpose
+    String path = null;
+
     // Here we're trying to load all information from Zookeeper into the DatasetProcessStatus object
     try {
       byte[] crawlJobBytes = curator.getData().forPath(crawlPath);
       CrawlJob crawlJob = mapper.readValue(crawlJobBytes, CrawlJob.class);
       builder.crawlJob(crawlJob);
 
-      String path = getCrawlInfoPath(datasetKey, CRAWL_CONTEXT);
+      path = getCrawlInfoPath(datasetKey, CRAWL_CONTEXT);
       if (curator.checkExists().forPath(path) != null) {
         byte[] responseData = curator.getData().forPath(path);
         if (responseData != null) {
@@ -176,8 +179,9 @@ public class DatasetProcessServiceImpl implements DatasetProcessService {
       }
 
     } catch (Exception e) {
+      LOG.debug("ZooKeeper path debug info: last path:" + path + " , crawlPath:" + crawlPath, e);
       throw new ServiceUnavailableException("Error communicating with ZooKeeper, getting status for "
-                                            + datasetKey.toString(), e);
+                                            + datasetKey.toString() + ": " + e.getMessage(), e);
     }
     return builder.build();
   }
