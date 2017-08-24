@@ -133,18 +133,20 @@ public class DwcaValidator {
     final boolean useCoreID = !archive.getCore().hasTerm(term);
 
     try (ClosableIterator<Record> it = DwcFiles.iterator(archive.getCore(), true, true)) {
-      Record rec = it.next();
-      records++;
-      String id = useCoreID ? rec.id() : rec.value(term);
-      if (linesMissingIds.size() < MAX_EXAMPLE_ERRORS && Strings.isNullOrEmpty(id)) {
-        linesMissingIds.add(records);
-      }
-      if (duplicateIds.size() < MAX_EXAMPLE_ERRORS && ids.contains(id)) {
-        duplicateIds.add(id);
-      }
+      while(it.hasNext()) {
+        Record rec = it.next();
+        records++;
+        String id = useCoreID ? rec.id() : rec.value(term);
+        if (linesMissingIds.size() < MAX_EXAMPLE_ERRORS && Strings.isNullOrEmpty(id)) {
+          linesMissingIds.add(records);
+        }
+        if (duplicateIds.size() < MAX_EXAMPLE_ERRORS && ids.contains(id)) {
+          duplicateIds.add(id);
+        }
 
-      if (!Strings.isNullOrEmpty(id) && ids.size() < MAX_RECORDS) {
-        ids.add(id);
+        if (!Strings.isNullOrEmpty(id) && ids.size() < MAX_RECORDS) {
+          ids.add(id);
+        }
       }
     } catch (Exception e) {
       throw new IOException(e);
@@ -153,9 +155,9 @@ public class DwcaValidator {
   }
 
   private OccurrenceValidationReport validateOccurrenceCore(Archive archive) throws IOException {
-    try(ClosableIterator<Record> iter = DwcFiles.iterator(archive.getCore(), true, true)){
-      while (iter.hasNext()) {
-        Record record = iter.next();
+    try(ClosableIterator<Record> it = DwcFiles.iterator(archive.getCore(), true, true)){
+      while (it.hasNext()) {
+        Record record = it.next();
         if (checkOccurrenceRecord(record, getTriplet(record, null))) {
           break;
         }
