@@ -71,7 +71,8 @@ public class DwcaFragmenterService extends AbstractIdleService {
     curator = cfg.zooKeeper.getCuratorFramework();
 
     publisher = new DefaultMessagePublisher(cfg.messaging.getConnectionParameters());
-    listener = new MessageListener(cfg.messaging.getConnectionParameters());
+    // Prefetch is one, since this is a long-running process.
+    listener = new MessageListener(cfg.messaging.getConnectionParameters(), 1);
     listener.listen("dwca-fragmenter", cfg.poolSize,
       new DwCaCallback(publisher, cfg.archiveRepository));
   }
