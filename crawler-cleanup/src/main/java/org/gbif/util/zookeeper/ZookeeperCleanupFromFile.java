@@ -19,7 +19,7 @@ public class ZookeeperCleanupFromFile {
   private static final String UAT_PATH = "/uat_crawler/crawls/";
   private static final String DEV_PATH = "/dev_crawler/crawls/";
   private static final String PROD_ZK = "c5zk1.gbif.org:2181,c5zk2.gbif.org:2181,c5zk3.gbif.org:2181";
-  private static final String PROD_ZK = "c4zk1.gbif-uat.org:2181,c4zk2.gbif-uat.org:2181,c4zk3.gbif-uat.org:2181";
+  private static final String UAT_ZK = "c4zk1.gbif-uat.org:2181,c4zk2.gbif-uat.org:2181,c4zk3.gbif-uat.org:2181";
   private static final String DEV_ZK = "c3zk1.gbif-dev.org:2181,c3zk2.gbif-dev.org:2181,c3zk3.gbif-dev.org:2181";
 
   private ZookeeperCleanupFromFile() {
