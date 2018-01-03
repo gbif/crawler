@@ -90,17 +90,18 @@ public class CoordinatorCleanupService extends AbstractScheduledService {
 
         try {
           updateRegistry(status);
+
+          if (!checkDoneProcessing(status)) {
+            continue;
+          }
+
+          // If all of these things are true we can delete this dataset from ZK and dump info to disc
+          updateRegistry(status);
+          delete(status);
         } catch (Exception e) {
           LOG.error("Unable to callback and update the registry. Aborting this cleanup round, will try again later.", e);
           return;
         }
-
-        if (!checkDoneProcessing(status)) {
-          continue;
-        }
-
-        // If all of these things are true we can delete this dataset from ZK and dump info to disc
-        delete(status);
       }
     }
     LOG.info("Done checking for finished crawls");
@@ -240,6 +241,12 @@ public class CoordinatorCleanupService extends AbstractScheduledService {
     }
 
     // the crawl is finally done!
+
+    // Set the occurrence processing to completed.
+    if (status.getProcessStateOccurrence() == ProcessState.RUNNING) {
+      status.setProcessStateOccurrence(ProcessState.FINISHED);
+    }
+
     return true;
   }
 

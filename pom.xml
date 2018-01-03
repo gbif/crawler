@@ -43,7 +43,7 @@
 
     <dwc-api.version>1.16</dwc-api.version>
     <dwca-io.version>1.31</dwca-io.version>
-    <gbif-api.version>0.55</gbif-api.version>
+    <gbif-api.version>0.58</gbif-api.version>
     <gbif-cli.version>0.13</gbif-cli.version>
     <gbif-common-service.version>0.16</gbif-common-service.version>
     <gbif-common-ws.version>0.40</gbif-common-ws.version>
@@ -52,7 +52,7 @@
     <gbif-microservice.version>0.7</gbif-microservice.version>
     <gbif-occurrence.version>0.69</gbif-occurrence.version>
     <gbif-postal-service.version>0.24</gbif-postal-service.version>
-    <gbif-registry.version>2.70</gbif-registry.version>
+    <gbif-registry.version>2.76</gbif-registry.version>
     <gbif-wrangler.version>0.2</gbif-wrangler.version>
 
     <guava.version>17.0</guava.version>
