@@ -100,7 +100,10 @@
         else $('td:eq(1)', nRow).removeClass("text-success").addClass("text-error");
 
         // The final log | detail section
-        var url = "http://elk.gbif.org:5601/app/kibana#/discover?_a=(filters:!((meta:(alias:!n,disabled:!f,index:'" + env + "-crawl-*',key:datasetKey,negate:!f,value:'" + aData.datasetKey + "'),query:(match:(datasetKey:(query:'" + aData.datasetKey + "',type:phrase))))),index:'" + env + "-crawl-*')&_g=(time:(from:now-7d,mode:quick,to:now))"
+        var index = 'AWBqgxPaf8lu3pmE7fpp';
+        if (env == 'uat') index = 'AWDqIcB5f8lu3pmEHgcY';
+        if (env == 'prod') index = 'AWDqIeCpf8lu3pmEHglJ';
+        var url = "https://logs.gbif.org/app/kibana#/discover?_g=(time:(from:now-7d,mode:quick,to:now))&_a=(filters:!((meta:(alias:!n,disabled:!f,index:"+index+",key:datasetKey,negate:!f,type:phrase,value:'"+aData.datasetKey+"'),query:(match:(datasetKey:(query:'"+aData.datasetKey+"',type:phrase))))),index:"+index+")";
 
         var $log = $("<a href='"+url+"'>Logs</a>").bind('click', function() {
           // open a tab to Kibana
