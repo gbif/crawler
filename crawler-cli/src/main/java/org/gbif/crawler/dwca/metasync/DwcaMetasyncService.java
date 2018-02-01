@@ -13,6 +13,7 @@ import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.DwcaMetasyncFinishedMessage;
 import org.gbif.common.messaging.api.messages.DwcaValidationFinishedMessage;
 import org.gbif.crawler.constants.CrawlerNodePaths;
+import org.gbif.crawler.dwca.DwcaConfiguration;
 import org.gbif.crawler.dwca.DwcaService;
 import org.gbif.dwca.io.Archive;
 import org.gbif.dwca.io.ArchiveFactory;
@@ -22,6 +23,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -117,16 +119,32 @@ public class DwcaMetasyncService extends DwcaService {
         throw new IllegalArgumentException("The requested dataset " + message.getDatasetUuid() + " is not registered");
       }
 
-      Archive archive = ArchiveFactory.openArchive(new File(archiveRepository, datasetKey.toString()));
-      File metaFile = archive.getMetadataLocationFile();
+      // Metadata-only datasets are just a file, no DWCA.
+      Archive archive;
+      File metaFile;
+      if (DatasetType.METADATA == dataset.getType()) {
+        archive = null;
+        metaFile = new File(new File(archiveRepository, datasetKey.toString()), DwcaConfiguration.METADATA_FILE);
+      } else {
+        archive = ArchiveFactory.openArchive(new File(archiveRepository, datasetKey.toString()));
+        metaFile = archive.getMetadataLocationFile();
+      }
+
       if (metaFile != null && metaFile.exists()) {
         // metadata found, put into repository thereby updating the dataset
         setMetaDocument(metaFile, datasetKey);
         datasetsUpdated.inc();
       }
 
-      // process dataset constituents
-      Map<String, UUID> constituents = processConstituents(dataset, archive);
+      // Metadata-only datasets can't have constituents
+      Map<String, UUID> constituents;
+      if (DatasetType.METADATA == dataset.getType()) {
+        constituents = new HashMap();
+      } else {
+        // process dataset constituents
+        constituents = processConstituents(dataset, archive);
+      }
+
       LOG.info("Finished updating metadata from DwC-A for dataset [{}]", datasetKey);
 
       // for metadata only dataset this is the last step
@@ -198,6 +216,7 @@ public class DwcaMetasyncService extends DwcaService {
     private boolean setMetaDocument(File metaDoc, UUID datasetKey) throws FileNotFoundException {
       try (InputStream stream = new FileInputStream(metaDoc)){
         datasetService.insertMetadata(datasetKey, stream);
+        LOG.info("Metadata document inserted from file {}", metaDoc);
         return true;
       } catch (IllegalArgumentException e) {
         LOG.warn("Metadata document {} for dataset {} not understood", metaDoc.getAbsolutePath(), datasetKey, e);
