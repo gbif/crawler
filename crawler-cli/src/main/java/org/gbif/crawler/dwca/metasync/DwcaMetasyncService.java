@@ -156,7 +156,7 @@ public class DwcaMetasyncService extends DwcaService {
 
       // send success message
       publisher.send(new DwcaMetasyncFinishedMessage(datasetKey, dataset.getType(), message.getSource(), message.getAttempt(),
-        constituents, message.getValidationReport()));
+        constituents, message.getValidationReport()), true);
     }
 
     private Map<String, UUID> processConstituents(Dataset parent, Archive archive) {

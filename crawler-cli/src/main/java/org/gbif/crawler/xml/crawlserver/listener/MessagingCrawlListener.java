@@ -124,7 +124,7 @@ public class MessagingCrawlListener<CTX extends CrawlContext> implements CrawlLi
 
   private void sendMessageSilently(Message msg) {
     try {
-      publisher.send(msg);
+      publisher.send(msg, true);
     } catch (IOException e) {
       LOG.warn("Could not send message: [{}]", msg);
     }

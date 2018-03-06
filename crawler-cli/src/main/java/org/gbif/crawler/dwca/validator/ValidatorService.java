@@ -113,7 +113,7 @@ public class ValidatorService extends DwcaService {
         try {
           publisher.send(
               new DwcaValidationFinishedMessage(datasetKey, dataset.getType(), message.getSource(), message.getAttempt(),
-                  validationReport));
+                  validationReport), true);
         } catch (IOException e) {
           LOG.error("Failed to send validation finished message for dataset [{}]", datasetKey, e);
         }
