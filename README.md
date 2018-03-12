@@ -31,3 +31,6 @@ More information in crawler-cli [README](https://github.com/gbif/crawler/tree/ma
 
 ## Change Log
 [Change Log](CHANGELOG.md)
+
+## Note
+  pipelines57 branch as branch for all changes related to Milestone for adding all DwCAvro files to avro (https://github.com/gbif/pipelines/projects/5)
