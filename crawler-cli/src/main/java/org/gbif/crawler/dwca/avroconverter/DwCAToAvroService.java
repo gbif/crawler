@@ -7,7 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A service which listens to the  {@link org.gbif.common.messaging.api.messages.DwcaDownloadFinishedMessage } and perform conversion
+ * A service which listens to the  {@link org.gbif.common.messaging.api.messages.DwcaValidationFinishedMessage } and perform conversion
  */
 public class DwCAToAvroService extends AbstractIdleService {
 
