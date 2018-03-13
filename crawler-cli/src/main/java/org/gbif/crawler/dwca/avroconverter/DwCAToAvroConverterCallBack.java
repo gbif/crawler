@@ -1,7 +1,6 @@
 package org.gbif.crawler.dwca.avroconverter;
 
 import org.gbif.common.messaging.AbstractMessageCallback;
-import org.gbif.common.messaging.api.messages.DwcaDownloadFinishedMessage;
 import org.gbif.common.messaging.api.messages.DwcaValidationFinishedMessage;
 
 import org.slf4j.Logger;
@@ -17,6 +16,6 @@ public class DwCAToAvroConverterCallBack extends AbstractMessageCallback<DwcaVal
 
   @Override
   public void handleMessage(DwcaValidationFinishedMessage dwcaValidationFinishedMessage) {
-    LOG.info("Received Download finished message, " + dwcaValidationFinishedMessage.toString());
+    LOG.info("Received Download finished message {}", dwcaValidationFinishedMessage.toString());
   }
 }
