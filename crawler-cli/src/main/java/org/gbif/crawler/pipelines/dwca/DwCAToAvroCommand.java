@@ -1,4 +1,4 @@
-package org.gbif.crawler.dwca.avroconverter;
+package org.gbif.crawler.pipelines.dwca;
 
 import org.gbif.cli.Command;
 import org.gbif.cli.service.ServiceCommand;
