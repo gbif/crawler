@@ -1,0 +1,7 @@
+messaging:
+  host: mq.gbif.org
+  virtualHost: /users/mlopez
+  username: mlopez
+  password: mlopez
+queueName: xml-avro-propagator
+threadCount: 1
