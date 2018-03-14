@@ -43,7 +43,7 @@ public class XmlToAvroService extends AbstractIdleService {
     @Override
     public void handleMessage(CrawlFinishedMessage message) {
 
-      LOG.info("CrawlFinsihedMessage received");
+      LOG.info("CrawlFinishedMessage received");
 
       // Add processing here...
 
