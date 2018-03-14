@@ -1,4 +1,4 @@
-package org.gbif.crawler.xml.propagater;
+package org.gbif.crawler.pipelines.xml;
 
 import org.gbif.common.messaging.config.MessagingConfiguration;
 
@@ -10,7 +10,10 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParametersDelegate;
 import com.google.common.base.Objects;
 
-public class AvroPropagatorConfiguration {
+/**
+ * Configuration to be used in the {@link XmlToAvroCommand}.
+ */
+public class XmlToAvroConfiguration {
 
   @ParametersDelegate
   @NotNull

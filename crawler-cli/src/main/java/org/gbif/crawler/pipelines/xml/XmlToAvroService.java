@@ -1,4 +1,4 @@
-package org.gbif.crawler.xml.propagater;
+package org.gbif.crawler.pipelines.xml;
 
 import org.gbif.common.messaging.AbstractMessageCallback;
 import org.gbif.common.messaging.MessageListener;
@@ -8,13 +8,18 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class AvroPropagatorService extends AbstractIdleService {
+/**
+ * Service for the {@link XmlToAvroCommand}.
+ * <p>
+ * This service listens to {@link CrawlFinishedMessage}.
+ */
+public class XmlToAvroService extends AbstractIdleService {
 
-  private static final Logger LOG = LoggerFactory.getLogger(AvroPropagatorService.class);
-  private final AvroPropagatorConfiguration configuration;
+  private static final Logger LOG = LoggerFactory.getLogger(XmlToAvroService.class);
+  private final XmlToAvroConfiguration configuration;
   private MessageListener listener;
 
-  public AvroPropagatorService(AvroPropagatorConfiguration configuration) {
+  public XmlToAvroService(XmlToAvroConfiguration configuration) {
     this.configuration = configuration;
   }
 
@@ -38,7 +43,7 @@ public class AvroPropagatorService extends AbstractIdleService {
     @Override
     public void handleMessage(CrawlFinishedMessage message) {
 
-      LOG.info("CrawlFinsihedMessage recevied");
+      LOG.info("CrawlFinsihedMessage received");
 
       // Add processing here...
 
