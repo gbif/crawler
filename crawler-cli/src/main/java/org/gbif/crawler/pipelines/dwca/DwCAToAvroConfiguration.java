@@ -33,9 +33,9 @@ public class DwCAToAvroConfiguration {
   @NotNull
   public String archiveRepository;
 
-  @Parameter(names = "--export-avro-base-url")
+  @Parameter(names = "--extended-record-repository")
   @NotNull
-  public String exportAvroBaseURL;
+  public String extendedRecordRepository;
 
   @Override
   public String toString() {
@@ -48,7 +48,7 @@ public class DwCAToAvroConfiguration {
       .add("connectionHost", messaging.host)
       .add("poolSize", poolSize)
       .add("archiveRepository", archiveRepository)
-      .add("exportAvroBaseURL", exportAvroBaseURL)
+      .add("extendedRecordRepository", extendedRecordRepository)
       .toString();
   }
 }

@@ -46,7 +46,6 @@ public class DwcaToAvroConfigVerificationTest {
     Assert.assertEquals(INPUT_DATASET_FOLDER_POS.concat(File.separator).concat(DATASET_UUID_POS).concat(".zip"),
                         configParameter.getAbsoluteDwCAPath());
     Assert.assertEquals(new Path(OUTPUT_DATASET_FOLDER_POS.concat(File.separator)
-                                   .concat("data/ingest/")
                                    .concat(DATASET_UUID_POS)
                                    .concat(File.separator)
                                    .concat("2_verbatim.avro")), configParameter.getAbsoluteDatasetExportPath());
@@ -95,7 +94,7 @@ public class DwcaToAvroConfigVerificationTest {
   private DwCAToAvroConfiguration getConfig(String archiveRepo, String exportAvroURL) {
     DwCAToAvroConfiguration config = new DwCAToAvroConfiguration();
     config.archiveRepository = archiveRepo;
-    config.exportAvroBaseURL = exportAvroURL;
+    config.extendedRecordRepository = exportAvroURL;
     return config;
   }
 

@@ -17,8 +17,6 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Test dwca-to-avro commands message handling command on hdfs
@@ -26,10 +24,10 @@ import org.slf4j.LoggerFactory;
 public class DwcaToAvroCallBackTest {
 
 
-  private final static String DATASET_UUID_POS = "9bed66b3-4caa-42bb-9c93-71d7ba109dad";
-  private final static String DUMMY_URL = "http://some.new.url";
-  private final static String INPUT_DATASET_FOLDER_POS = "dataset";
-  private static final Configuration config = new Configuration();
+  private static final String DATASET_UUID_POS = "9bed66b3-4caa-42bb-9c93-71d7ba109dad";
+  private static final String DUMMY_URL = "http://some.new.url";
+  private static final String INPUT_DATASET_FOLDER_POS = "dataset";
+  private static final Configuration CONFIG = new Configuration();
   private static String hdfsUri;
   private static MiniDFSCluster cluster;
 
@@ -37,8 +35,8 @@ public class DwcaToAvroCallBackTest {
   public static void setUp() throws Exception {
     File baseDir = new File("minicluster").getAbsoluteFile();
     FileUtil.fullyDelete(baseDir);
-    config.set(MiniDFSCluster.HDFS_MINIDFS_BASEDIR, baseDir.getAbsolutePath());
-    MiniDFSCluster.Builder builder = new MiniDFSCluster.Builder(config);
+    CONFIG.set(MiniDFSCluster.HDFS_MINIDFS_BASEDIR, baseDir.getAbsolutePath());
+    MiniDFSCluster.Builder builder = new MiniDFSCluster.Builder(CONFIG);
     cluster = builder.build();
     hdfsUri = "hdfs://localhost:" + cluster.getNameNodePort() + "/";
     cluster.waitClusterUp();
@@ -53,8 +51,8 @@ public class DwcaToAvroCallBackTest {
   public void testPositiveCase() throws IOException {
     DwCAToAvroConfiguration config = new DwCAToAvroConfiguration();
     config.archiveRepository = INPUT_DATASET_FOLDER_POS;
-    config.exportAvroBaseURL = hdfsUri;
-    DwCAToAvroConverterCallBack callback = new DwCAToAvroConverterCallBack(config);
+    config.extendedRecordRepository = hdfsUri;
+    DwCAToAvroCallBack callback = new DwCAToAvroCallBack(config);
 
     DwcaValidationFinishedMessage finishedMessage = new DwcaValidationFinishedMessage(UUID.fromString(DATASET_UUID_POS),
                                                                                       DatasetType.OCCURRENCE,
@@ -65,9 +63,9 @@ public class DwcaToAvroCallBackTest {
                                                                                                                "no reason"));
     callback.handleMessage(finishedMessage);
     Assert.assertTrue(cluster.getFileSystem()
-                        .exists(new Path(hdfsUri + "data/ingest/" + DATASET_UUID_POS + "/2_verbatim.avro")));
+                        .exists(new Path(hdfsUri  + DATASET_UUID_POS + "/2_verbatim.avro")));
     Assert.assertTrue(cluster.getFileSystem()
-                        .getStatus(new Path(hdfsUri + "data/ingest/" + DATASET_UUID_POS + "/2_verbatim.avro"))
+                        .getStatus(new Path(hdfsUri + DATASET_UUID_POS + "/2_verbatim.avro"))
                         .getCapacity() > 0);
   }
 

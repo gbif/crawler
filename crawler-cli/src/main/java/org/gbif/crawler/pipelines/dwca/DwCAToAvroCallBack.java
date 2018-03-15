@@ -18,12 +18,12 @@ import org.slf4j.LoggerFactory;
 /**
  * Call back which is called when the {@link org.gbif.common.messaging.api.messages.DwcaValidationFinishedMessage } is received.
  */
-public class DwCAToAvroConverterCallBack extends AbstractMessageCallback<DwcaValidationFinishedMessage> {
+public class DwCAToAvroCallBack extends AbstractMessageCallback<DwcaValidationFinishedMessage> {
 
-  private static final Logger LOG = LoggerFactory.getLogger(DwCAToAvroConverterCallBack.class);
+  private static final Logger LOG = LoggerFactory.getLogger(DwCAToAvroCallBack.class);
   private final DwCAToAvroConfiguration configuration;
 
-  DwCAToAvroConverterCallBack(DwCAToAvroConfiguration configuration) {
+  DwCAToAvroCallBack(DwCAToAvroConfiguration configuration) {
     Objects.requireNonNull(configuration, "Configuration cannot be null");
     this.configuration = configuration;
   }
@@ -51,14 +51,9 @@ public class DwCAToAvroConverterCallBack extends AbstractMessageCallback<DwcaVal
       while (reader.advance()) dataFileWriter.append(reader.getCurrent());
 
     } catch (IOException e) {
-      LOG.error("Failed performing conversion on "
-                + dwcaValidationFinishedMessage.getDatasetUuid()
-                + " because "
-                + e.getMessage());
-      throw new RuntimeException("Failed performing conversion on "
-                                 + dwcaValidationFinishedMessage.getDatasetUuid()
-                                 + " because "
-                                 + e.getMessage(), e);
+      LOG.error("Failed performing conversion on " + dwcaValidationFinishedMessage.getDatasetUuid(), e);
+      throw new RuntimeException("Failed performing conversion on " + dwcaValidationFinishedMessage.getDatasetUuid(),
+                                 e);
     }
     LOG.info("DwCA to avro conversion completed for {}", dwcaValidationFinishedMessage.getDatasetUuid());
   }

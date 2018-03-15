@@ -5,7 +5,6 @@ import org.gbif.common.messaging.api.messages.DwcaValidationFinishedMessage;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.util.Objects;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -40,11 +39,6 @@ public class DwCAToAvroCommandVerification {
    */
   public DwCA2AvroConfigurationParameter verifyParametersAndGetResourceConfigurations() {
     /*
-      verifies the input configuration and messages are not null
-     */
-    Objects.requireNonNull(configuration, "Configuration cannot be null");
-    Objects.requireNonNull(receivedMessage, "Received message cannot be null");
-    /*
       checks existence of archiveRepository provided in the yaml config
      */
     String inputBasePath = configuration.archiveRepository.endsWith(File.separator)
@@ -64,9 +58,9 @@ public class DwCAToAvroCommandVerification {
     /*
     checks existence of provided path for exporting final avro file
      */
-    String baseURL = configuration.exportAvroBaseURL.endsWith(File.separator)
-      ? configuration.exportAvroBaseURL
-      : configuration.exportAvroBaseURL + File.separator;
+    String baseURL = configuration.extendedRecordRepository.endsWith(File.separator)
+      ? configuration.extendedRecordRepository
+      : configuration.extendedRecordRepository + Path.SEPARATOR;
 
     try {
       Assert.isLegal(fs.exists(new Path(baseURL)), "export avro url provided donot exists or is invalid");
@@ -76,28 +70,25 @@ public class DwCAToAvroCommandVerification {
     }
 
     Path absoluteAvroExportPath = new Path(baseURL
-                                           + "data"
-                                           + File.separator
-                                           + "ingest"
-                                           + File.separator
                                            + receivedMessage.getDatasetUuid()
-                                           + File.separator
+                                           + Path.SEPARATOR
                                            + receivedMessage.getAttempt()
                                            + "_verbatim.avro");
     return new DwCA2AvroConfigurationParameter(fs, absoluteAvroExportPath, absoluteDwCAPath, absoluteDwCAExportPath);
 
   }
+
   /**
    * Helper method to get file system based on provided configuration
    */
-  private FileSystem getFileSystem(Configuration config){
-    URI fsURI = URI.create(configuration.exportAvroBaseURL);
+  private FileSystem getFileSystem(Configuration config) {
+    URI fsURI = URI.create(configuration.extendedRecordRepository);
     FileSystem fs;
     try {
       fs = FileSystem.get(fsURI, config);
     } catch (IOException ex) {
       throw new IllegalArgumentException("Cannot get a valid filesystem from provided uri "
-                                         + configuration.exportAvroBaseURL, ex);
+                                         + configuration.extendedRecordRepository, ex);
     }
     return fs;
   }
@@ -105,16 +96,15 @@ public class DwCAToAvroCommandVerification {
   /**
    * Calculated Configuration parameters
    */
-  class DwCA2AvroConfigurationParameter {
+  static class DwCA2AvroConfigurationParameter {
 
     private final FileSystem fs;
     private final Path absoluteDatasetExportPath;
     private final String absoluteDwCAPath;
     private final String absoluteDwCAExportPath;
 
-    public DwCA2AvroConfigurationParameter(
-      FileSystem fs, Path absoluteDatasetExportPath, String absoluteDwCAPath, String absoluteDwCAExportPath
-    ) {
+    public DwCA2AvroConfigurationParameter(FileSystem fs, Path absoluteDatasetExportPath,
+                                           String absoluteDwCAPath, String absoluteDwCAExportPath) {
       this.fs = fs;
       this.absoluteDatasetExportPath = absoluteDatasetExportPath;
       this.absoluteDwCAPath = absoluteDwCAPath;
