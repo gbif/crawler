@@ -18,16 +18,16 @@ import org.junit.Test;
  */
 public class DwcaToAvroConfigVerificationTest {
 
-  private final static String DATASET_UUID_POS = "9bed66b3-4caa-42bb-9c93-71d7ba109dad";
-  private final static String DATASET_UUID_NEG = "9bed66b3-4caa-42bb-9c93-71d7ba109dae";
+  private static final String DATASET_UUID_POS = "9bed66b3-4caa-42bb-9c93-71d7ba109dad";
+  private static final String DATASET_UUID_NEG = "9bed66b3-4caa-42bb-9c93-71d7ba109dae";
 
-  private final static String DUMMY_URL = "http://some.new.url";
+  private static final String DUMMY_URL = "http://some.new.url";
 
-  private final static String INPUT_DATASET_FOLDER_POS = "dataset";
-  private final static String INPUT_DATASET_FOLDER_NEG = "d";
+  private static final String INPUT_DATASET_FOLDER_POS = "dataset";
+  private static final String INPUT_DATASET_FOLDER_NEG = "d";
 
-  private final static String OUTPUT_DATASET_FOLDER_POS = "dataset/export";
-  private final static String OUTPUT_DATASET_FOLDER_NEG = "dataset/e";
+  private static final String OUTPUT_DATASET_FOLDER_POS = "dataset/export";
+  private static final String OUTPUT_DATASET_FOLDER_NEG = "dataset/e";
 
   @BeforeClass
   public static void init(){
