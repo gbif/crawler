@@ -10,6 +10,7 @@ import java.util.UUID;
 
 import org.apache.hadoop.fs.Path;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 /**
@@ -28,6 +29,10 @@ public class DwcaToAvroConfigVerificationTest {
   private final static String OUTPUT_DATASET_FOLDER_POS = "dataset/export";
   private final static String OUTPUT_DATASET_FOLDER_NEG = "dataset/e";
 
+  @BeforeClass
+  public static void init(){
+    new File(OUTPUT_DATASET_FOLDER_POS).mkdir();
+  }
   /**
    * All Positive values
    */

@@ -5,7 +5,6 @@ import org.gbif.common.messaging.api.messages.DwcaValidationFinishedMessage;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.nio.file.Files;
 import java.util.Objects;
 
 import org.apache.hadoop.conf.Configuration;
@@ -18,9 +17,8 @@ import org.eclipse.jdt.internal.core.Assert;
  */
 public class DwCAToAvroCommandVerification {
 
-  private DwCAToAvroConfiguration configuration;
+  private final DwCAToAvroConfiguration configuration;
   private DwcaValidationFinishedMessage receivedMessage;
-  private DwCA2AvroConfigurationParameter resourceConfigurationParameter;
 
   public static DwCAToAvroCommandVerification of(DwCAToAvroConfiguration configuration) {
     return new DwCAToAvroCommandVerification(configuration);
@@ -51,29 +49,18 @@ public class DwCAToAvroCommandVerification {
      */
     String inputBasePath = configuration.archiveRepository.endsWith(File.separator)
       ? configuration.archiveRepository
-      : configuration.archiveRepository.concat(File.separator);
-    Assert.isLegal(Files.exists(new File(inputBasePath).toPath()),
-                   "Illegal Argument archiveRepository is not a valid path");
+      : configuration.archiveRepository + File.separator;
+    Assert.isLegal(new File(inputBasePath).exists(), "Illegal Argument archiveRepository is not a valid path");
     /*
       calculates and checks existence of DwC Archive
     */
-    String absoluteDwCAExportPath = inputBasePath.concat(this.receivedMessage.getDatasetUuid().toString());
-    String absoluteDwCAPath = absoluteDwCAExportPath.concat(".zip");
-    Assert.isLegal(Files.exists(new File(absoluteDwCAPath).toPath()),
+    String absoluteDwCAExportPath = inputBasePath + receivedMessage.getDatasetUuid().toString();
+    String absoluteDwCAPath = absoluteDwCAExportPath + ".zip";
+    Assert.isLegal(new File(absoluteDwCAPath).exists(),
                    "Illegal Argument " + absoluteDwCAPath + " Input DwC Archive not available");
 
     Configuration config = new Configuration();
-    config.set("fs.hdfs.impl", org.apache.hadoop.hdfs.DistributedFileSystem.class.getName());
-    config.set("fs.file.impl", org.apache.hadoop.fs.LocalFileSystem.class.getName());
-
-    URI fsURI = URI.create(configuration.exportAvroBaseURL);
-    FileSystem fs;
-    try {
-      fs = FileSystem.get(fsURI, config);
-    } catch (IOException ex) {
-      throw new IllegalArgumentException("Cannot get a valid filesystem from provided uri "
-                                         + configuration.exportAvroBaseURL, ex);
-    }
+    FileSystem fs = getFileSystem(config);
     /*
     checks existence of provided path for exporting final avro file
      */
@@ -99,6 +86,20 @@ public class DwCAToAvroCommandVerification {
                                            + "_verbatim.avro");
     return new DwCA2AvroConfigurationParameter(fs, absoluteAvroExportPath, absoluteDwCAPath, absoluteDwCAExportPath);
 
+  }
+  /**
+   * Helper method to get file system based on provided configuration
+   */
+  private FileSystem getFileSystem(Configuration config){
+    URI fsURI = URI.create(configuration.exportAvroBaseURL);
+    FileSystem fs;
+    try {
+      fs = FileSystem.get(fsURI, config);
+    } catch (IOException ex) {
+      throw new IllegalArgumentException("Cannot get a valid filesystem from provided uri "
+                                         + configuration.exportAvroBaseURL, ex);
+    }
+    return fs;
   }
 
   /**
