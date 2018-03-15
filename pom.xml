@@ -41,8 +41,8 @@
     <!-- Fixed to the version Curator uses, problems otherwise -->
     <freemarker.version>2.3.23</freemarker.version>
 
-    <dwc-api.version>1.16</dwc-api.version>
-    <dwca-io.version>1.31</dwca-io.version>
+    <dwc-api.version>1.18-SNAPSHOT</dwc-api.version>
+    <dwca-io.version>1.33-SNAPSHOT</dwca-io.version>
     <gbif-api.version>0.58</gbif-api.version>
     <gbif-cli.version>0.13</gbif-cli.version>
     <gbif-common-service.version>0.16</gbif-common-service.version>
@@ -54,6 +54,7 @@
     <gbif-postal-service.version>0.24</gbif-postal-service.version>
     <gbif-registry.version>2.76</gbif-registry.version>
     <gbif-wrangler.version>0.2</gbif-wrangler.version>
+    <gbif-pipelines-core.version>1.0-SNAPSHOT</gbif-pipelines-core.version>
 
     <guava.version>17.0</guava.version>
     <guice.version>4.0</guice.version>
@@ -81,6 +82,8 @@
     <woodstox.version>4.4.1</woodstox.version>
     <yammer-metrics.version>2.2.0</yammer-metrics.version>
     <zookeeper.version>3.4.5</zookeeper.version>
+    <hadoop-core.version>2.6.0-mr1-cdh5.12.1</hadoop-core.version>
+    <hadoop-common.version>2.6.0-cdh5.12.1</hadoop-common.version>
   </properties>
 
   <repositories>
@@ -140,6 +143,11 @@
       </dependency>
 
       <!-- GBIF -->
+      <dependency>
+        <groupId>org.gbif.pipelines</groupId>
+        <artifactId>core</artifactId>
+        <version>${gbif-pipelines-core.version}</version>
+      </dependency>
       <dependency>
         <groupId>org.gbif</groupId>
         <artifactId>gbif-api</artifactId>
@@ -391,6 +399,33 @@
         <groupId>org.apache.httpcomponents</groupId>
         <artifactId>httpcore</artifactId>
         <version>${httpcore.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.hadoop</groupId>
+        <artifactId>hadoop-hdfs</artifactId>
+        <version>${hadoop-common.version}</version>
+      </dependency>
+      <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-core</artifactId>
+      <version>${hadoop-core.version}</version>
+      </dependency>
+      <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-common</artifactId>
+      <version>${hadoop-common.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.hadoop</groupId>
+        <artifactId>hadoop-minicluster</artifactId>
+        <version>${hadoop-common.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.hadoop</groupId>
+        <artifactId>hadoop-hdfs</artifactId>
+        <classifier>tests</classifier>
+        <version>${hadoop-common.version}</version>
       </dependency>
 
       <dependency>

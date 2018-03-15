@@ -27,7 +27,15 @@ public class DwCAToAvroConfiguration {
   @Parameter(names = "--parallelism")
   @NotNull
   @Min(1)
-  public int parallelism;
+  public int poolSize;
+
+  @Parameter(names = "--archive-repository")
+  @NotNull
+  public String archiveRepository;
+
+  @Parameter(names = "--export-avro-base-url")
+  @NotNull
+  public String exportAvroBaseURL;
 
   @Override
   public String toString() {
@@ -38,7 +46,9 @@ public class DwCAToAvroConfiguration {
       .add("password", messaging.password)
       .add("port", messaging.port)
       .add("connectionHost", messaging.host)
-      .add("parallelism", parallelism)
+      .add("poolSize", poolSize)
+      .add("archiveRepository", archiveRepository)
+      .add("exportAvroBaseURL", exportAvroBaseURL)
       .toString();
   }
 }
