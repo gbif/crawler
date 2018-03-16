@@ -16,7 +16,7 @@ import org.junit.Test;
 /**
  * Test dwca-to-avro commands Configurations with received message parameter verification
  */
-public class DwcaToAvroConfigVerificationTest {
+public class DwCAToAvroPathsTest {
 
   private static final String DATASET_UUID_POS = "9bed66b3-4caa-42bb-9c93-71d7ba109dad";
   private static final String DATASET_UUID_NEG = "9bed66b3-4caa-42bb-9c93-71d7ba109dae";
@@ -30,9 +30,10 @@ public class DwcaToAvroConfigVerificationTest {
   private static final String OUTPUT_DATASET_FOLDER_NEG = "dataset/e";
 
   @BeforeClass
-  public static void init(){
+  public static void init() {
     new File(OUTPUT_DATASET_FOLDER_POS).mkdir();
   }
+
   /**
    * All Positive values
    */
@@ -41,14 +42,14 @@ public class DwcaToAvroConfigVerificationTest {
     DwCAToAvroConfiguration config = getConfig(INPUT_DATASET_FOLDER_POS, OUTPUT_DATASET_FOLDER_POS);
     DwcaValidationFinishedMessage msg = getMessage(DATASET_UUID_POS);
 
-    DwCAToAvroCommandVerification.DwCA2AvroConfigurationParameter configParameter =
-      DwCAToAvroCommandVerification.of(config).with(msg).verifyParametersAndGetResourceConfigurations();
-    Assert.assertEquals(INPUT_DATASET_FOLDER_POS.concat(File.separator).concat(DATASET_UUID_POS).concat(".zip"),
-                        configParameter.getAbsoluteDwCAPath());
-    Assert.assertEquals(new Path(OUTPUT_DATASET_FOLDER_POS.concat(File.separator)
+    DwCAToAvroPaths paths = DwCAToAvroPaths.from(config, msg);
+    Assert.assertEquals(INPUT_DATASET_FOLDER_POS.concat(File.separator).concat(DATASET_UUID_POS),
+                        paths.getDwcaExpandedPath().toString());
+
+    Assert.assertEquals(new File(OUTPUT_DATASET_FOLDER_POS.concat(File.separator)
                                    .concat(DATASET_UUID_POS)
                                    .concat(File.separator)
-                                   .concat("2_verbatim.avro")), configParameter.getAbsoluteDatasetExportPath());
+                                   .concat("2_verbatim.avro")).toPath().toUri(), paths.getExtendedRepositoryExportPath().toUri());
 
   }
 
@@ -60,20 +61,19 @@ public class DwcaToAvroConfigVerificationTest {
     DwCAToAvroConfiguration config = getConfig(INPUT_DATASET_FOLDER_NEG, OUTPUT_DATASET_FOLDER_POS);
     DwcaValidationFinishedMessage msg = getMessage(DATASET_UUID_POS);
 
-    DwCAToAvroCommandVerification.DwCA2AvroConfigurationParameter configParameter =
-      DwCAToAvroCommandVerification.of(config).with(msg).verifyParametersAndGetResourceConfigurations();
+    DwCAToAvroPaths paths = DwCAToAvroPaths.from(config, msg);
   }
 
   /**
    * wrong output target avro path
+   * invalid output path is created if not available, so it does not fail.
    */
-  @Test(expected = IllegalStateException.class)
+  @Test()
   public void testInvalidOutputDirectory() {
     DwCAToAvroConfiguration config = getConfig(INPUT_DATASET_FOLDER_POS, OUTPUT_DATASET_FOLDER_NEG);
     DwcaValidationFinishedMessage msg = getMessage(DATASET_UUID_POS);
 
-    DwCAToAvroCommandVerification.DwCA2AvroConfigurationParameter configParameter =
-      DwCAToAvroCommandVerification.of(config).with(msg).verifyParametersAndGetResourceConfigurations();
+    DwCAToAvroPaths paths = DwCAToAvroPaths.from(config, msg);
   }
 
   /**
@@ -84,8 +84,7 @@ public class DwcaToAvroConfigVerificationTest {
     DwCAToAvroConfiguration config = getConfig(INPUT_DATASET_FOLDER_POS, OUTPUT_DATASET_FOLDER_POS);
     DwcaValidationFinishedMessage msg = getMessage(DATASET_UUID_NEG);
 
-    DwCAToAvroCommandVerification.DwCA2AvroConfigurationParameter configParameter =
-      DwCAToAvroCommandVerification.of(config).with(msg).verifyParametersAndGetResourceConfigurations();
+    DwCAToAvroPaths paths = DwCAToAvroPaths.from(config, msg);
   }
 
   /**
