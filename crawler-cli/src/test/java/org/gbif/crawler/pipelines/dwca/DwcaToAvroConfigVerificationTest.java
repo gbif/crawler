@@ -55,7 +55,7 @@ public class DwcaToAvroConfigVerificationTest {
   /**
    * wrong input dwca path
    */
-  @Test(expected = IllegalArgumentException.class)
+  @Test(expected = IllegalStateException.class)
   public void testInvalidInputDirectory() {
     DwCAToAvroConfiguration config = getConfig(INPUT_DATASET_FOLDER_NEG, OUTPUT_DATASET_FOLDER_POS);
     DwcaValidationFinishedMessage msg = getMessage(DATASET_UUID_POS);
@@ -67,7 +67,7 @@ public class DwcaToAvroConfigVerificationTest {
   /**
    * wrong output target avro path
    */
-  @Test(expected = IllegalArgumentException.class)
+  @Test(expected = IllegalStateException.class)
   public void testInvalidOutputDirectory() {
     DwCAToAvroConfiguration config = getConfig(INPUT_DATASET_FOLDER_POS, OUTPUT_DATASET_FOLDER_NEG);
     DwcaValidationFinishedMessage msg = getMessage(DATASET_UUID_POS);
@@ -79,7 +79,7 @@ public class DwcaToAvroConfigVerificationTest {
   /**
    * wrong dataset id, file is absent
    */
-  @Test(expected = IllegalArgumentException.class)
+  @Test(expected = IllegalStateException.class)
   public void testInvalidDatasetDirectory() {
     DwCAToAvroConfiguration config = getConfig(INPUT_DATASET_FOLDER_POS, OUTPUT_DATASET_FOLDER_POS);
     DwcaValidationFinishedMessage msg = getMessage(DATASET_UUID_NEG);
