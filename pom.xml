@@ -52,7 +52,7 @@
     <gbif-microservice.version>0.7</gbif-microservice.version>
     <gbif-occurrence.version>0.69</gbif-occurrence.version>
     <gbif-postal-service.version>0.24</gbif-postal-service.version>
-    <gbif-registry.version>2.76</gbif-registry.version>
+    <gbif-registry.version>2.79</gbif-registry.version>
     <gbif-wrangler.version>0.2</gbif-wrangler.version>
 
     <guava.version>17.0</guava.version>
