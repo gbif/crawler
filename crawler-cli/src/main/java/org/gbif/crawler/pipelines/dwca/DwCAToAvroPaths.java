@@ -23,9 +23,16 @@ class DwCAToAvroPaths {
       Paths.get(configuration.archiveRepository, receivedMessage.getDatasetUuid().toString());
     Preconditions.checkState(dwcaExpandedPath.toFile().exists(), "Could not find %s not available", dwcaExpandedPath);
     //calculates export path of avro as extended record
-    Path extendedRepositoryExportPath = new Path(Paths.get(configuration.extendedRecordRepository,
-                                                           receivedMessage.getDatasetUuid().toString(),
-                                                           receivedMessage.getAttempt() + "_verbatim.avro").toUri());
+    String extendedRecordRepositoryPath = configuration.extendedRecordRepository.endsWith(Path.SEPARATOR)
+      ? configuration.extendedRecordRepository
+      : configuration.extendedRecordRepository + Path.SEPARATOR;
+    Path extendedRepositoryExportPath = new Path(extendedRecordRepositoryPath
+                                                 + Path.SEPARATOR
+                                                 + receivedMessage.getDatasetUuid().toString()
+                                                 + Path.SEPARATOR
+                                                 + receivedMessage.getAttempt()
+                                                 + "_verbatim.avro");
+
     return new DwCAToAvroPaths(dwcaExpandedPath, extendedRepositoryExportPath);
   }
 

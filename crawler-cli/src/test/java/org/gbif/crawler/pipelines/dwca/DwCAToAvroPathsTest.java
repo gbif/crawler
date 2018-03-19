@@ -25,8 +25,8 @@ public class DwCAToAvroPathsTest {
   private static final String INPUT_DATASET_FOLDER_POS = "dataset";
   private static final String INPUT_DATASET_FOLDER_NEG = "d";
 
-  private static final String OUTPUT_DATASET_FOLDER_POS = "dataset/export";
-  private static final String OUTPUT_DATASET_FOLDER_NEG = "dataset/e";
+  private static final String OUTPUT_DATASET_FOLDER_POS = new File("dataset/export").toPath().toUri().toString();
+  private static final String OUTPUT_DATASET_FOLDER_NEG = new File("dataset/e").toPath().toUri().toString();
 
   @BeforeClass
   public static void init() {
@@ -79,13 +79,12 @@ public class DwCAToAvroPathsTest {
   private void assertCases(String inputDatasetFolder, String datasetUUID, String outputdatasetFolder,
     DwCAToAvroPaths paths) {
     Assert.assertEquals(inputDatasetFolder + File.separator + datasetUUID, paths.getDwcaExpandedPath().toString());
-
-    Assert.assertEquals(new File(outputdatasetFolder
-                                 + File.separator
+    outputdatasetFolder=outputdatasetFolder.endsWith(File.separator)?outputdatasetFolder:outputdatasetFolder+File.separator;
+    Assert.assertEquals(URI.create(outputdatasetFolder
                                  + datasetUUID
                                  + File.separator
-                                 + "2_verbatim.avro").toPath().toUri(),
-                        paths.getExtendedRepositoryExportPath().toUri());
+                                 + "2_verbatim.avro").getPath(),
+                        paths.getExtendedRepositoryExportPath().toUri().getPath());
   }
 
   private static class DataSetConfig {

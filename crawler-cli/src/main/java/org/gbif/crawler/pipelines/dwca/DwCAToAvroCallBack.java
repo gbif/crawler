@@ -5,13 +5,12 @@ import org.gbif.common.messaging.api.messages.DwcaValidationFinishedMessage;
 import org.gbif.pipelines.core.io.DwCAReader;
 import org.gbif.pipelines.io.avro.ExtendedRecord;
 
+import java.io.BufferedOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.URI;
 import java.util.Objects;
 
 import org.apache.avro.file.DataFileWriter;
-import org.apache.avro.io.DatumWriter;
 import org.apache.avro.specific.SpecificDatumWriter;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -35,19 +34,15 @@ public class DwCAToAvroCallBack extends AbstractMessageCallback<DwcaValidationFi
   @Override
   public void handleMessage(DwcaValidationFinishedMessage dwcaValidationFinishedMessage) {
     LOG.info("Received Download finished validation message {}", dwcaValidationFinishedMessage);
-    LOG.info("Verifying the configuration parameters for dataset {}, before exporting",
-             dwcaValidationFinishedMessage.getDatasetUuid());
     DwCAToAvroPaths paths = DwCAToAvroPaths.from(configuration, dwcaValidationFinishedMessage);
 
-    DatumWriter<ExtendedRecord> writer = new SpecificDatumWriter<>();
     try (FileSystem fs = createParentDirectories(paths.getExtendedRepositoryExportPath());
-         OutputStream extendedRepoPath = fs.create(paths.getExtendedRepositoryExportPath());
-         DataFileWriter<ExtendedRecord> dataFileWriter = new DataFileWriter<>(writer)
+         BufferedOutputStream extendedRepoPath = new BufferedOutputStream(fs.create(paths.getExtendedRepositoryExportPath()));
+         DataFileWriter<ExtendedRecord> dataFileWriter = new DataFileWriter<>(new SpecificDatumWriter<ExtendedRecord>())
            .create(ExtendedRecord.getClassSchema(), extendedRepoPath)) {
 
       LOG.info("Extracting the DwC Archive {} started", paths.getDwcaExpandedPath());
-      DwCAReader reader =
-        new DwCAReader(paths.getDwcaExpandedPath().toString());
+      DwCAReader reader = new DwCAReader(paths.getDwcaExpandedPath().toString());
       reader.init();
       LOG.info("Exporting the DwC Archive to avro {} started", paths.getExtendedRepositoryExportPath());
       while (reader.advance()) {
@@ -56,8 +51,8 @@ public class DwCAToAvroCallBack extends AbstractMessageCallback<DwcaValidationFi
 
     } catch (IOException e) {
       LOG.error("Failed performing conversion on {}", dwcaValidationFinishedMessage.getDatasetUuid(), e);
-      throw new IllegalStateException("Failed performing conversion on " + dwcaValidationFinishedMessage.getDatasetUuid(),
-                                 e);
+      throw new IllegalStateException("Failed performing conversion on "
+                                      + dwcaValidationFinishedMessage.getDatasetUuid(), e);
     }
     LOG.info("DwCA to avro conversion completed for {}", dwcaValidationFinishedMessage.getDatasetUuid());
   }
@@ -67,7 +62,11 @@ public class DwCAToAvroCallBack extends AbstractMessageCallback<DwcaValidationFi
    */
   private FileSystem getFileSystem() {
     try {
-      return FileSystem.get(URI.create(configuration.extendedRecordRepository), new Configuration());
+      Configuration config = new Configuration();
+      //aded to avoid IOException : No FileSystem for scheme: hdfs
+      config.set("fs.hdfs.impl", org.apache.hadoop.hdfs.DistributedFileSystem.class.getName());
+      config.set("fs.file.impl", org.apache.hadoop.fs.LocalFileSystem.class.getName());
+      return FileSystem.get(URI.create(configuration.extendedRecordRepository), config);
     } catch (IOException ex) {
       throw new IllegalStateException("Cannot get a valid filesystem from provided uri "
                                       + configuration.extendedRecordRepository, ex);
@@ -76,7 +75,7 @@ public class DwCAToAvroCallBack extends AbstractMessageCallback<DwcaValidationFi
 
   private FileSystem createParentDirectories(Path extendedRepoPath) throws IOException {
     FileSystem fs = getFileSystem();
-    fs.mkdirs(extendedRepoPath);
+    fs.mkdirs(extendedRepoPath.getParent());
     return fs;
   }
 

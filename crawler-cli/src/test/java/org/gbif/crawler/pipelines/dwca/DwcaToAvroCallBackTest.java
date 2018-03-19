@@ -64,8 +64,8 @@ public class DwcaToAvroCallBackTest {
                                                                                         DATASET_UUID_POS),
                                                                                                                "no reason"));
     callback.handleMessage(finishedMessage);
-    Assert.assertTrue(clusterFS.exists(new Path(hdfsUri + DATASET_UUID_POS + "/2_verbatim.avro")));
-    Assert.assertTrue(clusterFS.getStatus(new Path(hdfsUri + DATASET_UUID_POS + "/2_verbatim.avro")).getCapacity() > 0);
+    Assert.assertTrue(cluster.getFileSystem().exists(new Path(hdfsUri + DATASET_UUID_POS + "/2_verbatim.avro")));
+    Assert.assertTrue(cluster.getFileSystem().getStatus(new Path(hdfsUri + DATASET_UUID_POS + "/2_verbatim.avro")).getCapacity() > 0);
   }
 
 }
