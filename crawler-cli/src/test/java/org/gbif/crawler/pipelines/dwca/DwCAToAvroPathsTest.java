@@ -8,7 +8,6 @@ import java.io.File;
 import java.net.URI;
 import java.util.UUID;
 
-import org.apache.hadoop.fs.Path;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -35,77 +34,94 @@ public class DwCAToAvroPathsTest {
   }
 
   /**
-   * All Positive values
+   * All Positive values.
    */
   @Test
   public void testAllPos() {
-    DwCAToAvroConfiguration config = getConfig(INPUT_DATASET_FOLDER_POS, OUTPUT_DATASET_FOLDER_POS);
-    DwcaValidationFinishedMessage msg = getMessage(DATASET_UUID_POS);
-
-    DwCAToAvroPaths paths = DwCAToAvroPaths.from(config, msg);
-    Assert.assertEquals(INPUT_DATASET_FOLDER_POS.concat(File.separator).concat(DATASET_UUID_POS),
-                        paths.getDwcaExpandedPath().toString());
-
-    Assert.assertEquals(new File(OUTPUT_DATASET_FOLDER_POS.concat(File.separator)
-                                   .concat(DATASET_UUID_POS)
-                                   .concat(File.separator)
-                                   .concat("2_verbatim.avro")).toPath().toUri(), paths.getExtendedRepositoryExportPath().toUri());
-
+    DataSetConfig config =
+      DataSetConfig.getDataSetConfig(INPUT_DATASET_FOLDER_POS, DATASET_UUID_POS, OUTPUT_DATASET_FOLDER_POS);
+    DwCAToAvroPaths paths = DwCAToAvroPaths.from(config.config, config.message);
+    assertCases(INPUT_DATASET_FOLDER_POS, DATASET_UUID_POS, OUTPUT_DATASET_FOLDER_POS, paths);
   }
 
   /**
-   * wrong input dwca path
+   * Wrong input dwca path.
    */
   @Test(expected = IllegalStateException.class)
   public void testInvalidInputDirectory() {
-    DwCAToAvroConfiguration config = getConfig(INPUT_DATASET_FOLDER_NEG, OUTPUT_DATASET_FOLDER_POS);
-    DwcaValidationFinishedMessage msg = getMessage(DATASET_UUID_POS);
-
-    DwCAToAvroPaths paths = DwCAToAvroPaths.from(config, msg);
+    DataSetConfig config =
+      DataSetConfig.getDataSetConfig(INPUT_DATASET_FOLDER_NEG, DATASET_UUID_POS, OUTPUT_DATASET_FOLDER_POS);
+    DwCAToAvroPaths.from(config.config, config.message);
   }
 
   /**
-   * wrong output target avro path
-   * invalid output path is created if not available, so it does not fail.
+   * Wrong output target avro path.
+   * Invalid output path is created if not available, so it does not fail.
    */
   @Test()
   public void testInvalidOutputDirectory() {
-    DwCAToAvroConfiguration config = getConfig(INPUT_DATASET_FOLDER_POS, OUTPUT_DATASET_FOLDER_NEG);
-    DwcaValidationFinishedMessage msg = getMessage(DATASET_UUID_POS);
-
-    DwCAToAvroPaths paths = DwCAToAvroPaths.from(config, msg);
+    DataSetConfig config =
+      DataSetConfig.getDataSetConfig(INPUT_DATASET_FOLDER_POS, DATASET_UUID_POS, OUTPUT_DATASET_FOLDER_NEG);
+    DwCAToAvroPaths paths = DwCAToAvroPaths.from(config.config, config.message);
+    assertCases(INPUT_DATASET_FOLDER_POS, DATASET_UUID_POS, OUTPUT_DATASET_FOLDER_NEG, paths);
   }
 
   /**
-   * wrong dataset id, file is absent
+   * Wrong dataset id, file is absent.
    */
   @Test(expected = IllegalStateException.class)
   public void testInvalidDatasetDirectory() {
-    DwCAToAvroConfiguration config = getConfig(INPUT_DATASET_FOLDER_POS, OUTPUT_DATASET_FOLDER_POS);
-    DwcaValidationFinishedMessage msg = getMessage(DATASET_UUID_NEG);
-
-    DwCAToAvroPaths paths = DwCAToAvroPaths.from(config, msg);
+    DataSetConfig config =
+      DataSetConfig.getDataSetConfig(INPUT_DATASET_FOLDER_POS, DATASET_UUID_NEG, OUTPUT_DATASET_FOLDER_POS);
+    DwCAToAvroPaths.from(config.config, config.message);
   }
 
-  /**
-   * get DwCAToAvroConfiguration based on provided parameters
-   */
-  private DwCAToAvroConfiguration getConfig(String archiveRepo, String exportAvroURL) {
-    DwCAToAvroConfiguration config = new DwCAToAvroConfiguration();
-    config.archiveRepository = archiveRepo;
-    config.extendedRecordRepository = exportAvroURL;
-    return config;
+  private void assertCases(String inputDatasetFolder, String datasetUUID, String outputdatasetFolder,
+    DwCAToAvroPaths paths) {
+    Assert.assertEquals(inputDatasetFolder + File.separator + datasetUUID, paths.getDwcaExpandedPath().toString());
+
+    Assert.assertEquals(new File(outputdatasetFolder
+                                 + File.separator
+                                 + datasetUUID
+                                 + File.separator
+                                 + "2_verbatim.avro").toPath().toUri(),
+                        paths.getExtendedRepositoryExportPath().toUri());
   }
 
-  /**
-   * get DwcaValidationFinishedMessage based on provided datasetUUID
-   */
-  private DwcaValidationFinishedMessage getMessage(String datasetUUID) {
-    return new DwcaValidationFinishedMessage(UUID.fromString(datasetUUID),
-                                             DatasetType.OCCURRENCE,
-                                             URI.create(DUMMY_URL),
-                                             2,
-                                             new DwcaValidationReport(UUID.fromString(datasetUUID), "no reason"));
+  private static class DataSetConfig {
+
+    private final DwCAToAvroConfiguration config;
+    private final DwcaValidationFinishedMessage message;
+
+    static DataSetConfig getDataSetConfig(String inputDatasetFolder, String datasetUUID, String outputdatasetFolder) {
+      return new DataSetConfig(getConfig(inputDatasetFolder, outputdatasetFolder), getMessage(datasetUUID));
+    }
+
+    /**
+     * Get DwCAToAvroConfiguration based on provided parameters.
+     */
+    private static DwCAToAvroConfiguration getConfig(String archiveRepo, String exportAvroURL) {
+      DwCAToAvroConfiguration config = new DwCAToAvroConfiguration();
+      config.archiveRepository = archiveRepo;
+      config.extendedRecordRepository = exportAvroURL;
+      return config;
+    }
+
+    /**
+     * Get DwcaValidationFinishedMessage based on provided datasetUUID.
+     */
+    private static DwcaValidationFinishedMessage getMessage(String datasetUUID) {
+      return new DwcaValidationFinishedMessage(UUID.fromString(datasetUUID),
+                                               DatasetType.OCCURRENCE,
+                                               URI.create(DUMMY_URL),
+                                               2,
+                                               new DwcaValidationReport(UUID.fromString(datasetUUID), "no reason"));
+    }
+
+    private DataSetConfig(DwCAToAvroConfiguration config, DwcaValidationFinishedMessage message) {
+      this.config = config;
+      this.message = message;
+    }
   }
 
 }

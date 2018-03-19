@@ -10,6 +10,7 @@ import java.net.URI;
 import java.util.UUID;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
@@ -23,13 +24,13 @@ import org.junit.Test;
  */
 public class DwcaToAvroCallBackTest {
 
-
   private static final String DATASET_UUID_POS = "9bed66b3-4caa-42bb-9c93-71d7ba109dad";
   private static final String DUMMY_URL = "http://some.new.url";
   private static final String INPUT_DATASET_FOLDER_POS = "dataset";
   private static final Configuration CONFIG = new Configuration();
   private static String hdfsUri;
   private static MiniDFSCluster cluster;
+  private static FileSystem clusterFS;
 
   @BeforeClass
   public static void setUp() throws Exception {
@@ -40,6 +41,7 @@ public class DwcaToAvroCallBackTest {
     cluster = builder.build();
     hdfsUri = "hdfs://localhost:" + cluster.getNameNodePort() + "/";
     cluster.waitClusterUp();
+    clusterFS = cluster.getFileSystem();
   }
 
   @AfterClass
@@ -62,11 +64,8 @@ public class DwcaToAvroCallBackTest {
                                                                                         DATASET_UUID_POS),
                                                                                                                "no reason"));
     callback.handleMessage(finishedMessage);
-    Assert.assertTrue(cluster.getFileSystem()
-                        .exists(new Path(hdfsUri  + DATASET_UUID_POS + "/2_verbatim.avro")));
-    Assert.assertTrue(cluster.getFileSystem()
-                        .getStatus(new Path(hdfsUri + DATASET_UUID_POS + "/2_verbatim.avro"))
-                        .getCapacity() > 0);
+    Assert.assertTrue(clusterFS.exists(new Path(hdfsUri + DATASET_UUID_POS + "/2_verbatim.avro")));
+    Assert.assertTrue(clusterFS.getStatus(new Path(hdfsUri + DATASET_UUID_POS + "/2_verbatim.avro")).getCapacity() > 0);
   }
 
 }
