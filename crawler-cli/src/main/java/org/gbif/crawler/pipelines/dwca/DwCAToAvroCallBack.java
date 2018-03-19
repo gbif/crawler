@@ -55,7 +55,7 @@ public class DwCAToAvroCallBack extends AbstractMessageCallback<DwcaValidationFi
       }
 
     } catch (IOException e) {
-      LOG.error("Failed performing conversion on "+ dwcaValidationFinishedMessage.getDatasetUuid(), e);
+      LOG.error("Failed performing conversion on {}", dwcaValidationFinishedMessage.getDatasetUuid(), e);
       throw new IllegalStateException("Failed performing conversion on " + dwcaValidationFinishedMessage.getDatasetUuid(),
                                  e);
     }
