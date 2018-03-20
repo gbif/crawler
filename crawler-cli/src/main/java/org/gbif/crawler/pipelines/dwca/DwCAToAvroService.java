@@ -21,10 +21,10 @@ public class DwCAToAvroService extends AbstractIdleService {
 
   @Override
   protected void startUp() throws Exception {
-    LOG.info("Started dwca-to-avro service with parameters : {}", configuration.toString());
+    LOG.info("Started dwca-to-avro service with parameters : {}", configuration);
     // Prefetch is one, since this is a long-running process.
     listener = new MessageListener(configuration.messaging.getConnectionParameters(), 1);
-    listener.listen(configuration.queueName, configuration.parallelism, new DwCAToAvroConverterCallBack());
+    listener.listen(configuration.queueName, configuration.poolSize, new DwCAToAvroCallBack(configuration));
   }
 
   @Override
