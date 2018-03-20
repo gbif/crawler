@@ -15,6 +15,12 @@ class DwCAToAvroPaths {
   private final Path extendedRepositoryExportPath;
   private final java.nio.file.Path dwcaExpandedPath;
 
+  /**
+   * Derives expanded DwCA path and target avro files path from configuration and received message.
+   * @param configuration
+   * @param receivedMessage
+   * @return derived input,output paths
+   */
   public static DwCAToAvroPaths from(
     DwCAToAvroConfiguration configuration, DwcaValidationFinishedMessage receivedMessage
   ) {
@@ -41,10 +47,18 @@ class DwCAToAvroPaths {
     this.dwcaExpandedPath = dwcaExpandedPath;
   }
 
+  /**
+   * Target path where the avro files in {@link org.gbif.pipelines.io.avro.ExtendedRecord} format is written.
+   * @return extendedRepository export path
+   */
   public Path getExtendedRepositoryExportPath() {
     return extendedRepositoryExportPath;
   }
 
+  /**
+   * Source Path of the expanded DwC Archive, required for reading the dataset.
+   * @return expanded DwCA dataset path
+   */
   public java.nio.file.Path getDwcaExpandedPath() {
     return dwcaExpandedPath;
   }

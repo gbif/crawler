@@ -58,12 +58,12 @@ public class DwCAToAvroCallBack extends AbstractMessageCallback<DwcaValidationFi
   }
 
   /**
-   * Helper method to get file system based on provided configuration
+   * Helper method to get file system based on provided configuration.
    */
   private FileSystem getFileSystem() {
     try {
       Configuration config = new Configuration();
-      //aded to avoid IOException : No FileSystem for scheme: hdfs
+      //added to avoid IOException : No FileSystem for scheme: hdfs
       config.set("fs.hdfs.impl", org.apache.hadoop.hdfs.DistributedFileSystem.class.getName());
       config.set("fs.file.impl", org.apache.hadoop.fs.LocalFileSystem.class.getName());
       return FileSystem.get(URI.create(configuration.extendedRecordRepository), config);
@@ -73,6 +73,12 @@ public class DwCAToAvroCallBack extends AbstractMessageCallback<DwcaValidationFi
     }
   }
 
+  /**
+   * Helper method to create a parent directory in the provided path
+   * @param extendedRepoPath
+   * @return filesystem
+   * @throws IOException
+   */
   private FileSystem createParentDirectories(Path extendedRepoPath) throws IOException {
     FileSystem fs = getFileSystem();
     fs.mkdirs(extendedRepoPath.getParent());
