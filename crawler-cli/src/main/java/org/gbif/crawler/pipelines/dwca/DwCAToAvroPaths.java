@@ -21,9 +21,7 @@ class DwCAToAvroPaths {
    * @param receivedMessage
    * @return derived input,output paths
    */
-  public static DwCAToAvroPaths from(
-    DwCAToAvroConfiguration configuration, DwcaValidationFinishedMessage receivedMessage
-  ) {
+  public static DwCAToAvroPaths from(DwCAToAvroConfiguration configuration, DwcaValidationFinishedMessage receivedMessage) {
     //calculates and checks existence of DwC Archive
     java.nio.file.Path dwcaExpandedPath =
       Paths.get(configuration.archiveRepository, receivedMessage.getDatasetUuid().toString());
@@ -34,7 +32,7 @@ class DwCAToAvroPaths {
       : configuration.extendedRecordRepository + Path.SEPARATOR;
     Path extendedRepositoryExportPath = new Path(extendedRecordRepositoryPath
                                                  + Path.SEPARATOR
-                                                 + receivedMessage.getDatasetUuid().toString()
+                                                 + receivedMessage.getDatasetUuid()
                                                  + Path.SEPARATOR
                                                  + receivedMessage.getAttempt()
                                                  + "_verbatim.avro");

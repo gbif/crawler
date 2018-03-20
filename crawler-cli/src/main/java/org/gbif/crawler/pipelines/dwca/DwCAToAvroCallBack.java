@@ -63,9 +63,6 @@ public class DwCAToAvroCallBack extends AbstractMessageCallback<DwcaValidationFi
   private FileSystem getFileSystem() {
     try {
       Configuration config = new Configuration();
-      //added to avoid IOException : No FileSystem for scheme: hdfs
-      config.set("fs.hdfs.impl", org.apache.hadoop.hdfs.DistributedFileSystem.class.getName());
-      config.set("fs.file.impl", org.apache.hadoop.fs.LocalFileSystem.class.getName());
       return FileSystem.get(URI.create(configuration.extendedRecordRepository), config);
     } catch (IOException ex) {
       throw new IllegalStateException("Cannot get a valid filesystem from provided uri "
