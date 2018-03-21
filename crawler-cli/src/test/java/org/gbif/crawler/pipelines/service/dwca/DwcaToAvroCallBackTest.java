@@ -27,7 +27,7 @@ public class DwcaToAvroCallBackTest {
 
   private static final String DATASET_UUID_POS = "9bed66b3-4caa-42bb-9c93-71d7ba109dad";
   private static final String DUMMY_URL = "http://some.new.url";
-  private static final String INPUT_DATASET_FOLDER_POS = "dataset";
+  private static final String INPUT_DATASET_FOLDER_POS = "dataset/dwca";
   private static final Configuration CONFIG = new Configuration();
   private static String hdfsUri;
   private static MiniDFSCluster cluster;
