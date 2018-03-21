@@ -49,7 +49,7 @@ public class XmlToAvroCallBack extends AbstractMessageCallback<CrawlFinishedMess
       LOG.error("Failed performing conversion on {}", message.getDatasetUuid(), ex);
       throw new IllegalStateException("Failed performing conversion on " + message.getDatasetUuid(), ex);
     }
-    LOG.info("DwCA to avro conversion completed for {}", message.getDatasetUuid());
+    LOG.info("XML to avro conversion completed for {}", message.getDatasetUuid());
 
   }
 }
