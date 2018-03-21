@@ -9,7 +9,7 @@ import java.util.UUID;
 import org.apache.hadoop.fs.Path;
 
 /**
- * Contains derived paths for input(dwcaExpandedPath) and output(extendedRecordsRepository)
+ * Contains derived paths for input and output
  */
 public abstract class ArchiveToAvroPath {
 
@@ -17,9 +17,9 @@ public abstract class ArchiveToAvroPath {
   private java.nio.file.Path inputPath;
 
   /**
-   * Derives expanded DwCA path and target avro files path from configuration and received message.
+   * Derives source files path and target avro files path from configuration and received message.
    *
-   * @return derived input,output paths
+   * @return derived input, output paths
    */
   public ArchiveToAvroPath from(ConverterConfiguration configuration, UUID dataSetUuid, int attempt) {
     //calculates and checks existence of DwC Archive
@@ -40,9 +40,9 @@ public abstract class ArchiveToAvroPath {
   }
 
   /**
-   * Source Path of the expanded DwC Archive, required for reading the dataset.
+   * Source path, required for reading the dataset.
    *
-   * @return expanded DwCA dataset path
+   * @return dataset path
    */
   public java.nio.file.Path getInputPath() {
     return inputPath;
