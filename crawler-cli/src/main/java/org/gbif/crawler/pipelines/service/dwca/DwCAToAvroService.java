@@ -1,6 +1,7 @@
-package org.gbif.crawler.pipelines.dwca;
+package org.gbif.crawler.pipelines.service.dwca;
 
 import org.gbif.common.messaging.MessageListener;
+import org.gbif.crawler.pipelines.ConverterConfiguration;
 
 import com.google.common.util.concurrent.AbstractIdleService;
 import org.slf4j.Logger;
@@ -12,10 +13,10 @@ import org.slf4j.LoggerFactory;
 public class DwCAToAvroService extends AbstractIdleService {
 
   private static final Logger LOG = LoggerFactory.getLogger(DwCAToAvroService.class);
-  private final DwCAToAvroConfiguration configuration;
+  private final ConverterConfiguration configuration;
   private MessageListener listener;
 
-  public DwCAToAvroService(DwCAToAvroConfiguration configuration) {
+  public DwCAToAvroService(ConverterConfiguration configuration) {
     this.configuration = configuration;
   }
 
