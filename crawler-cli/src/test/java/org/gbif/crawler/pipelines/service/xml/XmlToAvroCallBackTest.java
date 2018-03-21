@@ -21,6 +21,8 @@ import static org.junit.Assert.*;
 
 public class XmlToAvroCallBackTest {
 
+  private static final String AVRO = "/verbatim.avro";
+
   private static final Configuration CONFIG = new Configuration();
   private static String hdfsUri;
   private static MiniDFSCluster cluster;
@@ -44,7 +46,7 @@ public class XmlToAvroCallBackTest {
   }
 
   @Test
-  public void testPositiveCase() throws IOException {
+  public void testXmlDirectory() throws IOException {
 
     // When
     String uuid = "7ef15372-1387-11e2-bb2e-00145eb45e9a";
@@ -61,8 +63,30 @@ public class XmlToAvroCallBackTest {
     callback.handleMessage(message);
 
     // Should
-    assertTrue(cluster.getFileSystem().exists(new Path(hdfsUri + uuid + "/" + attempt + "/verbatim.avro")));
-    assertTrue(cluster.getFileSystem().getStatus(new Path(hdfsUri + uuid + "/" + attempt + "/verbatim.avro")).getCapacity() > 0);
+    assertTrue(cluster.getFileSystem().exists(new Path(hdfsUri + uuid + "/" + attempt + AVRO)));
+    assertTrue(cluster.getFileSystem().getStatus(new Path(hdfsUri + uuid + "/" + attempt + AVRO)).getCapacity() > 0);
+  }
+
+  @Test
+  public void testXmlTarArchive() throws IOException {
+
+    // When
+    String uuid = "7ef15372-1387-11e2-bb2e-00145eb45e9a";
+    String inputFolder = "dataset/xml";
+    int attempt = 60;
+
+    // Expected
+    ConverterConfiguration config = new ConverterConfiguration();
+    config.archiveRepository = inputFolder;
+    config.extendedRecordRepository = hdfsUri;
+    XmlToAvroCallBack callback = new XmlToAvroCallBack(config);
+
+    CrawlFinishedMessage message = new CrawlFinishedMessage(UUID.fromString(uuid), attempt, 20, FinishReason.NORMAL);
+    callback.handleMessage(message);
+
+    // Should
+    assertTrue(cluster.getFileSystem().exists(new Path(hdfsUri + uuid + "/" + attempt + AVRO)));
+    assertTrue(cluster.getFileSystem().getStatus(new Path(hdfsUri + uuid + "/" + attempt + AVRO)).getCapacity() > 0);
   }
 
 }
