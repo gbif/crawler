@@ -241,7 +241,7 @@
         <version>${gbif-microservice.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.gbif</groupId>
+        <groupId>org.gbif.pipelines</groupId>
         <artifactId>xml-occurrence-parsers</artifactId>
         <version>${gbif-xml-occurrence-parsers.version}</version>
       </dependency>
