@@ -6,10 +6,12 @@ import org.gbif.pipelines.core.io.DwCAReader;
 import org.gbif.pipelines.io.avro.ExtendedRecord;
 
 import java.io.BufferedOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Objects;
 
+import com.google.common.base.Strings;
 import org.apache.avro.file.DataFileWriter;
 import org.apache.avro.specific.SpecificDatumWriter;
 import org.apache.hadoop.conf.Configuration;
@@ -63,6 +65,18 @@ public class DwCAToAvroCallBack extends AbstractMessageCallback<DwcaValidationFi
   private FileSystem getFileSystem() {
     try {
       Configuration config = new Configuration();
+
+      // check if the hdfs-site.xml is provided
+      if (!Strings.isNullOrEmpty(configuration.hdfsSiteConfig)) {
+        File hdfsSiteConfig = new File(configuration.hdfsSiteConfig);
+        if (hdfsSiteConfig.exists() && hdfsSiteConfig.isFile()) {
+          LOG.info("using hdfs-site.xml");
+          config.addResource(hdfsSiteConfig.toURI().toURL());
+        } else {
+          LOG.warn("hdfs-site.xml does not exist");
+        }
+      }
+
       return FileSystem.get(URI.create(configuration.extendedRecordRepository), config);
     } catch (IOException ex) {
       throw new IllegalStateException("Cannot get a valid filesystem from provided uri "
@@ -72,9 +86,8 @@ public class DwCAToAvroCallBack extends AbstractMessageCallback<DwcaValidationFi
 
   /**
    * Helper method to create a parent directory in the provided path
-   * @param extendedRepoPath
+   *
    * @return filesystem
-   * @throws IOException
    */
   private FileSystem createParentDirectories(Path extendedRepoPath) throws IOException {
     FileSystem fs = getFileSystem();

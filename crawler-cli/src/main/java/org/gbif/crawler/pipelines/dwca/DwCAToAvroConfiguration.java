@@ -37,6 +37,9 @@ public class DwCAToAvroConfiguration {
   @NotNull
   public String extendedRecordRepository;
 
+  @Parameter(names = "--hdfs-site-config")
+  public String hdfsSiteConfig;
+
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
@@ -49,6 +52,7 @@ public class DwCAToAvroConfiguration {
       .add("poolSize", poolSize)
       .add("archiveRepository", archiveRepository)
       .add("extendedRecordRepository", extendedRecordRepository)
+      .add("hdfsSiteConfig", hdfsSiteConfig)
       .toString();
   }
 }
