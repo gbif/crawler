@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Objects;
 
+import org.apache.avro.file.CodecFactory;
 import org.apache.avro.file.DataFileWriter;
 import org.apache.avro.specific.SpecificDatumWriter;
 import org.apache.hadoop.conf.Configuration;
@@ -34,14 +35,14 @@ public class DwCAToAvroCallBack extends AbstractMessageCallback<DwcaValidationFi
   @Override
   public void handleMessage(DwcaValidationFinishedMessage dwcaValidationFinishedMessage) {
     LOG.info("Received Download finished validation message {}", dwcaValidationFinishedMessage);
+
     DwCAToAvroPaths paths = DwCAToAvroPaths.from(configuration, dwcaValidationFinishedMessage);
 
     try (FileSystem fs = createParentDirectories(paths.getExtendedRepositoryExportPath());
          BufferedOutputStream extendedRepoPath = new BufferedOutputStream(fs.create(paths.getExtendedRepositoryExportPath()));
          DataFileWriter<ExtendedRecord> dataFileWriter = new DataFileWriter<>(new SpecificDatumWriter<ExtendedRecord>())
-           .create(ExtendedRecord.getClassSchema(), extendedRepoPath)) {
+           .setCodec(configuration.avroConfig.getCodec()).setSyncInterval(configuration.avroConfig.syncInterval).create(ExtendedRecord.getClassSchema(), extendedRepoPath)) {
 
-      LOG.info("Extracting the DwC Archive {} started", paths.getDwcaExpandedPath());
       DwCAReader reader = new DwCAReader(paths.getDwcaExpandedPath().toString());
       reader.init();
       LOG.info("Exporting the DwC Archive to avro {} started", paths.getExtendedRepositoryExportPath());

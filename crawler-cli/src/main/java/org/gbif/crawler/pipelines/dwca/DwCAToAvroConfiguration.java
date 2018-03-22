@@ -1,6 +1,7 @@
 package org.gbif.crawler.pipelines.dwca;
 
 import org.gbif.common.messaging.config.MessagingConfiguration;
+import org.gbif.crawler.common.AvroWriteConfiguration;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
@@ -9,6 +10,7 @@ import javax.validation.constraints.NotNull;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParametersDelegate;
 import com.google.common.base.Objects;
+import org.apache.avro.file.CodecFactory;
 
 /**
  * Configuration required to convert downloaded DwCArchive to avro (ExtendedRecord)
@@ -37,6 +39,12 @@ public class DwCAToAvroConfiguration {
   @NotNull
   public String extendedRecordRepository;
 
+  @ParametersDelegate
+  @Valid
+  @NotNull
+  public AvroWriteConfiguration avroConfig=new AvroWriteConfiguration();
+
+
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
@@ -49,6 +57,9 @@ public class DwCAToAvroConfiguration {
       .add("poolSize", poolSize)
       .add("archiveRepository", archiveRepository)
       .add("extendedRecordRepository", extendedRecordRepository)
+      .add("syncInterval", avroConfig.syncInterval)
+      .add("compressionCodec", avroConfig.compressionType)
+      .add("codecFactory",avroConfig.getCodec())
       .toString();
   }
 }
