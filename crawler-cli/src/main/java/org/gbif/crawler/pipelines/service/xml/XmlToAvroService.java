@@ -1,12 +1,10 @@
-package org.gbif.crawler.pipelines.xml;
+package org.gbif.crawler.pipelines.service.xml;
 
-import org.gbif.common.messaging.AbstractMessageCallback;
 import org.gbif.common.messaging.MessageListener;
 import org.gbif.common.messaging.api.messages.CrawlFinishedMessage;
+import org.gbif.crawler.pipelines.ConverterConfiguration;
 
 import com.google.common.util.concurrent.AbstractIdleService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Service for the {@link XmlToAvroCommand}.
@@ -15,39 +13,25 @@ import org.slf4j.LoggerFactory;
  */
 public class XmlToAvroService extends AbstractIdleService {
 
-  private static final Logger LOG = LoggerFactory.getLogger(XmlToAvroService.class);
-  private final XmlToAvroConfiguration configuration;
+  private final ConverterConfiguration configuration;
   private MessageListener listener;
 
-  public XmlToAvroService(XmlToAvroConfiguration configuration) {
+  public XmlToAvroService(ConverterConfiguration configuration) {
     this.configuration = configuration;
   }
 
   @Override
   protected void startUp() throws Exception {
-
     // create the listener.
     listener = new MessageListener(configuration.messaging.getConnectionParameters(), 1);
     // creates a binding between the queue specified in the configuration and the exchange and routing key specified in
     // CrawlFinishedMessage
-    listener.listen(configuration.queueName, configuration.threadCount, new AvroPropagatorCallback());
+    listener.listen(configuration.queueName, configuration.poolSize, new XmlToAvroCallBack(configuration));
   }
 
   @Override
-  protected void shutDown() throws Exception {
+  protected void shutDown() {
     listener.close();
-  }
-
-  private static class AvroPropagatorCallback extends AbstractMessageCallback<CrawlFinishedMessage> {
-
-    @Override
-    public void handleMessage(CrawlFinishedMessage message) {
-
-      LOG.info("CrawlFinishedMessage received");
-
-      // Add processing here...
-
-    }
   }
 
 }

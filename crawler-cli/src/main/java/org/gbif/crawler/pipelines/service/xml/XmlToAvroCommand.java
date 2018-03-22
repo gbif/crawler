@@ -1,7 +1,8 @@
-package org.gbif.crawler.pipelines.xml;
+package org.gbif.crawler.pipelines.service.xml;
 
 import org.gbif.cli.Command;
 import org.gbif.cli.service.ServiceCommand;
+import org.gbif.crawler.pipelines.ConverterConfiguration;
 
 import com.google.common.util.concurrent.Service;
 import org.kohsuke.MetaInfServices;
@@ -12,7 +13,7 @@ import org.kohsuke.MetaInfServices;
 @MetaInfServices(Command.class)
 public class XmlToAvroCommand extends ServiceCommand {
 
-  private final XmlToAvroConfiguration configuration = new XmlToAvroConfiguration();
+  private final ConverterConfiguration configuration = new ConverterConfiguration();
 
   public XmlToAvroCommand() {
     super("xmlToAvro");
