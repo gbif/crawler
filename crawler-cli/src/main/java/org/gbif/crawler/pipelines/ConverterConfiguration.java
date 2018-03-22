@@ -1,4 +1,4 @@
-package org.gbif.crawler.pipelines.dwca;
+package org.gbif.crawler.pipelines;
 
 import org.gbif.common.messaging.config.MessagingConfiguration;
 
@@ -11,9 +11,9 @@ import com.beust.jcommander.ParametersDelegate;
 import com.google.common.base.Objects;
 
 /**
- * Configuration required to convert downloaded DwCArchive to avro (ExtendedRecord)
+ * Configuration required to convert downloaded DwCArchive/ABCD and etc to avro (ExtendedRecord)
  */
-public class DwCAToAvroConfiguration {
+public class ConverterConfiguration {
 
   @ParametersDelegate
   @Valid
