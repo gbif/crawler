@@ -39,8 +39,11 @@ public class DwCAToAvroCallBack extends AbstractMessageCallback<DwcaValidationFi
     LOG.info("Received Download finished validation message {}", message);
     ArchiveToAvroPath paths = PathFactory.create(DWCA).from(configuration, message.getDatasetUuid(), message.getAttempt());
 
-    try (FileSystem fs = FileSystemUtils.createParentDirectories(paths.getOutputPath(), configuration.hdfsSiteConfig);
-         BufferedOutputStream extendedRepoPath = new BufferedOutputStream(fs.create(paths.getOutputPath()));
+    // the fs has to be out of the try-catch block to avoid closing it, because the hdfs client tries to reuse the
+    // same connection. So, when using multiple consumers, one consumer would close the connection that is being used
+    // by another consumer.
+    FileSystem fs = FileSystemUtils.createParentDirectories(paths.getOutputPath(), configuration.hdfsSiteConfig);
+    try (BufferedOutputStream extendedRepoPath = new BufferedOutputStream(fs.create(paths.getOutputPath()));
          DataFileWriter<ExtendedRecord> dataFileWriter = new DataFileWriter<>(new SpecificDatumWriter<ExtendedRecord>())
            .create(ExtendedRecord.getClassSchema(), extendedRepoPath)) {
 
@@ -57,6 +60,7 @@ public class DwCAToAvroCallBack extends AbstractMessageCallback<DwcaValidationFi
       LOG.error("Failed performing conversion on {}", message.getDatasetUuid(), e);
       throw new IllegalStateException("Failed performing conversion on " + message.getDatasetUuid(), e);
     }
+
     LOG.info("DwCA to avro conversion completed for {}", message.getDatasetUuid());
   }
 

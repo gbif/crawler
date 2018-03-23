@@ -38,8 +38,11 @@ public class XmlToAvroCallBack extends AbstractMessageCallback<CrawlFinishedMess
     LOG.info("Received Download finished validation message {}", message);
     ArchiveToAvroPath paths = PathFactory.create(XML).from(configuration, message.getDatasetUuid(), message.getAttempt());
 
-    try (FileSystem fs = FileSystemUtils.createParentDirectories(paths.getOutputPath(), configuration.hdfsSiteConfig);
-         BufferedOutputStream outputStream = new BufferedOutputStream(fs.create(paths.getOutputPath()))) {
+    // the fs has to be out of the try-catch block to avoid closing it, because the hdfs client tries to reuse the
+    // same connection. So, when using multiple consumers, one consumer would close the connection that is being used
+    // by another consumer.
+    FileSystem fs = FileSystemUtils.createParentDirectories(paths.getOutputPath(), configuration.hdfsSiteConfig);
+    try (BufferedOutputStream outputStream = new BufferedOutputStream(fs.create(paths.getOutputPath()))) {
 
       LOG.info("Parsing process has been started");
       ExtendedRecordParser.convertFromXML(paths.getInputPath().toString(), outputStream);

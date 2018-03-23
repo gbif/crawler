@@ -47,9 +47,13 @@ public class FileSystemUtils {
    *
    * @return filesystem
    */
-  public static FileSystem createParentDirectories(Path extendedRepoPath, String hdfsSite) throws IOException {
+  public static FileSystem createParentDirectories(Path extendedRepoPath, String hdfsSite) {
     FileSystem fs = getFileSystem(extendedRepoPath.toString(), hdfsSite);
-    fs.mkdirs(extendedRepoPath.getParent());
+    try {
+      fs.mkdirs(extendedRepoPath.getParent());
+    } catch (IOException e) {
+      throw new IllegalStateException("Error creating parent directories for extendedRepoPath: " + extendedRepoPath, e);
+    }
     return fs;
   }
 }
