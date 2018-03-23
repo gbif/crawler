@@ -7,12 +7,14 @@ PASSWORD=$2
 URL=$3
 
 ROUTING_KEY="crawl.dwca.validation.finished"
-CMD="ls dwca"
+CMD="ls -d */"
 
 echo "-----RUN-----"
 
 # All directories in the "dwca" directory
 for UUID in `$CMD`; do
+
+    UUID=${UUID%%/}
 
     # The RabbitMQ payload
     PAYLOAD="{\\\"datasetUuid\\\":\\\"$UUID\\\",\\\"datasetType\\\":\\\"OCCURRENCE\\\",\\\"source\\\":\\\"http://some.new.url\\\",\\\"attempt\\\":1,\\\"validationReport\\\":{\\\"datasetKey\\\":\\\"$UUID\\\",\\\"occurrenceReport\\\":null,\\\"genericReport\\\":null,\\\"invalidationReason\\\":\\\"no reason\\\",\\\"valid\\\":false}}"
