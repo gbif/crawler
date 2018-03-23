@@ -1,7 +1,5 @@
 package org.gbif.crawler.pipelines;
 
-import org.gbif.crawler.pipelines.service.xml.XmlToAvroService;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
