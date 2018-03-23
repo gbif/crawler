@@ -39,7 +39,7 @@ public class DwCAToAvroCallBack extends AbstractMessageCallback<DwcaValidationFi
     LOG.info("Received Download finished validation message {}", message);
     ArchiveToAvroPath paths = PathFactory.create(DWCA).from(configuration, message.getDatasetUuid(), message.getAttempt());
 
-    try (FileSystem fs = FileSystemUtils.createParentDirectories(paths.getOutputPath());
+    try (FileSystem fs = FileSystemUtils.createParentDirectories(paths.getOutputPath(), configuration.hdfsSiteConfig);
          BufferedOutputStream extendedRepoPath = new BufferedOutputStream(fs.create(paths.getOutputPath()));
          DataFileWriter<ExtendedRecord> dataFileWriter = new DataFileWriter<>(new SpecificDatumWriter<ExtendedRecord>())
            .create(ExtendedRecord.getClassSchema(), extendedRepoPath)) {

@@ -16,7 +16,7 @@ public class XmlToAvroCommand extends ServiceCommand {
   private final ConverterConfiguration configuration = new ConverterConfiguration();
 
   public XmlToAvroCommand() {
-    super("xmlToAvro");
+    super("xml-to-avro");
   }
 
   @Override
