@@ -26,7 +26,7 @@ public class ConverterConfiguration {
   @NotNull
   public String queueName;
 
-  @Parameter(names = "--parallelism")
+  @Parameter(names = "--pool-size")
   @NotNull
   @Min(1)
   public int poolSize;
