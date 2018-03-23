@@ -38,7 +38,7 @@ public class XmlToAvroCallBack extends AbstractMessageCallback<CrawlFinishedMess
     LOG.info("Received Download finished validation message {}", message);
     ArchiveToAvroPath paths = PathFactory.create(XML).from(configuration, message.getDatasetUuid(), message.getAttempt());
 
-    try (FileSystem fs = FileSystemUtils.createParentDirectories(paths.getOutputPath());
+    try (FileSystem fs = FileSystemUtils.createParentDirectories(paths.getOutputPath(), configuration.hdfsSiteConfig);
          BufferedOutputStream outputStream = new BufferedOutputStream(fs.create(paths.getOutputPath()))) {
 
       LOG.info("Parsing process has been started");

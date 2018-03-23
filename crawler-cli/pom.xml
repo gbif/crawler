@@ -305,7 +305,7 @@
       </exclusions>
     </dependency>
     <dependency>
-      <groupId>org.gbif</groupId>
+      <groupId>org.gbif.pipelines</groupId>
       <artifactId>xml-occurrence-parsers</artifactId>
     </dependency>
     <dependency>
