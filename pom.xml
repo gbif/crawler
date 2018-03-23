@@ -54,6 +54,7 @@
     <gbif-postal-service.version>0.24</gbif-postal-service.version>
     <gbif-registry.version>2.76</gbif-registry.version>
     <gbif-wrangler.version>0.2</gbif-wrangler.version>
+    <gbif-xml-occurrence-parsers.version>1.0-SNAPSHOT</gbif-xml-occurrence-parsers.version>
     <gbif-pipelines-core.version>1.0-SNAPSHOT</gbif-pipelines-core.version>
 
     <guava.version>17.0</guava.version>
@@ -238,6 +239,11 @@
         <groupId>org.gbif</groupId>
         <artifactId>gbif-microservice</artifactId>
         <version>${gbif-microservice.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.gbif.pipelines</groupId>
+        <artifactId>xml-occurrence-parsers</artifactId>
+        <version>${gbif-xml-occurrence-parsers.version}</version>
       </dependency>
 
       <!-- Other -->

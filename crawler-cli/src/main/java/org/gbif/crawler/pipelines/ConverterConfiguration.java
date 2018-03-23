@@ -1,4 +1,4 @@
-package org.gbif.crawler.pipelines.dwca;
+package org.gbif.crawler.pipelines;
 
 import org.gbif.common.messaging.config.MessagingConfiguration;
 import org.gbif.crawler.common.AvroWriteConfiguration;
@@ -13,9 +13,9 @@ import com.google.common.base.Objects;
 import org.apache.avro.file.CodecFactory;
 
 /**
- * Configuration required to convert downloaded DwCArchive to avro (ExtendedRecord)
+ * Configuration required to convert downloaded DwCArchive/ABCD and etc to avro (ExtendedRecord)
  */
-public class DwCAToAvroConfiguration {
+public class ConverterConfiguration {
 
   @ParametersDelegate
   @Valid
@@ -44,6 +44,8 @@ public class DwCAToAvroConfiguration {
   @NotNull
   public AvroWriteConfiguration avroConfig=new AvroWriteConfiguration();
 
+  @Parameter(names = "--hdfs-site-config")
+  public String hdfsSiteConfig;
 
   @Override
   public String toString() {
@@ -60,6 +62,7 @@ public class DwCAToAvroConfiguration {
       .add("syncInterval", avroConfig.syncInterval)
       .add("compressionCodec", avroConfig.compressionType)
       .add("codecFactory",avroConfig.getCodec())
+      .add("hdfsSiteConfig", hdfsSiteConfig)
       .toString();
   }
 }
