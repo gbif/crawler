@@ -37,7 +37,8 @@ public class DwCAToAvroCallBack extends AbstractMessageCallback<DwcaValidationFi
   @Override
   public void handleMessage(DwcaValidationFinishedMessage message) {
     LOG.info("Received Download finished validation message {}", message);
-    ArchiveToAvroPath paths = PathFactory.create(DWCA).from(configuration, message.getDatasetUuid(), message.getAttempt());
+    ArchiveToAvroPath paths =
+      PathFactory.create(DWCA).from(configuration, message.getDatasetUuid(), message.getAttempt());
 
     // the fs has to be out of the try-catch block to avoid closing it, because the hdfs client tries to reuse the
     // same connection. So, when using multiple consumers, one consumer would close the connection that is being used
@@ -45,9 +46,10 @@ public class DwCAToAvroCallBack extends AbstractMessageCallback<DwcaValidationFi
     FileSystem fs = FileSystemUtils.createParentDirectories(paths.getOutputPath(), configuration.hdfsSiteConfig);
     try (BufferedOutputStream extendedRepoPath = new BufferedOutputStream(fs.create(paths.getOutputPath()));
          DataFileWriter<ExtendedRecord> dataFileWriter = new DataFileWriter<>(new SpecificDatumWriter<ExtendedRecord>())
+           .setSyncInterval(configuration.avroConfig.syncInterval)
+           .setCodec(configuration.avroConfig.getCodec())
            .create(ExtendedRecord.getClassSchema(), extendedRepoPath)) {
 
-      LOG.info("Extracting the DwC Archive {} started", paths.getInputPath());
       DwCAReader reader = new DwCAReader(paths.getInputPath().toString());
       reader.init();
 

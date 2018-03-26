@@ -1,6 +1,7 @@
 package org.gbif.crawler.pipelines;
 
 import org.gbif.common.messaging.config.MessagingConfiguration;
+import org.gbif.crawler.common.AvroWriteConfiguration;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
@@ -9,6 +10,7 @@ import javax.validation.constraints.NotNull;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParametersDelegate;
 import com.google.common.base.Objects;
+import org.apache.avro.file.CodecFactory;
 
 /**
  * Configuration required to convert downloaded DwCArchive/ABCD and etc to avro (ExtendedRecord)
@@ -24,7 +26,7 @@ public class ConverterConfiguration {
   @NotNull
   public String queueName;
 
-  @Parameter(names = "--parallelism")
+  @Parameter(names = "--pool-size")
   @NotNull
   @Min(1)
   public int poolSize;
@@ -36,6 +38,11 @@ public class ConverterConfiguration {
   @Parameter(names = "--extended-record-repository")
   @NotNull
   public String extendedRecordRepository;
+
+  @ParametersDelegate
+  @Valid
+  @NotNull
+  public AvroWriteConfiguration avroConfig=new AvroWriteConfiguration();
 
   @Parameter(names = "--hdfs-site-config")
   public String hdfsSiteConfig;
@@ -52,6 +59,9 @@ public class ConverterConfiguration {
       .add("poolSize", poolSize)
       .add("archiveRepository", archiveRepository)
       .add("extendedRecordRepository", extendedRecordRepository)
+      .add("syncInterval", avroConfig.syncInterval)
+      .add("compressionCodec", avroConfig.compressionType)
+      .add("codecFactory",avroConfig.getCodec())
       .add("hdfsSiteConfig", hdfsSiteConfig)
       .toString();
   }
