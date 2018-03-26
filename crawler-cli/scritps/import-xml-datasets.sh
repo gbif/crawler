@@ -7,7 +7,7 @@ PASSWORD=$2
 URL=$3
 
 ROUTING_KEY="crawl.finished"
-CMD="ls"
+CMD="ls ."
 
 
 echo "-----RUN-----"
