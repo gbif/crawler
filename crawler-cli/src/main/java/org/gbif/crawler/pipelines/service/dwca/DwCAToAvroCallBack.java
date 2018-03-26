@@ -7,6 +7,7 @@ import org.gbif.crawler.pipelines.FileSystemUtils;
 import org.gbif.crawler.pipelines.path.ArchiveToAvroPath;
 import org.gbif.crawler.pipelines.path.PathFactory;
 import org.gbif.pipelines.core.io.DwCAReader;
+import org.gbif.pipelines.core.utils.DataFileWriteBuilder;
 import org.gbif.pipelines.io.avro.ExtendedRecord;
 
 import java.io.BufferedOutputStream;
@@ -14,7 +15,6 @@ import java.io.IOException;
 import java.util.Objects;
 
 import org.apache.avro.file.DataFileWriter;
-import org.apache.avro.specific.SpecificDatumWriter;
 import org.apache.hadoop.fs.FileSystem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,11 +44,13 @@ public class DwCAToAvroCallBack extends AbstractMessageCallback<DwcaValidationFi
     // same connection. So, when using multiple consumers, one consumer would close the connection that is being used
     // by another consumer.
     FileSystem fs = FileSystemUtils.createParentDirectories(paths.getOutputPath(), configuration.hdfsSiteConfig);
-    try (BufferedOutputStream extendedRepoPath = new BufferedOutputStream(fs.create(paths.getOutputPath()));
-         DataFileWriter<ExtendedRecord> dataFileWriter = new DataFileWriter<>(new SpecificDatumWriter<ExtendedRecord>())
-           .setSyncInterval(configuration.avroConfig.syncInterval)
-           .setCodec(configuration.avroConfig.getCodec())
-           .create(ExtendedRecord.getClassSchema(), extendedRepoPath)) {
+    try (BufferedOutputStream outputStream = new BufferedOutputStream(fs.create(paths.getOutputPath()));
+         DataFileWriter<ExtendedRecord> dataFileWriter = DataFileWriteBuilder.create()
+           .schema(ExtendedRecord.getClassSchema())
+           .codec(configuration.avroConfig.getCodec())
+           .outputStream(outputStream)
+           .syncInterval(configuration.avroConfig.syncInterval)
+           .build()) {
 
       DwCAReader reader = new DwCAReader(paths.getInputPath().toString());
       reader.init();

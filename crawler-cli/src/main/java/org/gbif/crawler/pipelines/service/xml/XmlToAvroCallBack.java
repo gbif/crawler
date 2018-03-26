@@ -6,27 +6,14 @@ import org.gbif.crawler.pipelines.ConverterConfiguration;
 import org.gbif.crawler.pipelines.FileSystemUtils;
 import org.gbif.crawler.pipelines.path.ArchiveToAvroPath;
 import org.gbif.crawler.pipelines.path.PathFactory;
-import org.gbif.pipelines.core.utils.AvroUtil;
+import org.gbif.pipelines.core.utils.DataFileWriteBuilder;
 import org.gbif.pipelines.io.avro.ExtendedRecord;
-import org.gbif.xml.occurrence.parser.ParsingException;
-import org.gbif.xml.occurrence.parser.parsing.extendedrecord.ConverterTask;
-import org.gbif.xml.occurrence.parser.parsing.extendedrecord.ParserFileUtils;
-import org.gbif.xml.occurrence.parser.parsing.extendedrecord.SyncDataFileWriter;
-import org.gbif.xml.occurrence.parser.parsing.validators.UniquenessValidator;
+import org.gbif.xml.occurrence.parser.ExtendedRecordConverter;
 
 import java.io.BufferedOutputStream;
-import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
-import java.util.stream.Stream;
 
-import com.google.common.base.Strings;
-import org.apache.avro.Schema;
-import org.apache.avro.file.CodecFactory;
 import org.apache.avro.file.DataFileWriter;
 import org.apache.hadoop.fs.FileSystem;
 import org.slf4j.Logger;
@@ -40,7 +27,6 @@ import static org.gbif.crawler.pipelines.path.PathFactory.ArchiveTypeEnum.XML;
 public class XmlToAvroCallBack extends AbstractMessageCallback<CrawlFinishedMessage> {
 
   private static final Logger LOG = LoggerFactory.getLogger(XmlToAvroService.class);
-  private static final String FILE_PREFIX = ".response";
   private final ConverterConfiguration configuration;
 
   public XmlToAvroCallBack(ConverterConfiguration configuration) {
@@ -59,14 +45,19 @@ public class XmlToAvroCallBack extends AbstractMessageCallback<CrawlFinishedMess
     // same connection. So, when using multiple consumers, one consumer would close the connection that is being used
     // by another consumer.
     FileSystem fs = FileSystemUtils.createParentDirectories(paths.getOutputPath(), configuration.hdfsSiteConfig);
-    try (BufferedOutputStream outputStream = new BufferedOutputStream(fs.create(paths.getOutputPath()))) {
+    try (BufferedOutputStream outputStream = new BufferedOutputStream(fs.create(paths.getOutputPath()));
+         DataFileWriter<ExtendedRecord> dataFileWriter = DataFileWriteBuilder.create()
+           .schema(ExtendedRecord.getClassSchema())
+           .codec(configuration.avroConfig.getCodec())
+           .outputStream(outputStream)
+           .syncInterval(configuration.avroConfig.syncInterval)
+           .build()) {
 
       LOG.info("Parsing process has been started");
 
-      convertFromXML(paths.getInputPath().toString(),
-                     outputStream,
-                     configuration.avroConfig.syncInterval,
-                     configuration.avroConfig.getCodec());
+      ExtendedRecordConverter.crete(configuration.xmlReaderParallelism)
+        .toAvroFromXmlResponse(paths.getInputPath().toString(), dataFileWriter);
+
       LOG.info("Parsing process has been finished");
 
     } catch (IOException ex) {
@@ -77,42 +68,4 @@ public class XmlToAvroCallBack extends AbstractMessageCallback<CrawlFinishedMess
 
   }
 
-  /**
-   * @param inputPath    path to directory with response files or a tar.xz archive
-   * @param outputStream output stream to support any file system
-   */
-  private void convertFromXML(String inputPath, OutputStream outputStream, int syncInterval, CodecFactory codec) {
-
-    if (Strings.isNullOrEmpty(inputPath) || Objects.isNull(outputStream)) {
-      throw new ParsingException("Input or output stream must not be empty or null!");
-    }
-
-    File inputFile = ParserFileUtils.uncompressAndGetInputFile(inputPath);
-    Schema schema = ExtendedRecord.getClassSchema();
-
-    try (DataFileWriter<ExtendedRecord> dataFileWriter = AvroUtil.getExtendedRecordWriter(outputStream,
-                                                                                          syncInterval,
-                                                                                          codec);
-         Stream<Path> walk = Files.walk(inputFile.toPath());
-         UniquenessValidator validator = UniquenessValidator.getNewInstance()) {
-      dataFileWriter.setFlushOnEveryBlock(false);
-
-      // Class with sync method to avoid problem with writing
-      SyncDataFileWriter syncWriter = new SyncDataFileWriter(dataFileWriter);
-
-      // Run async process - read a file, convert to ExtendedRecord and write to avro
-      CompletableFuture[] futures = walk.filter(x -> x.toFile().isFile() && x.toString().endsWith(FILE_PREFIX))
-        .map(Path::toFile)
-        .map(file -> CompletableFuture.runAsync(new ConverterTask(file, syncWriter, validator)))
-        .toArray(CompletableFuture[]::new);
-
-      // Wait all threads
-      CompletableFuture.allOf(futures).get();
-      dataFileWriter.flush();
-
-    } catch (Exception ex) {
-      LOG.error(ex.getMessage(), ex);
-      throw new ParsingException(ex);
-    }
-  }
 }

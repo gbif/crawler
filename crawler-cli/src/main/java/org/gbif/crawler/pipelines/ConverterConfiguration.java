@@ -10,7 +10,6 @@ import javax.validation.constraints.NotNull;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParametersDelegate;
 import com.google.common.base.Objects;
-import org.apache.avro.file.CodecFactory;
 
 /**
  * Configuration required to convert downloaded DwCArchive/ABCD and etc to avro (ExtendedRecord)
@@ -30,6 +29,10 @@ public class ConverterConfiguration {
   @NotNull
   @Min(1)
   public int poolSize;
+
+  @Parameter(names = "--xml-reader-parallelism")
+  @Min(1)
+  public int xmlReaderParallelism;
 
   @Parameter(names = "--archive-repository")
   @NotNull
@@ -57,6 +60,7 @@ public class ConverterConfiguration {
       .add("port", messaging.port)
       .add("connectionHost", messaging.host)
       .add("poolSize", poolSize)
+      .add("xmlReaderParallelism", xmlReaderParallelism)
       .add("archiveRepository", archiveRepository)
       .add("extendedRecordRepository", extendedRecordRepository)
       .add("syncInterval", avroConfig.syncInterval)

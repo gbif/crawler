@@ -57,6 +57,7 @@ public class XmlToAvroCallBackTest {
     ConverterConfiguration config = new ConverterConfiguration();
     config.archiveRepository = inputFolder;
     config.extendedRecordRepository = hdfsUri;
+    config.xmlReaderParallelism = 4;
     XmlToAvroCallBack callback = new XmlToAvroCallBack(config);
 
     CrawlFinishedMessage message = new CrawlFinishedMessage(UUID.fromString(uuid), attempt, 20, FinishReason.NORMAL);
@@ -79,6 +80,7 @@ public class XmlToAvroCallBackTest {
     ConverterConfiguration config = new ConverterConfiguration();
     config.archiveRepository = inputFolder;
     config.extendedRecordRepository = hdfsUri;
+    config.xmlReaderParallelism = 4;
     XmlToAvroCallBack callback = new XmlToAvroCallBack(config);
 
     CrawlFinishedMessage message = new CrawlFinishedMessage(UUID.fromString(uuid), attempt, 20, FinishReason.NORMAL);
