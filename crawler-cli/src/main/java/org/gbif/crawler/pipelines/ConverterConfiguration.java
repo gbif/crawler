@@ -31,7 +31,6 @@ public class ConverterConfiguration {
   public int poolSize;
 
   @Parameter(names = "--xml-reader-parallelism")
-  @NotNull
   @Min(1)
   public int xmlReaderParallelism;
 
