@@ -54,8 +54,8 @@
     <gbif-postal-service.version>0.24</gbif-postal-service.version>
     <gbif-registry.version>2.79</gbif-registry.version>
     <gbif-wrangler.version>0.2</gbif-wrangler.version>
-    <gbif-xml-occurrence-parsers.version>1.0-SNAPSHOT</gbif-xml-occurrence-parsers.version>
-    <gbif-pipelines-core.version>1.0-SNAPSHOT</gbif-pipelines-core.version>
+    <gbif-xml-occurrence-parsers.version>1.0</gbif-xml-occurrence-parsers.version>
+    <gbif-pipelines-core.version>1.0</gbif-pipelines-core.version>
 
     <guava.version>17.0</guava.version>
     <guice.version>4.0</guice.version>
