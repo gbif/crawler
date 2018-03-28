@@ -26,7 +26,7 @@ import static org.gbif.crawler.pipelines.path.PathFactory.ArchiveTypeEnum.XML;
  */
 public class XmlToAvroCallBack extends AbstractMessageCallback<CrawlFinishedMessage> {
 
-  private static final Logger LOG = LoggerFactory.getLogger(XmlToAvroService.class);
+  private static final Logger LOG = LoggerFactory.getLogger(XmlToAvroCallBack.class);
   private final ConverterConfiguration configuration;
 
   public XmlToAvroCallBack(ConverterConfiguration configuration) {
