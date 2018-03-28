@@ -19,12 +19,14 @@ import java.util.UUID;
 import com.google.common.base.Optional;
 import com.google.common.collect.Iterables;
 import org.apache.http.HttpResponse;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
 
 import static org.fest.assertions.api.Assertions.assertThat;
@@ -109,6 +111,14 @@ public class CrawlerTest {
       Crawler.newInstance(strategy, requestHandler, responseHandler, client, retryPolicy, NoLockFactory.getLock());
     crawler.addListener(crawlListener);
     when(responseHandler.isValidState()).thenReturn(true);
+  }
+
+  /**
+   * Necessary to avoid running out of RAM.
+   */
+  @After
+  public void tearDown() {
+    Mockito.reset(responseHandler, client, crawlListener);
   }
 
   @Test
