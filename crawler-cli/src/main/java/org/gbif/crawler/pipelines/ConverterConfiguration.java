@@ -32,7 +32,7 @@ public class ConverterConfiguration {
 
   @Parameter(names = "--xml-reader-parallelism")
   @Min(1)
-  public int xmlReaderParallelism;
+  public Integer xmlReaderParallelism;
 
   @Parameter(names = "--archive-repository")
   @NotNull
