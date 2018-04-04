@@ -22,11 +22,14 @@ import static org.junit.Assert.*;
 public class XmlToAvroCallBackTest {
 
   private static final String AVRO = "/verbatim.avro";
+  private static final String STRING_UUID = "7ef15372-1387-11e2-bb2e-00145eb45e9a";
+  private static final UUID DATASET_UUID = UUID.fromString(STRING_UUID);
+  private static final String INPUT_DATASET_FOLDER = "dataset/xml";
 
   private static final Configuration CONFIG = new Configuration();
   private static String hdfsUri;
   private static MiniDFSCluster cluster;
-  private static FileSystem clusterFS;
+  private static FileSystem clusterFs;
 
   @BeforeClass
   public static void setUp() throws IOException {
@@ -37,58 +40,72 @@ public class XmlToAvroCallBackTest {
     cluster = builder.build();
     hdfsUri = "hdfs://localhost:" + cluster.getNameNodePort() + "/";
     cluster.waitClusterUp();
-    clusterFS = cluster.getFileSystem();
+    clusterFs = cluster.getFileSystem();
   }
 
   @AfterClass
-  public static void tearDown() {
+  public static void tearDown() throws IOException {
+    clusterFs.close();
     cluster.shutdown();
   }
 
   @Test
   public void testXmlDirectory() throws IOException {
-
     // When
-    String uuid = "7ef15372-1387-11e2-bb2e-00145eb45e9a";
-    String inputFolder = "dataset/xml";
     int attempt = 61;
-
-    // Expected
     ConverterConfiguration config = new ConverterConfiguration();
-    config.archiveRepository = inputFolder;
+    config.archiveRepository = INPUT_DATASET_FOLDER;
     config.extendedRecordRepository = hdfsUri;
     config.xmlReaderParallelism = 4;
     XmlToAvroCallBack callback = new XmlToAvroCallBack(config);
+    CrawlFinishedMessage message = new CrawlFinishedMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL);
 
-    CrawlFinishedMessage message = new CrawlFinishedMessage(UUID.fromString(uuid), attempt, 20, FinishReason.NORMAL);
+    // Expected
     callback.handleMessage(message);
 
     // Should
-    assertTrue(cluster.getFileSystem().exists(new Path(hdfsUri + uuid + "/" + attempt + AVRO)));
-    assertTrue(cluster.getFileSystem().getStatus(new Path(hdfsUri + uuid + "/" + attempt + AVRO)).getCapacity() > 0);
+    Path path = new Path(hdfsUri + STRING_UUID + "/" + attempt + AVRO);
+    assertTrue(cluster.getFileSystem().exists(path));
+    assertTrue(clusterFs.getFileStatus(path).getLen() > 0);
   }
 
   @Test
   public void testXmlTarArchive() throws IOException {
-
     // When
-    String uuid = "7ef15372-1387-11e2-bb2e-00145eb45e9a";
-    String inputFolder = "dataset/xml";
     int attempt = 60;
-
-    // Expected
     ConverterConfiguration config = new ConverterConfiguration();
-    config.archiveRepository = inputFolder;
+    config.archiveRepository = INPUT_DATASET_FOLDER;
     config.extendedRecordRepository = hdfsUri;
     config.xmlReaderParallelism = 4;
     XmlToAvroCallBack callback = new XmlToAvroCallBack(config);
+    CrawlFinishedMessage message = new CrawlFinishedMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL);
 
-    CrawlFinishedMessage message = new CrawlFinishedMessage(UUID.fromString(uuid), attempt, 20, FinishReason.NORMAL);
+    // Expected
     callback.handleMessage(message);
 
     // Should
-    assertTrue(cluster.getFileSystem().exists(new Path(hdfsUri + uuid + "/" + attempt + AVRO)));
-    assertTrue(cluster.getFileSystem().getStatus(new Path(hdfsUri + uuid + "/" + attempt + AVRO)).getCapacity() > 0);
+    Path path = new Path(hdfsUri + STRING_UUID + "/" + attempt + AVRO);
+    assertTrue(cluster.getFileSystem().exists(path));
+    assertTrue(clusterFs.getFileStatus(path).getLen() > 0);
+  }
+
+  @Test
+  public void testXmlEmptyAvro() throws IOException {
+    // When
+    int attempt = 62;
+    ConverterConfiguration config = new ConverterConfiguration();
+    config.archiveRepository = INPUT_DATASET_FOLDER;
+    config.extendedRecordRepository = hdfsUri;
+    config.xmlReaderParallelism = 4;
+    XmlToAvroCallBack callback = new XmlToAvroCallBack(config);
+    CrawlFinishedMessage message = new CrawlFinishedMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL);
+
+    // Expected
+    callback.handleMessage(message);
+
+    // Should
+    Path path = new Path(hdfsUri + STRING_UUID + "/" + attempt + AVRO);
+    assertFalse(cluster.getFileSystem().exists(path));
   }
 
 }

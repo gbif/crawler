@@ -1,11 +1,16 @@
 package org.gbif.crawler.pipelines;
 
+import org.gbif.pipelines.io.avro.ExtendedRecord;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 
 import com.google.common.base.Strings;
+import org.apache.avro.file.DataFileReader;
+import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.AvroFSInput;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.slf4j.Logger;
@@ -14,6 +19,8 @@ import org.slf4j.LoggerFactory;
 public class FileSystemUtils {
 
   private static final Logger LOG = LoggerFactory.getLogger(FileSystemUtils.class);
+
+  private static final long FILE_LIMIT_SIZE = 3L * 1_024L; //3Kb
 
   private FileSystemUtils() {
   }
@@ -56,4 +63,28 @@ public class FileSystemUtils {
     }
     return fs;
   }
+
+  /**
+   * If a file is too small (less than 3Kb), checks any records inside, if the file is empty, removes it
+   */
+  public static void deleteAvroFileIfEmpty(FileSystem fs, Path path) {
+    try {
+
+      if (fs.exists(path) && fs.getFileStatus(path).getLen() < FILE_LIMIT_SIZE) {
+        SpecificDatumReader<ExtendedRecord> datumReader = new SpecificDatumReader<>(ExtendedRecord.class);
+        try (AvroFSInput input = new AvroFSInput(fs.open(path), fs.getFileStatus(path).getLen());
+             DataFileReader<ExtendedRecord> dataFileReader = new DataFileReader<>(input, datumReader)) {
+          if (!dataFileReader.hasNext()) {
+            LOG.info("File is empty - {}", path);
+            fs.delete(path.getParent(), true);
+          }
+        }
+      }
+
+    } catch (IOException ex) {
+      LOG.error("Error deleting an empty file", ex);
+      throw new IllegalStateException("Error deleting an empty file", ex);
+    }
+  }
+
 }

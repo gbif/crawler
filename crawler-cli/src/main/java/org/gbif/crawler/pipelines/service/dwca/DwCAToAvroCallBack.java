@@ -65,6 +65,8 @@ public class DwCAToAvroCallBack extends AbstractMessageCallback<DwcaValidationFi
       throw new IllegalStateException("Failed performing conversion on " + message.getDatasetUuid(), e);
     }
 
+    FileSystemUtils.deleteAvroFileIfEmpty(fs, paths.getOutputPath());
+
     LOG.info("DwCA to avro conversion completed for {}", message.getDatasetUuid());
   }
 

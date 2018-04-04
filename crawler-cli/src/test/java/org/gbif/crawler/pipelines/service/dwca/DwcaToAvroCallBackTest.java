@@ -27,11 +27,11 @@ public class DwcaToAvroCallBackTest {
 
   private static final String DATASET_UUID_POS = "9bed66b3-4caa-42bb-9c93-71d7ba109dad";
   private static final String DUMMY_URL = "http://some.new.url";
-  private static final String INPUT_DATASET_FOLDER_POS = "dataset/dwca";
+  private static final String INPUT_DATASET_FOLDER = "dataset/dwca";
   private static final Configuration CONFIG = new Configuration();
   private static String hdfsUri;
   private static MiniDFSCluster cluster;
-  private static FileSystem clusterFS;
+  private static FileSystem clusterFs;
 
   @BeforeClass
   public static void setUp() throws IOException {
@@ -42,31 +42,34 @@ public class DwcaToAvroCallBackTest {
     cluster = builder.build();
     hdfsUri = "hdfs://localhost:" + cluster.getNameNodePort() + "/";
     cluster.waitClusterUp();
-    clusterFS = cluster.getFileSystem();
+    clusterFs = cluster.getFileSystem();
   }
 
   @AfterClass
-  public static void tearDown() {
+  public static void tearDown() throws IOException {
+    clusterFs.close();
     cluster.shutdown();
   }
 
   @Test
   public void testPositiveCase() throws IOException {
+    // When
     ConverterConfiguration config = new ConverterConfiguration();
-    config.archiveRepository = INPUT_DATASET_FOLDER_POS;
+    config.archiveRepository = INPUT_DATASET_FOLDER;
     config.extendedRecordRepository = hdfsUri;
     DwCAToAvroCallBack callback = new DwCAToAvroCallBack(config);
+    UUID uuid = UUID.fromString(DATASET_UUID_POS);
+    DwcaValidationReport reason = new DwcaValidationReport(uuid, "no reason");
+    DwcaValidationFinishedMessage finishedMessage =
+      new DwcaValidationFinishedMessage(uuid, DatasetType.OCCURRENCE, URI.create(DUMMY_URL), 2, reason);
 
-    DwcaValidationFinishedMessage finishedMessage = new DwcaValidationFinishedMessage(UUID.fromString(DATASET_UUID_POS),
-                                                                                      DatasetType.OCCURRENCE,
-                                                                                      URI.create(DUMMY_URL),
-                                                                                      2,
-                                                                                      new DwcaValidationReport(UUID.fromString(
-                                                                                        DATASET_UUID_POS),
-                                                                                                               "no reason"));
+    // Expected
     callback.handleMessage(finishedMessage);
-    Assert.assertTrue(cluster.getFileSystem().exists(new Path(hdfsUri + DATASET_UUID_POS + "/2/verbatim.avro")));
-    Assert.assertTrue(cluster.getFileSystem().getStatus(new Path(hdfsUri + DATASET_UUID_POS + "/2/verbatim.avro")).getCapacity() > 0);
+
+    // Should
+    Path path = new Path(hdfsUri + DATASET_UUID_POS + "/2/verbatim.avro");
+    Assert.assertTrue(cluster.getFileSystem().exists(path));
+    Assert.assertTrue(clusterFs.getFileStatus(path).getLen() > 0);
   }
 
 }

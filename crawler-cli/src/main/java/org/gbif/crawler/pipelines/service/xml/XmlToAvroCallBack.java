@@ -64,6 +64,9 @@ public class XmlToAvroCallBack extends AbstractMessageCallback<CrawlFinishedMess
       LOG.error("Failed performing conversion on {}", message.getDatasetUuid(), ex);
       throw new IllegalStateException("Failed performing conversion on " + message.getDatasetUuid(), ex);
     }
+
+    FileSystemUtils.deleteAvroFileIfEmpty(fs, paths.getOutputPath());
+
     LOG.info("XML to avro conversion completed for {}", message.getDatasetUuid());
 
   }
