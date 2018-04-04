@@ -106,6 +106,9 @@ public class XmlToAvroCallBackTest {
     // Should
     Path path = new Path(hdfsUri + STRING_UUID + "/" + attempt + AVRO);
     assertFalse(cluster.getFileSystem().exists(path));
+    assertFalse(cluster.getFileSystem().exists(path.getParent()));
+    // NOTE: If you run this method independently, it will fail, it is normal
+    assertTrue(cluster.getFileSystem().exists(path.getParent().getParent()));
   }
 
 }

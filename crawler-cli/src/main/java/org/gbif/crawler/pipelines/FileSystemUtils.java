@@ -69,18 +69,22 @@ public class FileSystemUtils {
    */
   public static void deleteAvroFileIfEmpty(FileSystem fs, Path path) {
     try {
-
       if (fs.exists(path) && fs.getFileStatus(path).getLen() < FILE_LIMIT_SIZE) {
         SpecificDatumReader<ExtendedRecord> datumReader = new SpecificDatumReader<>(ExtendedRecord.class);
         try (AvroFSInput input = new AvroFSInput(fs.open(path), fs.getFileStatus(path).getLen());
              DataFileReader<ExtendedRecord> dataFileReader = new DataFileReader<>(input, datumReader)) {
           if (!dataFileReader.hasNext()) {
             LOG.info("File is empty - {}", path);
-            fs.delete(path.getParent(), true);
+            Path parent = path.getParent();
+            fs.delete(parent, true);
+
+            Path subParent = parent.getParent();
+            if(!fs.listFiles(subParent, true).hasNext()){
+              fs.delete(subParent, true);
+            }
           }
         }
       }
-
     } catch (IOException ex) {
       LOG.error("Error deleting an empty file", ex);
       throw new IllegalStateException("Error deleting an empty file", ex);
