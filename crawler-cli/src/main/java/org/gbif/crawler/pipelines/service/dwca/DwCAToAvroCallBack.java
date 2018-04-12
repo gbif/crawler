@@ -1,7 +1,9 @@
 package org.gbif.crawler.pipelines.service.dwca;
 
 import org.gbif.common.messaging.AbstractMessageCallback;
+import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.DwcaValidationFinishedMessage;
+import org.gbif.common.messaging.api.messages.ExtendedRecordAvailableMessage;
 import org.gbif.crawler.pipelines.ConverterConfiguration;
 import org.gbif.crawler.pipelines.FileSystemUtils;
 import org.gbif.crawler.pipelines.path.ArchiveToAvroPath;
@@ -28,10 +30,12 @@ public class DwCAToAvroCallBack extends AbstractMessageCallback<DwcaValidationFi
 
   private static final Logger LOG = LoggerFactory.getLogger(DwCAToAvroCallBack.class);
   private final ConverterConfiguration configuration;
+  private final MessagePublisher publisher;
 
-  DwCAToAvroCallBack(ConverterConfiguration configuration) {
+  DwCAToAvroCallBack(ConverterConfiguration configuration, MessagePublisher publisher) {
     Objects.requireNonNull(configuration, "Configuration cannot be null");
     this.configuration = configuration;
+    this.publisher = publisher;
   }
 
   @Override
@@ -54,7 +58,6 @@ public class DwCAToAvroCallBack extends AbstractMessageCallback<DwcaValidationFi
 
       DwCAReader reader = new DwCAReader(paths.getInputPath().toString());
       reader.init();
-
       LOG.info("Exporting the DwC Archive to avro {} started", paths.getOutputPath());
       while (reader.advance()) {
         dataFileWriter.append(reader.getCurrent());
@@ -68,6 +71,13 @@ public class DwCAToAvroCallBack extends AbstractMessageCallback<DwcaValidationFi
     }
 
     LOG.info("DwCA to avro conversion completed for {}", message.getDatasetUuid());
+    try {
+      if (publisher != null) {
+        publisher.send(new ExtendedRecordAvailableMessage(message.getDatasetUuid(), paths.getOutputPath().toUri()));
+      }
+    } catch (IOException e) {
+      LOG.error("Could not send message for dataset [{}] : {}", message.getDatasetUuid(), e.getMessage());
+    }
   }
 
 }

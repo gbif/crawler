@@ -1,7 +1,9 @@
 package org.gbif.crawler.pipelines.service.xml;
 
 import org.gbif.common.messaging.AbstractMessageCallback;
+import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.CrawlFinishedMessage;
+import org.gbif.common.messaging.api.messages.ExtendedRecordAvailableMessage;
 import org.gbif.crawler.pipelines.ConverterConfiguration;
 import org.gbif.crawler.pipelines.FileSystemUtils;
 import org.gbif.crawler.pipelines.path.ArchiveToAvroPath;
@@ -28,10 +30,12 @@ public class XmlToAvroCallBack extends AbstractMessageCallback<CrawlFinishedMess
 
   private static final Logger LOG = LoggerFactory.getLogger(XmlToAvroCallBack.class);
   private final ConverterConfiguration configuration;
+  private final MessagePublisher publisher;
 
-  public XmlToAvroCallBack(ConverterConfiguration configuration) {
+  public XmlToAvroCallBack(ConverterConfiguration configuration, MessagePublisher publisher) {
     Objects.requireNonNull(configuration, "Configuration cannot be null");
     this.configuration = configuration;
+    this.publisher = publisher;
   }
 
   @Override
@@ -68,6 +72,13 @@ public class XmlToAvroCallBack extends AbstractMessageCallback<CrawlFinishedMess
     }
 
     LOG.info("XML to avro conversion completed for {}", message.getDatasetUuid());
+    try {
+      if (publisher != null) {
+        publisher.send(new ExtendedRecordAvailableMessage(message.getDatasetUuid(), paths.getOutputPath().toUri()));
+      }
+    } catch (IOException e) {
+      LOG.error("Could not send message for dataset [{}] : {}", message.getDatasetUuid(), e.getMessage());
+    }
 
   }
 

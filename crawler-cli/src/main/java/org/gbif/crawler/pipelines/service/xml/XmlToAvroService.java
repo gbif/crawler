@@ -1,6 +1,8 @@
 package org.gbif.crawler.pipelines.service.xml;
 
+import org.gbif.common.messaging.DefaultMessagePublisher;
 import org.gbif.common.messaging.MessageListener;
+import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.CrawlFinishedMessage;
 import org.gbif.crawler.pipelines.ConverterConfiguration;
 
@@ -15,6 +17,7 @@ public class XmlToAvroService extends AbstractIdleService {
 
   private final ConverterConfiguration configuration;
   private MessageListener listener;
+  private MessagePublisher publisher;
 
   public XmlToAvroService(ConverterConfiguration configuration) {
     this.configuration = configuration;
@@ -26,11 +29,13 @@ public class XmlToAvroService extends AbstractIdleService {
     listener = new MessageListener(configuration.messaging.getConnectionParameters(), 1);
     // creates a binding between the queue specified in the configuration and the exchange and routing key specified in
     // CrawlFinishedMessage
-    listener.listen(configuration.queueName, configuration.poolSize, new XmlToAvroCallBack(configuration));
+    publisher = new DefaultMessagePublisher(configuration.messaging.getConnectionParameters());
+    listener.listen(configuration.queueName, configuration.poolSize, new XmlToAvroCallBack(configuration,publisher));
   }
 
   @Override
   protected void shutDown() {
+    publisher.close();
     listener.close();
   }
 
