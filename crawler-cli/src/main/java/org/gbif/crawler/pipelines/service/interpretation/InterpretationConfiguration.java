@@ -15,4 +15,5 @@ public class InterpretationConfiguration {
   String hdfsConfigPath;
   File error;
   File output;
+  String defaultTargetDirectory;
 }

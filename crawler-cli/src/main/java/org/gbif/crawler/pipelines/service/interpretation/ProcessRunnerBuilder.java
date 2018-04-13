@@ -1,8 +1,8 @@
 package org.gbif.crawler.pipelines.service.interpretation;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.stream.Collectors;
@@ -28,8 +28,8 @@ public class ProcessRunnerBuilder {
   private String jarFullPath;
   private String datasetId;
   private String interpretationTypes;
-  private File error;
-  private File output;
+  private File redirectErrorFile;
+  private File redirectOutputFile;
   private String hdfsConfigPath;
   private String defaultTargetDirectory;
   private String inputFile;
@@ -94,13 +94,13 @@ public class ProcessRunnerBuilder {
     return this;
   }
 
-  public ProcessRunnerBuilder error(File error) {
-    this.error = error;
+  public ProcessRunnerBuilder redirectError(File redirectErrorFile) {
+    this.redirectErrorFile = redirectErrorFile;
     return this;
   }
 
-  public ProcessRunnerBuilder output(File output) {
-    this.output = output;
+  public ProcessRunnerBuilder redirectOutput(File redirectOutputFile) {
+    this.redirectOutputFile = redirectOutputFile;
     return this;
   }
 
@@ -135,50 +135,51 @@ public class ProcessRunnerBuilder {
       .executorNumbers(config.executorNumbers)
       .jarFullPath(config.jarFullPath)
       .hdfsConfigPath(config.hdfsConfigPath)
-      .error(config.error)
-      .output(config.output);
-
+      .defaultTargetDirectory(config.defaultTargetDirectory)
+      .redirectError(config.error)
+      .redirectOutput(config.output);
   }
 
-  public Process start() throws IOException {
+  public ProcessBuilder build() {
     if (RunnerEnum.DIRECT == runner) {
-      return startDirect();
+      return buildDirect();
     }
     if (RunnerEnum.SPARK == runner) {
-      return startSpark();
+      return buildSpark();
     }
     throw new IllegalArgumentException("Wrong runner type - " + runner);
   }
 
-  private Process startDirect() throws IOException {
+  private ProcessBuilder buildDirect() {
     StringJoiner joiner = new StringJoiner(DELIMITER).add("java -cp")
-      .add(jarFullPath)
-      .add(mainClass)
-      .add("--targetParallelism=" + directParallelism);
+      .add(Objects.requireNonNull(jarFullPath))
+      .add(Objects.requireNonNull(mainClass));
 
-    return start(joiner);
+    Optional.ofNullable(directParallelism).ifPresent(x -> joiner.add("--targetParallelism=" + x));
+
+    return build(joiner);
   }
 
-  private Process startSpark() throws IOException {
+  private ProcessBuilder buildSpark() {
     StringJoiner joiner = new StringJoiner(DELIMITER).add("spark-submit")
-      .add("--conf spark.default.parallelism=" + sparkParallelism)
-      .add("--conf spark.yarn.executor.memoryOverhead=" + memoryOverhead)
-      .add("--class " + mainClass)
+      .add("--conf spark.default.parallelism=" + Objects.requireNonNull(sparkParallelism))
+      .add("--conf spark.yarn.executor.memoryOverhead=" + Objects.requireNonNull(memoryOverhead))
+      .add("--class " + Objects.requireNonNull(mainClass))
       .add("--master yarn")
-      .add("--executor-memory " + executorMemory)
-      .add("--executor-cores " + executorCores)
-      .add("--num-executors " + executorNumbers)
-      .add(jarFullPath);
+      .add("--executor-memory " + Objects.requireNonNull(executorMemory))
+      .add("--executor-cores " + Objects.requireNonNull(executorCores))
+      .add("--num-executors " + Objects.requireNonNull(executorNumbers))
+      .add(Objects.requireNonNull(jarFullPath));
 
-    return start(joiner);
+    return build(joiner);
   }
 
-  private Process start(StringJoiner command) throws IOException {
-    command.add("--datasetId=" + datasetId)
-      .add("--interpretationTypes=" + interpretationTypes)
-      .add("--runner=" + runner.getName())
-      .add("--defaultTargetDirectory=" + defaultTargetDirectory)
-      .add("--inputFile=" + inputFile);
+  private ProcessBuilder build(StringJoiner command) {
+    command.add("--datasetId=" + Objects.requireNonNull(datasetId))
+      .add("--interpretationTypes=" + Objects.requireNonNull(interpretationTypes))
+      .add("--runner=" + Objects.requireNonNull(runner).getName())
+      .add("--defaultTargetDirectory=" + Objects.requireNonNull(defaultTargetDirectory))
+      .add("--inputFile=" + Objects.requireNonNull(inputFile));
 
     Optional.ofNullable(hdfsConfigPath).ifPresent(x -> command.add("--hdfsConfiguration=" + x));
 
@@ -191,9 +192,9 @@ public class ProcessRunnerBuilder {
     LOG.info("Command - {}", result);
 
     ProcessBuilder builder = new ProcessBuilder("/bin/bash", "-c", result);
-    Optional.ofNullable(error).ifPresent(builder::redirectError);
-    Optional.ofNullable(output).ifPresent(builder::redirectOutput);
-    return builder.start();
+    Optional.ofNullable(redirectErrorFile).ifPresent(builder::redirectError);
+    Optional.ofNullable(redirectOutputFile).ifPresent(builder::redirectOutput);
+    return builder;
   }
 
 }
