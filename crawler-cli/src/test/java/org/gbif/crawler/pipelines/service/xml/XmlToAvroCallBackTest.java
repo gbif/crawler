@@ -2,7 +2,7 @@ package org.gbif.crawler.pipelines.service.xml;
 
 import org.gbif.api.model.crawler.FinishReason;
 import org.gbif.common.messaging.api.messages.CrawlFinishedMessage;
-import org.gbif.crawler.pipelines.ConverterConfiguration;
+import org.gbif.crawler.pipelines.config.ConverterConfiguration;
 
 import java.io.File;
 import java.io.IOException;

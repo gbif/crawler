@@ -1,6 +1,6 @@
 package org.gbif.crawler.pipelines.path;
 
-import org.gbif.crawler.pipelines.ConverterConfiguration;
+import org.gbif.crawler.pipelines.config.ConverterConfiguration;
 
 import java.util.Arrays;
 import java.util.StringJoiner;

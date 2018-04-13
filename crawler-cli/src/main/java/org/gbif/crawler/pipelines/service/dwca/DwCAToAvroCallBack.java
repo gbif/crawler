@@ -4,7 +4,7 @@ import org.gbif.common.messaging.AbstractMessageCallback;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.DwcaValidationFinishedMessage;
 import org.gbif.common.messaging.api.messages.ExtendedRecordAvailableMessage;
-import org.gbif.crawler.pipelines.ConverterConfiguration;
+import org.gbif.crawler.pipelines.config.ConverterConfiguration;
 import org.gbif.crawler.pipelines.FileSystemUtils;
 import org.gbif.crawler.pipelines.path.ArchiveToAvroPath;
 import org.gbif.crawler.pipelines.path.PathFactory;

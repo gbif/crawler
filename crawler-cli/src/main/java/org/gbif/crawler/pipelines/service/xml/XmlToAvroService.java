@@ -4,7 +4,7 @@ import org.gbif.common.messaging.DefaultMessagePublisher;
 import org.gbif.common.messaging.MessageListener;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.CrawlFinishedMessage;
-import org.gbif.crawler.pipelines.ConverterConfiguration;
+import org.gbif.crawler.pipelines.config.ConverterConfiguration;
 
 import com.google.common.util.concurrent.AbstractIdleService;
 

@@ -2,7 +2,7 @@ package org.gbif.crawler.pipelines.service.dwca;
 
 import org.gbif.cli.Command;
 import org.gbif.cli.service.ServiceCommand;
-import org.gbif.crawler.pipelines.ConverterConfiguration;
+import org.gbif.crawler.pipelines.config.ConverterConfiguration;
 
 import com.google.common.util.concurrent.Service;
 import org.kohsuke.MetaInfServices;

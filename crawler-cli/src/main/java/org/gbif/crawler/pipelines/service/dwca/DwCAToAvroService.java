@@ -3,7 +3,7 @@ package org.gbif.crawler.pipelines.service.dwca;
 import org.gbif.common.messaging.DefaultMessagePublisher;
 import org.gbif.common.messaging.MessageListener;
 import org.gbif.common.messaging.api.MessagePublisher;
-import org.gbif.crawler.pipelines.ConverterConfiguration;
+import org.gbif.crawler.pipelines.config.ConverterConfiguration;
 
 import com.google.common.util.concurrent.AbstractIdleService;
 import org.slf4j.Logger;

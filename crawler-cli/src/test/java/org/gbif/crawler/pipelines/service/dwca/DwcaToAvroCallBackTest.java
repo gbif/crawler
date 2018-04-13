@@ -3,7 +3,7 @@ package org.gbif.crawler.pipelines.service.dwca;
 import org.gbif.api.model.crawler.DwcaValidationReport;
 import org.gbif.api.vocabulary.DatasetType;
 import org.gbif.common.messaging.api.messages.DwcaValidationFinishedMessage;
-import org.gbif.crawler.pipelines.ConverterConfiguration;
+import org.gbif.crawler.pipelines.config.ConverterConfiguration;
 
 import java.io.File;
 import java.io.IOException;

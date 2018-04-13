@@ -1,4 +1,4 @@
-package org.gbif.crawler.pipelines;
+package org.gbif.crawler.pipelines.config;
 
 import org.gbif.common.messaging.config.MessagingConfiguration;
 import org.gbif.crawler.common.AvroWriteConfiguration;
