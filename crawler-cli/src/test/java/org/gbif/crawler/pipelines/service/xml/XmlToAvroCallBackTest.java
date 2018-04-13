@@ -57,7 +57,7 @@ public class XmlToAvroCallBackTest {
     config.archiveRepository = INPUT_DATASET_FOLDER;
     config.extendedRecordRepository = hdfsUri;
     config.xmlReaderParallelism = 4;
-    XmlToAvroCallBack callback = new XmlToAvroCallBack(config);
+    XmlToAvroCallBack callback = new XmlToAvroCallBack(config,null);
     CrawlFinishedMessage message = new CrawlFinishedMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL);
 
     // Expected
@@ -77,7 +77,7 @@ public class XmlToAvroCallBackTest {
     config.archiveRepository = INPUT_DATASET_FOLDER;
     config.extendedRecordRepository = hdfsUri;
     config.xmlReaderParallelism = 4;
-    XmlToAvroCallBack callback = new XmlToAvroCallBack(config);
+    XmlToAvroCallBack callback = new XmlToAvroCallBack(config,null);
     CrawlFinishedMessage message = new CrawlFinishedMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL);
 
     // Expected
@@ -97,7 +97,7 @@ public class XmlToAvroCallBackTest {
     config.archiveRepository = INPUT_DATASET_FOLDER;
     config.extendedRecordRepository = hdfsUri;
     config.xmlReaderParallelism = 4;
-    XmlToAvroCallBack callback = new XmlToAvroCallBack(config);
+    XmlToAvroCallBack callback = new XmlToAvroCallBack(config,null);
     CrawlFinishedMessage message = new CrawlFinishedMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL);
 
     // Expected
