@@ -3,6 +3,7 @@ package org.gbif.crawler.pipelines.config;
 import org.gbif.common.messaging.config.MessagingConfiguration;
 import org.gbif.crawler.common.AvroWriteConfiguration;
 
+import java.util.Arrays;
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
@@ -45,10 +46,18 @@ public class ConverterConfiguration {
   @ParametersDelegate
   @Valid
   @NotNull
-  public AvroWriteConfiguration avroConfig=new AvroWriteConfiguration();
+  public AvroWriteConfiguration avroConfig = new AvroWriteConfiguration();
 
   @Parameter(names = "--hdfs-site-config")
   public String hdfsSiteConfig;
+
+  @Parameter(names = "--interpret-types")
+  @NotNull
+  public String[] interpretTypes = {"ALL"};
+
+  @Parameter(names = "--file-name")
+  @NotNull
+  public String fileName = "verbatim.avro";
 
   @Override
   public String toString() {
@@ -63,10 +72,12 @@ public class ConverterConfiguration {
       .add("xmlReaderParallelism", xmlReaderParallelism)
       .add("archiveRepository", archiveRepository)
       .add("extendedRecordRepository", extendedRecordRepository)
+      .add("fileName", fileName)
       .add("syncInterval", avroConfig.syncInterval)
       .add("compressionCodec", avroConfig.compressionType)
-      .add("codecFactory",avroConfig.getCodec())
+      .add("codecFactory", avroConfig.getCodec())
       .add("hdfsSiteConfig", hdfsSiteConfig)
+      .add("interpretTypes", Arrays.toString(interpretTypes))
       .toString();
   }
 }

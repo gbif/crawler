@@ -67,28 +67,39 @@ public class FileSystemUtils {
   /**
    * If a file is too small (less than 3Kb), checks any records inside, if the file is empty, removes it
    */
-  public static void deleteAvroFileIfEmpty(FileSystem fs, Path path) {
+  public static boolean deleteAvroFileIfEmpty(FileSystem fs, Path path) {
     try {
-      if (fs.exists(path) && fs.getFileStatus(path).getLen() < FILE_LIMIT_SIZE) {
-        SpecificDatumReader<ExtendedRecord> datumReader = new SpecificDatumReader<>(ExtendedRecord.class);
-        try (AvroFSInput input = new AvroFSInput(fs.open(path), fs.getFileStatus(path).getLen());
-             DataFileReader<ExtendedRecord> dataFileReader = new DataFileReader<>(input, datumReader)) {
-          if (!dataFileReader.hasNext()) {
-            LOG.info("File is empty - {}", path);
-            Path parent = path.getParent();
-            fs.delete(parent, true);
+      if (!fs.exists(path)) {
+        return true;
+      }
+      if (fs.getFileStatus(path).getLen() > FILE_LIMIT_SIZE) {
+        return false;
+      }
+      SpecificDatumReader<ExtendedRecord> datumReader = new SpecificDatumReader<>(ExtendedRecord.class);
+      try (AvroFSInput input = new AvroFSInput(fs.open(path), fs.getFileStatus(path).getLen());
+           DataFileReader<ExtendedRecord> dataFileReader = new DataFileReader<>(input, datumReader)) {
+        if (!dataFileReader.hasNext()) {
+          LOG.warn("File is empty - {}", path);
+          Path parent = path.getParent();
+          fs.delete(parent, true);
 
-            Path subParent = parent.getParent();
-            if(!fs.listFiles(subParent, true).hasNext()){
-              fs.delete(subParent, true);
-            }
+          Path subParent = parent.getParent();
+          if (!fs.listFiles(subParent, true).hasNext()) {
+            fs.delete(subParent, true);
           }
+          return true;
         }
       }
+      return false;
     } catch (IOException ex) {
       LOG.error("Error deleting an empty file", ex);
       throw new IllegalStateException("Error deleting an empty file", ex);
     }
+  }
+
+  public static long fileSize(URI file, String hdfsSiteConfig) throws IOException {
+    FileSystem fs = getFileSystem(file.toString(), hdfsSiteConfig);
+    return fs.getFileStatus(new Path(file)).getLen();
   }
 
 }

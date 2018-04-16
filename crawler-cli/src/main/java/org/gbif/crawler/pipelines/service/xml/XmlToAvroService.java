@@ -30,7 +30,7 @@ public class XmlToAvroService extends AbstractIdleService {
     // creates a binding between the queue specified in the configuration and the exchange and routing key specified in
     // CrawlFinishedMessage
     publisher = new DefaultMessagePublisher(configuration.messaging.getConnectionParameters());
-    listener.listen(configuration.queueName, configuration.poolSize, new XmlToAvroCallBack(configuration,publisher));
+    listener.listen(configuration.queueName, configuration.poolSize, new XmlToAvroCallBack(configuration, publisher));
   }
 
   @Override

@@ -1,8 +1,6 @@
-package org.gbif.crawler.pipelines.service.interpretation;
+package org.gbif.crawler.pipelines.service.interpret;
 
-import org.gbif.crawler.pipelines.service.interpret.InterpretationTypeEnum;
-import org.gbif.crawler.pipelines.service.interpret.ProcessRunnerBuilder;
-import org.gbif.crawler.pipelines.service.interpret.RunnerEnum;
+import org.gbif.crawler.pipelines.service.interpret.ProcessRunnerBuilder.RunnerEnum;
 
 import org.junit.Test;
 
@@ -30,15 +28,17 @@ public class ProcessRunnerBuilderTest {
     // When
     String expected =
       "java -cp java.jar org.gbif.Test --datasetId=de7ffb5e-c07b-42dc-8a88-f67a4465fe3d --interpretationTypes=ALL "
-      + "--runner=DirectRunner --defaultTargetDirectory=tmp --inputFile=verbatim.avro";
+      + "--runner=DirectRunner --defaultTargetDirectory=tmp --inputFile=verbatim.avro --setAvroCompressionType=SNAPPY --setAvroSyncInterval=1";
 
     RunnerEnum runner = RunnerEnum.DIRECT;
     String datasetId = "de7ffb5e-c07b-42dc-8a88-f67a4465fe3d";
     String jarFullPath = "java.jar";
     String mainClass = "org.gbif.Test";
-    String type = InterpretationTypeEnum.ALL.name();
+    String type = "ALL";
     String input = "verbatim.avro";
     String output = "tmp";
+    String avroType = "SNAPPY";
+    int avroSync = 1;
 
     // Expected
     ProcessBuilder builder = ProcessRunnerBuilder.create()
@@ -48,7 +48,9 @@ public class ProcessRunnerBuilderTest {
       .mainClass(mainClass)
       .interpretationTypes(type)
       .inputFile(input)
-      .defaultTargetDirectory(output)
+      .targetDirectory(output)
+      .avroCompressionType(avroType)
+      .avroSyncInterval(avroSync)
       .build();
 
     String result = builder.command().get(2);
@@ -63,13 +65,13 @@ public class ProcessRunnerBuilderTest {
     String expected =
       "spark-submit --conf spark.default.parallelism=1 --conf spark.yarn.executor.memoryOverhead=1 --class org.gbif.Test "
       + "--master yarn --executor-memory 1G --executor-cores 1 --num-executors 1 java.jar --datasetId=de7ffb5e-c07b-42dc-8a88-f67a4465fe3d "
-      + "--interpretationTypes=ALL --runner=SparkRunner --defaultTargetDirectory=tmp --inputFile=verbatim.avro";
+      + "--interpretationTypes=ALL --runner=SparkRunner --defaultTargetDirectory=tmp --inputFile=verbatim.avro --setAvroCompressionType=SNAPPY --setAvroSyncInterval=1";
 
     RunnerEnum runner = RunnerEnum.SPARK;
     String datasetId = "de7ffb5e-c07b-42dc-8a88-f67a4465fe3d";
     String jarFullPath = "java.jar";
     String mainClass = "org.gbif.Test";
-    String type = InterpretationTypeEnum.ALL.name();
+    String type = "ALL";
     String input = "verbatim.avro";
     String output = "tmp";
     String executorMemory = "1G";
@@ -77,6 +79,8 @@ public class ProcessRunnerBuilderTest {
     Integer executorNumbers = 1;
     Integer sparkParallelism = 1;
     Integer memoryOverhead = 1;
+    String avroType = "SNAPPY";
+    int avroSync = 1;
 
     // Expected
     ProcessBuilder builder = ProcessRunnerBuilder.create()
@@ -86,12 +90,14 @@ public class ProcessRunnerBuilderTest {
       .mainClass(mainClass)
       .interpretationTypes(type)
       .inputFile(input)
-      .defaultTargetDirectory(output)
+      .targetDirectory(output)
       .sparkParallelism(sparkParallelism)
       .memoryOverhead(memoryOverhead)
       .executorCores(executorCores)
       .executorMemory(executorMemory)
       .executorNumbers(executorNumbers)
+      .avroCompressionType(avroType)
+      .avroSyncInterval(avroSync)
       .build();
 
     String result = builder.command().get(2);

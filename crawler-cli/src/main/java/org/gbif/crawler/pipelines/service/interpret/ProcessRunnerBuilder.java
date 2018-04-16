@@ -1,4 +1,6 @@
-package org.gbif.crawler.pipelines.service.interpretation;
+package org.gbif.crawler.pipelines.service.interpret;
+
+import org.gbif.crawler.pipelines.config.InterpreterConfiguration;
 
 import java.io.File;
 import java.util.Arrays;
@@ -11,6 +13,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ProcessRunnerBuilder {
+
+  public enum RunnerEnum {
+
+    DIRECT("DirectRunner"), SPARK("SparkRunner");
+
+    String name;
+
+    RunnerEnum(String name) {
+      this.name = name;
+    }
+
+    public String getName() {
+      return name;
+    }
+
+  }
 
   private static final Logger LOG = LoggerFactory.getLogger(ProcessRunnerBuilder.class);
 
@@ -28,11 +46,13 @@ public class ProcessRunnerBuilder {
   private String jarFullPath;
   private String datasetId;
   private String interpretationTypes;
-  private File redirectErrorFile;
-  private File redirectOutputFile;
   private String hdfsConfigPath;
-  private String defaultTargetDirectory;
+  private String targetDirectory;
   private String inputFile;
+  private String avroCompressionType;
+  private Integer avroSyncInterval;
+  private String redirectErrorFile;
+  private String redirectOutputFile;
 
   public ProcessRunnerBuilder user(String user) {
     this.user = user;
@@ -94,12 +114,12 @@ public class ProcessRunnerBuilder {
     return this;
   }
 
-  public ProcessRunnerBuilder redirectError(File redirectErrorFile) {
+  public ProcessRunnerBuilder redirectErrorFile(String redirectErrorFile) {
     this.redirectErrorFile = redirectErrorFile;
     return this;
   }
 
-  public ProcessRunnerBuilder redirectOutput(File redirectOutputFile) {
+  public ProcessRunnerBuilder redirectOutputFile(String redirectOutputFile) {
     this.redirectOutputFile = redirectOutputFile;
     return this;
   }
@@ -109,8 +129,8 @@ public class ProcessRunnerBuilder {
     return this;
   }
 
-  public ProcessRunnerBuilder defaultTargetDirectory(String defaultTargetDirectory) {
-    this.defaultTargetDirectory = defaultTargetDirectory;
+  public ProcessRunnerBuilder targetDirectory(String targetDirectory) {
+    this.targetDirectory = targetDirectory;
     return this;
   }
 
@@ -119,13 +139,23 @@ public class ProcessRunnerBuilder {
     return this;
   }
 
+  public ProcessRunnerBuilder avroCompressionType(String avroCompressionType) {
+    this.avroCompressionType = avroCompressionType;
+    return this;
+  }
+
+  public ProcessRunnerBuilder avroSyncInterval(Integer avroSyncInterval) {
+    this.avroSyncInterval = avroSyncInterval;
+    return this;
+  }
+
   public static ProcessRunnerBuilder create() {
     return new ProcessRunnerBuilder();
   }
 
-  public static ProcessRunnerBuilder create(InterpretationConfiguration config) {
+  public static ProcessRunnerBuilder create(InterpreterConfiguration config) {
     return ProcessRunnerBuilder.create()
-      .user(config.user)
+      .user(config.otherUser)
       .sparkParallelism(config.sparkParallelism)
       .directParallelism(config.directParallelism)
       .memoryOverhead(config.memoryOverhead)
@@ -134,10 +164,12 @@ public class ProcessRunnerBuilder {
       .executorCores(config.executorCores)
       .executorNumbers(config.executorNumbers)
       .jarFullPath(config.jarFullPath)
-      .hdfsConfigPath(config.hdfsConfigPath)
-      .defaultTargetDirectory(config.defaultTargetDirectory)
-      .redirectError(config.error)
-      .redirectOutput(config.output);
+      .hdfsConfigPath(config.hdfsSiteConfig)
+      .targetDirectory(config.targetDirectory)
+      .avroCompressionType(config.avroConfig.compressionType)
+      .avroSyncInterval(config.avroConfig.syncInterval)
+      .redirectErrorFile(config.proccesErrorFile)
+      .redirectOutputFile(config.proccesOutputFile);
   }
 
   public ProcessBuilder build() {
@@ -178,8 +210,10 @@ public class ProcessRunnerBuilder {
     command.add("--datasetId=" + Objects.requireNonNull(datasetId))
       .add("--interpretationTypes=" + Objects.requireNonNull(interpretationTypes))
       .add("--runner=" + Objects.requireNonNull(runner).getName())
-      .add("--defaultTargetDirectory=" + Objects.requireNonNull(defaultTargetDirectory))
-      .add("--inputFile=" + Objects.requireNonNull(inputFile));
+      .add("--defaultTargetDirectory=" + Objects.requireNonNull(targetDirectory))
+      .add("--inputFile=" + Objects.requireNonNull(inputFile))
+      .add("--setAvroCompressionType=" + Objects.requireNonNull(avroCompressionType))
+      .add("--setAvroSyncInterval=" + Objects.requireNonNull(avroSyncInterval));
 
     Optional.ofNullable(hdfsConfigPath).ifPresent(x -> command.add("--hdfsConfiguration=" + x));
 
@@ -192,8 +226,8 @@ public class ProcessRunnerBuilder {
     LOG.info("Command - {}", result);
 
     ProcessBuilder builder = new ProcessBuilder("/bin/bash", "-c", result);
-    Optional.ofNullable(redirectErrorFile).ifPresent(builder::redirectError);
-    Optional.ofNullable(redirectOutputFile).ifPresent(builder::redirectOutput);
+    Optional.ofNullable(redirectErrorFile).ifPresent(x -> builder.redirectError(new File(redirectErrorFile)));
+    Optional.ofNullable(redirectOutputFile).ifPresent(x -> builder.redirectOutput(new File(redirectOutputFile)));
     return builder;
   }
 

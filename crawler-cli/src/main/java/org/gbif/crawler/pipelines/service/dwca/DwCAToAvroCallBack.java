@@ -14,7 +14,9 @@ import org.gbif.pipelines.io.avro.ExtendedRecord;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
+import java.net.URI;
 import java.util.Objects;
+import java.util.UUID;
 
 import org.apache.avro.file.DataFileWriter;
 import org.apache.hadoop.fs.FileSystem;
@@ -41,8 +43,12 @@ public class DwCAToAvroCallBack extends AbstractMessageCallback<DwcaValidationFi
   @Override
   public void handleMessage(DwcaValidationFinishedMessage message) {
     LOG.info("Received Download finished validation message {}", message);
-    ArchiveToAvroPath paths =
-      PathFactory.create(DWCA).from(configuration, message.getDatasetUuid(), message.getAttempt());
+
+    UUID datasetUuid = message.getDatasetUuid();
+
+    ArchiveToAvroPath paths = PathFactory.create(DWCA).from(configuration, datasetUuid, message.getAttempt());
+
+    boolean isFileDeleted;
 
     // the fs has to be out of the try-catch block to avoid closing it, because the hdfs client tries to reuse the
     // same connection. So, when using multiple consumers, one consumer would close the connection that is being used
@@ -64,19 +70,20 @@ public class DwCAToAvroCallBack extends AbstractMessageCallback<DwcaValidationFi
       }
 
     } catch (IOException e) {
-      LOG.error("Failed performing conversion on {}", message.getDatasetUuid(), e);
-      throw new IllegalStateException("Failed performing conversion on " + message.getDatasetUuid(), e);
+      LOG.error("Failed performing conversion on {}", datasetUuid, e);
+      throw new IllegalStateException("Failed performing conversion on " + datasetUuid, e);
     } finally {
-      FileSystemUtils.deleteAvroFileIfEmpty(fs, paths.getOutputPath());
+      isFileDeleted = FileSystemUtils.deleteAvroFileIfEmpty(fs, paths.getOutputPath());
     }
 
-    LOG.info("DwCA to avro conversion completed for {}", message.getDatasetUuid());
-    try {
-      if (publisher != null) {
-        publisher.send(new ExtendedRecordAvailableMessage(message.getDatasetUuid(), paths.getOutputPath().toUri()));
+    LOG.info("DWCA to avro conversion completed for {}, file was deleted - {}", datasetUuid, isFileDeleted);
+    if (!isFileDeleted && Objects.nonNull(publisher)) {
+      try {
+        URI uri = paths.getOutputPath().toUri();
+        publisher.send(new ExtendedRecordAvailableMessage(datasetUuid, uri, configuration.interpretTypes));
+      } catch (IOException e) {
+        LOG.error("Could not send message for dataset [{}] : {}", datasetUuid, e.getMessage());
       }
-    } catch (IOException e) {
-      LOG.error("Could not send message for dataset [{}] : {}", message.getDatasetUuid(), e.getMessage());
     }
   }
 

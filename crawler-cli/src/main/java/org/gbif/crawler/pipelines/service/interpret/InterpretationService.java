@@ -1,6 +1,7 @@
-package org.gbif.crawler.pipelines.interpret;
+package org.gbif.crawler.pipelines.service.interpret;
 
 import org.gbif.common.messaging.MessageListener;
+import org.gbif.crawler.pipelines.config.InterpreterConfiguration;
 
 import com.google.common.util.concurrent.AbstractIdleService;
 import org.slf4j.Logger;
@@ -29,7 +30,7 @@ public class InterpretationService extends AbstractIdleService {
   }
 
   @Override
-  protected void shutDown() throws Exception {
+  protected void shutDown() {
     listener.close();
     LOG.info("Stopping interpret-dataset service");
   }

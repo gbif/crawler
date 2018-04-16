@@ -1,7 +1,8 @@
-package org.gbif.crawler.pipelines.interpret;
+package org.gbif.crawler.pipelines.service.interpret;
 
 import org.gbif.cli.Command;
 import org.gbif.cli.service.ServiceCommand;
+import org.gbif.crawler.pipelines.config.InterpreterConfiguration;
 
 import com.google.common.util.concurrent.Service;
 import org.kohsuke.MetaInfServices;
