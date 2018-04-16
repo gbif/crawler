@@ -1,5 +1,9 @@
 package org.gbif.crawler.pipelines.service.interpretation;
 
+import org.gbif.crawler.pipelines.service.interpret.InterpretationTypeEnum;
+import org.gbif.crawler.pipelines.service.interpret.ProcessRunnerBuilder;
+import org.gbif.crawler.pipelines.service.interpret.RunnerEnum;
+
 import org.junit.Test;
 
 import static org.junit.Assert.*;
