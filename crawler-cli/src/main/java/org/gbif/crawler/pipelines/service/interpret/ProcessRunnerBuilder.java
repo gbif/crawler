@@ -51,6 +51,7 @@ public class ProcessRunnerBuilder {
   private String inputFile;
   private String avroCompressionType;
   private Integer avroSyncInterval;
+  private String taxonWsConfig;
   private String redirectErrorFile;
   private String redirectOutputFile;
 
@@ -149,6 +150,11 @@ public class ProcessRunnerBuilder {
     return this;
   }
 
+  public ProcessRunnerBuilder taxonWsConfig(String taxonWsConfig) {
+    this.taxonWsConfig = taxonWsConfig;
+    return this;
+  }
+
   public static ProcessRunnerBuilder create() {
     return new ProcessRunnerBuilder();
   }
@@ -169,7 +175,8 @@ public class ProcessRunnerBuilder {
       .avroCompressionType(config.avroConfig.compressionType)
       .avroSyncInterval(config.avroConfig.syncInterval)
       .redirectErrorFile(config.proccesErrorFile)
-      .redirectOutputFile(config.proccesOutputFile);
+      .redirectOutputFile(config.proccesOutputFile)
+      .taxonWsConfig(config.taxonWsConfig);
   }
 
   public ProcessBuilder build() {
@@ -213,7 +220,8 @@ public class ProcessRunnerBuilder {
       .add("--defaultTargetDirectory=" + Objects.requireNonNull(targetDirectory))
       .add("--inputFile=" + Objects.requireNonNull(inputFile))
       .add("--avroCompressionType=" + Objects.requireNonNull(avroCompressionType))
-      .add("--avroSyncInterval=" + Objects.requireNonNull(avroSyncInterval));
+      .add("--avroSyncInterval=" + Objects.requireNonNull(avroSyncInterval))
+      .add("--wsProperties=" + Objects.requireNonNull(taxonWsConfig));
 
     Optional.ofNullable(hdfsConfigPath).ifPresent(x -> command.add("--hdfsConfiguration=" + x));
 
