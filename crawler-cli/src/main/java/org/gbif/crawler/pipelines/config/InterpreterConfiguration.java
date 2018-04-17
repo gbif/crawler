@@ -38,10 +38,10 @@ public class InterpreterConfiguration {
   @Parameter(names = "--hdfs-site-config")
   public String hdfsSiteConfig;
 
-  @Parameter(names = "--taxon-ws-config")
+  @Parameter(names = "--ws-config")
   @Valid
   @NotNull
-  public String taxonWsConfig;
+  public String wsConfig;
 
   @Parameter(names = "--other-user")
   public String otherUser;
@@ -103,7 +103,7 @@ public class InterpreterConfiguration {
       .add("poolSize", poolSize)
       .add("avroConfig", avroConfig)
       .add("hdfsSiteConfig", hdfsSiteConfig)
-      .add("taxonWsConfig", taxonWsConfig)
+      .add("taxonWsConfig", wsConfig)
       .add("otherUser", otherUser)
       .add("sparkParallelism", sparkParallelism)
       .add("directParallelism", directParallelism)

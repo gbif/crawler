@@ -28,7 +28,8 @@ public class ProcessRunnerBuilderTest {
     // When
     String expected =
       "java -cp java.jar org.gbif.Test --datasetId=de7ffb5e-c07b-42dc-8a88-f67a4465fe3d --interpretationTypes=ALL "
-      + "--runner=DirectRunner --defaultTargetDirectory=tmp --inputFile=verbatim.avro --setAvroCompressionType=SNAPPY --setAvroSyncInterval=1";
+      + "--runner=DirectRunner --defaultTargetDirectory=tmp --inputFile=verbatim.avro --avroCompressionType=SNAPPY "
+      + "--avroSyncInterval=1 --wsProperties=ws.config";
 
     RunnerEnum runner = RunnerEnum.DIRECT;
     String datasetId = "de7ffb5e-c07b-42dc-8a88-f67a4465fe3d";
@@ -39,6 +40,7 @@ public class ProcessRunnerBuilderTest {
     String output = "tmp";
     String avroType = "SNAPPY";
     int avroSync = 1;
+    String wsConfig = "ws.config";
 
     // Expected
     ProcessBuilder builder = ProcessRunnerBuilder.create()
@@ -51,6 +53,7 @@ public class ProcessRunnerBuilderTest {
       .targetDirectory(output)
       .avroCompressionType(avroType)
       .avroSyncInterval(avroSync)
+      .wsConfig(wsConfig)
       .build();
 
     String result = builder.command().get(2);
@@ -65,7 +68,8 @@ public class ProcessRunnerBuilderTest {
     String expected =
       "spark-submit --conf spark.default.parallelism=1 --conf spark.yarn.executor.memoryOverhead=1 --class org.gbif.Test "
       + "--master yarn --executor-memory 1G --executor-cores 1 --num-executors 1 java.jar --datasetId=de7ffb5e-c07b-42dc-8a88-f67a4465fe3d "
-      + "--interpretationTypes=ALL --runner=SparkRunner --defaultTargetDirectory=tmp --inputFile=verbatim.avro --setAvroCompressionType=SNAPPY --setAvroSyncInterval=1";
+      + "--interpretationTypes=ALL --runner=SparkRunner --defaultTargetDirectory=tmp --inputFile=verbatim.avro --avroCompressionType=SNAPPY "
+      + "--avroSyncInterval=1 --wsProperties=ws.config";
 
     RunnerEnum runner = RunnerEnum.SPARK;
     String datasetId = "de7ffb5e-c07b-42dc-8a88-f67a4465fe3d";
@@ -81,6 +85,7 @@ public class ProcessRunnerBuilderTest {
     Integer memoryOverhead = 1;
     String avroType = "SNAPPY";
     int avroSync = 1;
+    String wsConfig = "ws.config";
 
     // Expected
     ProcessBuilder builder = ProcessRunnerBuilder.create()
@@ -98,6 +103,7 @@ public class ProcessRunnerBuilderTest {
       .executorNumbers(executorNumbers)
       .avroCompressionType(avroType)
       .avroSyncInterval(avroSync)
+      .wsConfig(wsConfig)
       .build();
 
     String result = builder.command().get(2);
