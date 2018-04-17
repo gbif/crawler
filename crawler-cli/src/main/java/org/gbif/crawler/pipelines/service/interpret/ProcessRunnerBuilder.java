@@ -12,6 +12,9 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Class to build an instance of ProcessBuilder for direct or spark command
+ */
 public class ProcessRunnerBuilder {
 
   public enum RunnerEnum {
@@ -189,6 +192,9 @@ public class ProcessRunnerBuilder {
     throw new IllegalArgumentException("Wrong runner type - " + runner);
   }
 
+  /**
+   * Builds ProcessBuilder to process direct command
+   */
   private ProcessBuilder buildDirect() {
     StringJoiner joiner = new StringJoiner(DELIMITER).add("java -cp")
       .add(Objects.requireNonNull(jarFullPath))
@@ -199,6 +205,9 @@ public class ProcessRunnerBuilder {
     return build(joiner);
   }
 
+  /**
+   * Builds ProcessBuilder to process spark command
+   */
   private ProcessBuilder buildSpark() {
     StringJoiner joiner = new StringJoiner(DELIMITER).add("spark-submit")
       .add("--conf spark.default.parallelism=" + Objects.requireNonNull(sparkParallelism))
@@ -213,7 +222,11 @@ public class ProcessRunnerBuilder {
     return build(joiner);
   }
 
+  /**
+   * Adds common properties to direct or spark process, for running Java pipelines with pipeline options
+   */
   private ProcessBuilder build(StringJoiner command) {
+    // Common properies
     command.add("--datasetId=" + Objects.requireNonNull(datasetId))
       .add("--interpretationTypes=" + Objects.requireNonNull(interpretationTypes))
       .add("--runner=" + Objects.requireNonNull(runner).getName())
@@ -223,17 +236,21 @@ public class ProcessRunnerBuilder {
       .add("--avroSyncInterval=" + Objects.requireNonNull(avroSyncInterval))
       .add("--wsProperties=" + Objects.requireNonNull(taxonWsConfig));
 
+    // Adds hdfs configuration if it is necessary
     Optional.ofNullable(hdfsConfigPath).ifPresent(x -> command.add("--hdfsConfiguration=" + x));
 
+    // Adds user name to run a command if it is necessary
     StringJoiner joiner = new StringJoiner(DELIMITER);
     Optional.ofNullable(user).ifPresent(x -> joiner.add("sudo -u " + x));
-
     joiner.merge(command);
 
+    // The result
     String result = joiner.toString();
     LOG.info("Command - {}", result);
 
     ProcessBuilder builder = new ProcessBuilder("/bin/bash", "-c", result);
+
+    // The command side outputs
     Optional.ofNullable(redirectErrorFile).ifPresent(x -> builder.redirectError(new File(redirectErrorFile)));
     Optional.ofNullable(redirectOutputFile).ifPresent(x -> builder.redirectOutput(new File(redirectOutputFile)));
     return builder;

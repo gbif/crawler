@@ -31,9 +31,11 @@ public class InterpretationCallBack extends AbstractMessageCallback<ExtendedReco
 
     try {
 
+      // Chooses a runner type
       long fileSize = FileSystemUtils.fileSize(message.getInputFile(), config.hdfsSiteConfig);
       RunnerEnum runner = fileSize > config.switchFileSize ? RunnerEnum.SPARK : RunnerEnum.DIRECT;
 
+      // Assembles a process and runs it
       ProcessRunnerBuilder.create(config)
         .runner(runner)
         .datasetId(uuid)
@@ -42,6 +44,7 @@ public class InterpretationCallBack extends AbstractMessageCallback<ExtendedReco
         .build()
         .start()
         .waitFor();
+
     } catch (InterruptedException | IOException ex) {
       LOG.error(ex.getMessage(), ex);
       throw new IllegalStateException("Failed performing interpretation on " + uuid, ex);
