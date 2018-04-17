@@ -45,8 +45,6 @@ public class InterpretationCallBack extends AbstractMessageCallback<ExtendedReco
     } catch (InterruptedException | IOException ex) {
       LOG.error(ex.getMessage(), ex);
       throw new IllegalStateException("Failed performing interpretation on " + uuid, ex);
-    } finally {
-      // TODO: DELETE WRONG FILE
     }
   }
 }
