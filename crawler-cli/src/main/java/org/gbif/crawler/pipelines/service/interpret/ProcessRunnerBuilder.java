@@ -212,8 +212,8 @@ public class ProcessRunnerBuilder {
       .add("--runner=" + Objects.requireNonNull(runner).getName())
       .add("--defaultTargetDirectory=" + Objects.requireNonNull(targetDirectory))
       .add("--inputFile=" + Objects.requireNonNull(inputFile))
-      .add("--setAvroCompressionType=" + Objects.requireNonNull(avroCompressionType))
-      .add("--setAvroSyncInterval=" + Objects.requireNonNull(avroSyncInterval));
+      .add("--avroCompressionType=" + Objects.requireNonNull(avroCompressionType))
+      .add("--avroSyncInterval=" + Objects.requireNonNull(avroSyncInterval));
 
     Optional.ofNullable(hdfsConfigPath).ifPresent(x -> command.add("--hdfsConfiguration=" + x));
 

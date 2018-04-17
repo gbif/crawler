@@ -30,10 +30,6 @@ public class InterpreterConfiguration {
   @Min(1)
   public int poolSize;
 
-  @Parameter(names = "--interpreted-record-repository")
-  @NotNull
-  public String interpretedRecordRepository;
-
   @ParametersDelegate
   @Valid
   @NotNull
@@ -100,7 +96,6 @@ public class InterpreterConfiguration {
       .add("messaging", messaging)
       .add("queueName", queueName)
       .add("poolSize", poolSize)
-      .add("interpretedRecordRepository", interpretedRecordRepository)
       .add("avroConfig", avroConfig)
       .add("hdfsSiteConfig", hdfsSiteConfig)
       .add("otherUser", otherUser)
