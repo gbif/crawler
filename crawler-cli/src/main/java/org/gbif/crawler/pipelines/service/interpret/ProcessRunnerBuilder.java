@@ -177,8 +177,8 @@ public class ProcessRunnerBuilder {
       .targetDirectory(config.targetDirectory)
       .avroCompressionType(config.avroConfig.compressionType)
       .avroSyncInterval(config.avroConfig.syncInterval)
-      .redirectErrorFile(config.proccesErrorFile)
-      .redirectOutputFile(config.proccesOutputFile)
+      .redirectErrorFile(config.processErrorFile)
+      .redirectOutputFile(config.processOutputFile)
       .wsConfig(config.wsConfig);
   }
 

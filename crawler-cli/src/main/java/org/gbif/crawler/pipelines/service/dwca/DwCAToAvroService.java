@@ -32,7 +32,7 @@ public class DwCAToAvroService extends AbstractIdleService {
   }
 
   @Override
-  protected void shutDown() throws Exception {
+  protected void shutDown() {
     publisher.close();
     listener.close();
     LOG.info("Stopping dwca-to-avro service");

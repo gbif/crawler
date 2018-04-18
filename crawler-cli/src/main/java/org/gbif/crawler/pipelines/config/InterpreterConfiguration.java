@@ -89,11 +89,11 @@ public class InterpreterConfiguration {
   @NotNull
   public String targetDirectory;
 
-  @Parameter(names = "--procces-error-file")
-  public String proccesErrorFile;
+  @Parameter(names = "--process-error-file")
+  public String processErrorFile;
 
-  @Parameter(names = "--procces-output-file")
-  public String proccesOutputFile;
+  @Parameter(names = "--process-output-file")
+  public String processOutputFile;
 
   @Override
   public String toString() {
@@ -114,8 +114,8 @@ public class InterpreterConfiguration {
       .add("jarFullPath", jarFullPath)
       .add("targetDirectory", targetDirectory)
       .add("mainClass", mainClass)
-      .add("proccesErrorFile", proccesErrorFile)
-      .add("proccesOutputFile", proccesOutputFile)
+      .add("processErrorFile", processErrorFile)
+      .add("processOutputFile", processOutputFile)
       .toString();
   }
 }
