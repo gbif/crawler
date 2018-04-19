@@ -112,6 +112,7 @@ public class CrawlSchedulerService extends AbstractScheduledService {
     PagingRequest pageable = new PagingRequest();
     PagingResponse<Dataset> datasets;
     int numberInitiated = 0;
+    int numberConsidered = 0;
     // datasets that have never been crawled are attempted on each run, but only if there is spare capacity.
     // we do this because they typically fail immediately, and we don't want to waste slots on those when accessible
     // data can be found.  At the end of a run, any available slots will be used on these datasets.
@@ -128,6 +129,7 @@ public class CrawlSchedulerService extends AbstractScheduledService {
 
       for (Dataset dataset : datasets.getResults()) {
         try (MDC.MDCCloseable closeable = MDC.putCloseable("datasetKey", dataset.getKey().toString())) {
+          numberConsidered++;
           boolean eligibleToCrawl = false;
           try {
             eligibleToCrawl = isDatasetEligibleToCrawl(dataset, now, neverCrawledDatasets);
@@ -145,6 +147,10 @@ public class CrawlSchedulerService extends AbstractScheduledService {
               break;
             }
           }
+
+          if (numberConsidered % 1000 == 0) {
+            LOG.info("Considered {} datasets so far", numberConsidered);
+          }
         }
       }
 
@@ -154,7 +160,7 @@ public class CrawlSchedulerService extends AbstractScheduledService {
     if (!neverCrawledDatasets.isEmpty()) {
       if (numberInitiated < availableCapacity) {
         int remainingSlots = availableCapacity-numberInitiated;
-        LOG.info("There remains {} available slots having crawled all eligible datasets.  Attempting crawls "
+        LOG.info("There remain {} available slots having crawled all eligible datasets.  Attempting crawls "
                  + "which have never been crawled before [total {}]", remainingSlots, neverCrawledDatasets.size());
 
         // launch them randomly until we are exhausted
@@ -173,7 +179,8 @@ public class CrawlSchedulerService extends AbstractScheduledService {
       }
     }
 
-    LOG.info("Finished checking for datasets, having initiated {} crawls", numberInitiated);
+    LOG.info("Finished checking for datasets, having considered {} datasets and initiated {} crawls", numberConsidered,
+        numberInitiated);
   }
 
   @Override
