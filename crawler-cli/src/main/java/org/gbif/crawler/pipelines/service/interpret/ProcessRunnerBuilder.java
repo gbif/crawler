@@ -39,15 +39,18 @@ public class ProcessRunnerBuilder {
 
   private String user;
   private RunnerEnum runner;
-  private Integer sparkParallelism;
-  private Integer directParallelism;
-  private Integer memoryOverhead;
-  private String mainClass;
-  private String executorMemory;
-  private Integer executorCores;
-  private Integer executorNumbers;
-  private String jarFullPath;
   private String datasetId;
+  private Integer sparkParallelism;
+  private Integer sparkMemoryOverhead;
+  private String sparkExecutorMemory;
+  private Integer sparkExecutorCores;
+  private Integer sparkExecutorNumbers;
+  private String sparkDriverMemory;
+  private Integer directParallelism;
+  private String directStackSize;
+  private String directHeapSize;
+  private String jarFullPath;
+  private String mainClass;
   private String interpretationTypes;
   private String hdfsConfigPath;
   private String targetDirectory;
@@ -73,38 +76,52 @@ public class ProcessRunnerBuilder {
     return this;
   }
 
+  public ProcessRunnerBuilder sparkMemoryOverhead(Integer sparkMemoryOverhead) {
+    this.sparkMemoryOverhead = sparkMemoryOverhead;
+    return this;
+  }
+  public ProcessRunnerBuilder sparkExecutorMemory(String sparkExecutorMemory) {
+    this.sparkExecutorMemory = sparkExecutorMemory;
+    return this;
+  }
+
+  public ProcessRunnerBuilder sparkExecutorCores(Integer sparkExecutorCores) {
+    this.sparkExecutorCores = sparkExecutorCores;
+    return this;
+  }
+
+  public ProcessRunnerBuilder sparkExecutorNumbers(Integer sparkExecutorNumbers) {
+    this.sparkExecutorNumbers = sparkExecutorNumbers;
+    return this;
+  }
+
+  public ProcessRunnerBuilder sparkDriverMemory(String sparkDriverMemory) {
+    this.sparkDriverMemory = sparkDriverMemory;
+    return this;
+  }
+
   public ProcessRunnerBuilder directParallelism(Integer directParallelism) {
     this.directParallelism = directParallelism;
     return this;
   }
 
-  public ProcessRunnerBuilder memoryOverhead(Integer memoryOverhead) {
-    this.memoryOverhead = memoryOverhead;
+  public ProcessRunnerBuilder directStackSize(String directStackSize) {
+    this.directStackSize = directStackSize;
     return this;
   }
 
-  public ProcessRunnerBuilder mainClass(String mainClass) {
-    this.mainClass = mainClass;
-    return this;
-  }
-
-  public ProcessRunnerBuilder executorMemory(String executorMemory) {
-    this.executorMemory = executorMemory;
-    return this;
-  }
-
-  public ProcessRunnerBuilder executorCores(Integer executorCores) {
-    this.executorCores = executorCores;
-    return this;
-  }
-
-  public ProcessRunnerBuilder executorNumbers(Integer executorNumbers) {
-    this.executorNumbers = executorNumbers;
+  public ProcessRunnerBuilder directHeapSize(String directHeapSize) {
+    this.directHeapSize = directHeapSize;
     return this;
   }
 
   public ProcessRunnerBuilder jarFullPath(String jarFullPath) {
     this.jarFullPath = jarFullPath;
+    return this;
+  }
+
+  public ProcessRunnerBuilder mainClass(String mainClass) {
+    this.mainClass = mainClass;
     return this;
   }
 
@@ -165,14 +182,17 @@ public class ProcessRunnerBuilder {
   public static ProcessRunnerBuilder create(InterpreterConfiguration config) {
     return ProcessRunnerBuilder.create()
       .user(config.otherUser)
-      .sparkParallelism(config.sparkParallelism)
       .directParallelism(config.directParallelism)
-      .memoryOverhead(config.memoryOverhead)
-      .mainClass(config.mainClass)
-      .executorMemory(config.executorMemory)
-      .executorCores(config.executorCores)
-      .executorNumbers(config.executorNumbers)
+      .directStackSize(config.directStackSize)
+      .directHeapSize(config.directHeapSize)
+      .sparkParallelism(config.sparkParallelism)
+      .sparkMemoryOverhead(config.sparkMemoryOverhead)
+      .sparkExecutorMemory(config.sparkExecutorMemory)
+      .sparkExecutorCores(config.sparkExecutorCores)
+      .sparkExecutorNumbers(config.sparkExecutorNumbers)
+      .sparkDriverMemory(config.sparkDriverMemory)
       .jarFullPath(config.jarFullPath)
+      .mainClass(config.mainClass)
       .hdfsConfigPath(config.hdfsSiteConfig)
       .targetDirectory(config.targetDirectory)
       .avroCompressionType(config.avroConfig.compressionType)
@@ -196,7 +216,10 @@ public class ProcessRunnerBuilder {
    * Builds ProcessBuilder to process direct command
    */
   private ProcessBuilder buildDirect() {
-    StringJoiner joiner = new StringJoiner(DELIMITER).add("java -cp")
+    StringJoiner joiner = new StringJoiner(DELIMITER).add("java")
+      .add("-Xms" + Objects.requireNonNull(directStackSize))
+      .add("-Xmx" + Objects.requireNonNull(directHeapSize))
+      .add("-cp")
       .add(Objects.requireNonNull(jarFullPath))
       .add(Objects.requireNonNull(mainClass));
 
@@ -211,12 +234,13 @@ public class ProcessRunnerBuilder {
   private ProcessBuilder buildSpark() {
     StringJoiner joiner = new StringJoiner(DELIMITER).add("spark-submit")
       .add("--conf spark.default.parallelism=" + Objects.requireNonNull(sparkParallelism))
-      .add("--conf spark.yarn.executor.memoryOverhead=" + Objects.requireNonNull(memoryOverhead))
+      .add("--conf spark.yarn.executor.memoryOverhead=" + Objects.requireNonNull(sparkMemoryOverhead))
       .add("--class " + Objects.requireNonNull(mainClass))
       .add("--master yarn")
-      .add("--executor-memory " + Objects.requireNonNull(executorMemory))
-      .add("--executor-cores " + Objects.requireNonNull(executorCores))
-      .add("--num-executors " + Objects.requireNonNull(executorNumbers))
+      .add("--executor-memory " + Objects.requireNonNull(sparkExecutorMemory))
+      .add("--executor-cores " + Objects.requireNonNull(sparkExecutorCores))
+      .add("--num-executors " + Objects.requireNonNull(sparkExecutorNumbers))
+      .add("--driver-memory " + Objects.requireNonNull(sparkDriverMemory))
       .add(Objects.requireNonNull(jarFullPath));
 
     return build(joiner);
@@ -226,7 +250,7 @@ public class ProcessRunnerBuilder {
    * Adds common properties to direct or spark process, for running Java pipelines with pipeline options
    */
   private ProcessBuilder build(StringJoiner command) {
-    // Common properies
+    // Common properties
     command.add("--datasetId=" + Objects.requireNonNull(datasetId))
       .add("--interpretationTypes=" + Objects.requireNonNull(interpretationTypes))
       .add("--runner=" + Objects.requireNonNull(runner).getName())

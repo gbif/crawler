@@ -51,27 +51,43 @@ public class InterpreterConfiguration {
   @Min(1)
   public int sparkParallelism;
 
+  @Parameter(names = "--spark-memory-overhead")
+  @NotNull
+  @Min(1)
+  public int sparkMemoryOverhead;
+
+  @Parameter(names = "--spark-executor-memory")
+  @NotNull
+  public String sparkExecutorMemory;
+
+  @Parameter(names = "--spark-executor-cores")
+  @NotNull
+  public int sparkExecutorCores;
+
+  @Parameter(names = "--spark-executor-numbers")
+  @NotNull
+  public int sparkExecutorNumbers;
+
+  @Parameter(names = "--spark-driver-emory")
+  @NotNull
+  public String sparkDriverMemory;
+
   @Parameter(names = "--direct-parallelism")
   @NotNull
   @Min(1)
   public int directParallelism;
 
-  @Parameter(names = "--memory-overhead")
+  @Parameter(names = "--direct-stack-size")
   @NotNull
-  @Min(1)
-  public int memoryOverhead;
+  public String directStackSize;
 
-  @Parameter(names = "--executor-memory")
+  @Parameter(names = "--direct-heap-size")
   @NotNull
-  public String executorMemory;
+  public String directHeapSize;
 
-  @Parameter(names = "--executor-cores")
+  @Parameter(names = "--switch-file-size")
   @NotNull
-  public int executorCores;
-
-  @Parameter(names = "--executor-numbers")
-  @NotNull
-  public int executorNumbers;
+  public long switchFileSize;
 
   @Parameter(names = "--jar-full-path")
   @NotNull
@@ -80,10 +96,6 @@ public class InterpreterConfiguration {
   @Parameter(names = "--main-class")
   @NotNull
   public String mainClass;
-
-  @Parameter(names = "--switch-file-size")
-  @NotNull
-  public long switchFileSize = 10L * 1_024L;
 
   @Parameter(names = "--target-directory")
   @NotNull
@@ -105,12 +117,14 @@ public class InterpreterConfiguration {
       .add("hdfsSiteConfig", hdfsSiteConfig)
       .add("taxonWsConfig", wsConfig)
       .add("otherUser", otherUser)
-      .add("sparkParallelism", sparkParallelism)
       .add("directParallelism", directParallelism)
-      .add("memoryOverhead", memoryOverhead)
-      .add("executorMemory", executorMemory)
-      .add("executorCores", executorCores)
-      .add("executorNumbers", executorNumbers)
+      .add("directStackSize", directStackSize)
+      .add("directHeapSize", directHeapSize)
+      .add("sparkParallelism", sparkParallelism)
+      .add("sparkMemoryOverhead", sparkMemoryOverhead)
+      .add("sparkExecutorMemory", sparkExecutorMemory)
+      .add("sparkExecutorCores", sparkExecutorCores)
+      .add("sparkExecutorNumbers", sparkExecutorNumbers)
       .add("jarFullPath", jarFullPath)
       .add("targetDirectory", targetDirectory)
       .add("mainClass", mainClass)

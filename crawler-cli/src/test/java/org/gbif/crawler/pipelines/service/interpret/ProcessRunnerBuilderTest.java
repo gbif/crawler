@@ -27,7 +27,7 @@ public class ProcessRunnerBuilderTest {
   public void testDirectRunnerCommand() {
     // When
     String expected =
-      "java -cp java.jar org.gbif.Test --datasetId=de7ffb5e-c07b-42dc-8a88-f67a4465fe3d --interpretationTypes=ALL "
+      "java -Xms1G -Xmx1G -cp java.jar org.gbif.Test --datasetId=de7ffb5e-c07b-42dc-8a88-f67a4465fe3d --interpretationTypes=ALL "
       + "--runner=DirectRunner --defaultTargetDirectory=tmp --inputFile=verbatim.avro --avroCompressionType=SNAPPY "
       + "--avroSyncInterval=1 --wsProperties=ws.config";
 
@@ -41,6 +41,8 @@ public class ProcessRunnerBuilderTest {
     String avroType = "SNAPPY";
     int avroSync = 1;
     String wsConfig = "ws.config";
+    String xmx = "1G";
+    String xms = "1G";
 
     // Expected
     ProcessBuilder builder = ProcessRunnerBuilder.create()
@@ -54,6 +56,8 @@ public class ProcessRunnerBuilderTest {
       .avroCompressionType(avroType)
       .avroSyncInterval(avroSync)
       .wsConfig(wsConfig)
+      .directStackSize(xms)
+      .directHeapSize(xmx)
       .build();
 
     String result = builder.command().get(2);
@@ -67,7 +71,7 @@ public class ProcessRunnerBuilderTest {
     // When
     String expected =
       "spark-submit --conf spark.default.parallelism=1 --conf spark.yarn.executor.memoryOverhead=1 --class org.gbif.Test "
-      + "--master yarn --executor-memory 1G --executor-cores 1 --num-executors 1 java.jar --datasetId=de7ffb5e-c07b-42dc-8a88-f67a4465fe3d "
+      + "--master yarn --executor-memory 1G --executor-cores 1 --num-executors 1 --driver-memory 4G java.jar --datasetId=de7ffb5e-c07b-42dc-8a88-f67a4465fe3d "
       + "--interpretationTypes=ALL --runner=SparkRunner --defaultTargetDirectory=tmp --inputFile=verbatim.avro --avroCompressionType=SNAPPY "
       + "--avroSyncInterval=1 --wsProperties=ws.config";
 
@@ -86,6 +90,7 @@ public class ProcessRunnerBuilderTest {
     String avroType = "SNAPPY";
     int avroSync = 1;
     String wsConfig = "ws.config";
+    String driverMemory = "4G";
 
     // Expected
     ProcessBuilder builder = ProcessRunnerBuilder.create()
@@ -97,10 +102,11 @@ public class ProcessRunnerBuilderTest {
       .inputFile(input)
       .targetDirectory(output)
       .sparkParallelism(sparkParallelism)
-      .memoryOverhead(memoryOverhead)
-      .executorCores(executorCores)
-      .executorMemory(executorMemory)
-      .executorNumbers(executorNumbers)
+      .sparkMemoryOverhead(memoryOverhead)
+      .sparkExecutorCores(executorCores)
+      .sparkExecutorMemory(executorMemory)
+      .sparkExecutorNumbers(executorNumbers)
+      .sparkDriverMemory(driverMemory)
       .avroCompressionType(avroType)
       .avroSyncInterval(avroSync)
       .wsConfig(wsConfig)
