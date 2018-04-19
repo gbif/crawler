@@ -34,8 +34,12 @@ public class InterpretationCallBack extends AbstractMessageCallback<ExtendedReco
       // Chooses a runner type
       long fileSize = FileSystemUtils.fileSize(message.getInputFile(), config.hdfsSiteConfig);
       RunnerEnum runner = fileSize > config.switchFileSize ? RunnerEnum.SPARK : RunnerEnum.DIRECT;
+      LOG.info("Runner type - {}", runner);
 
       // Assembles a process and runs it
+      LOG.info("Start the process. DatasetId - {}, InterpretTypes - {}, Runner type - {}",
+               message.getDatasetUuid(), message.getInterpretTypes(), runner);
+
       ProcessRunnerBuilder.create(config)
         .runner(runner)
         .datasetId(uuid)
@@ -44,6 +48,9 @@ public class InterpretationCallBack extends AbstractMessageCallback<ExtendedReco
         .build()
         .start()
         .waitFor();
+
+      LOG.info("Finish the process. DatasetId - {}, InterpretTypes - {}, Runner type - {}",
+               message.getDatasetUuid(), message.getInterpretTypes(), runner);
 
     } catch (InterruptedException | IOException ex) {
       LOG.error(ex.getMessage(), ex);

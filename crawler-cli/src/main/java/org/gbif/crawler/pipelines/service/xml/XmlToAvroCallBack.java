@@ -81,6 +81,7 @@ public class XmlToAvroCallBack extends AbstractMessageCallback<CrawlFinishedMess
       try {
         URI uri = paths.getOutputPath().toUri();
         publisher.send(new ExtendedRecordAvailableMessage(datasetUuid, uri, configuration.interpretTypes));
+        LOG.info("Message has been sent - {}", uri);
       } catch (IOException e) {
         LOG.error("Could not send message for dataset [{}] : {}", datasetUuid, e.getMessage());
       }
