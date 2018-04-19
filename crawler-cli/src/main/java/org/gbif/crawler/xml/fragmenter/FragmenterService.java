@@ -189,7 +189,7 @@ public class FragmenterService extends AbstractIdleService {
       try {
         AtomicValue<Long> value = counter.add(count);
         if (!value.succeeded()) {
-          LOG.error("Failed to update counter [{}]", path);
+          LOG.error("Failed to update counter [{}] result {}", path, value);
         }
       } catch (Exception e) {
         LOG.error("Failed to update counter [{}]", path, e);
