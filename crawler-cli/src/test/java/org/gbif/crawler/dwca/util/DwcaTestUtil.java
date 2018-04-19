@@ -1,7 +1,7 @@
 package org.gbif.crawler.dwca.util;
 
-import org.gbif.dwca.io.Archive;
-import org.gbif.dwca.io.ArchiveFactory;
+import org.gbif.dwc.DwcFiles;
+import org.gbif.dwc.Archive;
 
 import java.io.File;
 import java.io.IOException;
@@ -24,11 +24,11 @@ public class DwcaTestUtil {
     Files.copy(srcFile, tmpFile);
 
     File dwcaDir = new File(tmpFile.getParent(), uuid.toString());
-    if("zip".equalsIgnoreCase(FilenameUtils.getExtension(srcFile.getName()))) {
-      return ArchiveFactory.openArchive(tmpFile, dwcaDir);
+    if ("zip".equalsIgnoreCase(FilenameUtils.getExtension(srcFile.getName()))) {
+      return DwcFiles.fromCompressed(tmpFile.toPath(), dwcaDir.toPath());
     }
 
-    return ArchiveFactory.openArchive(tmpFile);
+    return DwcFiles.fromLocation(tmpFile.toPath());
 
   }
 

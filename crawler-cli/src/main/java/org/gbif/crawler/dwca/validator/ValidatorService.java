@@ -12,12 +12,13 @@ import org.gbif.common.messaging.api.messages.DwcaDownloadFinishedMessage;
 import org.gbif.common.messaging.api.messages.DwcaValidationFinishedMessage;
 import org.gbif.crawler.dwca.DwcaConfiguration;
 import org.gbif.crawler.dwca.DwcaService;
-import org.gbif.dwca.io.Archive;
-import org.gbif.dwca.io.ArchiveFactory;
-import org.gbif.dwca.io.UnsupportedArchiveException;
+import org.gbif.dwc.Archive;
+import org.gbif.dwc.DwcFiles;
+import org.gbif.dwc.UnsupportedArchiveException;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -93,8 +94,8 @@ public class ValidatorService extends DwcaService {
           throw new IllegalArgumentException("The requested dataset " + datasetKey + " is not registered");
         }
 
-        final File dwcaFile = new File(archiveRepository, datasetKey + DwcaConfiguration.DWCA_SUFFIX);
-        final File destinationDir = new File(archiveRepository, datasetKey.toString());
+        final Path dwcaFile = new File(archiveRepository, datasetKey + DwcaConfiguration.DWCA_SUFFIX).toPath();
+        final Path destinationDir = new File(archiveRepository, datasetKey.toString()).toPath();
 
         DwcaValidationReport validationReport = prepareAndRunValidation(dataset, dwcaFile, destinationDir);
         if (validationReport.isValid()) {
@@ -127,25 +128,24 @@ public class ValidatorService extends DwcaService {
      * @param destinationFolder
      * @return
      */
-    private DwcaValidationReport prepareAndRunValidation(Dataset dataset, File downloadedFile, File destinationFolder) {
+    private DwcaValidationReport prepareAndRunValidation(Dataset dataset, Path downloadedFile, Path destinationFolder) {
 
       Objects.requireNonNull(dataset, "dataset shall be provided");
       DwcaValidationReport validationReport;
 
       try {
-        Archive archive;
-        if(DatasetType.METADATA == dataset.getType()) {
-          Path destinationPath = destinationFolder.toPath().resolve(DwcaConfiguration.METADATA_FILE);
-          FileUtils.forceMkdir(destinationFolder);
-          //not an archive so copy the file alone
-          //we copy the file (instead of using the .dwca directly) in case the dataset is transformed into a more concrete type eventually
-          Files.copy(downloadedFile.toPath(), destinationPath, StandardCopyOption.REPLACE_EXISTING);
-          archive = ArchiveFactory.openArchiveDataFile(destinationPath.toFile());
+        if (DatasetType.METADATA == dataset.getType()) {
+          Path destinationPath = destinationFolder.resolve(DwcaConfiguration.METADATA_FILE);
+          FileUtils.forceMkdir(destinationFolder.toFile());
+          // not an archive so copy the file alone
+          // we copy the file (instead of using the .dwca directly) in case the dataset is transformed into a more concrete type eventually
+          Files.copy(downloadedFile, destinationPath, StandardCopyOption.REPLACE_EXISTING);
+          String metadata = new String(Files.readAllBytes(destinationPath), StandardCharsets.UTF_8);
+          validationReport = DwcaValidator.validate(dataset, metadata);
+        } else {
+          Archive archive = DwcFiles.fromCompressed(downloadedFile, destinationFolder);
+          validationReport = DwcaValidator.validate(dataset, archive);
         }
-        else{
-          archive = ArchiveFactory.openArchive(downloadedFile, destinationFolder);
-        }
-        validationReport = DwcaValidator.validate(dataset, archive);
       } catch (UnsupportedArchiveException e) {
         LOG.warn("Invalid DwC archive for dataset [{}]", dataset.getKey(), e);
         validationReport = new DwcaValidationReport(dataset.getKey(), "Invalid Dwc archive");

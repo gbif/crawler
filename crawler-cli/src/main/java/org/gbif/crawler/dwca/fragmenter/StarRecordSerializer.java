@@ -1,8 +1,8 @@
 package org.gbif.crawler.dwca.fragmenter;
 
 import org.gbif.dwc.terms.Term;
-import org.gbif.dwca.record.Record;
-import org.gbif.dwca.record.StarRecord;
+import org.gbif.dwc.record.Record;
+import org.gbif.dwc.record.StarRecord;
 
 import java.io.IOException;
 import java.util.*;
