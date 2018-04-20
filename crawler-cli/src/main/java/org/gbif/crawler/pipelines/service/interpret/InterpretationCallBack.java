@@ -7,6 +7,8 @@ import org.gbif.crawler.pipelines.config.InterpreterConfiguration;
 import org.gbif.crawler.pipelines.service.interpret.ProcessRunnerBuilder.RunnerEnum;
 
 import java.io.IOException;
+import java.util.Objects;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,7 +29,7 @@ public class InterpretationCallBack extends AbstractMessageCallback<ExtendedReco
   public void handleMessage(ExtendedRecordAvailableMessage message) {
     LOG.info("Message received: {}", message);
 
-    String uuid = message.getDatasetUuid().toString();
+    UUID datasetId = message.getDatasetUuid();
 
     try {
 
@@ -38,23 +40,30 @@ public class InterpretationCallBack extends AbstractMessageCallback<ExtendedReco
 
       // Assembles a process and runs it
       LOG.info("Start the process. DatasetId - {}, InterpretTypes - {}, Runner type - {}",
-               message.getDatasetUuid(), message.getInterpretTypes(), runner);
+               datasetId, message.getInterpretTypes(), runner);
+
+      String error = Objects.nonNull(config.processErrorDirectory) ? config.processErrorDirectory + datasetId + "-err.log" : null;
+      LOG.info("Error file - {}", error);
+      String output = Objects.nonNull(config.processOutputDirectory) ? config.processOutputDirectory + datasetId + "-out.log" : null;
+      LOG.info("Output file - {}", output);
 
       ProcessRunnerBuilder.create(config)
         .runner(runner)
-        .datasetId(uuid)
+        .datasetId(datasetId.toString())
         .inputFile(message.getInputFile().toString())
         .interpretationTypes(message.getInterpretTypes())
+        .redirectOutputFile(output)
+        .redirectErrorFile(error)
         .build()
         .start()
         .waitFor();
 
       LOG.info("Finish the process. DatasetId - {}, InterpretTypes - {}, Runner type - {}",
-               message.getDatasetUuid(), message.getInterpretTypes(), runner);
+               datasetId, message.getInterpretTypes(), runner);
 
     } catch (InterruptedException | IOException ex) {
       LOG.error(ex.getMessage(), ex);
-      throw new IllegalStateException("Failed performing interpretation on " + uuid, ex);
+      throw new IllegalStateException("Failed performing interpretation on " + datasetId.toString(), ex);
     }
   }
 }

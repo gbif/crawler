@@ -197,8 +197,6 @@ public class ProcessRunnerBuilder {
       .targetDirectory(config.targetDirectory)
       .avroCompressionType(config.avroConfig.compressionType)
       .avroSyncInterval(config.avroConfig.syncInterval)
-      .redirectErrorFile(config.processErrorFile)
-      .redirectOutputFile(config.processOutputFile)
       .wsConfig(config.wsConfig);
   }
 
@@ -237,6 +235,7 @@ public class ProcessRunnerBuilder {
       .add("--conf spark.yarn.executor.memoryOverhead=" + Objects.requireNonNull(sparkMemoryOverhead))
       .add("--class " + Objects.requireNonNull(mainClass))
       .add("--master yarn")
+      .add("--deploy-mode client")
       .add("--executor-memory " + Objects.requireNonNull(sparkExecutorMemory))
       .add("--executor-cores " + Objects.requireNonNull(sparkExecutorCores))
       .add("--num-executors " + Objects.requireNonNull(sparkExecutorNumbers))
@@ -261,7 +260,7 @@ public class ProcessRunnerBuilder {
       .add("--wsProperties=" + Objects.requireNonNull(wsConfig));
 
     // Adds hdfs configuration if it is necessary
-    Optional.ofNullable(hdfsConfigPath).ifPresent(x -> command.add("--hdfsConfiguration=" + x));
+    Optional.ofNullable(hdfsConfigPath).ifPresent(x -> command.add("--hdfsSitePath=" + x));
 
     // Adds user name to run a command if it is necessary
     StringJoiner joiner = new StringJoiner(DELIMITER);

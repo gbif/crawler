@@ -87,6 +87,7 @@ public class InterpreterConfiguration {
 
   @Parameter(names = "--switch-file-size")
   @NotNull
+  @Min(1)
   public long switchFileSize;
 
   @Parameter(names = "--jar-full-path")
@@ -101,11 +102,11 @@ public class InterpreterConfiguration {
   @NotNull
   public String targetDirectory;
 
-  @Parameter(names = "--process-error-file")
-  public String processErrorFile;
+  @Parameter(names = "--process-error-directory")
+  public String processErrorDirectory;
 
-  @Parameter(names = "--process-output-file")
-  public String processOutputFile;
+  @Parameter(names = "--process-output-directory")
+  public String processOutputDirectory;
 
   @Override
   public String toString() {
@@ -128,8 +129,8 @@ public class InterpreterConfiguration {
       .add("jarFullPath", jarFullPath)
       .add("targetDirectory", targetDirectory)
       .add("mainClass", mainClass)
-      .add("processErrorFile", processErrorFile)
-      .add("processOutputFile", processOutputFile)
+      .add("processErrorDirectory", processErrorDirectory)
+      .add("processOutputDirectory", processOutputDirectory)
       .toString();
   }
 }
