@@ -36,7 +36,12 @@ public class InterpreterConfiguration {
   public AvroWriteConfiguration avroConfig = new AvroWriteConfiguration();
 
   @Parameter(names = "--hdfs-site-config")
+  @NotNull
   public String hdfsSiteConfig;
+
+  @Parameter(names = "--core-site-config")
+  @NotNull
+  public String coreSiteConfig;
 
   @Parameter(names = "--ws-config")
   @Valid

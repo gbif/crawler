@@ -52,7 +52,8 @@ public class ProcessRunnerBuilder {
   private String jarFullPath;
   private String mainClass;
   private String interpretationTypes;
-  private String hdfsConfigPath;
+  private String hdfsSiteConfig;
+  private String coreSiteConfig;
   private String targetDirectory;
   private String inputFile;
   private String avroCompressionType;
@@ -80,6 +81,7 @@ public class ProcessRunnerBuilder {
     this.sparkMemoryOverhead = sparkMemoryOverhead;
     return this;
   }
+
   public ProcessRunnerBuilder sparkExecutorMemory(String sparkExecutorMemory) {
     this.sparkExecutorMemory = sparkExecutorMemory;
     return this;
@@ -145,8 +147,13 @@ public class ProcessRunnerBuilder {
     return this;
   }
 
-  public ProcessRunnerBuilder hdfsConfigPath(String hdfsConfigPath) {
-    this.hdfsConfigPath = hdfsConfigPath;
+  public ProcessRunnerBuilder hdfsSiteConfig(String hdfsSiteConfig) {
+    this.hdfsSiteConfig = hdfsSiteConfig;
+    return this;
+  }
+
+  public ProcessRunnerBuilder coreSiteConfig(String coreSiteConfig) {
+    this.coreSiteConfig = coreSiteConfig;
     return this;
   }
 
@@ -193,7 +200,8 @@ public class ProcessRunnerBuilder {
       .sparkDriverMemory(config.sparkDriverMemory)
       .jarFullPath(config.jarFullPath)
       .mainClass(config.mainClass)
-      .hdfsConfigPath(config.hdfsSiteConfig)
+      .hdfsSiteConfig(config.hdfsSiteConfig)
+      .coreSiteConfig(config.coreSiteConfig)
       .targetDirectory(config.targetDirectory)
       .avroCompressionType(config.avroConfig.compressionType)
       .avroSyncInterval(config.avroConfig.syncInterval)
@@ -257,10 +265,9 @@ public class ProcessRunnerBuilder {
       .add("--inputFile=" + Objects.requireNonNull(inputFile))
       .add("--avroCompressionType=" + Objects.requireNonNull(avroCompressionType))
       .add("--avroSyncInterval=" + Objects.requireNonNull(avroSyncInterval))
-      .add("--wsProperties=" + Objects.requireNonNull(wsConfig));
-
-    // Adds hdfs configuration if it is necessary
-    Optional.ofNullable(hdfsConfigPath).ifPresent(x -> command.add("--hdfsSitePath=" + x));
+      .add("--wsProperties=" + Objects.requireNonNull(wsConfig))
+      .add("--hdfsSiteConfig=" + Objects.requireNonNull(hdfsSiteConfig))
+      .add("--coreSiteConfig=" + Objects.requireNonNull(coreSiteConfig));
 
     // Adds user name to run a command if it is necessary
     StringJoiner joiner = new StringJoiner(DELIMITER);
