@@ -27,9 +27,9 @@ public class ProcessRunnerBuilderTest {
   public void testDirectRunnerCommand() {
     // When
     String expected =
-      "java -Xms1G -Xmx1G -cp java.jar org.gbif.Test --datasetId=de7ffb5e-c07b-42dc-8a88-f67a4465fe3d --interpretationTypes=ALL "
-      + "--runner=DirectRunner --defaultTargetDirectory=tmp --inputFile=verbatim.avro --avroCompressionType=SNAPPY "
-      + "--avroSyncInterval=1 --wsProperties=ws.config --hdfsSiteConfig=hdfs.xml --coreSiteConfig=core.xml";
+      "java -Xms1G -Xmx1G -cp java.jar org.gbif.Test --wsProperties=/path/ws.config --datasetId=de7ffb5e-c07b-42dc-8a88-f67a4465fe3d "
+      + "--interpretationTypes=ALL --runner=DirectRunner --defaultTargetDirectory=tmp --inputFile=verbatim.avro --avroCompressionType=SNAPPY "
+      + "--avroSyncInterval=1 --hdfsSiteConfig=hdfs.xml --coreSiteConfig=core.xml";
 
     RunnerEnum runner = RunnerEnum.DIRECT;
     String datasetId = "de7ffb5e-c07b-42dc-8a88-f67a4465fe3d";
@@ -40,7 +40,7 @@ public class ProcessRunnerBuilderTest {
     String output = "tmp";
     String avroType = "SNAPPY";
     int avroSync = 1;
-    String wsConfig = "ws.config";
+    String wsConfig = "/path/ws.config";
     String xmx = "1G";
     String xms = "1G";
     String core = "core.xml";
@@ -74,10 +74,10 @@ public class ProcessRunnerBuilderTest {
   public void testSparkRunnerCommand() {
     // When
     String expected =
-      "spark-submit --conf spark.default.parallelism=1 --conf spark.yarn.executor.memoryOverhead=1 --class org.gbif.Test "
-      + "--master yarn --deploy-mode client --executor-memory 1G --executor-cores 1 --num-executors 1 --driver-memory 4G java.jar --datasetId=de7ffb5e-c07b-42dc-8a88-f67a4465fe3d "
-      + "--interpretationTypes=ALL --runner=SparkRunner --defaultTargetDirectory=tmp --inputFile=verbatim.avro --avroCompressionType=SNAPPY "
-      + "--avroSyncInterval=1 --wsProperties=ws.config --hdfsSiteConfig=hdfs.xml --coreSiteConfig=core.xml";
+      "spark-submit --properties-file /path/ws.config --conf spark.default.parallelism=1 --conf spark.yarn.executor.memoryOverhead=1 --class org.gbif.Test "
+      + "--master yarn --deploy-mode client --executor-memory 1G --executor-cores 1 --num-executors 1 --driver-memory 4G java.jar --wsProperties=ws.config"
+      + " --datasetId=de7ffb5e-c07b-42dc-8a88-f67a4465fe3d --interpretationTypes=ALL --runner=SparkRunner --defaultTargetDirectory=tmp --inputFile=verbatim.avro "
+      + "--avroCompressionType=SNAPPY --avroSyncInterval=1 --hdfsSiteConfig=hdfs.xml --coreSiteConfig=core.xml";
 
     RunnerEnum runner = RunnerEnum.SPARK;
     String datasetId = "de7ffb5e-c07b-42dc-8a88-f67a4465fe3d";
@@ -93,7 +93,7 @@ public class ProcessRunnerBuilderTest {
     Integer memoryOverhead = 1;
     String avroType = "SNAPPY";
     int avroSync = 1;
-    String wsConfig = "ws.config";
+    String wsConfig = "/path/ws.config";
     String driverMemory = "4G";
     String core = "core.xml";
     String hdfs = "hdfs.xml";

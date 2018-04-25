@@ -227,7 +227,8 @@ public class ProcessRunnerBuilder {
       .add("-Xmx" + Objects.requireNonNull(directHeapSize))
       .add("-cp")
       .add(Objects.requireNonNull(jarFullPath))
-      .add(Objects.requireNonNull(mainClass));
+      .add(Objects.requireNonNull(mainClass))
+      .add("--wsProperties=" + Objects.requireNonNull(wsConfig));
 
     Optional.ofNullable(directParallelism).ifPresent(x -> joiner.add("--targetParallelism=" + x));
 
@@ -239,6 +240,7 @@ public class ProcessRunnerBuilder {
    */
   private ProcessBuilder buildSpark() {
     StringJoiner joiner = new StringJoiner(DELIMITER).add("spark-submit")
+      .add("--properties-file " + Objects.requireNonNull(wsConfig))
       .add("--conf spark.default.parallelism=" + Objects.requireNonNull(sparkParallelism))
       .add("--conf spark.yarn.executor.memoryOverhead=" + Objects.requireNonNull(sparkMemoryOverhead))
       .add("--class " + Objects.requireNonNull(mainClass))
@@ -248,7 +250,8 @@ public class ProcessRunnerBuilder {
       .add("--executor-cores " + Objects.requireNonNull(sparkExecutorCores))
       .add("--num-executors " + Objects.requireNonNull(sparkExecutorNumbers))
       .add("--driver-memory " + Objects.requireNonNull(sparkDriverMemory))
-      .add(Objects.requireNonNull(jarFullPath));
+      .add(Objects.requireNonNull(jarFullPath))
+      .add("--wsProperties=" + new File(Objects.requireNonNull(wsConfig)).getName());
 
     return build(joiner);
   }
@@ -265,7 +268,6 @@ public class ProcessRunnerBuilder {
       .add("--inputFile=" + Objects.requireNonNull(inputFile))
       .add("--avroCompressionType=" + Objects.requireNonNull(avroCompressionType))
       .add("--avroSyncInterval=" + Objects.requireNonNull(avroSyncInterval))
-      .add("--wsProperties=" + Objects.requireNonNull(wsConfig))
       .add("--hdfsSiteConfig=" + Objects.requireNonNull(hdfsSiteConfig))
       .add("--coreSiteConfig=" + Objects.requireNonNull(coreSiteConfig));
 
