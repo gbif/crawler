@@ -80,7 +80,7 @@ public class DwCAToAvroCallBack extends AbstractMessageCallback<DwcaValidationFi
     if (!isFileDeleted && Objects.nonNull(publisher)) {
       try {
         URI uri = paths.getOutputPath().toUri();
-        publisher.send(new ExtendedRecordAvailableMessage(datasetUuid, uri, configuration.interpretTypes));
+        publisher.send(new ExtendedRecordAvailableMessage(datasetUuid, message.getAttempt(), uri, configuration.interpretTypes));
         LOG.info("Message has been sent - {}", uri);
       } catch (IOException e) {
         LOG.error("Could not send message for dataset [{}] : {}", datasetUuid, e.getMessage());

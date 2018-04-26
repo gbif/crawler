@@ -40,6 +40,7 @@ public class ProcessRunnerBuilder {
   private String user;
   private RunnerEnum runner;
   private String datasetId;
+  private int attempt;
   private Integer sparkParallelism;
   private Integer sparkMemoryOverhead;
   private String sparkExecutorMemory;
@@ -129,6 +130,11 @@ public class ProcessRunnerBuilder {
 
   public ProcessRunnerBuilder datasetId(String datasetId) {
     this.datasetId = datasetId;
+    return this;
+  }
+
+  public ProcessRunnerBuilder attempt(int attempt) {
+    this.attempt = attempt;
     return this;
   }
 
@@ -232,7 +238,7 @@ public class ProcessRunnerBuilder {
 
     Optional.ofNullable(directParallelism).ifPresent(x -> joiner.add("--targetParallelism=" + x));
 
-    return build(joiner);
+    return buildCommon(joiner);
   }
 
   /**
@@ -245,7 +251,7 @@ public class ProcessRunnerBuilder {
       .add("--conf spark.yarn.executor.memoryOverhead=" + Objects.requireNonNull(sparkMemoryOverhead))
       .add("--class " + Objects.requireNonNull(mainClass))
       .add("--master yarn")
-      .add("--deploy-mode client")
+      .add("--deploy-mode cluster")
       .add("--executor-memory " + Objects.requireNonNull(sparkExecutorMemory))
       .add("--executor-cores " + Objects.requireNonNull(sparkExecutorCores))
       .add("--num-executors " + Objects.requireNonNull(sparkExecutorNumbers))
@@ -253,15 +259,16 @@ public class ProcessRunnerBuilder {
       .add(Objects.requireNonNull(jarFullPath))
       .add("--wsProperties=" + new File(Objects.requireNonNull(wsConfig)).getName());
 
-    return build(joiner);
+    return buildCommon(joiner);
   }
 
   /**
    * Adds common properties to direct or spark process, for running Java pipelines with pipeline options
    */
-  private ProcessBuilder build(StringJoiner command) {
+  private ProcessBuilder buildCommon(StringJoiner command) {
     // Common properties
     command.add("--datasetId=" + Objects.requireNonNull(datasetId))
+      .add("--attempt=" + attempt)
       .add("--interpretationTypes=" + Objects.requireNonNull(interpretationTypes))
       .add("--runner=" + Objects.requireNonNull(runner).getName())
       .add("--defaultTargetDirectory=" + Objects.requireNonNull(targetDirectory))
