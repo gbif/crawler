@@ -229,6 +229,7 @@ public class ProcessRunnerBuilder {
    */
   private ProcessBuilder buildDirect() {
     StringJoiner joiner = new StringJoiner(DELIMITER).add("java")
+      .add("-XX:+UseG1GC")
       .add("-Xms" + Objects.requireNonNull(directStackSize))
       .add("-Xmx" + Objects.requireNonNull(directHeapSize))
       .add("-cp")
