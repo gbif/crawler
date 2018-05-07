@@ -86,7 +86,6 @@ public class XmlToAvroCallBack extends AbstractMessageCallback<CrawlFinishedMess
         LOG.error("Could not send message for dataset [{}] : {}", datasetUuid, e.getMessage());
       }
     }
-
   }
 
 }

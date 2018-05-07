@@ -27,7 +27,7 @@ public class ProcessRunnerBuilderTest {
   public void testDirectRunnerCommand() {
     // When
     String expected =
-      "java -Xms1G -Xmx1G -cp java.jar org.gbif.Test --wsProperties=/path/ws.config --datasetId=de7ffb5e-c07b-42dc-8a88-f67a4465fe3d "
+      "java -XX:+UseG1GC -Xms1G -Xmx1G -cp java.jar org.gbif.Test --wsProperties=/path/ws.config --datasetId=de7ffb5e-c07b-42dc-8a88-f67a4465fe3d "
       + "--attempt=1 --interpretationTypes=ALL --runner=DirectRunner --defaultTargetDirectory=tmp --inputFile=verbatim.avro "
       + "--avroCompressionType=SNAPPY --avroSyncInterval=1 --hdfsSiteConfig=hdfs.xml --coreSiteConfig=core.xml";
 
