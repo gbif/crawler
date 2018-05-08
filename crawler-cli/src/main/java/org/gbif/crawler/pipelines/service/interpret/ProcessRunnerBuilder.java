@@ -62,6 +62,7 @@ public class ProcessRunnerBuilder {
   private String wsConfig;
   private String redirectErrorFile;
   private String redirectOutputFile;
+  private String logConfigPath;
 
   public ProcessRunnerBuilder user(String user) {
     this.user = user;
@@ -153,6 +154,11 @@ public class ProcessRunnerBuilder {
     return this;
   }
 
+  public ProcessRunnerBuilder logConfigPath(String logConfigPath) {
+    this.logConfigPath = logConfigPath;
+    return this;
+  }
+
   public ProcessRunnerBuilder hdfsSiteConfig(String hdfsSiteConfig) {
     this.hdfsSiteConfig = hdfsSiteConfig;
     return this;
@@ -211,6 +217,7 @@ public class ProcessRunnerBuilder {
       .targetDirectory(config.targetDirectory)
       .avroCompressionType(config.avroConfig.compressionType)
       .avroSyncInterval(config.avroConfig.syncInterval)
+      .logConfigPath(config.logConfigPath)
       .wsConfig(config.wsConfig);
   }
 
@@ -232,6 +239,7 @@ public class ProcessRunnerBuilder {
       .add("-XX:+UseG1GC")
       .add("-Xms" + Objects.requireNonNull(directStackSize))
       .add("-Xmx" + Objects.requireNonNull(directHeapSize))
+      .add("-Dlogback.configurationFile=" + Objects.requireNonNull(logConfigPath))
       .add("-cp")
       .add(Objects.requireNonNull(jarFullPath))
       .add(Objects.requireNonNull(mainClass))

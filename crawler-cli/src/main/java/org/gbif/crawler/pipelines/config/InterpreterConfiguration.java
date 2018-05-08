@@ -113,6 +113,9 @@ public class InterpreterConfiguration {
   @Parameter(names = "--process-output-directory")
   public String processOutputDirectory;
 
+  @Parameter(names = "--log-config-path")
+  public String logConfigPath;
+
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
@@ -136,6 +139,7 @@ public class InterpreterConfiguration {
       .add("mainClass", mainClass)
       .add("processErrorDirectory", processErrorDirectory)
       .add("processOutputDirectory", processOutputDirectory)
+      .add("logConfigPath", logConfigPath)
       .toString();
   }
 }
