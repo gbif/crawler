@@ -11,13 +11,11 @@ import org.gbif.common.messaging.api.messages.DwcaMetasyncFinishedMessage;
 import org.gbif.common.messaging.api.messages.DwcaValidationFinishedMessage;
 import org.gbif.common.messaging.api.messages.OccurrenceFragmentedMessage;
 import org.gbif.dwc.DwcFiles;
-import org.gbif.dwc.NormalizedDwcArchive;
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.Term;
-import org.gbif.dwca.io.Archive;
-import org.gbif.dwca.io.ArchiveFactory;
-import org.gbif.dwca.record.Record;
-import org.gbif.dwca.record.StarRecord;
+import org.gbif.dwc.Archive;
+import org.gbif.dwc.record.Record;
+import org.gbif.dwc.record.StarRecord;
 import org.gbif.utils.file.ClosableIterator;
 
 import java.io.File;
@@ -106,7 +104,7 @@ public class DwcaFragmenterService extends AbstractIdleService {
 
       Archive archive;
       try {
-        archive = ArchiveFactory.openArchive(new File(archiveRepository, datasetKey.toString()));
+        archive = DwcFiles.fromLocation(new File(archiveRepository, datasetKey.toString()).toPath());
       } catch (IOException ioEx) {
         LOG.error("Could not open archive for dataset [{}] : {}", datasetKey, ioEx.getMessage());
         updateCounter(curator, datasetKey, PAGES_FRAGMENTED_ERROR, 1L);
@@ -133,16 +131,15 @@ public class DwcaFragmenterService extends AbstractIdleService {
       int counter = 0;
       final DistributedAtomicLong zCounter = getCounter(curator, datasetKey, FRAGMENTS_EMITTED);
 
-      NormalizedDwcArchive normalizedDwcArchive;
       try {
         //this can take some time if the archive includes extension(s)
-        normalizedDwcArchive = DwcFiles.prepareArchive(archive, false, false);
+        archive.initialize();
       } catch (IOException e) {
         LOG.error("Error extracting DwC-A for dataset [{}]", datasetKey);
         return;
       }
 
-      try (ClosableIterator<StarRecord> iterator = normalizedDwcArchive.iterator()) {
+      try (ClosableIterator<StarRecord> iterator = archive.iterator(false, false)) {
         while (iterator.hasNext()) {
           StarRecord record = iterator.next();
           counter++;
@@ -171,16 +168,15 @@ public class DwcaFragmenterService extends AbstractIdleService {
                                            DwcaMetasyncFinishedMessage message) {
       LOG.info("Fragmenting DwC-A for dataset [{}] with {} extension", datasetKey, rowType);
 
-      NormalizedDwcArchive normalizedDwcArchive;
       try {
         //this can take some time if the archive includes extension(s)
-        normalizedDwcArchive = DwcFiles.prepareArchive(archive, false, false);
+        archive.initialize();
       } catch (IOException ioEx) {
         LOG.error("Error extracting DwC-A for dataset [{}] : {}", datasetKey, ioEx.getMessage());
         return;
       }
 
-      try (ClosableIterator<StarRecord> iterator = normalizedDwcArchive.iterator()) {
+      try (ClosableIterator<StarRecord> iterator = archive.iterator(false, false)) {
         int counter = 0;
         final DistributedAtomicLong zCounter = getCounter(curator, datasetKey, FRAGMENTS_EMITTED);
         while (iterator.hasNext()) {

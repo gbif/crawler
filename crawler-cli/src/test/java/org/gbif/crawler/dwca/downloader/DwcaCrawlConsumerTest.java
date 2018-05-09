@@ -2,7 +2,7 @@ package org.gbif.crawler.dwca.downloader;
 
 import org.gbif.api.model.crawler.CrawlJob;
 import org.gbif.api.vocabulary.EndpointType;
-import org.gbif.dwca.io.ArchiveFactory;
+import org.gbif.dwc.DwcFiles;
 import org.gbif.utils.file.CompressionUtil;
 import org.gbif.utils.file.FileUtils;
 
@@ -38,7 +38,7 @@ public class DwcaCrawlConsumerTest extends TestCase {
     org.apache.commons.io.FileUtils.forceMkdir(dir);
 
     CompressionUtil.decompressFile(dir, ebi, true);
-    ArchiveFactory.openArchive(dir);
+    DwcFiles.fromLocation(dir.toPath());
   }
 
 }

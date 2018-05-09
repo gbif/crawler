@@ -26,6 +26,7 @@ import org.gbif.ws.client.guice.SingleUserAuthModule;
 import java.io.IOException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Date;
 import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
@@ -92,6 +93,12 @@ public class CoordinatorCleanupService extends AbstractScheduledService {
           updateRegistry(status);
 
           if (!checkDoneProcessing(status)) {
+            continue;
+          }
+
+          // It seemed we might have a race condition, where some crawls complete very fast (e.g. NOT_MODIFIED)
+          if ((new Date().getTime() - status.getStartedCrawling().getTime()) < 120_000) {
+            LOG.info("Dataset [{}] hasn't yet been crawling for two minutes ({} seconds so far), wait a little", status.getDatasetKey(), (new Date().getTime() - status.getStartedCrawling().getTime())/1_000);
             continue;
           }
 

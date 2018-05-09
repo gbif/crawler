@@ -1,9 +1,9 @@
 package org.gbif.crawler.emlpusher;
 
 import org.gbif.api.service.registry.DatasetService;
-import org.gbif.dwca.io.Archive;
-import org.gbif.dwca.io.ArchiveFactory;
-import org.gbif.dwca.io.UnsupportedArchiveException;
+import org.gbif.dwc.Archive;
+import org.gbif.dwc.DwcFiles;
+import org.gbif.dwc.UnsupportedArchiveException;
 import org.gbif.registry.ws.client.guice.RegistryWsClientModule;
 import org.gbif.ws.client.guice.SingleUserAuthModule;
 
@@ -107,10 +107,10 @@ public class EmlPusher {
     File dir = archiveDir(archiveFile);
     try {
       if (dir.exists()) {
-        return ArchiveFactory.openArchive(dir);
+        return DwcFiles.fromLocation(dir.toPath());
       } else {
         LOG.info("Decompress archive {}", archiveFile.getAbsoluteFile());
-        return ArchiveFactory.openArchive(archiveFile, dir);
+        return DwcFiles.fromCompressed(archiveFile.toPath(), dir.toPath());
       }
     } catch (IOException e) {
       throw new UnsupportedArchiveException(e);

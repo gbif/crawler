@@ -1,7 +1,7 @@
 package org.gbif.crawler.dwca;
 
 import org.gbif.crawler.dwca.util.DwcaTestUtil;
-import org.gbif.dwca.io.Archive;
+import org.gbif.dwc.Archive;
 
 import java.io.IOException;
 

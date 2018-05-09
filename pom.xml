@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.gbif</groupId>
     <artifactId>motherpom</artifactId>
-    <version>37</version>
+    <version>38-SNAPSHOT</version>
   </parent>
 
   <groupId>org.gbif.crawler</groupId>
@@ -41,13 +41,13 @@
     <!-- Fixed to the version Curator uses, problems otherwise -->
     <freemarker.version>2.3.23</freemarker.version>
 
-    <dwc-api.version>1.17</dwc-api.version>
-    <dwca-io.version>1.32</dwca-io.version>
+    <dwc-api.version>1.18</dwc-api.version>
+    <dwca-io.version>2.0-RC1</dwca-io.version>
     <gbif-api.version>0.58</gbif-api.version>
     <gbif-cli.version>0.13</gbif-cli.version>
     <gbif-common-service.version>0.16</gbif-common-service.version>
     <gbif-common-ws.version>0.40</gbif-common-ws.version>
-    <gbif-common.version>0.36</gbif-common.version>
+    <gbif-common.version>0.38</gbif-common.version>
     <gbif-httputils.version>0.10</gbif-httputils.version>
     <gbif-microservice.version>0.7</gbif-microservice.version>
     <gbif-occurrence.version>0.69</gbif-occurrence.version>
