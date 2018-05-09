@@ -5,13 +5,11 @@ import org.gbif.api.model.crawler.GenericValidationReport;
 import org.gbif.api.model.crawler.OccurrenceValidationReport;
 import org.gbif.api.model.registry.Dataset;
 import org.gbif.api.vocabulary.DatasetType;
-import org.gbif.dwc.DwcFiles;
-import org.gbif.dwc.NormalizedDwcArchive;
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.Term;
-import org.gbif.dwca.io.Archive;
-import org.gbif.dwca.record.Record;
-import org.gbif.dwca.record.StarRecord;
+import org.gbif.dwc.Archive;
+import org.gbif.dwc.record.Record;
+import org.gbif.dwc.record.StarRecord;
 import org.gbif.utils.file.ClosableIterator;
 
 import java.io.IOException;
@@ -76,13 +74,26 @@ public class DwcaValidator {
    * Produce a report with the counts of good and bad unique identifiers (triplets and occurrenceId) in the archive.
    *
    * @param dataset the parent Dataset of the archive
-   * @param archive the archive as opened by the dwca-io project's {@link org.gbif.dwca.io.ArchiveFactory}
+   * @param archive the archive as opened by the dwca-io project's {@link org.gbif.dwc.DwcFiles}
    *
    * @return a report with the counts of good, bad and missing identifiers
    */
   public static DwcaValidationReport validate(Dataset dataset, Archive archive) throws IOException {
     DwcaValidator validator = new DwcaValidator();
     return validator.check(dataset, archive);
+  }
+
+  /**
+   * Produce a report for a metadata-only dataset.
+   *
+   * @param dataset the parent Dataset of the metadata
+   * @param metadata the metadata file contents
+   *
+   * @return a "passed" report
+   */
+  public static DwcaValidationReport validate(Dataset dataset, String metadata) throws IOException {
+    return new DwcaValidationReport(dataset.getKey(),
+      new GenericValidationReport(0, true, Collections.emptyList(), Collections.emptyList()));
   }
 
   /**
@@ -132,7 +143,7 @@ public class DwcaValidator {
     Set<String> ids = Sets.newHashSet();
     final boolean useCoreID = !archive.getCore().hasTerm(term);
 
-    try (ClosableIterator<Record> it = DwcFiles.iterator(archive.getCore(), true, true)) {
+    try (ClosableIterator<Record> it = archive.getCore().iterator(true, true)) {
       while(it.hasNext()) {
         Record rec = it.next();
         records++;
@@ -155,7 +166,7 @@ public class DwcaValidator {
   }
 
   private OccurrenceValidationReport validateOccurrenceCore(Archive archive) throws IOException {
-    try(ClosableIterator<Record> it = DwcFiles.iterator(archive.getCore(), true, true)){
+    try (ClosableIterator<Record> it = archive.getCore().iterator(true, true)) {
       while (it.hasNext()) {
         Record record = it.next();
         if (checkOccurrenceRecord(record, getTriplet(record, null))) {
@@ -173,10 +184,10 @@ public class DwcaValidator {
   private OccurrenceValidationReport validateOccurrenceExtension(Archive archive, final Term rowType) throws IOException {
 
     // this can take some time if the archive includes extension(s)
-    NormalizedDwcArchive normalizedDwcArchive = DwcFiles.prepareArchive(archive, true, true);
+    archive.initialize();
 
     // outer loop over core records, e.g. taxa or samples
-    try(ClosableIterator<StarRecord> iterator = normalizedDwcArchive.iterator()) {
+    try (ClosableIterator<StarRecord> iterator = archive.iterator()) {
       while (iterator.hasNext()) {
         StarRecord star = iterator.next();
         // inner loop over extension records

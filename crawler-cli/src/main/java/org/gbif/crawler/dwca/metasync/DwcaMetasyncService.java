@@ -15,8 +15,7 @@ import org.gbif.common.messaging.api.messages.DwcaValidationFinishedMessage;
 import org.gbif.crawler.constants.CrawlerNodePaths;
 import org.gbif.crawler.dwca.DwcaConfiguration;
 import org.gbif.crawler.dwca.DwcaService;
-import org.gbif.dwca.io.Archive;
-import org.gbif.dwca.io.ArchiveFactory;
+import org.gbif.dwc.Archive;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -35,6 +34,7 @@ import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.atomic.DistributedAtomicLong;
 import org.apache.curator.retry.RetryNTimes;
+import org.gbif.dwc.DwcFiles;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -126,7 +126,7 @@ public class DwcaMetasyncService extends DwcaService {
         archive = null;
         metaFile = new File(new File(archiveRepository, datasetKey.toString()), DwcaConfiguration.METADATA_FILE);
       } else {
-        archive = ArchiveFactory.openArchive(new File(archiveRepository, datasetKey.toString()));
+        archive = DwcFiles.fromLocation(new File(archiveRepository, datasetKey.toString()).toPath());
         metaFile = archive.getMetadataLocationFile();
       }
 
