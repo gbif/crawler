@@ -145,7 +145,7 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
       builder.lockPath(CrawlerNodePaths.buildPath(path, RUNNING_CRAWLS)).buildPriorityQueue(1);
 
     try {
-      curator.create().creatingParentContainersIfNeeded().forPath(buildPath(CRAWL_INFO));
+      curator.create().orSetData().creatingParentContainersIfNeeded().forPath(buildPath(CRAWL_INFO));
       queue.start();
     } catch (Exception e) {
       throw new ServiceUnavailableException("Error starting up Priority queue", e);

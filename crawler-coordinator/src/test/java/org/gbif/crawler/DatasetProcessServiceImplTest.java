@@ -1,6 +1,5 @@
 package org.gbif.crawler;
 
-
 import org.gbif.api.model.crawler.CrawlJob;
 import org.gbif.api.model.crawler.DatasetProcessStatus;
 import org.gbif.api.vocabulary.EndpointType;
@@ -16,10 +15,8 @@ import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Executors;
-import javax.annotation.Nullable;
 
 import com.google.common.base.Charsets;
-import com.google.common.base.Function;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -38,28 +35,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import static org.gbif.crawler.constants.CrawlerNodePaths.CRAWL_CONTEXT;
-import static org.gbif.crawler.constants.CrawlerNodePaths.DECLARED_COUNT;
-import static org.gbif.crawler.constants.CrawlerNodePaths.DWCA_CRAWL;
-import static org.gbif.crawler.constants.CrawlerNodePaths.FRAGMENTS_EMITTED;
-import static org.gbif.crawler.constants.CrawlerNodePaths.FRAGMENTS_PROCESSED;
-import static org.gbif.crawler.constants.CrawlerNodePaths.FRAGMENTS_RECEIVED;
-import static org.gbif.crawler.constants.CrawlerNodePaths.INTERPRETED_OCCURRENCES_PERSISTED_ERROR;
-import static org.gbif.crawler.constants.CrawlerNodePaths.INTERPRETED_OCCURRENCES_PERSISTED_SUCCESSFUL;
-import static org.gbif.crawler.constants.CrawlerNodePaths.PAGES_CRAWLED;
-import static org.gbif.crawler.constants.CrawlerNodePaths.PAGES_FRAGMENTED_ERROR;
-import static org.gbif.crawler.constants.CrawlerNodePaths.PAGES_FRAGMENTED_SUCCESSFUL;
-import static org.gbif.crawler.constants.CrawlerNodePaths.RAW_OCCURRENCES_PERSISTED_ERROR;
-import static org.gbif.crawler.constants.CrawlerNodePaths.RAW_OCCURRENCES_PERSISTED_NEW;
-import static org.gbif.crawler.constants.CrawlerNodePaths.RAW_OCCURRENCES_PERSISTED_UNCHANGED;
-import static org.gbif.crawler.constants.CrawlerNodePaths.RAW_OCCURRENCES_PERSISTED_UPDATED;
-import static org.gbif.crawler.constants.CrawlerNodePaths.STARTED_CRAWLING;
-import static org.gbif.crawler.constants.CrawlerNodePaths.VERBATIM_OCCURRENCES_PERSISTED_ERROR;
-import static org.gbif.crawler.constants.CrawlerNodePaths.VERBATIM_OCCURRENCES_PERSISTED_SUCCESSFUL;
-import static org.gbif.crawler.constants.CrawlerNodePaths.XML_CRAWL;
-import static org.gbif.crawler.constants.CrawlerNodePaths.buildPath;
-
 import static org.apache.curator.framework.recipes.queue.QueueHelper.serialize;
+import static org.gbif.crawler.constants.CrawlerNodePaths.*;
 import static org.hamcrest.core.IsCollectionContaining.hasItem;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
@@ -150,42 +127,35 @@ public class DatasetProcessServiceImplTest {
 
     // get a DatasetCrawlMetrics mock object to populate the first crawl job
     DatasetProcessStatus status = mockMetrics(uuid, running);
+
     // populate the first crawl job with complete data
-    String runningJob = CrawlerNodePaths.getCrawlInfoPath(uuid);
-
     curator.create()
       .creatingParentsIfNeeded()
-      .forPath(buildPath(runningJob, STARTED_CRAWLING), dateToBytes(status.getStartedCrawling()));
+      .forPath(getCrawlInfoPath(uuid, STARTED_CRAWLING), dateToBytes(status.getStartedCrawling()));
     curator.create()
       .creatingParentsIfNeeded()
-      .forPath(buildPath(runningJob, CRAWL_CONTEXT), stringToBytes(status.getCrawlContext()));
+      .forPath(getCrawlInfoPath(uuid, CRAWL_CONTEXT), stringToBytes(status.getCrawlContext()));
 
-    curator.setData().forPath(runningJob, new ObjectMapper().writeValueAsBytes(status.getCrawlJob()));
+    curator.setData().forPath(getCrawlInfoPath(uuid), new ObjectMapper().writeValueAsBytes(status.getCrawlJob()));
 
     if (status.getDeclaredCount() != null) {
-      curator.create()
-        .forPath(buildPath(runningJob, DECLARED_COUNT), status.getDeclaredCount().toString().getBytes(Charsets.UTF_8));
+      curator.create().forPath(getCrawlInfoPath(uuid, DECLARED_COUNT), status.getDeclaredCount().toString().getBytes(Charsets.UTF_8));
     }
 
-    setCounter(buildPath(runningJob, PAGES_CRAWLED), status.getPagesCrawled());
-    setCounter(buildPath(runningJob, PAGES_FRAGMENTED_SUCCESSFUL), status.getPagesFragmentedSuccessful());
-    setCounter(buildPath(runningJob, PAGES_FRAGMENTED_ERROR), status.getPagesFragmentedError());
-    setCounter(buildPath(runningJob, FRAGMENTS_EMITTED), status.getFragmentsEmitted());
-    setCounter(buildPath(runningJob, FRAGMENTS_RECEIVED), status.getFragmentsReceived());
-    setCounter(buildPath(runningJob, RAW_OCCURRENCES_PERSISTED_NEW), status.getRawOccurrencesPersistedNew());
-    setCounter(buildPath(runningJob, RAW_OCCURRENCES_PERSISTED_UPDATED), status.getRawOccurrencesPersistedUpdated());
-    setCounter(buildPath(runningJob, RAW_OCCURRENCES_PERSISTED_UNCHANGED),
-               status.getRawOccurrencesPersistedUnchanged());
-    setCounter(buildPath(runningJob, RAW_OCCURRENCES_PERSISTED_ERROR), status.getRawOccurrencesPersistedError());
-    setCounter(buildPath(runningJob, FRAGMENTS_PROCESSED), status.getFragmentsProcessed());
-    setCounter(buildPath(runningJob, VERBATIM_OCCURRENCES_PERSISTED_SUCCESSFUL),
-               status.getVerbatimOccurrencesPersistedSuccessful());
-    setCounter(buildPath(runningJob, VERBATIM_OCCURRENCES_PERSISTED_ERROR),
-               status.getVerbatimOccurrencesPersistedError());
-    setCounter(buildPath(runningJob, INTERPRETED_OCCURRENCES_PERSISTED_SUCCESSFUL),
-               status.getInterpretedOccurrencesPersistedSuccessful());
-    setCounter(buildPath(runningJob, INTERPRETED_OCCURRENCES_PERSISTED_ERROR),
-               status.getInterpretedOccurrencesPersistedError());
+    setCounter(getCrawlInfoPath(uuid, PAGES_CRAWLED), status.getPagesCrawled());
+    setCounter(getCrawlInfoPath(uuid, PAGES_FRAGMENTED_SUCCESSFUL), status.getPagesFragmentedSuccessful());
+    setCounter(getCrawlInfoPath(uuid, PAGES_FRAGMENTED_ERROR), status.getPagesFragmentedError());
+    setCounter(getCrawlInfoPath(uuid, FRAGMENTS_EMITTED), status.getFragmentsEmitted());
+    setCounter(getCrawlInfoPath(uuid, FRAGMENTS_RECEIVED), status.getFragmentsReceived());
+    setCounter(getCrawlInfoPath(uuid, RAW_OCCURRENCES_PERSISTED_NEW), status.getRawOccurrencesPersistedNew());
+    setCounter(getCrawlInfoPath(uuid, RAW_OCCURRENCES_PERSISTED_UPDATED), status.getRawOccurrencesPersistedUpdated());
+    setCounter(getCrawlInfoPath(uuid, RAW_OCCURRENCES_PERSISTED_UNCHANGED), status.getRawOccurrencesPersistedUnchanged());
+    setCounter(getCrawlInfoPath(uuid, RAW_OCCURRENCES_PERSISTED_ERROR), status.getRawOccurrencesPersistedError());
+    setCounter(getCrawlInfoPath(uuid, FRAGMENTS_PROCESSED), status.getFragmentsProcessed());
+    setCounter(getCrawlInfoPath(uuid, VERBATIM_OCCURRENCES_PERSISTED_SUCCESSFUL), status.getVerbatimOccurrencesPersistedSuccessful());
+    setCounter(getCrawlInfoPath(uuid, VERBATIM_OCCURRENCES_PERSISTED_ERROR), status.getVerbatimOccurrencesPersistedError());
+    setCounter(getCrawlInfoPath(uuid, INTERPRETED_OCCURRENCES_PERSISTED_SUCCESSFUL), status.getInterpretedOccurrencesPersistedSuccessful());
+    setCounter(getCrawlInfoPath(uuid, INTERPRETED_OCCURRENCES_PERSISTED_ERROR), status.getInterpretedOccurrencesPersistedError());
 
     ALL_CRAWLS.add(status);
     if (running) {
@@ -195,15 +165,8 @@ public class DatasetProcessServiceImplTest {
       QUEUE_MAP.put(status, queueIdentifier);
     }
 
-    Ordering<DatasetProcessStatus> ordering =
-      Ordering.natural().onResultOf(new Function<DatasetProcessStatus, String>() {
-        @Override
-        public String apply(@Nullable DatasetProcessStatus input) {
-          return QUEUE_MAP.get(input);
-        }
-      });
+    Ordering<DatasetProcessStatus> ordering = Ordering.natural().onResultOf(input -> QUEUE_MAP.get(input));
     QUEUED_CRAWLS = ordering.sortedCopy(QUEUED_CRAWLS);
-
   }
 
   private static void setCounter(String path, long value) throws Exception {
@@ -302,7 +265,6 @@ public class DatasetProcessServiceImplTest {
     }
     return null;
   }
-
 
   /**
    * Simple conversion from a {@link String} into an array of bytes.

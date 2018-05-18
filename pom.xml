@@ -37,6 +37,7 @@
 
     <amqp-client.version>3.5.6</amqp-client.version>
     <curator.version>4.0.1</curator.version>
+    <curator-test.version>2.12.0</curator-test.version>
     <fest.version>2.0M10</fest.version>
     <!-- Fixed to the version Curator uses, problems otherwise -->
     <freemarker.version>2.3.23</freemarker.version>
@@ -453,7 +454,8 @@
         <version>${hadoop-common.version}</version>
       </dependency>
 
-      <!-- Apache Curator. See https://curator.apache.org/zk-compatibility.html for notes on compatibility with ZooKeeper 3.4 -->
+      <!-- Apache Curator. See https://curator.apache.org/zk-compatibility.html for notes on compatibility with ZooKeeper 3.4.
+           Note especially the different (old) version used for curator-test. -->
       <dependency>
         <groupId>org.apache.curator</groupId>
         <artifactId>curator-client</artifactId>
@@ -484,7 +486,7 @@
       <dependency>
         <groupId>org.apache.curator</groupId>
         <artifactId>curator-test</artifactId>
-        <version>${curator.version}</version>
+        <version>${curator-test.version}</version>
         <exclusions>
           <exclusion>
             <groupId>org.apache.zookeeper</groupId>
@@ -497,6 +499,16 @@
         <groupId>org.apache.zookeeper</groupId>
         <artifactId>zookeeper</artifactId>
         <version>${zookeeper.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
 
       <dependency>

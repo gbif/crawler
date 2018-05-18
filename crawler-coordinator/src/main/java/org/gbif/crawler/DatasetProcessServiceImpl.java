@@ -15,7 +15,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
@@ -310,7 +309,7 @@ public class DatasetProcessServiceImpl implements DatasetProcessService {
     List<Future<UUID>> futures = Lists.newArrayList();
     for (final String queueIdentifier : queueIdentifiers) {
       Future<UUID> future = completionService.submit(() -> {
-        byte[] responseData = curator.getData().forPath(buildPath(path, queueIdentifier));
+        byte[] responseData = curator.getData().forPath(path+"/"+queueIdentifier);
         return QueueHelper.deserializeSingle(responseData, UUID_SERIALIZER);
       });
       futures.add(future);
