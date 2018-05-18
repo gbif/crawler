@@ -14,8 +14,8 @@
   <packaging>pom</packaging>
 
   <name>Crawler :: Mother POM</name>
-  <description>Libraries and executables to the crawling of gbif data publishers.</description>
-  <url>http://github.org/gbif/crawler</url>
+  <description>Libraries and executables to the crawling of GBIF data publishers.</description>
+  <url>https://github.org/gbif/crawler</url>
 
   <scm>
     <connection>scm:git:git@github.com:gbif/crawler.git</connection>
@@ -36,7 +36,7 @@
     <release.tagNameBase>crawler</release.tagNameBase>
 
     <amqp-client.version>3.5.6</amqp-client.version>
-    <curator.version>2.6.0</curator.version>
+    <curator.version>4.0.1</curator.version>
     <fest.version>2.0M10</fest.version>
     <!-- Fixed to the version Curator uses, problems otherwise -->
     <freemarker.version>2.3.23</freemarker.version>
@@ -453,10 +453,17 @@
         <version>${hadoop-common.version}</version>
       </dependency>
 
+      <!-- Apache Curator. See https://curator.apache.org/zk-compatibility.html for notes on compatibility with ZooKeeper 3.4 -->
       <dependency>
         <groupId>org.apache.curator</groupId>
         <artifactId>curator-client</artifactId>
         <version>${curator.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.apache.zookeeper</groupId>
+            <artifactId>zookeeper</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.apache.curator</groupId>
@@ -467,33 +474,29 @@
         <groupId>org.apache.curator</groupId>
         <artifactId>curator-recipes</artifactId>
         <version>${curator.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.apache.zookeeper</groupId>
+            <artifactId>zookeeper</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.apache.curator</groupId>
         <artifactId>curator-test</artifactId>
         <version>${curator.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.apache.zookeeper</groupId>
+            <artifactId>zookeeper</artifactId>
+          </exclusion>
+        </exclusions>
         <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.apache.zookeeper</groupId>
         <artifactId>zookeeper</artifactId>
         <version>${zookeeper.version}</version>
-        <exclusions>
-          <!-- We need to exclude these because they live in a legacy repository (Maven 1)
-               and that isn't supported by Maven 3 anymore -->
-          <exclusion>
-            <artifactId>jms</artifactId>
-            <groupId>javax.jms</groupId>
-          </exclusion>
-          <exclusion>
-            <artifactId>jmxtools</artifactId>
-            <groupId>com.sun.jdmk</groupId>
-          </exclusion>
-          <exclusion>
-            <artifactId>jmxri</artifactId>
-            <groupId>com.sun.jmx</groupId>
-          </exclusion>
-        </exclusions>
       </dependency>
 
       <dependency>

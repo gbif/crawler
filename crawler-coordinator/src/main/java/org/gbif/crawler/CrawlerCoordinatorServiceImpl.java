@@ -35,13 +35,9 @@ import org.slf4j.MDC;
 
 import static org.gbif.api.vocabulary.TagName.CRAWL_ATTEMPT;
 import static org.gbif.api.vocabulary.TagName.DECLARED_RECORD_COUNT;
-import static org.gbif.crawler.constants.CrawlerNodePaths.CRAWL_INFO;
-import static org.gbif.crawler.constants.CrawlerNodePaths.DWCA_CRAWL;
-import static org.gbif.crawler.constants.CrawlerNodePaths.QUEUED_CRAWLS;
-import static org.gbif.crawler.constants.CrawlerNodePaths.RUNNING_CRAWLS;
-import static org.gbif.crawler.constants.CrawlerNodePaths.XML_CRAWL;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.gbif.crawler.constants.CrawlerNodePaths.*;
 
 /**
  * This implementation stores crawls in ZooKeeper in a node structure like this:
@@ -54,10 +50,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * lock here as long as it's running so that in case of failure the job can be picked up</li>
  * </ul>
  * <p></p>
- * This uses a framework named Curator (by Netflix) to help implement the Queue in ZooKeeper. For more information see
- * the <a href="https://github.com/Netflix/curator/wiki/Distributed-Priority-Queue">documentation</a>. Please note that
- * this means that we rely on Curator's serializationf format for the <em>queuedCrawls</em> and <em>runningCrawls</em>
- * nodes.
+ * This uses the Apache Curator framework to help implement the Queue in ZooKeeper. For more information see
+ * the <a href="https://curator.apache.org/curator-recipes/distributed-priority-queue.html">documentation</a>. Please
+ * note that this means that we rely on Curator's serialization format for the <em>queuedCrawls</em> and
+ * <em>runningCrawls</em> nodes.
  */
 public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService {
 
@@ -149,7 +145,7 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
       builder.lockPath(CrawlerNodePaths.buildPath(path, RUNNING_CRAWLS)).buildPriorityQueue(1);
 
     try {
-      curator.newNamespaceAwareEnsurePath(CRAWL_INFO).ensure(curator.getZookeeperClient());
+      curator.create().creatingParentContainersIfNeeded().forPath(buildPath(CRAWL_INFO));
       queue.start();
     } catch (Exception e) {
       throw new ServiceUnavailableException("Error starting up Priority queue", e);

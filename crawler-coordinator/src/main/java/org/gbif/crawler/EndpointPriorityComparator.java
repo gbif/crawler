@@ -24,6 +24,7 @@ import com.google.common.collect.Ordering;
  * <li>BioCASe</li>
  * <li>DiGIR</li>
  * <li>DiGIR (Manis)</li>
+ * <li>EML</li>
  * </ol>
  */
 public class EndpointPriorityComparator implements Comparator<Endpoint>, Serializable {
