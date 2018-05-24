@@ -22,6 +22,7 @@ import org.apache.curator.retry.RetryOneTime;
 import org.apache.curator.test.TestingServer;
 import org.apache.curator.utils.ZKPaths;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.gbif.registry.metasync.api.MetadataSynchroniser;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -31,8 +32,9 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import static org.gbif.api.vocabulary.TagName.CONCEPTUAL_SCHEMA;
 import static org.gbif.api.vocabulary.TagName.CRAWL_ATTEMPT;
-import static org.gbif.api.vocabulary.TagName.DECLARED_RECORD_COUNT;
+import static org.gbif.api.vocabulary.TagName.DECLARED_COUNT;
 
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
@@ -47,6 +49,8 @@ public class CrawlerCoordinatorServiceImplTest {
   public ExpectedException thrown = ExpectedException.none();
   @Mock
   private DatasetService datasetService;
+  @Mock
+  private MetadataSynchroniser metadataSynchroniser;
   private CuratorFramework curator;
   private CrawlerCoordinatorServiceImpl service;
   private UUID uuid = UUID.randomUUID();
@@ -64,7 +68,7 @@ public class CrawlerCoordinatorServiceImplTest {
     curator.start();
     ZKPaths.mkdirs(curator.getZookeeperClient().getZooKeeper(), "/crawler/crawls");
 
-    service = new CrawlerCoordinatorServiceImpl(curator, datasetService);
+    service = new CrawlerCoordinatorServiceImpl(curator, datasetService, metadataSynchroniser);
     dataset.setType(DatasetType.OCCURRENCE);
     when(datasetService.get(uuid)).thenReturn(dataset);
   }
@@ -200,14 +204,11 @@ public class CrawlerCoordinatorServiceImplTest {
     endpoint.setUrl(url);
 
     dataset.getEndpoints().add(endpoint);
-    dataset.getMachineTags().add(MachineTag.newInstance("metasync.gbif.org", "conceptualSchema", "foo"));
-    MachineTag tag = MachineTag.newInstance(CRAWL_ATTEMPT.getNamespace().getNamespace(), CRAWL_ATTEMPT.getName(), "10");
+    dataset.getMachineTags().add(MachineTag.newInstance(CONCEPTUAL_SCHEMA, "foo"));
+    MachineTag tag = MachineTag.newInstance(CRAWL_ATTEMPT, "10");
     tag.setKey(123);
     dataset.getMachineTags().add(tag);
-    dataset.getMachineTags()
-      .add(MachineTag.newInstance(DECLARED_RECORD_COUNT.getNamespace().getNamespace(),
-                                  DECLARED_RECORD_COUNT.getName(),
-                                  "1234"));
+    dataset.getMachineTags().add(MachineTag.newInstance(DECLARED_COUNT,"1234"));
     service.initiateCrawl(uuid, 5);
 
     List<String> children = curator.getChildren().forPath("/crawls");

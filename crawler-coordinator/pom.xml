@@ -79,6 +79,16 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpclient</artifactId>
+      <exclusions>
+        <exclusion>
+          <artifactId>commons-logging</artifactId>
+          <groupId>commons-logging</groupId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <scope>test</scope>
@@ -98,6 +108,10 @@
     <dependency>
       <groupId>org.gbif.common</groupId>
       <artifactId>gbif-postal-service</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.gbif.registry</groupId>
+      <artifactId>registry-metasync</artifactId>
     </dependency>
     <dependency>
       <groupId>org.hamcrest</groupId>

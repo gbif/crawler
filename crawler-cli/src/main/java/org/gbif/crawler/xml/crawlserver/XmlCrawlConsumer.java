@@ -31,7 +31,7 @@ class XmlCrawlConsumer extends CrawlConsumer {
   private final Optional<Long> maxDelay;
   private final File responseArchive;
 
-  // The key used to store the count of records declared by the publisher in the Registry as a machine tag
+  // The key used to store the count of records declared by the publisher in ZooKeeper.
   private static final String KEY_DECLARED_COUNT = "declaredCount";
 
   // Less than 1000 records will be requested in a single range
@@ -71,11 +71,9 @@ class XmlCrawlConsumer extends CrawlConsumer {
 
     Crawler<ScientificNameRangeCrawlContext, String, HttpResponse, List<Byte>> crawler = builder.build();
 
-    crawler.addListener(
-      new CrawlerZooKeeperUpdatingListener<ScientificNameRangeCrawlContext>(builder.getCrawlConfiguration(), curator));
-    crawler.addListener(new LoggingCrawlListener<ScientificNameRangeCrawlContext>(builder.getCrawlConfiguration()));
-    crawler.addListener(
-      new MessagingCrawlListener<ScientificNameRangeCrawlContext>(publisher, builder.getCrawlConfiguration()));
+    crawler.addListener(new CrawlerZooKeeperUpdatingListener(builder.getCrawlConfiguration(), curator));
+    crawler.addListener(new LoggingCrawlListener(builder.getCrawlConfiguration()));
+    crawler.addListener(new MessagingCrawlListener(publisher, builder.getCrawlConfiguration()));
     if (responseArchive != null) {
       crawler.addListener(new ResultPersistingListener(responseArchive, builder.getCrawlConfiguration()));
     }
