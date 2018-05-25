@@ -33,24 +33,15 @@ public class TapirScientificNameRangeRequestHandler implements RequestHandler<Sc
 
   static {
     // DwC
-    TEMPLATE_MAPPING.put("http://rs.tdwg.org/dwc/dwcore/",
-                         "http://rs.gbif.org/templates/tapir/dwc/1.4/sci_name_range.xml");
-    TEMPLATE_MAPPING.put("http://rs.tdwg.org/dwc/geospatial/",
-                         "http://rs.gbif.org/templates/tapir/dwc/1.4/sci_name_range.xml");
-    TEMPLATE_MAPPING.put("http://rs.tdwg.org/dwc/curatorial/",
-                         "http://rs.gbif.org/templates/tapir/dwc/1.4/sci_name_range.xml");
-    TEMPLATE_MAPPING.put("http://rs.tdwg.org/dwc/terms/",
-                         "http://rs.tdwg.org/tapir/cs/dwc/terms/2009-09-23/template/dwc_sci_name_range.xml");
-    TEMPLATE_MAPPING.put("http://digir.net/schema/conceptual/darwin/2003/1.0",
-                         "http://rs.gbif.org/templates/tapir/dwc/1.0/sci_name_range.xml");
-    TEMPLATE_MAPPING.put("http://www.tdwg.org/schemas/abcd/1.2",
-                         "http://rs.gbif.org/templates/tapir/abcd/1.2/sci_name_range.xml");
-    TEMPLATE_MAPPING.put("http://www.tdwg.org/schemas/abcd/2.06",
-                         "http://rs.gbif.org/templates/tapir/abcd/206/sci_name_range.xml");
+    TEMPLATE_MAPPING.put("http://rs.tdwg.org/dwc/dwcore/","http://rs.gbif.org/templates/tapir/dwc/1.4/sci_name_range.xml");
+    TEMPLATE_MAPPING.put("http://rs.tdwg.org/dwc/geospatial/","http://rs.gbif.org/templates/tapir/dwc/1.4/sci_name_range.xml");
+    TEMPLATE_MAPPING.put("http://rs.tdwg.org/dwc/curatorial/","http://rs.gbif.org/templates/tapir/dwc/1.4/sci_name_range.xml");
+    TEMPLATE_MAPPING.put("http://rs.tdwg.org/dwc/terms/","http://rs.tdwg.org/tapir/cs/dwc/terms/2009-09-23/template/dwc_sci_name_range.xml");
+    TEMPLATE_MAPPING.put("http://digir.net/schema/conceptual/darwin/2003/1.0","http://rs.gbif.org/templates/tapir/dwc/1.0/sci_name_range.xml");
+    TEMPLATE_MAPPING.put("http://www.tdwg.org/schemas/abcd/1.2","http://rs.gbif.org/templates/tapir/abcd/1.2/sci_name_range.xml");
+    TEMPLATE_MAPPING.put("http://www.tdwg.org/schemas/abcd/2.06","http://rs.gbif.org/templates/tapir/abcd/206/sci_name_range.xml");
     // ABCD (Default to 2.0.6 whenever 2.0.5 is encountered)
-    TEMPLATE_MAPPING.put("http://www.tdwg.org/schemas/abcd/2.05",
-                         TEMPLATE_MAPPING.get("http://www.tdwg.org/schemas/abcd/2.06"));
-
+    TEMPLATE_MAPPING.put("http://www.tdwg.org/schemas/abcd/2.05",TEMPLATE_MAPPING.get("http://www.tdwg.org/schemas/abcd/2.06"));
   }
 
   public TapirScientificNameRangeRequestHandler(TapirCrawlConfiguration configuration) {

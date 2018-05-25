@@ -25,24 +25,30 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public abstract class AbstractScientificNameRangeRequestHandler
   implements RequestHandler<ScientificNameRangeCrawlContext, String> {
 
-  private final String templateLocation;
+  private final String rangeTemplateLocation;
+  private final String nullTemplateLocation;
   private final String requestParamKey;
   private final URI targetUrl;
 
   /**
    * All constructor parameters are mandatory and may not be null.
    *
-   * @param targetUrl        of the dataset
-   * @param templateLocation the location on the classpath that contains the template to use for this request
-   * @param requestParamKey  the query parameter name that contains the serialized request
+   * @param targetUrl             of the dataset
+   * @param rangeTemplateLocation the location on the classpath that contains the template to use for range requests
+   * @param nullTemplateLocation  the location on the classpath that contains the template to use for null requests
+   * @param requestParamKey       the query parameter name that contains the serialized request
    */
-  protected AbstractScientificNameRangeRequestHandler(URI targetUrl, String templateLocation, String requestParamKey) {
+  protected AbstractScientificNameRangeRequestHandler(
+      URI targetUrl, String rangeTemplateLocation, String nullTemplateLocation, String requestParamKey
+  ) {
     this.targetUrl = checkNotNull(targetUrl);
-    this.templateLocation = checkNotNull(templateLocation);
+    this.rangeTemplateLocation = checkNotNull(rangeTemplateLocation);
+    this.nullTemplateLocation = checkNotNull(nullTemplateLocation);
     this.requestParamKey = checkNotNull(requestParamKey);
 
     // Throws an IllegalArgumentException if it doesn't exist so serves as validation
-    Resources.getResource(templateLocation);
+    Resources.getResource(rangeTemplateLocation);
+    Resources.getResource(nullTemplateLocation);
   }
 
   @Override
@@ -64,14 +70,17 @@ public abstract class AbstractScientificNameRangeRequestHandler
    */
   private String buildRequest(ScientificNameRangeCrawlContext context) {
     Map<String, Object> templateContext = new HashMap<String, Object>(getDefaultContext());
+    String templateLocation = nullTemplateLocation;
 
     templateContext.put("startAt", String.valueOf(context.getOffset()));
 
     if (context.getLowerBound().isPresent()) {
       templateContext.put("lower", context.getLowerBound().get());
+      templateLocation = rangeTemplateLocation;
     }
     if (context.getUpperBound().isPresent()) {
       templateContext.put("upper", context.getUpperBound().get());
+      templateLocation = rangeTemplateLocation;
     }
 
     try {

@@ -16,7 +16,8 @@ import com.google.common.collect.ImmutableMap;
 @NotThreadSafe
 public class DigirScientificNameRangeRequestHandler extends AbstractScientificNameRangeRequestHandler {
 
-  private static final String TEMPLATE_LOCATION = "template/digir/scientificNameRangeSearch.ftl";
+  private static final String RANGE_TEMPLATE_LOCATION = "template/digir/scientificNameRangeSearch.ftl";
+  private static final String NULL_TEMPLATE_LOCATION = "template/digir/scientificNameRangeSearch.ftl";
   private static final String REQUEST_PARAM_KEY = "request";
 
   private static final int MAX_RESULTS = 1000;
@@ -29,8 +30,7 @@ public class DigirScientificNameRangeRequestHandler extends AbstractScientificNa
   static {
     ImmutableMap<String, String> normalDigir = ImmutableMap.<String, String>builder()
       .put(SCHEMA_LOCATION_KEY, "http://digir.sourceforge.net/schema/conceptual/darwin/2003/1.0/darwin2.xsd")
-      .put(RECORD_SCHEMA_LOCATION_KEY,
-        "http://digir.sourceforge.net/schema/conceptual/darwin/full/2003/1.0/darwin2full.xsd")
+      .put(RECORD_SCHEMA_LOCATION_KEY, "http://digir.sourceforge.net/schema/conceptual/darwin/full/2003/1.0/darwin2full.xsd")
       .build();
 
     ImmutableMap<String, String> manisDigir = ImmutableMap.<String, String>builder()
@@ -50,7 +50,7 @@ public class DigirScientificNameRangeRequestHandler extends AbstractScientificNa
    * Initializes this request handler.
    */
   public DigirScientificNameRangeRequestHandler(DigirCrawlConfiguration configuration) {
-    super(configuration.getUrl(), TEMPLATE_LOCATION, REQUEST_PARAM_KEY);
+    super(configuration.getUrl(), RANGE_TEMPLATE_LOCATION, NULL_TEMPLATE_LOCATION, REQUEST_PARAM_KEY);
 
     defaultContext = ImmutableMap.<String, Object>builder()
       .put("resource", configuration.getResourceCode())

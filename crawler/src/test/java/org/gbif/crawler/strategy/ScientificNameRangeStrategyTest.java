@@ -14,7 +14,7 @@ public class ScientificNameRangeStrategyTest {
     ScientificNameRangeStrategy strategy = new ScientificNameRangeStrategy(new ScientificNameRangeCrawlContext());
     ScientificNameRangeCrawlContext next = strategy.next();
 
-    // Test if null...Aaa works
+    // Test if ...Aaa works
     assertThat(next.getOffset()).isZero();
     assertThat(next.getLowerBound().isPresent()).isFalse();
     assertThat(next.getUpperBound().isPresent()).isTrue();
@@ -51,12 +51,19 @@ public class ScientificNameRangeStrategyTest {
     assertThat(next.getUpperBound().isPresent()).isTrue();
     assertThat(next.getUpperBound().get()).isEqualTo("Zza");
 
-    // Zza...null
+    // Zza...
     assertThat(strategy.hasNext()).isTrue();
     next = strategy.next();
     assertThat(next.getOffset()).isZero();
     assertThat(next.getLowerBound().isPresent()).isTrue();
     assertThat(next.getLowerBound().get()).isEqualTo("Zza");
+    assertThat(next.getUpperBound().isPresent()).isFalse();
+
+    // Zza...
+    assertThat(strategy.hasNext()).isTrue();
+    next = strategy.next();
+    assertThat(next.getOffset()).isZero();
+    assertThat(next.getLowerBound().isPresent()).isFalse();
     assertThat(next.getUpperBound().isPresent()).isFalse();
 
     assertThat(strategy.hasNext()).isFalse();
@@ -72,7 +79,7 @@ public class ScientificNameRangeStrategyTest {
                                                                            ScientificNameRangeStrategy.Mode.ABC);
     ScientificNameRangeCrawlContext next = strategy.next();
 
-    // Test if null...Aaa works
+    // Test if ...Aaa works
     assertThat(next.getOffset()).isZero();
     assertThat(next.getLowerBound().isPresent()).isFalse();
     assertThat(next.getUpperBound().isPresent()).isTrue();
@@ -98,12 +105,19 @@ public class ScientificNameRangeStrategyTest {
     assertThat(next.getUpperBound().isPresent()).isTrue();
     assertThat(next.getUpperBound().get()).isEqualTo("Zaa");
 
-    // Zaa...null
+    // Zaa...
     assertThat(strategy.hasNext()).isTrue();
     next = strategy.next();
     assertThat(next.getOffset()).isZero();
     assertThat(next.getLowerBound().isPresent()).isTrue();
     assertThat(next.getLowerBound().get()).isEqualTo("Zaa");
+    assertThat(next.getUpperBound().isPresent()).isFalse();
+
+    // null
+    assertThat(strategy.hasNext()).isTrue();
+    next = strategy.next();
+    assertThat(next.getOffset()).isZero();
+    assertThat(next.getLowerBound().isPresent()).isFalse();
     assertThat(next.getUpperBound().isPresent()).isFalse();
 
     assertThat(strategy.hasNext()).isFalse();
@@ -119,7 +133,7 @@ public class ScientificNameRangeStrategyTest {
                                                                            ScientificNameRangeStrategy.Mode.AZ);
     ScientificNameRangeCrawlContext next = strategy.next();
 
-    // Test if null...Aaa works
+    // Test if ...Aaa works
     assertThat(next.getOffset()).isZero();
     assertThat(next.getLowerBound().isPresent()).isFalse();
     assertThat(next.getUpperBound().isPresent()).isTrue();
@@ -134,7 +148,7 @@ public class ScientificNameRangeStrategyTest {
     assertThat(next.getUpperBound().isPresent()).isTrue();
     assertThat(next.getUpperBound().get()).isEqualTo("Zaa");
 
-    // Zaa...null
+    // Zaa...
     assertThat(strategy.hasNext()).isTrue();
     next = strategy.next();
     assertThat(next.getOffset()).isZero();
@@ -142,17 +156,22 @@ public class ScientificNameRangeStrategyTest {
     assertThat(next.getLowerBound().get()).isEqualTo("Zaa");
     assertThat(next.getUpperBound().isPresent()).isFalse();
 
+    // null
+    assertThat(strategy.hasNext()).isTrue();
+    next = strategy.next();
+    assertThat(next.getOffset()).isZero();
+    assertThat(next.getLowerBound().isPresent()).isFalse();
+    assertThat(next.getUpperBound().isPresent()).isFalse();
+
     assertThat(strategy.hasNext()).isFalse();
   }
-
-
 
   @Test
   public void testFailure() {
     ScientificNameRangeStrategy strategy = new ScientificNameRangeStrategy(new ScientificNameRangeCrawlContext());
     ScientificNameRangeCrawlContext next = strategy.next();
 
-    next.setLowerBound("Zza");
+    next.setLowerBoundAbsent();
     next.setUpperBoundAbsent();
     // Make sure there are no more
     assertThat(strategy.hasNext()).isFalse();

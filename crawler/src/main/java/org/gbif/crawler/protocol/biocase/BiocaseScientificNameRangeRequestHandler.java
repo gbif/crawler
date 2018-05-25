@@ -17,7 +17,8 @@ import com.google.common.collect.ImmutableMap;
 @NotThreadSafe
 public class BiocaseScientificNameRangeRequestHandler extends AbstractScientificNameRangeRequestHandler {
 
-  private static final String TEMPLATE_LOCATION = "template/biocase/scientificNameRangeSearch.ftl";
+  private static final String TEMPLATE_RANGE_LOCATION = "template/biocase/scientificNameRangeSearch.ftl";
+  private static final String TEMPLATE_NULL_LOCATION = "template/biocase/scientificNameNullSearch.ftl";
   private static final String REQUEST_PARAM_KEY = "request";
 
   private static final int MAX_RESULTS = 1000;
@@ -30,14 +31,12 @@ public class BiocaseScientificNameRangeRequestHandler extends AbstractScientific
   static {
     ImmutableMap<String, String> abcd12 = ImmutableMap.<String, String>builder()
       .put(TITLE_KEY, "/DataSets/DataSet/OriginalSource/SourceName")
-      .put(SUBJECT_KEY,
-        "/DataSets/DataSet/Units/Unit/Identifications/Identification/TaxonIdentified/NameAuthorYearString")
+      .put(SUBJECT_KEY, "/DataSets/DataSet/Units/Unit/Identifications/Identification/TaxonIdentified/NameAuthorYearString")
       .build();
 
     ImmutableMap<String, String> abcd206 = ImmutableMap.<String, String>builder()
       .put(TITLE_KEY, "/DataSets/DataSet/Metadata/Description/Representation/Title")
-      .put(SUBJECT_KEY,
-        "/DataSets/DataSet/Units/Unit/Identifications/Identification/Result/TaxonIdentified/ScientificName/FullScientificNameString")
+      .put(SUBJECT_KEY, "/DataSets/DataSet/Units/Unit/Identifications/Identification/Result/TaxonIdentified/ScientificName/FullScientificNameString")
       .build();
 
     SCHEMA_INFOS = ImmutableMap.<String, ImmutableMap<String, String>>builder()
@@ -52,7 +51,7 @@ public class BiocaseScientificNameRangeRequestHandler extends AbstractScientific
    * Initializes this request handler.
    */
   public BiocaseScientificNameRangeRequestHandler(BiocaseCrawlConfiguration configuration) {
-    super(configuration.getUrl(), TEMPLATE_LOCATION, REQUEST_PARAM_KEY);
+    super(configuration.getUrl(), TEMPLATE_RANGE_LOCATION, TEMPLATE_NULL_LOCATION, REQUEST_PARAM_KEY);
 
     defaultContext = ImmutableMap.<String, Object>builder()
       .put("limit", Integer.toString(MAX_RESULTS))

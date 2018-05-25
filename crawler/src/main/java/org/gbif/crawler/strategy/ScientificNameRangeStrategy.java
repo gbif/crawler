@@ -14,14 +14,15 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * to be more aggressive, the ABC mode with do Aaa-Baa, Baa-Caa etc and to be super eager the AZ mode will try and do
  * Aaa-Zaa in one call.
  * <p/>
- * All modes will include a first search for everything before 'aaa' - i.e. {@code null} -> 'aaa' and similar at the
- * end with a 'Zaa' or 'Zza' -> {@code null}.
+ * All modes will include a first search for everything before 'Aaa' and similar at the end with 'Zaa' or 'Zza'.
  * <p/>
- * We use three character strings even though we don't change the third because a lot of provides require at least that
+ * All modes finish with a search for null scientific names, with neither lower nor upper bounds set.
+ * <p/>
+ * We use three character strings even though we don't change the third because a lot of providers require at least that
  * many characters for a search.
  * <p/>
  * <em>Note:</em> There is currently no way of stopping the job automatically when a certain range has been scanned.
- * The initial context is just taken as a starting point buf from there on all the other ranges will be emitted.
+ * The initial context is just taken as a starting point but from there on all the other ranges will be emitted.
  * <p/>
  * This class is not thread-safe.
  */
@@ -56,12 +57,19 @@ public class ScientificNameRangeStrategy extends AbstractStrategy<ScientificName
       return context;
     }
 
+    // The very final step is records with no ScientificName
+    // Both bounds are set to null.
+    if (!context.getUpperBound().isPresent()) {
+      context.setLowerBoundAbsent();
+      return context;
+    }
+
     // We start with the last upper bound
     context.setLowerBound(context.getUpperBound().get());
 
     // If we are at the very end we still need to search:
-    // AAAB mode: zza..null
-    // others: zaa..null
+    // AAAB mode: Zza...
+    // others: Zaa...
     if ((mode == Mode.AAAB && context.getLowerBound().get().equals("Zza"))
       || (mode != Mode.AAAB && context.getLowerBound().get().equals("Zaa"))) {
       context.setUpperBound(null);
@@ -98,7 +106,7 @@ public class ScientificNameRangeStrategy extends AbstractStrategy<ScientificName
    */
   @Override
   public boolean hasNext() {
-    return context.getUpperBound().isPresent();
+    return context.getUpperBound().isPresent() || context.getLowerBound().isPresent();
   }
 
   /**
