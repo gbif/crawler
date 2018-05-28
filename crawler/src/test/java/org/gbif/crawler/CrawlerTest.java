@@ -79,8 +79,8 @@ public class CrawlerTest {
 
   private static final UUID DATASET_UUID = UUID.randomUUID();
 
-  // We have 26 * 26 = 676 + 2 (null->aaa, zza->null) = 678 different "bounds" which makes for 677 requests in total
-  private static final int NUM_RANGES = 677;
+  // We have 26 * 26 = 676 + 2 (null->aaa, zza->null) + 1 (empty) = 679 different "bounds" which makes for 678 requests in total
+  private static final int NUM_RANGES = 26 * 26 + 2 + 1 - 1;
   private ScientificNameRangeCrawlContext context;
   private ScientificNameRangeStrategy strategy;
   private LimitedRetryPolicy retryPolicy;
