@@ -175,7 +175,7 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
     }
 
     // Ask the source how many records it has
-    Long declaredCount = updateDeclaredRecordCount(dataset, endpoint.get(), datasetKey);
+    Long declaredCount = updateOrRetrieveDeclaredRecordCount(dataset, endpoint.get(), datasetKey);
 
     // This object holds all information needed by Crawlers to crawl the endpoint
     CrawlJob crawlJob = getCrawlJob(datasetKey, dataset, endpoint.get(), declaredCount);
@@ -189,7 +189,7 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
   /**
    * Query the source for an expected count of records.
    */
-  private Long updateDeclaredRecordCount(Dataset dataset, Endpoint endpoint, UUID datasetKey) {
+  private Long updateOrRetrieveDeclaredRecordCount(Dataset dataset, Endpoint endpoint, UUID datasetKey) {
     Long declaredCount = null;
 
     List<MachineTag> filteredTags = MachineTagUtils.list(dataset, DECLARED_COUNT);
@@ -203,14 +203,15 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
 
     try {
       LOG.debug("Attempting update of declared count");
-      declaredCount = metadataSynchroniser.getDatasetCount(dataset, endpoint);
+      Long newDeclaredCount = metadataSynchroniser.getDatasetCount(dataset, endpoint);
 
-      if (declaredCount != null) {
+      if (newDeclaredCount != null) {
         datasetService.deleteMachineTags(datasetKey, DECLARED_COUNT);
-        datasetService.addMachineTag(dataset.getKey(), DECLARED_COUNT, Long.toString(declaredCount));
-        LOG.debug("New declared count is {}", declaredCount);
+        datasetService.addMachineTag(dataset.getKey(), DECLARED_COUNT, Long.toString(newDeclaredCount));
+        LOG.debug("New declared count is {}", newDeclaredCount);
+        declaredCount = newDeclaredCount;
       } else {
-        LOG.debug("No declared count");
+        LOG.debug("No new declared count");
       }
     } catch (Exception e) {
       LOG.error("Error updating declared count "+e.getMessage(), e);

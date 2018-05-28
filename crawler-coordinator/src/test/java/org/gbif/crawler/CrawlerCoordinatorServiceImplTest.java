@@ -40,6 +40,7 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -59,6 +60,8 @@ public class CrawlerCoordinatorServiceImplTest {
 
   @Before
   public void setup() throws Exception {
+    when(metadataSynchroniser.getDatasetCount(any(), any())).thenReturn(null);
+
     server = new TestingServer();
     curator = CuratorFrameworkFactory.builder()
       .connectString(server.getConnectString())
@@ -223,6 +226,6 @@ public class CrawlerCoordinatorServiceImplTest {
     assertThat(attempt, equalTo(11));
 
     bytes = curator.getData().forPath("/crawls/" + uuid + "/" + CrawlerNodePaths.DECLARED_COUNT);
-    assertThat("1234", equalTo(new String(bytes)));
+    assertThat(new String(bytes), equalTo("1234"));
   }
 }
