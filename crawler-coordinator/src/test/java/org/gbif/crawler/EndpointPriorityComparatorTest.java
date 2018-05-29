@@ -38,6 +38,14 @@ public class EndpointPriorityComparatorTest {
     e1.setType(EndpointType.DWC_ARCHIVE);
     e2.setType(EndpointType.TAPIR);
     assertThat(COMP.compare(e1, e2), greaterThan(0));
+
+    e1.setType(EndpointType.BIOCASE_XML_ARCHIVE);
+    e2.setType(EndpointType.BIOCASE);
+    assertThat(COMP.compare(e1, e2), greaterThan(0));
+
+    e1.setType(EndpointType.DWC_ARCHIVE);
+    e2.setType(EndpointType.BIOCASE_XML_ARCHIVE);
+    assertThat(COMP.compare(e1, e2), greaterThan(0));
   }
 
   @Test

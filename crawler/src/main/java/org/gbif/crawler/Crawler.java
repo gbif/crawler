@@ -95,10 +95,8 @@ public class Crawler<CTX extends CrawlContext, REQ, RESP, RES> {
   public static Crawler<ScientificNameRangeCrawlContext, String, HttpResponse, List<Byte>> newBiocaseCrawler(
     UUID datasetKey, int attempt, URI url, String contentNamespace, String datasetTitle
     ) {
-    BiocaseCrawlConfiguration configuration =
-      new BiocaseCrawlConfiguration(datasetKey, attempt, url, contentNamespace, datasetTitle);
-    RequestHandler<ScientificNameRangeCrawlContext, String> requestHandler =
-      new BiocaseScientificNameRangeRequestHandler(configuration);
+    BiocaseCrawlConfiguration configuration = new BiocaseCrawlConfiguration(datasetKey, attempt, url, contentNamespace, datasetTitle);
+    RequestHandler<ScientificNameRangeCrawlContext, String> requestHandler = new BiocaseScientificNameRangeRequestHandler(configuration);
     ResponseHandler<HttpResponse, List<Byte>> responseHandler = new BiocaseResponseHandler();
     return newCrawler(requestHandler, responseHandler);
   }

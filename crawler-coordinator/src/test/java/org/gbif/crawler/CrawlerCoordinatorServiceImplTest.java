@@ -106,11 +106,15 @@ public class CrawlerCoordinatorServiceImplTest {
     endpoint5.setType(EndpointType.EML);
     endpoints.add(endpoint5);
 
+    Endpoint endpoint6 = new Endpoint();
+    endpoint6.setType(EndpointType.BIOCASE_XML_ARCHIVE);
+    endpoints.add(endpoint6);
+
     List<Endpoint> sortedEndpoints = service.prioritySortEndpoints(endpoints);
 
-    assertThat(sortedEndpoints.size(), equalTo(4));
-    assertThat(sortedEndpoints, contains(endpoint1, endpoint4, endpoint3, endpoint5));
-    assertTrue("Priority of Dwc-A is higher than its EML", sortedEndpoints.indexOf(endpoint1) < sortedEndpoints.indexOf(endpoint5));
+    assertThat(sortedEndpoints.size(), equalTo(5));
+    assertThat(sortedEndpoints, contains(endpoint1, endpoint6, endpoint4, endpoint3, endpoint5));
+    assertTrue("Priority of DwC-A is higher than its EML", sortedEndpoints.indexOf(endpoint1) < sortedEndpoints.indexOf(endpoint5));
   }
 
   @Test

@@ -69,6 +69,7 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
   private final CuratorFramework curator;
   private final DistributedPriorityQueue<UUID> xmlQueue;
   private final DistributedPriorityQueue<UUID> dwcaQueue;
+  private final DistributedPriorityQueue<UUID> abcdaQueue;
   private final DatasetService datasetService;
   private final MetadataSynchroniser metadataSynchroniser;
   private final CrawlerCoordinatorServiceMetrics metrics = new CrawlerCoordinatorServiceMetrics();
@@ -90,6 +91,7 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
 
     xmlQueue = buildQueue(curator, XML_CRAWL);
     dwcaQueue = buildQueue(curator, DWCA_CRAWL);
+    abcdaQueue = buildQueue(curator, ABCDA_CRAWL);
   }
 
   @Override
@@ -181,7 +183,7 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
     CrawlJob crawlJob = getCrawlJob(datasetKey, dataset, endpoint.get(), declaredCount);
 
     byte[] dataBytes = serializeCrawlJob(crawlJob);
-    queueCrawlJob(datasetKey, isDarwinCoreArchive(endpoint.get()), priority, dataBytes);
+    queueCrawlJob(datasetKey, isAbcdArchive(endpoint.get()), isDarwinCoreArchive(endpoint.get()), priority, dataBytes);
     LOG.info("Crawling endpoint [{}] for dataset [{}]", endpoint.get().getUrl(), datasetKey);
     writeDeclaredRecordCount(datasetKey, declaredCount);
   }
@@ -229,6 +231,15 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
   private static boolean isDarwinCoreArchive(Endpoint endpoint) {
     return EndpointType.DWC_ARCHIVE == endpoint.getType() ||
             EndpointType.EML == endpoint.getType();
+  }
+
+  /**
+   * Determine if an endpoint should be handled as an ABCD archive or not.
+   * @param endpoint
+   * @return
+   */
+  private static boolean isAbcdArchive(Endpoint endpoint) {
+    return EndpointType.BIOCASE_XML_ARCHIVE == endpoint.getType();
   }
 
   /**
@@ -488,14 +499,16 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
    * @param datasetKey of the dataset to enqueue
    * @param dataBytes   to put into ZooKeeper
    */
-  private void queueCrawlJob(UUID datasetKey, boolean isDwca, int priority, byte[] dataBytes) {
+  private void queueCrawlJob(UUID datasetKey, boolean isAbcda, boolean isDwca, int priority, byte[] dataBytes) {
     try {
       // This could in theory fail when two coordinators are running at the same time. They'll have confirmed if this
       // node exists or not earlier but in the meantime another Coordinator might have created it. That means the
       // Exception we throw does not necessarily tell us enough. But this is an edge-case and I feel it's not worth
       // trying to figure out why this failed.
       curator.create().creatingParentsIfNeeded().forPath(CrawlerNodePaths.getCrawlInfoPath(datasetKey), dataBytes);
-      if (isDwca) {
+      if (isAbcda) {
+        abcdaQueue.put(datasetKey, priority);
+      } else if (isDwca) {
         dwcaQueue.put(datasetKey, priority);
       } else {
         xmlQueue.put(datasetKey, priority);
