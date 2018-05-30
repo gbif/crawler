@@ -51,9 +51,9 @@
     <gbif-common.version>0.40</gbif-common.version>
     <gbif-httputils.version>0.10</gbif-httputils.version>
     <gbif-microservice.version>0.7</gbif-microservice.version>
-    <gbif-occurrence.version>0.81-SNAPSHOT</gbif-occurrence.version>
-    <gbif-postal-service.version>0.25-SNAPSHOT</gbif-postal-service.version>
-    <gbif-registry.version>2.83-SNAPSHOT</gbif-registry.version>
+    <gbif-occurrence.version>0.81</gbif-occurrence.version>
+    <gbif-postal-service.version>0.25</gbif-postal-service.version>
+    <gbif-registry.version>2.83</gbif-registry.version>
     <gbif-wrangler.version>0.2</gbif-wrangler.version>
     <gbif-xml-occurrence-parsers.version>1.0</gbif-xml-occurrence-parsers.version>
     <gbif-pipelines-core.version>1.1-SNAPSHOT</gbif-pipelines-core.version>
