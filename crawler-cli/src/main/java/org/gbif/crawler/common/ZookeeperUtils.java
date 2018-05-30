@@ -61,7 +61,17 @@ public class ZookeeperUtils {
   }
 
   public static DistributedAtomicLong getCounter(CuratorFramework curator, UUID datasetKey, String path) {
-    return new DistributedAtomicLong(curator, getCrawlInfoPath(datasetKey, path), new RetryNTimes(5, 1000));
+    try {
+      if (curator.checkExists().forPath(path) != null) {
+        return new DistributedAtomicLong(curator, getCrawlInfoPath(datasetKey, path), new RetryNTimes(5, 1000));
+      } else {
+        LOG.error("Attempt to get non-existent counter {} for dataset {}", path, datasetKey);
+        return null;
+      }
+    } catch (Exception e) {
+      LOG.error("Failed to check existence of counter {} for dataset {}", path, datasetKey, e);
+      return null;
+    }
   }
 
   public static void updateCounter(CuratorFramework curator, UUID datasetKey, String path, long value) {
