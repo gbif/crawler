@@ -275,13 +275,9 @@ public class DatasetProcessServiceImpl implements DatasetProcessService {
    * @return the counter value or absent if it didn't exist
    */
   private Optional<Long> getCounter(String rootPath, String counter) {
+    DistributedAtomicLong dal = new DistributedAtomicLong(curator, rootPath + "/" + counter, counterRetryPolicy);
     try {
-      if (curator.checkExists().forPath(rootPath + "/" + counter) != null) {
-        DistributedAtomicLong dal = new DistributedAtomicLong(curator, rootPath + "/" + counter, counterRetryPolicy);
-        return Optional.fromNullable(dal.get().preValue());
-      } else {
-        return Optional.absent();
-      }
+      return Optional.fromNullable(dal.get().preValue());
     } catch (Exception ignored) {
       return Optional.absent();
     }
