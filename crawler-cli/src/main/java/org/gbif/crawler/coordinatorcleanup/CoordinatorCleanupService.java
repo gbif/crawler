@@ -176,8 +176,10 @@ public class CoordinatorCleanupService extends AbstractScheduledService {
       return false;
     }
 
-    // if metadata only, these are set to empty once the metadata is synchronized
-    if (ProcessState.EMPTY == status.getProcessStateOccurrence() && ProcessState.EMPTY == status.getProcessStateChecklist()) {
+    // if metadata only, these are set to empty by the fragmenter
+    if (ProcessState.EMPTY == status.getProcessStateOccurrence() &&
+            ProcessState.EMPTY == status.getProcessStateChecklist() &&
+            ProcessState.EMPTY == status.getProcessStateSample()) {
       return true;
     }
 

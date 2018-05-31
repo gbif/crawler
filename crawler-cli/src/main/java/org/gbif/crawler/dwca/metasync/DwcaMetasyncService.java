@@ -45,7 +45,7 @@ import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_CHECKLIS
 import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_OCCURRENCE;
 
 /**
- * Service that listens to DwcaDownloadFinishedMessages and puts found metadata documents into the metadata
+ * Service that listens to DwcaValidationFinishedMessages and puts found metadata documents into the metadata
  * repository thereby updating the registered datasets information. Is aware of constituent datasets within an
  * archive and therefore knows how to process Catalogue of Life GSD information.
  */
@@ -146,13 +146,6 @@ public class DwcaMetasyncService extends DwcaService {
       }
 
       LOG.info("Finished updating metadata from DwC-A for dataset [{}]", datasetKey);
-
-      // for metadata only dataset this is the last step
-      // explicitly declare that no content is expected so the CoordinatorCleanup can pick it
-      if(DatasetType.METADATA == dataset.getType()) {
-        createOrUpdate(curator, datasetKey, PROCESS_STATE_OCCURRENCE, ProcessState.EMPTY);
-        createOrUpdate(curator, datasetKey, PROCESS_STATE_CHECKLIST, ProcessState.EMPTY);
-      }
 
       // send success message
       publisher.send(new DwcaMetasyncFinishedMessage(datasetKey, dataset.getType(), message.getSource(), message.getAttempt(),
