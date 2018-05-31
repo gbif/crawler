@@ -10,7 +10,7 @@ import org.gbif.api.model.crawler.FinishReason;
 import org.gbif.api.model.crawler.ProcessState;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.DatasetBasedMessage;
-import org.gbif.crawler.abcda.downloader.DownloaderService;
+import org.gbif.crawler.abcda.downloader.DownloaderService; // TODO; not abcd.
 import org.gbif.crawler.constants.CrawlerNodePaths;
 import org.gbif.utils.HttpUtil;
 import org.slf4j.Logger;
@@ -62,7 +62,7 @@ public abstract class DownloadCrawlConsumer extends CrawlConsumer {
     final File localFile = new File(archiveRepository, datasetKey + getSuffix());
 
     try (MDC.MDCCloseable closeable = MDC.putCloseable("datasetKey", datasetKey.toString())) {
-      LOG.info("Start download of ABCD archive from {} to {}", crawlJob.getTargetUrl(), localFile);
+      LOG.info("Start download of archive from {} to {}", crawlJob.getTargetUrl(), localFile);
       StatusLine status = client.downloadIfModifiedSince(crawlJob.getTargetUrl().toURL(), localFile);
 
       if (status.getStatusCode() == HttpStatus.SC_NOT_MODIFIED) {
