@@ -38,24 +38,24 @@ public class LoggingCrawlListener<CTX extends CrawlContext> implements CrawlList
   @Override
   public void startCrawl() {
     this.startDate = new Date();
-    LOG.info("started crawl");
+    LOG.info("Started crawl");
   }
 
   @Override
   public void error(Throwable e) {
-    LOG.warn("error during crawling: [{}], last request [{}]", lastContext, lastRequest, e);
+    LOG.warn("Error during crawling: [{}], last request [{}]", lastContext, lastRequest, e);
   }
 
   @Override
   public void error(String msg) {
-    LOG.warn("error during crawling: [{}], last request [{}], message [{}]", lastContext, lastRequest, msg);
+    LOG.warn("Error during crawling: [{}], last request [{}], message [{}]", lastContext, lastRequest, msg);
   }
 
   @Override
   public void response(List<Byte> response, int retry, long duration, Optional<Integer> recordCount,
     Optional<Boolean> endOfRecords) {
     totalRecordCount += recordCount.or(0);
-    LOG.info("got response for [{}], records [{}], endOfRecords [{}], retry [{}], took [{}s]", lastContext, recordCount,
+    LOG.info("Got response for [{}], records [{}], endOfRecords [{}], retry [{}], took [{}s]", lastContext, recordCount,
       endOfRecords, retry, TimeUnit.MILLISECONDS.toSeconds(duration));
   }
 
@@ -78,7 +78,7 @@ public class LoggingCrawlListener<CTX extends CrawlContext> implements CrawlList
     Date finishDate = new Date();
     long minutes = (finishDate.getTime() - startDate.getTime()) / (60 * 1000);
     LOG.info(
-      "finished crawling with a total of [{}] records, reason [{}], started at [{}], finished at [{}], took [{}] minutes",
+      "Finished crawling with a total of [{}] records, reason [{}], started at [{}], finished at [{}], took [{}] minutes",
       totalRecordCount, reason, startDate, finishDate, minutes);
 
     MDC.remove("datasetKey");
@@ -87,7 +87,7 @@ public class LoggingCrawlListener<CTX extends CrawlContext> implements CrawlList
 
   @Override
   public void request(String req, int retry) {
-    LOG.info("requested page for [{}], retry [{}], request [{}]", lastContext, retry, req);
+    LOG.info("Requested page for [{}], retry [{}], request [{}]", lastContext, retry, req);
     lastRequest = req;
   }
 
@@ -95,7 +95,7 @@ public class LoggingCrawlListener<CTX extends CrawlContext> implements CrawlList
   public void progress(CrawlContext context) {
     lastRequest = null;
     lastContext = context;
-    LOG.info("now beginning to crawl [{}]", context);
+    LOG.info("Now beginning to crawl [{}]", context);
   }
 
 }

@@ -33,8 +33,6 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
 import java.io.IOException;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
@@ -176,8 +174,11 @@ public class CoordinatorCleanupService extends AbstractScheduledService {
       return false;
     }
 
-    // if metadata only, these are set to empty once the metadata is synchronized
-    if (ProcessState.EMPTY == status.getProcessStateOccurrence() && ProcessState.EMPTY == status.getProcessStateChecklist()) {
+    // if metadata only, these are set to empty by the fragmenter
+    // Also if an occurrence dataset really is empty.
+    if (ProcessState.EMPTY == status.getProcessStateOccurrence() &&
+            ProcessState.EMPTY == status.getProcessStateChecklist() &&
+            ProcessState.EMPTY == status.getProcessStateSample()) {
       return true;
     }
 
@@ -200,13 +201,6 @@ public class CoordinatorCleanupService extends AbstractScheduledService {
     }
 
     // Done persisting fragments?
-
-    // There are legal cases when no fragments are emitted at all when the dataset is empty.
-    // Abort after 24h in such cases.
-    if (status.getFragmentsEmitted() == 0 && crawlingStartedBefore24h(status)) {
-      return true;
-    }
-
     // Verify that all fragments have been fully processed, i.e. when we have processed as many fragments as the fragmenter emitted.
     // During this processing we could generate more raw occurrence records than we got fragments due to ABCD2
     // We also make sure here that at least one fragment was already processed.
@@ -246,14 +240,6 @@ public class CoordinatorCleanupService extends AbstractScheduledService {
     }
 
     return true;
-  }
-
-  private boolean crawlingStartedBefore24h(DatasetProcessStatus status) {
-    if (status.getStartedCrawling() == null) return false;
-
-    Instant start = status.getStartedCrawling().toInstant();
-    Instant yesterday = Instant.now().minus( 24 , ChronoUnit.HOURS );
-    return start.isBefore( yesterday);
   }
 
   private void delete(DatasetProcessStatus status) {

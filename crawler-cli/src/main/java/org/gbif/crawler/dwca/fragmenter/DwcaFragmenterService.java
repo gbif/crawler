@@ -1,5 +1,6 @@
 package org.gbif.crawler.dwca.fragmenter;
 
+import org.gbif.api.model.crawler.ProcessState;
 import org.gbif.api.vocabulary.DatasetType;
 import org.gbif.api.vocabulary.EndpointType;
 import org.gbif.api.vocabulary.OccurrenceSchemaType;
@@ -31,11 +32,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
+import static org.gbif.crawler.common.ZookeeperUtils.createOrUpdate;
 import static org.gbif.crawler.common.ZookeeperUtils.getCounter;
 import static org.gbif.crawler.common.ZookeeperUtils.updateCounter;
 import static org.gbif.crawler.constants.CrawlerNodePaths.FRAGMENTS_EMITTED;
 import static org.gbif.crawler.constants.CrawlerNodePaths.PAGES_FRAGMENTED_ERROR;
 import static org.gbif.crawler.constants.CrawlerNodePaths.PAGES_FRAGMENTED_SUCCESSFUL;
+import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_CHECKLIST;
+import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_OCCURRENCE;
+import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_SAMPLE;
 
 /**
  * This service will listen for {@link DwcaValidationFinishedMessage} from RabbitMQ and for every valid archive it will
@@ -102,23 +107,34 @@ public class DwcaFragmenterService extends AbstractIdleService {
       UUID datasetKey = message.getDatasetUuid();
       MDC.put("datasetKey", datasetKey.toString());
 
-      Archive archive;
-      try {
-        archive = DwcFiles.fromLocation(new File(archiveRepository, datasetKey.toString()).toPath());
-      } catch (IOException ioEx) {
-        LOG.error("Could not open archive for dataset [{}] : {}", datasetKey, ioEx.getMessage());
-        updateCounter(curator, datasetKey, PAGES_FRAGMENTED_ERROR, 1L);
-        return;
-      }
+      if (message.getDatasetType() == DatasetType.METADATA) {
+        // for metadata only dataset this is the last step
+        // explicitly declare that no content is expected so the CoordinatorCleanup can pick it
+        createOrUpdate(curator, datasetKey, PROCESS_STATE_OCCURRENCE, ProcessState.EMPTY);
+        createOrUpdate(curator, datasetKey, PROCESS_STATE_CHECKLIST, ProcessState.EMPTY);
+        createOrUpdate(curator, datasetKey, PROCESS_STATE_SAMPLE, ProcessState.EMPTY);
+        LOG.info("Marked metadata-only dataset as empty [{}]", datasetKey);
 
-      if (message.getDatasetType() == DatasetType.OCCURRENCE) {
-        handleOccurrenceCore(datasetKey, archive, message);
-      } else if (archive.getExtension(DwcTerm.Occurrence) != null) {
-        // e.g. Sample and Taxon archives can have occurrences
-        handleOccurrenceExtension(datasetKey, archive, DwcTerm.Occurrence, message);
       } else {
-        LOG.info("Ignoring DwC-A for dataset [{}] because it does not have Occurrence information.",
-          message.getDatasetUuid());
+
+        Archive archive;
+        try {
+          archive = DwcFiles.fromLocation(new File(archiveRepository, datasetKey.toString()).toPath());
+        } catch (IOException ioEx) {
+          LOG.error("Could not open archive for dataset [{}] : {}", datasetKey, ioEx.getMessage());
+          updateCounter(curator, datasetKey, PAGES_FRAGMENTED_ERROR, 1L);
+          return;
+        }
+
+        if (message.getDatasetType() == DatasetType.OCCURRENCE) {
+          handleOccurrenceCore(datasetKey, archive, message);
+        } else if (archive.getExtension(DwcTerm.Occurrence) != null) {
+          // e.g. Sample and Taxon archives can have occurrences
+          handleOccurrenceExtension(datasetKey, archive, DwcTerm.Occurrence, message);
+        } else {
+          LOG.info("Ignoring DwC-A for dataset [{}] because it does not have Occurrence information.",
+            message.getDatasetUuid());
+        }
       }
 
       updateCounter(curator, datasetKey, PAGES_FRAGMENTED_SUCCESSFUL, 1L);
