@@ -47,12 +47,20 @@ public class MetasyncService extends AbstractIdleService {
 
     DatasetService datasetService = injector.getInstance(DatasetService.class);
     MetasyncHistoryService historyService = injector.getInstance(MetasyncHistoryService.class);
-    RegistryUpdater registryUpdater = new RegistryUpdater(datasetService, historyService);
     InstallationService installationService = injector.getInstance(InstallationService.class);
 
+    AbstractMessageCallback<StartMetasyncMessage> metasyncCallback;
+
+    if (configuration.dryRun) {
+      LOG.warn("Metasync dry run: the registry will not be updated.");
+      metasyncCallback = new DebugMetasyncCallback(installationService);
+    } else {
+      RegistryUpdater registryUpdater = new RegistryUpdater(datasetService, historyService);
+      metasyncCallback = new MetasyncCallback(registryUpdater, installationService);
+    }
+
     listener = new MessageListener(configuration.messaging.getConnectionParameters(), 1);
-    listener.listen(configuration.queueName, configuration.threadCount,
-      new MetasyncCallback(registryUpdater, installationService));
+    listener.listen(configuration.queueName, configuration.threadCount, metasyncCallback);
   }
 
   @Override
@@ -60,14 +68,13 @@ public class MetasyncService extends AbstractIdleService {
     listener.close();
   }
 
-  private static class MetasyncCallback extends AbstractMessageCallback<StartMetasyncMessage> {
-
-    private final RegistryUpdater registryUpdater;
+  /**
+   * Handles the synchronization, but only logs debug information.
+   */
+  private static class DebugMetasyncCallback extends AbstractMessageCallback<StartMetasyncMessage> {
     private final MetadataSynchroniser synchroniser;
 
-    private MetasyncCallback(RegistryUpdater registryUpdater, InstallationService installationService) {
-      this.registryUpdater = registryUpdater;
-
+    private DebugMetasyncCallback(InstallationService installationService) {
       HttpClientFactory clientFactory = new HttpClientFactory(120, TimeUnit.MINUTES);
 
       MetadataSynchroniserImpl newSynchroniser = new MetadataSynchroniserImpl(installationService);
@@ -76,19 +83,36 @@ public class MetasyncService extends AbstractIdleService {
       newSynchroniser.registerProtocolHandler(new TapirMetadataSynchroniser(clientFactory.provideHttpClient()));
       newSynchroniser.registerProtocolHandler(new BiocaseMetadataSynchroniser(clientFactory.provideHttpClient()));
       this.synchroniser = newSynchroniser;
-
     }
 
     @Override
     public void handleMessage(StartMetasyncMessage message) {
       SyncResult syncResult = synchroniser.synchroniseInstallation(message.getInstallationKey());
       LOG.info("Done syncing. Processing result.");
-      DebugHandler.processResult(syncResult);
-
-      registryUpdater.saveSyncResultsToRegistry(ImmutableList.of(syncResult));
-
+      handleSyncResult(syncResult);
     }
 
+    void handleSyncResult(SyncResult syncResult) {
+      DebugHandler.processResult(syncResult);
+    }
   }
 
+  /**
+   * Extends the debug handler to also update the registry.
+   */
+  private static class MetasyncCallback extends DebugMetasyncCallback {
+    private final RegistryUpdater registryUpdater;
+
+    private MetasyncCallback(RegistryUpdater registryUpdater, InstallationService installationService) {
+      super(installationService);
+      this.registryUpdater = registryUpdater;
+    }
+
+    @Override
+    void handleSyncResult(SyncResult syncResult) {
+      super.handleSyncResult(syncResult);
+
+      registryUpdater.saveSyncResultsToRegistry(ImmutableList.of(syncResult));
+    }
+  }
 }

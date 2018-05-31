@@ -32,6 +32,9 @@ public class MetasyncConfiguration {
   @NotNull
   public String queueName;
 
+  @Parameter(names = "--dry-run", description = "Run the metasync, but discard the results")
+  public boolean dryRun = false;
+
   @Override
   public String toString() {
     return Objects.toStringHelper(this).add("messaging", messaging).add("threadCount", threadCount)
