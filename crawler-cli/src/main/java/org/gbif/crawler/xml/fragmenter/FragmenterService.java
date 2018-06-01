@@ -82,7 +82,7 @@ public class FragmenterService extends AbstractIdleService {
 
     // http connection setup for the crawler-ws-client
     ApacheHttpClient4Handler hch =
-      new ApacheHttpClient4Handler(HttpUtil.newMultithreadedClient(1000, 100, 10), null, false);
+      new ApacheHttpClient4Handler(HttpUtil.newMultithreadedClient(60000, 100, 10), null, false);
     ClientConfig clientConfig = new DefaultClientConfig();
     clientConfig.getClasses().add(JacksonJsonContextResolver.class);
     clientConfig.getClasses().add(JacksonJsonProvider.class);
