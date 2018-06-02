@@ -23,6 +23,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Stopwatch;
+import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -112,6 +113,9 @@ public class FragmenterService extends AbstractIdleService {
 
     private final CrawlerWsClient crawlerWsClient;
 
+    // The endpointType won't change during a crawl attempt, so cache it.
+    private final Cache<String, EndpointType> endpointTypeCache = CacheBuilder.newBuilder().maximumSize(1000).build();
+
     private CrawlResponseMessageMessageCallback(MessagePublisher publisher,
       LoadingCache<String, DistributedAtomicLong> counterCache, CrawlerWsClient crawlerWsClient) {
       this.publisher = publisher;
@@ -143,10 +147,14 @@ public class FragmenterService extends AbstractIdleService {
 
         LOG.info("Sending [{}] occurrences for dataset [{}]", list.size(), message.getDatasetUuid());
 
-        DatasetProcessStatus status = crawlerWsClient.getDatasetProcessStatus(message.getDatasetUuid());
-        EndpointType endpointType = null;
-        if (status != null && status.getCrawlJob() != null) {
-          endpointType = status.getCrawlJob().getEndpointType();
+        String endpointTypeCacheKey = message.getDatasetUuid().toString() + message.getAttempt();
+        EndpointType endpointType = endpointTypeCache.getIfPresent(endpointTypeCacheKey);
+        if (endpointType == null) {
+          DatasetProcessStatus status = crawlerWsClient.getDatasetProcessStatus(message.getDatasetUuid());
+          if (status != null && status.getCrawlJob() != null) {
+            endpointType = status.getCrawlJob().getEndpointType();
+            endpointTypeCache.put(endpointTypeCacheKey, endpointType);
+          }
         }
 
         if (endpointType == null) {
