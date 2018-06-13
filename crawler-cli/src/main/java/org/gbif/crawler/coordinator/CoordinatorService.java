@@ -46,7 +46,7 @@ public class CoordinatorService extends AbstractIdleService {
     DatasetService datasetService = injector.getInstance(DatasetService.class);
     InstallationService installationService = injector.getInstance(InstallationService.class);
 
-    HttpClientFactory clientFactory = new HttpClientFactory(5, TimeUnit.MINUTES);
+    HttpClientFactory clientFactory = new HttpClientFactory(30, TimeUnit.SECONDS);
     MetadataSynchroniserImpl metadataSynchroniser = new MetadataSynchroniserImpl(installationService);
     metadataSynchroniser.registerProtocolHandler(new DigirMetadataSynchroniser(clientFactory.provideHttpClient()));
     metadataSynchroniser.registerProtocolHandler(new TapirMetadataSynchroniser(clientFactory.provideHttpClient()));
