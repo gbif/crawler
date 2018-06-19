@@ -126,7 +126,7 @@ public class DwcaFragmenterService extends AbstractIdleService {
           return;
         }
 
-        int counter = -1;
+        int counter = 0;
         if (message.getDatasetType() == DatasetType.OCCURRENCE) {
           counter = handleOccurrenceCore(datasetKey, archive, message);
         } else if (archive.getExtension(DwcTerm.Occurrence) != null) {
