@@ -1,5 +1,6 @@
 package org.gbif.crawler.xml.fragmenter;
 
+import org.apache.curator.retry.BoundedExponentialBackoffRetry;
 import org.gbif.api.model.crawler.DatasetProcessStatus;
 import org.gbif.api.vocabulary.EndpointType;
 import org.gbif.common.messaging.AbstractMessageCallback;
@@ -38,7 +39,6 @@ import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.atomic.AtomicValue;
 import org.apache.curator.framework.recipes.atomic.DistributedAtomicLong;
-import org.apache.curator.retry.RetryNTimes;
 import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,7 +71,7 @@ public class FragmenterService extends AbstractIdleService {
     LoadingCache<String, DistributedAtomicLong> cache =
       CacheBuilder.newBuilder().maximumSize(1000).build(new CacheLoader<String, DistributedAtomicLong>() {
 
-        private final RetryPolicy retryPolicy = new RetryNTimes(5, 1000);
+        private final RetryPolicy retryPolicy = new BoundedExponentialBackoffRetry(500, 30_000, 20);
 
         @Override
         public DistributedAtomicLong load(String key) throws Exception {
@@ -197,13 +197,13 @@ public class FragmenterService extends AbstractIdleService {
       try {
         AtomicValue<Long> value = counter.add(count);
         if (!value.succeeded()) {
-          LOG.error("Failed to update counter [{}] result {}", path, value);
+          LOG.error("Failed to update counter [{}]; pre {} post {} stats {}",
+              path, value.preValue(), value.postValue(), value.getStats());
         }
       } catch (Exception e) {
-        LOG.error("Failed to update counter [{}]", path, e);
+        LOG.error("Failed to update counter "+path, e);
       }
     }
 
   }
-
 }

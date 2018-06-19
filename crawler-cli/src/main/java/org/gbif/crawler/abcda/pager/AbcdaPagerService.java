@@ -145,11 +145,12 @@ public class AbcdaPagerService extends AbstractIdleService {
             LOG.error("Could not send message for dataset [{}] : {}", datasetKey, ioEx.getMessage());
           }
           incrementCounter(datasetKey, zCounter, 1L);
-          LOG.info("Successfully extracted [{}] response pages out of ABCD-A for dataset [{}]", counter, datasetKey);
+          LOG.info("Successfully extracted [{}]th response page out of ABCD-A for dataset [{}]", counter, datasetKey);
         } catch (Exception e) {
           LOG.error("Error iterating ABCD-A for dataset [{}]", datasetKey, e);
         }
       }
+      LOG.info("Finished extracting response pages, total of [{}] pages from ABCD-A for dataset [{}]", counter, datasetKey);
     }
 
     private void sendXmlPage(byte[] serializedRecord, AbcdaDownloadFinishedMessage message) throws IOException {
