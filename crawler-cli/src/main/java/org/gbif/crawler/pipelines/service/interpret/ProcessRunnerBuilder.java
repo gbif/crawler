@@ -255,7 +255,6 @@ public class ProcessRunnerBuilder {
    */
   private ProcessBuilder buildSpark() {
     StringJoiner joiner = new StringJoiner(DELIMITER).add("spark-submit")
-      .add("--properties-file " + Objects.requireNonNull(wsConfig))
       .add("--conf spark.default.parallelism=" + Objects.requireNonNull(sparkParallelism))
       .add("--conf spark.yarn.executor.memoryOverhead=" + Objects.requireNonNull(sparkMemoryOverhead))
       .add("--class " + Objects.requireNonNull(mainClass))
@@ -266,7 +265,7 @@ public class ProcessRunnerBuilder {
       .add("--num-executors " + Objects.requireNonNull(sparkExecutorNumbers))
       .add("--driver-memory " + Objects.requireNonNull(sparkDriverMemory))
       .add(Objects.requireNonNull(jarFullPath))
-      .add("--wsProperties=" + new File(Objects.requireNonNull(wsConfig)).getName());
+      .add("--wsProperties=" + Objects.requireNonNull(wsConfig));
 
     return buildCommon(joiner);
   }
