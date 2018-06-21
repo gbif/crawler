@@ -254,7 +254,7 @@ public class ProcessRunnerBuilder {
    * Builds ProcessBuilder to process spark command
    */
   private ProcessBuilder buildSpark() {
-    StringJoiner joiner = new StringJoiner(DELIMITER).add("spark-submit")
+    StringJoiner joiner = new StringJoiner(DELIMITER).add("spark2-submit")
       .add("--conf spark.default.parallelism=" + Objects.requireNonNull(sparkParallelism))
       .add("--conf spark.yarn.executor.memoryOverhead=" + Objects.requireNonNull(sparkMemoryOverhead))
       .add("--class " + Objects.requireNonNull(mainClass))
