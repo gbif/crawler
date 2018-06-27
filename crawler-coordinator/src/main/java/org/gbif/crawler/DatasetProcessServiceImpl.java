@@ -15,7 +15,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
@@ -168,13 +167,10 @@ public class DatasetProcessServiceImpl implements DatasetProcessService {
         builder.rawOccurrencesPersistedUnchanged(getCounter(crawlPath, RAW_OCCURRENCES_PERSISTED_UNCHANGED).or(0L));
         builder.rawOccurrencesPersistedError(getCounter(crawlPath, RAW_OCCURRENCES_PERSISTED_ERROR).or(0L));
         builder.fragmentsProcessed(getCounter(crawlPath, FRAGMENTS_PROCESSED).or(0L));
-        builder.verbatimOccurrencesPersistedSuccessful(getCounter(crawlPath,
-                                                                  VERBATIM_OCCURRENCES_PERSISTED_SUCCESSFUL).or(0L));
+        builder.verbatimOccurrencesPersistedSuccessful(getCounter(crawlPath, VERBATIM_OCCURRENCES_PERSISTED_SUCCESSFUL).or(0L));
         builder.verbatimOccurrencesPersistedError(getCounter(crawlPath, VERBATIM_OCCURRENCES_PERSISTED_ERROR).or(0L));
-        builder.interpretedOccurrencesPersistedSuccessful(getCounter(crawlPath,
-                                                                     INTERPRETED_OCCURRENCES_PERSISTED_SUCCESSFUL).or(0L));
-        builder.interpretedOccurrencesPersistedError(getCounter(crawlPath, INTERPRETED_OCCURRENCES_PERSISTED_ERROR).or(
-          0L));
+        builder.interpretedOccurrencesPersistedSuccessful(getCounter(crawlPath, INTERPRETED_OCCURRENCES_PERSISTED_SUCCESSFUL).or(0L));
+        builder.interpretedOccurrencesPersistedError(getCounter(crawlPath, INTERPRETED_OCCURRENCES_PERSISTED_ERROR).or(0L));
       }
 
     } catch (Exception e) {
@@ -189,7 +185,7 @@ public class DatasetProcessServiceImpl implements DatasetProcessService {
   public Set<DatasetProcessStatus> getRunningDatasetProcesses() {
     List<UUID> pendingUuids = getPendingCrawlUuids(XML_CRAWL);
     pendingUuids.addAll(getPendingCrawlUuids(DWCA_CRAWL));
-    List<String> allCrawls = getChildren(CRAWL_INFO, false);
+    List<String> allCrawls = getChildren(buildPath(CRAWL_INFO), false);
     List<UUID> allCrawlUuids = Lists.newArrayList();
     for (String crawl : allCrawls) {
       allCrawlUuids.add(UUID.fromString(crawl));
@@ -248,12 +244,7 @@ public class DatasetProcessServiceImpl implements DatasetProcessService {
       new ExecutorCompletionService<DatasetProcessStatus>(executor);
 
     for (final UUID queueKey : queueKeys) {
-      completionService.submit(new Callable<DatasetProcessStatus>() {
-        @Override
-        public DatasetProcessStatus call() throws Exception {
-          return getDatasetProcessStatus(queueKey);
-        }
-      });
+      completionService.submit(() -> getDatasetProcessStatus(queueKey));
     }
 
     List<DatasetProcessStatus> processStatuses = Lists.newArrayList();
@@ -304,7 +295,7 @@ public class DatasetProcessServiceImpl implements DatasetProcessService {
     return null;
   }
 
-    /**
+  /**
    * Gets a list of {@link UUID} keys belonging to datasets. Each dataset key is associated to one
    * queue identifier.
    *
@@ -317,12 +308,9 @@ public class DatasetProcessServiceImpl implements DatasetProcessService {
     CompletionService<UUID> completionService = new ExecutorCompletionService<UUID>(executor);
     List<Future<UUID>> futures = Lists.newArrayList();
     for (final String queueIdentifier : queueIdentifiers) {
-      Future<UUID> future = completionService.submit(new Callable<UUID>() {
-        @Override
-        public UUID call() throws Exception {
-          byte[] responseData = curator.getData().forPath(buildPath(path, queueIdentifier));
-          return QueueHelper.deserializeSingle(responseData, UUID_SERIALIZER);
-        }
+      Future<UUID> future = completionService.submit(() -> {
+        byte[] responseData = curator.getData().forPath(path+"/"+queueIdentifier);
+        return QueueHelper.deserializeSingle(responseData, UUID_SERIALIZER);
       });
       futures.add(future);
     }

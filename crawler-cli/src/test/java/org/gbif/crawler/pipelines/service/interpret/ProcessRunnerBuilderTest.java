@@ -78,8 +78,8 @@ public class ProcessRunnerBuilderTest {
   public void testSparkRunnerCommand() {
     // When
     String expected =
-      "spark-submit --properties-file /path/ws.config --conf spark.default.parallelism=1 --conf spark.yarn.executor.memoryOverhead=1 --class org.gbif.Test "
-      + "--master yarn --deploy-mode cluster --executor-memory 1G --executor-cores 1 --num-executors 1 --driver-memory 4G java.jar --wsProperties=ws.config"
+      "spark2-submit --conf spark.default.parallelism=1 --conf spark.yarn.executor.memoryOverhead=1 --class org.gbif"
+      + ".Test --master yarn --deploy-mode cluster --executor-memory 1G --executor-cores 1 --num-executors 1 --driver-memory 4G java.jar --wsProperties=/path/ws.config"
       + " --datasetId=de7ffb5e-c07b-42dc-8a88-f67a4465fe3d --attempt=1 --interpretationTypes=ALL --runner=SparkRunner --defaultTargetDirectory=tmp "
       + "--inputFile=verbatim.avro --avroCompressionType=SNAPPY --avroSyncInterval=1 --hdfsSiteConfig=hdfs.xml --coreSiteConfig=core.xml";
 

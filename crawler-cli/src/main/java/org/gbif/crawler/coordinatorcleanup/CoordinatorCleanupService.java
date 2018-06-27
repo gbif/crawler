@@ -12,6 +12,12 @@
  */
 package org.gbif.crawler.coordinatorcleanup;
 
+import com.google.common.util.concurrent.AbstractScheduledService;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import org.apache.curator.framework.CuratorFramework;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.map.SerializationConfig;
 import org.gbif.api.exception.ServiceUnavailableException;
 import org.gbif.api.model.crawler.DatasetProcessStatus;
 import org.gbif.api.model.crawler.ProcessState;
@@ -22,25 +28,15 @@ import org.gbif.crawler.constants.CrawlerNodePaths;
 import org.gbif.crawler.ws.client.guice.CrawlerWsClientModule;
 import org.gbif.registry.ws.client.guice.RegistryWsClientModule;
 import org.gbif.ws.client.guice.SingleUserAuthModule;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import java.io.IOException;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Date;
 import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-
-import com.google.common.util.concurrent.AbstractScheduledService;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import org.apache.curator.framework.CuratorFramework;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.map.SerializationConfig;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 
 /**
  * This services starts the Crawler Coordinator by listening for messages.
@@ -49,7 +45,6 @@ public class CoordinatorCleanupService extends AbstractScheduledService {
 
   private static final Logger LOG = LoggerFactory.getLogger(CoordinatorCleanupService.class);
   private static final ObjectMapper MAPPER = new ObjectMapper();
-  private static final long MILLIS_PER_DAY = TimeUnit.DAYS.toMillis(1);
   private final CoordinatorCleanupConfiguration configuration;
   private CuratorFramework curator;
   private DatasetProcessService service;
@@ -74,7 +69,7 @@ public class CoordinatorCleanupService extends AbstractScheduledService {
     }
   }
 
-  private void runOnce() throws Exception {
+  private void runOnce() {
     LOG.info("Checking if any crawls have finished now.");
     Set<DatasetProcessStatus> statuses;
     try {
@@ -93,12 +88,6 @@ public class CoordinatorCleanupService extends AbstractScheduledService {
           updateRegistry(status);
 
           if (!checkDoneProcessing(status)) {
-            continue;
-          }
-
-          // It seemed we might have a race condition, where some crawls complete very fast (e.g. NOT_MODIFIED)
-          if ((new Date().getTime() - status.getStartedCrawling().getTime()) < 120_000) {
-            LOG.info("Dataset [{}] hasn't yet been crawling for two minutes ({} seconds so far), wait a little", status.getDatasetKey(), (new Date().getTime() - status.getStartedCrawling().getTime())/1_000);
             continue;
           }
 
@@ -185,8 +174,11 @@ public class CoordinatorCleanupService extends AbstractScheduledService {
       return false;
     }
 
-    // if metadata only, these are set to empty once the metadata is synchronized
-    if (ProcessState.EMPTY == status.getProcessStateOccurrence() && ProcessState.EMPTY == status.getProcessStateChecklist()) {
+    // if metadata only, these are set to empty by the fragmenter
+    // Also if an occurrence dataset really is empty.
+    if (ProcessState.EMPTY == status.getProcessStateOccurrence() &&
+            ProcessState.EMPTY == status.getProcessStateChecklist() &&
+            ProcessState.EMPTY == status.getProcessStateSample()) {
       return true;
     }
 
@@ -209,13 +201,6 @@ public class CoordinatorCleanupService extends AbstractScheduledService {
     }
 
     // Done persisting fragments?
-
-    // There are legal cases when no fragments are emitted at all when the dataset is empty.
-    // Abort after 24h in such cases.
-    if (status.getFragmentsEmitted() == 0 && crawlingStartedBefore24h(status)) {
-      return true;
-    }
-
     // Verify that all fragments have been fully processed, i.e. when we have processed as many fragments as the fragmenter emitted.
     // During this processing we could generate more raw occurrence records than we got fragments due to ABCD2
     // We also make sure here that at least one fragment was already processed.
@@ -257,14 +242,6 @@ public class CoordinatorCleanupService extends AbstractScheduledService {
     return true;
   }
 
-  private boolean crawlingStartedBefore24h(DatasetProcessStatus status) {
-    if (status.getStartedCrawling() == null) return false;
-
-    Instant start = status.getStartedCrawling().toInstant();
-    Instant yesterday = Instant.now().minus( 24 , ChronoUnit.HOURS );
-    return start.isBefore( yesterday);
-  }
-
   private void delete(DatasetProcessStatus status) {
     String statusString;
     try {
@@ -281,6 +258,7 @@ public class CoordinatorCleanupService extends AbstractScheduledService {
       // However, this is seen as highly unlikely, and a cleaned ZK will be operationally easier to manage then
       // the alternative.  Any failed crawls due to some unlikely race condition (which includes a failure to delete)
       // will be picked up quickly in a scheduled recrawl anyway.
+      LOG.debug("Deleting ZK path {}", CrawlerNodePaths.getCrawlInfoPath(status.getDatasetKey()));
       curator.delete().guaranteed().deletingChildrenIfNeeded().forPath(CrawlerNodePaths.getCrawlInfoPath(status.getDatasetKey()));
     } catch (Exception e) {
       LOG.error("Couldn't delete [{}] - note that a background thread will retry this", status.getDatasetKey(), e);

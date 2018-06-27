@@ -29,19 +29,16 @@ import org.apache.curator.framework.recipes.queue.DistributedPriorityQueue;
 import org.apache.curator.framework.recipes.queue.QueueBuilder;
 import org.apache.zookeeper.data.Stat;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.gbif.registry.metasync.api.MetadataSynchroniser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
 import static org.gbif.api.vocabulary.TagName.CRAWL_ATTEMPT;
-import static org.gbif.api.vocabulary.TagName.DECLARED_RECORD_COUNT;
-import static org.gbif.crawler.constants.CrawlerNodePaths.CRAWL_INFO;
-import static org.gbif.crawler.constants.CrawlerNodePaths.DWCA_CRAWL;
-import static org.gbif.crawler.constants.CrawlerNodePaths.QUEUED_CRAWLS;
-import static org.gbif.crawler.constants.CrawlerNodePaths.RUNNING_CRAWLS;
-import static org.gbif.crawler.constants.CrawlerNodePaths.XML_CRAWL;
+import static org.gbif.api.vocabulary.TagName.DECLARED_COUNT;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.gbif.crawler.constants.CrawlerNodePaths.*;
 
 /**
  * This implementation stores crawls in ZooKeeper in a node structure like this:
@@ -54,10 +51,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * lock here as long as it's running so that in case of failure the job can be picked up</li>
  * </ul>
  * <p></p>
- * This uses a framework named Curator (by Netflix) to help implement the Queue in ZooKeeper. For more information see
- * the <a href="https://github.com/Netflix/curator/wiki/Distributed-Priority-Queue">documentation</a>. Please note that
- * this means that we rely on Curator's serializationf format for the <em>queuedCrawls</em> and <em>runningCrawls</em>
- * nodes.
+ * This uses the Apache Curator framework to help implement the Queue in ZooKeeper. For more information see
+ * the <a href="https://curator.apache.org/curator-recipes/distributed-priority-queue.html">documentation</a>. Please
+ * note that this means that we rely on Curator's serialization format for the <em>queuedCrawls</em> and
+ * <em>runningCrawls</em> nodes.
  */
 public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService {
 
@@ -72,7 +69,9 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
   private final CuratorFramework curator;
   private final DistributedPriorityQueue<UUID> xmlQueue;
   private final DistributedPriorityQueue<UUID> dwcaQueue;
+  private final DistributedPriorityQueue<UUID> abcdaQueue;
   private final DatasetService datasetService;
+  private final MetadataSynchroniser metadataSynchroniser;
   private final CrawlerCoordinatorServiceMetrics metrics = new CrawlerCoordinatorServiceMetrics();
 
   /**
@@ -84,17 +83,21 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
    * @throws ServiceUnavailableException when there was a failure during initialization of ZooKeeper
    */
   public CrawlerCoordinatorServiceImpl(
-    CuratorFramework curator, DatasetService datasetService
+    CuratorFramework curator, DatasetService datasetService, MetadataSynchroniser metadataSynchroniser
   ) {
     this.curator = checkNotNull(curator, "curator can't be null");
     this.datasetService = checkNotNull(datasetService, "datasetService can't be null");
+    this.metadataSynchroniser = checkNotNull(metadataSynchroniser, "metadataSynchroniser can't be null");
 
     xmlQueue = buildQueue(curator, XML_CRAWL);
     dwcaQueue = buildQueue(curator, DWCA_CRAWL);
+    abcdaQueue = buildQueue(curator, ABCDA_CRAWL);
   }
 
   @Override
   public void initiateCrawl(UUID datasetKey, int priority) {
+    MDC.put("datasetKey", datasetKey.toString());
+
     metrics.timerStart();
     try {
       doScheduleCrawl(datasetKey, priority);
@@ -106,6 +109,7 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
     }
 
     metrics.successfulSchedule(datasetKey);
+    MDC.remove("datasetKey");
   }
 
   @Override
@@ -149,7 +153,7 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
       builder.lockPath(CrawlerNodePaths.buildPath(path, RUNNING_CRAWLS)).buildPriorityQueue(1);
 
     try {
-      curator.newNamespaceAwareEnsurePath(CRAWL_INFO).ensure(curator.getZookeeperClient());
+      curator.create().orSetData().creatingParentContainersIfNeeded().forPath(buildPath(CRAWL_INFO));
       queue.start();
     } catch (Exception e) {
       throw new ServiceUnavailableException("Error starting up Priority queue", e);
@@ -163,7 +167,6 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
    */
   private void doScheduleCrawl(UUID datasetKey, int priority) {
     checkNotNull(datasetKey, "datasetKey can't be null");
-    MDC.put("datasetKey", datasetKey.toString());
 
     // We first have to check if the dataset can be crawled.
     Dataset dataset = checkDataset(datasetService.get(datasetKey), datasetKey);
@@ -173,14 +176,50 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
       throw new IllegalArgumentException("No eligible endpoints for dataset [" + datasetKey + "]");
     }
 
+    // Ask the source how many records it has
+    Long declaredCount = updateOrRetrieveDeclaredRecordCount(dataset, endpoint.get(), datasetKey);
+
     // This object holds all information needed by Crawlers to crawl the endpoint
-    CrawlJob crawlJob = getCrawlJob(datasetKey, dataset, endpoint.get());
+    CrawlJob crawlJob = getCrawlJob(datasetKey, dataset, endpoint.get(), declaredCount);
 
     byte[] dataBytes = serializeCrawlJob(crawlJob);
-    queueCrawlJob(datasetKey, isDarwinCoreArchive(endpoint.get()), priority, dataBytes);
+    queueCrawlJob(datasetKey, isAbcdArchive(endpoint.get()), isDarwinCoreArchive(endpoint.get()), priority, dataBytes);
     LOG.info("Crawling endpoint [{}] for dataset [{}]", endpoint.get().getUrl(), datasetKey);
-    writeDeclaredRecordCount(dataset, endpoint.get(), datasetKey);
-    MDC.remove("datasetKey");
+    writeDeclaredRecordCount(datasetKey, declaredCount);
+  }
+
+  /**
+   * Query the source for an expected count of records.
+   */
+  private Long updateOrRetrieveDeclaredRecordCount(Dataset dataset, Endpoint endpoint, UUID datasetKey) {
+    Long declaredCount = null;
+
+    List<MachineTag> filteredTags = MachineTagUtils.list(dataset, DECLARED_COUNT);
+
+    if (filteredTags.size() > 1) {
+      LOG.warn("Found more than one declaredCount for dataset [{}]. Ignoring.", dataset.getKey());
+    } else if (filteredTags.size() == 1) {
+      declaredCount = Long.parseLong(filteredTags.get(0).getValue());
+      LOG.debug("Existing declaredCount is {}", declaredCount);
+    }
+
+    try {
+      LOG.debug("Attempting update of declared count");
+      Long newDeclaredCount = metadataSynchroniser.getDatasetCount(dataset, endpoint);
+
+      if (newDeclaredCount != null) {
+        datasetService.deleteMachineTags(datasetKey, DECLARED_COUNT);
+        datasetService.addMachineTag(dataset.getKey(), DECLARED_COUNT, Long.toString(newDeclaredCount));
+        LOG.debug("New declared count is {}", newDeclaredCount);
+        declaredCount = newDeclaredCount;
+      } else {
+        LOG.debug("No new declared count");
+      }
+    } catch (Exception e) {
+      LOG.error("Error updating declared count "+e.getMessage(), e);
+    }
+
+    return declaredCount;
   }
 
   /**
@@ -195,28 +234,29 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
   }
 
   /**
+   * Determine if an endpoint should be handled as an ABCD archive or not.
+   * @param endpoint
+   * @return
+   */
+  private static boolean isAbcdArchive(Endpoint endpoint) {
+    return EndpointType.BIOCASE_XML_ARCHIVE == endpoint.getType();
+  }
+
+  /**
    * Some of our datasets declare how many records they hold. We save this count in ZooKeeper to later display it on
    * the admin console.
    */
-  private void writeDeclaredRecordCount(Dataset dataset, Endpoint endpoint, UUID datasetKey) {
-    MDC.put("datasetKey", datasetKey.toString());
-    List<MachineTag> filteredTags = MachineTagUtils.list(dataset, DECLARED_RECORD_COUNT);
-    filteredTags.addAll(MachineTagUtils.list(endpoint, DECLARED_RECORD_COUNT));
-
-    if (filteredTags.size() == 1) {
-      Long declaredCount = Long.parseLong(filteredTags.get(0).getValue());
+  private void writeDeclaredRecordCount(UUID datasetKey, Long declaredCount) {
+    if (declaredCount != null) {
       try {
         curator.create()
-          .creatingParentsIfNeeded()
-          .forPath(CrawlerNodePaths.getCrawlInfoPath(datasetKey, CrawlerNodePaths.DECLARED_COUNT),
-                   declaredCount.toString().getBytes(Charsets.UTF_8));
+            .creatingParentsIfNeeded()
+            .forPath(CrawlerNodePaths.getCrawlInfoPath(datasetKey, CrawlerNodePaths.DECLARED_COUNT),
+                declaredCount.toString().getBytes(Charsets.UTF_8));
       } catch (Exception e) {
         throw new ServiceUnavailableException("Error communicating with ZooKeeper", e);
       }
-    } else if (filteredTags.size() > 1) {
-      LOG.warn("Found more than one declaredRecordCount for dataset [{}]. Ignoring.", dataset.getKey());
     }
-    MDC.remove("datasetKey");
   }
 
   /**
@@ -310,60 +350,26 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
    *
    * @return populated object ready to be put into ZooKeeper
    */
-  private CrawlJob getCrawlJob(UUID datasetKey, Dataset dataset, Endpoint endpoint) {
+  private CrawlJob getCrawlJob(UUID datasetKey, Dataset dataset, Endpoint endpoint, Long declaredCount) {
     checkNotNull(dataset, "dataset can't be null");
     checkNotNull(endpoint, "endpoint can't be null");
 
     Map<String, String> properties = Maps.newHashMap();
     switch (endpoint.getType()) {
       case DIGIR:
-        fillPropertyFromTags(datasetKey, dataset.getMachineTags(), properties, METADATA_NAMESPACE, "code", true);
-        fillPropertyFromTags(datasetKey,
-                             dataset.getMachineTags(),
-                             properties,
-                             METADATA_NAMESPACE,
-                             "declaredCount",
-                             false);
+        fillPropertyFromTags(datasetKey, dataset.getMachineTags(), properties, METADATA_NAMESPACE,"code", true);
         properties.put("manis", "false");
         break;
       case DIGIR_MANIS:
-        fillPropertyFromTags(datasetKey, dataset.getMachineTags(), properties, METADATA_NAMESPACE, "code", true);
-        fillPropertyFromTags(datasetKey,
-                             dataset.getMachineTags(),
-                             properties,
-                             METADATA_NAMESPACE,
-                             "declaredCount",
-                             false);
+        fillPropertyFromTags(datasetKey, dataset.getMachineTags(), properties, METADATA_NAMESPACE,"code", true);
         properties.put("manis", "true");
         break;
       case TAPIR:
-        fillPropertyFromTags(datasetKey,
-                             dataset.getMachineTags(),
-                             properties,
-                             METADATA_NAMESPACE,
-                             "conceptualSchema",
-                             true);
-        fillPropertyFromTags(datasetKey,
-                             dataset.getMachineTags(),
-                             properties,
-                             METADATA_NAMESPACE,
-                             "declaredCount",
-                             false);
+        fillPropertyFromTags(datasetKey, dataset.getMachineTags(), properties, METADATA_NAMESPACE,"conceptualSchema",true);
         break;
       case BIOCASE:
         properties.put("datasetTitle", dataset.getTitle());
-        fillPropertyFromTags(datasetKey,
-                             endpoint.getMachineTags(),
-                             properties,
-                             METADATA_NAMESPACE,
-                             "conceptualSchema",
-                             true);
-        fillPropertyFromTags(datasetKey,
-                             dataset.getMachineTags(),
-                             properties,
-                             METADATA_NAMESPACE,
-                             "declaredCount",
-                             false);
+        fillPropertyFromTags(datasetKey, endpoint.getMachineTags(), properties, METADATA_NAMESPACE,"conceptualSchema",true);
         break;
       case DWC_ARCHIVE:
       case EML:
@@ -373,6 +379,10 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
         // probably a wrongly registered dataset
         LOG.warn("Unsupported endpoint for occurrence dataset [{}] - [{}]", datasetKey, endpoint.getType());
         break;
+    }
+
+    if (declaredCount != null) {
+      properties.put("declaredCount", String.valueOf(declaredCount));
     }
 
     /* NOTE/TODO: This introduces a race-condition. If two coordinators were to do this at the same time they'd get a
@@ -489,14 +499,16 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
    * @param datasetKey of the dataset to enqueue
    * @param dataBytes   to put into ZooKeeper
    */
-  private void queueCrawlJob(UUID datasetKey, boolean isDwca, int priority, byte[] dataBytes) {
+  private void queueCrawlJob(UUID datasetKey, boolean isAbcda, boolean isDwca, int priority, byte[] dataBytes) {
     try {
       // This could in theory fail when two coordinators are running at the same time. They'll have confirmed if this
       // node exists or not earlier but in the meantime another Coordinator might have created it. That means the
       // Exception we throw does not necessarily tell us enough. But this is an edge-case and I feel it's not worth
       // trying to figure out why this failed.
       curator.create().creatingParentsIfNeeded().forPath(CrawlerNodePaths.getCrawlInfoPath(datasetKey), dataBytes);
-      if (isDwca) {
+      if (isAbcda) {
+        abcdaQueue.put(datasetKey, priority);
+      } else if (isDwca) {
         dwcaQueue.put(datasetKey, priority);
       } else {
         xmlQueue.put(datasetKey, priority);

@@ -40,6 +40,8 @@ public class CrawlerZooKeeperUpdatingListener<CTX extends CrawlContext>
 
   private static final ObjectMapper MAPPER = new ObjectMapper();
 
+  private int totalRecordCount;
+
   static {
     MAPPER.registerModule(new GuavaModule());
   }
@@ -75,6 +77,7 @@ public class CrawlerZooKeeperUpdatingListener<CTX extends CrawlContext>
   @Override
   public void response(List<Byte> response, int retry, long duration, Optional<Integer> recordCount,
     Optional<Boolean> endOfRecords) {
+    totalRecordCount += recordCount.or(0);
     String crawlPath = CrawlerNodePaths.getCrawlInfoPath(configuration.getDatasetKey(), PAGES_CRAWLED);
     DistributedAtomicLong dal = new DistributedAtomicLong(curator, crawlPath, new RetryNTimes(1, 1000));
     try {
@@ -93,6 +96,11 @@ public class CrawlerZooKeeperUpdatingListener<CTX extends CrawlContext>
   @Override
   public void finishCrawlNormally() {
     finishCrawl(FinishReason.NORMAL);
+
+    if (totalRecordCount == 0) {
+      // Empty dataset, this is the end of processing.
+      createOrUpdate(curator, configuration.getDatasetKey(), PROCESS_STATE_OCCURRENCE, ProcessState.EMPTY);
+    }
   }
 
   @Override
@@ -107,9 +115,8 @@ public class CrawlerZooKeeperUpdatingListener<CTX extends CrawlContext>
     createOrUpdate(curator, configuration.getDatasetKey(), PROCESS_STATE_OCCURRENCE, ProcessState.FINISHED);
   }
 
-  public void finishCrawl(FinishReason reason) {
+  private void finishCrawl(FinishReason reason) {
     updateDate(curator, configuration.getDatasetKey(), FINISHED_CRAWLING);
     createOrUpdate(curator, configuration.getDatasetKey(), FINISHED_REASON, reason);
   }
-
 }

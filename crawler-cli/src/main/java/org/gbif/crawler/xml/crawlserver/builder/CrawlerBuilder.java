@@ -66,8 +66,7 @@ public class CrawlerBuilder {
       lockFactory = new DynamicDelayingLockFactory(lockFactory, minDelay.get(), maxDelay.get());
     }
     Lock lock = lockFactory.makeLock(crawlConfiguration.getUrl().getHost());
-    return new Crawler<ScientificNameRangeCrawlContext, String, HttpResponse, List<Byte>>(strategy, requestHandler,
-      responseHandler, client, retryPolicy, lock);
+    return new Crawler(strategy, requestHandler, responseHandler, client, retryPolicy, lock);
   }
 
   public CrawlConfiguration getCrawlConfiguration() {

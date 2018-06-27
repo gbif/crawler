@@ -1,5 +1,6 @@
 package org.gbif.crawler.xml.fragmenter;
 
+import org.apache.curator.retry.BoundedExponentialBackoffRetry;
 import org.gbif.api.model.crawler.DatasetProcessStatus;
 import org.gbif.api.vocabulary.EndpointType;
 import org.gbif.common.messaging.AbstractMessageCallback;
@@ -23,6 +24,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Stopwatch;
+import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -37,7 +39,6 @@ import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.atomic.AtomicValue;
 import org.apache.curator.framework.recipes.atomic.DistributedAtomicLong;
-import org.apache.curator.retry.RetryNTimes;
 import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,7 +71,7 @@ public class FragmenterService extends AbstractIdleService {
     LoadingCache<String, DistributedAtomicLong> cache =
       CacheBuilder.newBuilder().maximumSize(1000).build(new CacheLoader<String, DistributedAtomicLong>() {
 
-        private final RetryPolicy retryPolicy = new RetryNTimes(5, 1000);
+        private final RetryPolicy retryPolicy = new BoundedExponentialBackoffRetry(500, 30_000, 20);
 
         @Override
         public DistributedAtomicLong load(String key) throws Exception {
@@ -82,7 +83,7 @@ public class FragmenterService extends AbstractIdleService {
 
     // http connection setup for the crawler-ws-client
     ApacheHttpClient4Handler hch =
-      new ApacheHttpClient4Handler(HttpUtil.newMultithreadedClient(1000, 100, 10), null, false);
+      new ApacheHttpClient4Handler(HttpUtil.newMultithreadedClient(60000, 100, 10), null, false);
     ClientConfig clientConfig = new DefaultClientConfig();
     clientConfig.getClasses().add(JacksonJsonContextResolver.class);
     clientConfig.getClasses().add(JacksonJsonProvider.class);
@@ -111,6 +112,9 @@ public class FragmenterService extends AbstractIdleService {
     private final LoadingCache<String, DistributedAtomicLong> counterCache;
 
     private final CrawlerWsClient crawlerWsClient;
+
+    // The endpointType won't change during a crawl attempt, so cache it.
+    private final Cache<String, EndpointType> endpointTypeCache = CacheBuilder.newBuilder().maximumSize(1000).build();
 
     private CrawlResponseMessageMessageCallback(MessagePublisher publisher,
       LoadingCache<String, DistributedAtomicLong> counterCache, CrawlerWsClient crawlerWsClient) {
@@ -143,10 +147,14 @@ public class FragmenterService extends AbstractIdleService {
 
         LOG.info("Sending [{}] occurrences for dataset [{}]", list.size(), message.getDatasetUuid());
 
-        DatasetProcessStatus status = crawlerWsClient.getDatasetProcessStatus(message.getDatasetUuid());
-        EndpointType endpointType = null;
-        if (status != null && status.getCrawlJob() != null) {
-          endpointType = status.getCrawlJob().getEndpointType();
+        String endpointTypeCacheKey = message.getDatasetUuid().toString() + message.getAttempt();
+        EndpointType endpointType = endpointTypeCache.getIfPresent(endpointTypeCacheKey);
+        if (endpointType == null) {
+          DatasetProcessStatus status = crawlerWsClient.getDatasetProcessStatus(message.getDatasetUuid());
+          if (status != null && status.getCrawlJob() != null) {
+            endpointType = status.getCrawlJob().getEndpointType();
+            endpointTypeCache.put(endpointTypeCacheKey, endpointType);
+          }
         }
 
         if (endpointType == null) {
@@ -189,13 +197,13 @@ public class FragmenterService extends AbstractIdleService {
       try {
         AtomicValue<Long> value = counter.add(count);
         if (!value.succeeded()) {
-          LOG.error("Failed to update counter [{}] result {}", path, value);
+          LOG.error("Failed to update counter [{}]; pre {} post {} stats {}",
+              path, value.preValue(), value.postValue(), value.getStats());
         }
       } catch (Exception e) {
-        LOG.error("Failed to update counter [{}]", path, e);
+        LOG.error("Failed to update counter "+path, e);
       }
     }
 
   }
-
 }

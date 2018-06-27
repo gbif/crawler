@@ -22,6 +22,7 @@ import org.apache.curator.retry.RetryOneTime;
 import org.apache.curator.test.TestingServer;
 import org.apache.curator.utils.ZKPaths;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.gbif.registry.metasync.api.MetadataSynchroniser;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -31,13 +32,15 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import static org.gbif.api.vocabulary.TagName.CONCEPTUAL_SCHEMA;
 import static org.gbif.api.vocabulary.TagName.CRAWL_ATTEMPT;
-import static org.gbif.api.vocabulary.TagName.DECLARED_RECORD_COUNT;
+import static org.gbif.api.vocabulary.TagName.DECLARED_COUNT;
 
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -47,6 +50,8 @@ public class CrawlerCoordinatorServiceImplTest {
   public ExpectedException thrown = ExpectedException.none();
   @Mock
   private DatasetService datasetService;
+  @Mock
+  private MetadataSynchroniser metadataSynchroniser;
   private CuratorFramework curator;
   private CrawlerCoordinatorServiceImpl service;
   private UUID uuid = UUID.randomUUID();
@@ -55,6 +60,8 @@ public class CrawlerCoordinatorServiceImplTest {
 
   @Before
   public void setup() throws Exception {
+    when(metadataSynchroniser.getDatasetCount(any(), any())).thenReturn(null);
+
     server = new TestingServer();
     curator = CuratorFrameworkFactory.builder()
       .connectString(server.getConnectString())
@@ -64,7 +71,7 @@ public class CrawlerCoordinatorServiceImplTest {
     curator.start();
     ZKPaths.mkdirs(curator.getZookeeperClient().getZooKeeper(), "/crawler/crawls");
 
-    service = new CrawlerCoordinatorServiceImpl(curator, datasetService);
+    service = new CrawlerCoordinatorServiceImpl(curator, datasetService, metadataSynchroniser);
     dataset.setType(DatasetType.OCCURRENCE);
     when(datasetService.get(uuid)).thenReturn(dataset);
   }
@@ -99,11 +106,15 @@ public class CrawlerCoordinatorServiceImplTest {
     endpoint5.setType(EndpointType.EML);
     endpoints.add(endpoint5);
 
+    Endpoint endpoint6 = new Endpoint();
+    endpoint6.setType(EndpointType.BIOCASE_XML_ARCHIVE);
+    endpoints.add(endpoint6);
+
     List<Endpoint> sortedEndpoints = service.prioritySortEndpoints(endpoints);
 
-    assertThat(sortedEndpoints.size(), equalTo(4));
-    assertThat(sortedEndpoints, contains(endpoint1, endpoint4, endpoint3, endpoint5));
-    assertTrue("Priority of Dwc-A is higher than its EML", sortedEndpoints.indexOf(endpoint1) < sortedEndpoints.indexOf(endpoint5));
+    assertThat(sortedEndpoints.size(), equalTo(5));
+    assertThat(sortedEndpoints, contains(endpoint1, endpoint6, endpoint4, endpoint3, endpoint5));
+    assertTrue("Priority of DwC-A is higher than its EML", sortedEndpoints.indexOf(endpoint1) < sortedEndpoints.indexOf(endpoint5));
   }
 
   @Test
@@ -200,14 +211,11 @@ public class CrawlerCoordinatorServiceImplTest {
     endpoint.setUrl(url);
 
     dataset.getEndpoints().add(endpoint);
-    dataset.getMachineTags().add(MachineTag.newInstance("metasync.gbif.org", "conceptualSchema", "foo"));
-    MachineTag tag = MachineTag.newInstance(CRAWL_ATTEMPT.getNamespace().getNamespace(), CRAWL_ATTEMPT.getName(), "10");
+    dataset.getMachineTags().add(MachineTag.newInstance(CONCEPTUAL_SCHEMA, "foo"));
+    MachineTag tag = MachineTag.newInstance(CRAWL_ATTEMPT, "10");
     tag.setKey(123);
     dataset.getMachineTags().add(tag);
-    dataset.getMachineTags()
-      .add(MachineTag.newInstance(DECLARED_RECORD_COUNT.getNamespace().getNamespace(),
-                                  DECLARED_RECORD_COUNT.getName(),
-                                  "1234"));
+    dataset.getMachineTags().add(MachineTag.newInstance(DECLARED_COUNT,"1234"));
     service.initiateCrawl(uuid, 5);
 
     List<String> children = curator.getChildren().forPath("/crawls");
@@ -222,6 +230,6 @@ public class CrawlerCoordinatorServiceImplTest {
     assertThat(attempt, equalTo(11));
 
     bytes = curator.getData().forPath("/crawls/" + uuid + "/" + CrawlerNodePaths.DECLARED_COUNT);
-    assertThat("1234", equalTo(new String(bytes)));
+    assertThat(new String(bytes), equalTo("1234"));
   }
 }

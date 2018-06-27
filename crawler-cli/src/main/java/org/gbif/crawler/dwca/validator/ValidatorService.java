@@ -161,8 +161,8 @@ public class ValidatorService extends DwcaService {
     }
 
     /**
-     * For existing dataset types (that contains data) this sets the process state as given.
-     * For METADATA, this method will simply return. DwcaMetasyncService will handle them.
+     * Set the process state.  The For existing dataset types (that contains data) this sets the process state as given.
+     * For METADATA, this method will simply return. DwcaFragmenterService will handle them.
      *
      */
     private void updateProcessState(Dataset dataset, DwcaValidationReport report, ProcessState state) {
@@ -181,14 +181,13 @@ public class ValidatorService extends DwcaService {
           createOrUpdate(curator, report.getDatasetKey(), dataset.getType() == DatasetType.CHECKLIST ? PROCESS_STATE_CHECKLIST : PROCESS_STATE_SAMPLE, coreState);
 
           // update occurrence status
-          if (report.getOccurrenceReport() == null || report.getOccurrenceReport().getCheckedRecords() == 0) {
-            createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_OCCURRENCE, ProcessState.EMPTY);
-          } else {
-            createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_OCCURRENCE, state);
-          }
+          createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_OCCURRENCE, state);
           break;
         case METADATA:
-          // no-op, DwcaMetasyncService will set PROCESS_STATE_OCCURRENCE and PROCESS_STATE_CHECKLIST to EMPTY
+          // DwcaFragmenterService will later set these to EMPTY
+          createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_OCCURRENCE, state);
+          createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_CHECKLIST, state);
+          createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_SAMPLE, state);
           break;
         default:
           LOG.error("Can't updateProcessState dataset [{}]: unknown type -> {}", datasetKey, dataset.getType());

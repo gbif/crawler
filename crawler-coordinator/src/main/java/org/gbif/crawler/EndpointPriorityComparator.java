@@ -24,6 +24,7 @@ import com.google.common.collect.Ordering;
  * <li>BioCASe</li>
  * <li>DiGIR</li>
  * <li>DiGIR (Manis)</li>
+ * <li>EML</li>
  * </ol>
  */
 public class EndpointPriorityComparator implements Comparator<Endpoint>, Serializable {
@@ -32,12 +33,16 @@ public class EndpointPriorityComparator implements Comparator<Endpoint>, Seriali
    It should be easy to remove this class or change it into a factory */
 
   // Priorities from lowest to highest
-  public static final List<EndpointType> PRIORITIES = ImmutableList.of(EndpointType.EML,
-                                                                       EndpointType.DIGIR_MANIS,
-                                                                       EndpointType.DIGIR,
-                                                                       EndpointType.BIOCASE,
-                                                                       EndpointType.TAPIR,
-                                                                       EndpointType.DWC_ARCHIVE);
+  public static final List<EndpointType> PRIORITIES = ImmutableList.of(
+      EndpointType.EML,
+      EndpointType.DIGIR_MANIS,
+      EndpointType.DIGIR,
+      EndpointType.BIOCASE,
+      EndpointType.TAPIR,
+      EndpointType.BIOCASE_XML_ARCHIVE,
+      EndpointType.DWC_ARCHIVE
+  );
+
   private static final long serialVersionUID = 8085216142750609841L;
   private static final Ordering<EndpointType> PRIORITY_COMPARATOR = Ordering.explicit(PRIORITIES);
 

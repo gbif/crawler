@@ -5,17 +5,17 @@
   <parent>
     <groupId>org.gbif</groupId>
     <artifactId>motherpom</artifactId>
-    <version>38-SNAPSHOT</version>
+    <version>38</version>
   </parent>
 
   <groupId>org.gbif.crawler</groupId>
   <artifactId>crawler-motherpom</artifactId>
-  <version>0.46-SNAPSHOT</version>
+  <version>0.47-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>Crawler :: Mother POM</name>
-  <description>Libraries and executables to the crawling of gbif data publishers.</description>
-  <url>http://github.org/gbif/crawler</url>
+  <description>Libraries and executables to the crawling of GBIF data publishers.</description>
+  <url>https://github.org/gbif/crawler</url>
 
   <scm>
     <connection>scm:git:git@github.com:gbif/crawler.git</connection>
@@ -36,23 +36,24 @@
     <release.tagNameBase>crawler</release.tagNameBase>
 
     <amqp-client.version>3.5.6</amqp-client.version>
-    <curator.version>2.6.0</curator.version>
+    <curator.version>4.0.1</curator.version>
+    <curator-test.version>2.12.0</curator-test.version>
     <fest.version>2.0M10</fest.version>
     <!-- Fixed to the version Curator uses, problems otherwise -->
     <freemarker.version>2.3.23</freemarker.version>
 
     <dwc-api.version>1.18</dwc-api.version>
     <dwca-io.version>2.0-RC1</dwca-io.version>
-    <gbif-api.version>0.58</gbif-api.version>
+    <gbif-api.version>0.67</gbif-api.version>
     <gbif-cli.version>0.13</gbif-cli.version>
     <gbif-common-service.version>0.16</gbif-common-service.version>
     <gbif-common-ws.version>0.40</gbif-common-ws.version>
-    <gbif-common.version>0.39-SNAPSHOT</gbif-common.version>
+    <gbif-common.version>0.40</gbif-common.version>
     <gbif-httputils.version>0.10</gbif-httputils.version>
     <gbif-microservice.version>0.7</gbif-microservice.version>
-    <gbif-occurrence.version>0.69</gbif-occurrence.version>
-    <gbif-postal-service.version>0.25-SNAPSHOT</gbif-postal-service.version>
-    <gbif-registry.version>2.79</gbif-registry.version>
+    <gbif-occurrence.version>0.81</gbif-occurrence.version>
+    <gbif-postal-service.version>0.25</gbif-postal-service.version>
+    <gbif-registry.version>2.86-SNAPSHOT</gbif-registry.version>
     <gbif-wrangler.version>0.2</gbif-wrangler.version>
     <gbif-verbatim-converters.version>1.1-SNAPSHOT</gbif-verbatim-converters.version>
     <gbif-pipelines-core.version>1.1-SNAPSHOT</gbif-pipelines-core.version>
@@ -453,10 +454,18 @@
         <version>${hadoop-common.version}</version>
       </dependency>
 
+      <!-- Apache Curator. See https://curator.apache.org/zk-compatibility.html for notes on compatibility with ZooKeeper 3.4.
+           Note especially the different (old) version used for curator-test. -->
       <dependency>
         <groupId>org.apache.curator</groupId>
         <artifactId>curator-client</artifactId>
         <version>${curator.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.apache.zookeeper</groupId>
+            <artifactId>zookeeper</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.apache.curator</groupId>
@@ -467,11 +476,23 @@
         <groupId>org.apache.curator</groupId>
         <artifactId>curator-recipes</artifactId>
         <version>${curator.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.apache.zookeeper</groupId>
+            <artifactId>zookeeper</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.apache.curator</groupId>
         <artifactId>curator-test</artifactId>
-        <version>${curator.version}</version>
+        <version>${curator-test.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.apache.zookeeper</groupId>
+            <artifactId>zookeeper</artifactId>
+          </exclusion>
+        </exclusions>
         <scope>test</scope>
       </dependency>
       <dependency>
@@ -479,19 +500,13 @@
         <artifactId>zookeeper</artifactId>
         <version>${zookeeper.version}</version>
         <exclusions>
-          <!-- We need to exclude these because they live in a legacy repository (Maven 1)
-               and that isn't supported by Maven 3 anymore -->
           <exclusion>
-            <artifactId>jms</artifactId>
-            <groupId>javax.jms</groupId>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
           </exclusion>
           <exclusion>
-            <artifactId>jmxtools</artifactId>
-            <groupId>com.sun.jdmk</groupId>
-          </exclusion>
-          <exclusion>
-            <artifactId>jmxri</artifactId>
-            <groupId>com.sun.jmx</groupId>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
           </exclusion>
         </exclusions>
       </dependency>

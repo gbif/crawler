@@ -32,6 +32,7 @@ public class CrawlerNodePaths {
   public static final String LOCKED_URLS = "lockedUrls";
   public static final String XML_CRAWL = "xml";
   public static final String DWCA_CRAWL = "dwca";
+  public static final String ABCDA_CRAWL = "abcda";
   public static final String STARTED_CRAWLING = "startedCrawling";
   public static final String FINISHED_CRAWLING = "finishedCrawling";
   public static final String FINISHED_REASON = "finishedReason";
@@ -49,8 +50,7 @@ public class CrawlerNodePaths {
   public static final String FRAGMENTS_PROCESSED = "fragmentsProcessed";
   public static final String VERBATIM_OCCURRENCES_PERSISTED_SUCCESSFUL = "verbatimOccurrencesPersisted/" + SUCCESSFUL;
   public static final String VERBATIM_OCCURRENCES_PERSISTED_ERROR = "verbatimOccurrencesPersisted/" + ERROR;
-  public static final String INTERPRETED_OCCURRENCES_PERSISTED_SUCCESSFUL =
-    "interpretedOccurrencesPersisted/" + SUCCESSFUL;
+  public static final String INTERPRETED_OCCURRENCES_PERSISTED_SUCCESSFUL = "interpretedOccurrencesPersisted/" + SUCCESSFUL;
   public static final String INTERPRETED_OCCURRENCES_PERSISTED_ERROR = "interpretedOccurrencesPersisted/" + ERROR;
   public static final String PROCESS_STATE_OCCURRENCE = "processState/occurrence";
   public static final String PROCESS_STATE_CHECKLIST = "processState/checklist";
@@ -78,7 +78,7 @@ public class CrawlerNodePaths {
    */
   public static String getCrawlInfoPath(UUID uuid, @Nullable String path) {
     checkNotNull(uuid, "uuid can't be null");
-    String resultPath = CRAWL_INFO + "/" + uuid.toString();
+    String resultPath = "/" + CRAWL_INFO + "/" + uuid.toString();
     if (path != null) {
       resultPath += "/" + path;
     }
@@ -87,14 +87,15 @@ public class CrawlerNodePaths {
   }
 
   /**
-   * Builds a "/" separated path out of path elements. The returned string will not have a "/" as the first and last
-   * character.
+   * Builds a "/" separated path out of path elements. The returned string will have a "/" as the first character,
+   * but not as the last character.
    *
    * @param paths to concatenate
    * @return a string with all the parts concatenated
    */
   public static String buildPath(String... paths) {
-    return JOINER.join(paths);
+    String path = "/" + JOINER.join(paths);
+    return path;
   }
 
   private CrawlerNodePaths() {

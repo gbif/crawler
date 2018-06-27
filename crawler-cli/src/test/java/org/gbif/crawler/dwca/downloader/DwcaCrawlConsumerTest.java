@@ -24,7 +24,8 @@ public class DwcaCrawlConsumerTest extends TestCase {
     DwcaCrawlConsumer cc = new DwcaCrawlConsumer(null, null, DWCA_REPO);
     CrawlJob ebi = new CrawlJob(datasetKey, 1, EndpointType.DWC_ARCHIVE,
       URI.create("http://ftp.ebi.ac.uk/pub/databases/ena/biodiversity/occurrences/occurrences.tar.gz"));
-    cc.crawl(datasetKey, ebi);
+    // After refactoring this is still protected but now in a different package.
+    //cc.crawl(datasetKey, ebi);
   }
 
 
