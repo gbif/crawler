@@ -54,7 +54,7 @@
     <gbif-postal-service.version>0.25-SNAPSHOT</gbif-postal-service.version>
     <gbif-registry.version>2.79</gbif-registry.version>
     <gbif-wrangler.version>0.2</gbif-wrangler.version>
-    <gbif-xml-occurrence-parsers.version>1.0</gbif-xml-occurrence-parsers.version>
+    <gbif-verbatim-converters.version>1.1-SNAPSHOT</gbif-verbatim-converters.version>
     <gbif-pipelines-core.version>1.1-SNAPSHOT</gbif-pipelines-core.version>
 
     <guava.version>17.0</guava.version>
@@ -87,7 +87,7 @@
     <hadoop-common.version>2.6.0-cdh5.12.1</hadoop-common.version>
     <commons-lang.version>2.6</commons-lang.version>
     <commons-io.version>2.5</commons-io.version>
-    <avro.version>1.7.7</avro.version>
+    <avro.version>1.8.2</avro.version>
   </properties>
 
   <repositories>
@@ -242,8 +242,8 @@
       </dependency>
       <dependency>
         <groupId>org.gbif.pipelines</groupId>
-        <artifactId>xml-occurrence-parsers</artifactId>
-        <version>${gbif-xml-occurrence-parsers.version}</version>
+        <artifactId>verbatim-converters</artifactId>
+        <version>${gbif-verbatim-converters.version}</version>
       </dependency>
 
       <!-- Other -->
