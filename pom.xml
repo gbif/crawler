@@ -10,7 +10,7 @@
 
   <groupId>org.gbif.crawler</groupId>
   <artifactId>crawler-motherpom</artifactId>
-  <version>0.47-SNAPSHOT</version>
+  <version>0.48-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>Crawler :: Mother POM</name>
@@ -42,9 +42,9 @@
     <!-- Fixed to the version Curator uses, problems otherwise -->
     <freemarker.version>2.3.23</freemarker.version>
 
-    <dwc-api.version>1.18</dwc-api.version>
+    <dwc-api.version>1.19</dwc-api.version>
     <dwca-io.version>2.0-RC1</dwca-io.version>
-    <gbif-api.version>0.67</gbif-api.version>
+    <gbif-api.version>0.68</gbif-api.version>
     <gbif-cli.version>0.13</gbif-cli.version>
     <gbif-common-service.version>0.16</gbif-common-service.version>
     <gbif-common-ws.version>0.40</gbif-common-ws.version>
@@ -53,7 +53,7 @@
     <gbif-microservice.version>0.7</gbif-microservice.version>
     <gbif-occurrence.version>0.81</gbif-occurrence.version>
     <gbif-postal-service.version>0.25</gbif-postal-service.version>
-    <gbif-registry.version>2.86-SNAPSHOT</gbif-registry.version>
+    <gbif-registry.version>2.86</gbif-registry.version>
     <gbif-wrangler.version>0.2</gbif-wrangler.version>
     <gbif-verbatim-converters.version>1.1-SNAPSHOT</gbif-verbatim-converters.version>
     <gbif-pipelines-core.version>1.1-SNAPSHOT</gbif-pipelines-core.version>
