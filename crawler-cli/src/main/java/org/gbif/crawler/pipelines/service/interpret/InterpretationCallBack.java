@@ -51,7 +51,7 @@ public class InterpretationCallBack extends AbstractMessageCallback<ExtendedReco
         .runner(runner)
         .datasetId(datasetId.toString())
         .attempt(message.getAttempt())
-        .inputFile(message.getInputFile().toString())
+        .inputPath(message.getInputFile().toString())
         .interpretationTypes(message.getInterpretTypes())
         .redirectOutputFile(output)
         .redirectErrorFile(error)

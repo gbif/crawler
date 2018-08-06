@@ -135,7 +135,7 @@ public class InterpreterConfiguration {
       .add("sparkExecutorCores", sparkExecutorCores)
       .add("sparkExecutorNumbers", sparkExecutorNumbers)
       .add("jarFullPath", jarFullPath)
-      .add("targetDirectory", targetDirectory)
+      .add("targetPath", targetDirectory)
       .add("mainClass", mainClass)
       .add("processErrorDirectory", processErrorDirectory)
       .add("processOutputDirectory", processOutputDirectory)

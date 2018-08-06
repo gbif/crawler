@@ -55,8 +55,8 @@ public class ProcessRunnerBuilder {
   private String interpretationTypes;
   private String hdfsSiteConfig;
   private String coreSiteConfig;
-  private String targetDirectory;
-  private String inputFile;
+  private String targetPath;
+  private String inputPath;
   private String avroCompressionType;
   private Integer avroSyncInterval;
   private String wsConfig;
@@ -169,13 +169,13 @@ public class ProcessRunnerBuilder {
     return this;
   }
 
-  public ProcessRunnerBuilder targetDirectory(String targetDirectory) {
-    this.targetDirectory = targetDirectory;
+  public ProcessRunnerBuilder targetPath(String targetPath) {
+    this.targetPath = targetPath;
     return this;
   }
 
-  public ProcessRunnerBuilder inputFile(String inputFile) {
-    this.inputFile = inputFile;
+  public ProcessRunnerBuilder inputPath(String inputPath) {
+    this.inputPath = inputPath;
     return this;
   }
 
@@ -214,7 +214,7 @@ public class ProcessRunnerBuilder {
       .mainClass(config.mainClass)
       .hdfsSiteConfig(config.hdfsSiteConfig)
       .coreSiteConfig(config.coreSiteConfig)
-      .targetDirectory(config.targetDirectory)
+      .targetPath(config.targetDirectory)
       .avroCompressionType(config.avroConfig.compressionType)
       .avroSyncInterval(config.avroConfig.syncInterval)
       .logConfigPath(config.logConfigPath)
@@ -279,8 +279,8 @@ public class ProcessRunnerBuilder {
       .add("--attempt=" + attempt)
       .add("--interpretationTypes=" + Objects.requireNonNull(interpretationTypes))
       .add("--runner=" + Objects.requireNonNull(runner).getName())
-      .add("--defaultTargetDirectory=" + Objects.requireNonNull(targetDirectory))
-      .add("--inputFile=" + Objects.requireNonNull(inputFile))
+      .add("--targetPath=" + Objects.requireNonNull(targetPath))
+      .add("--inputPath=" + Objects.requireNonNull(inputPath))
       .add("--avroCompressionType=" + Objects.requireNonNull(avroCompressionType))
       .add("--avroSyncInterval=" + Objects.requireNonNull(avroSyncInterval))
       .add("--hdfsSiteConfig=" + Objects.requireNonNull(hdfsSiteConfig))
