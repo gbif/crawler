@@ -242,8 +242,7 @@ public class ProcessRunnerBuilder {
       .add("-Dlogback.configurationFile=" + Objects.requireNonNull(logConfigPath))
       .add("-cp")
       .add(Objects.requireNonNull(jarFullPath))
-      .add(Objects.requireNonNull(mainClass))
-      .add("--wsProperties=" + Objects.requireNonNull(wsConfig));
+      .add(Objects.requireNonNull(mainClass));
 
     Optional.ofNullable(directParallelism).ifPresent(x -> joiner.add("--targetParallelism=" + x));
 
@@ -264,8 +263,7 @@ public class ProcessRunnerBuilder {
       .add("--executor-cores " + Objects.requireNonNull(sparkExecutorCores))
       .add("--num-executors " + Objects.requireNonNull(sparkExecutorNumbers))
       .add("--driver-memory " + Objects.requireNonNull(sparkDriverMemory))
-      .add(Objects.requireNonNull(jarFullPath))
-      .add("--wsProperties=" + Objects.requireNonNull(wsConfig));
+      .add(Objects.requireNonNull(jarFullPath));
 
     return buildCommon(joiner);
   }
@@ -284,7 +282,8 @@ public class ProcessRunnerBuilder {
       .add("--avroCompressionType=" + Objects.requireNonNull(avroCompressionType))
       .add("--avroSyncInterval=" + Objects.requireNonNull(avroSyncInterval))
       .add("--hdfsSiteConfig=" + Objects.requireNonNull(hdfsSiteConfig))
-      .add("--coreSiteConfig=" + Objects.requireNonNull(coreSiteConfig));
+      .add("--coreSiteConfig=" + Objects.requireNonNull(coreSiteConfig))
+      .add("--wsProperties=" + Objects.requireNonNull(wsConfig));
 
     // Adds user name to run a command if it is necessary
     StringJoiner joiner = new StringJoiner(DELIMITER);
