@@ -4,7 +4,7 @@ import org.gbif.common.messaging.AbstractMessageCallback;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.CrawlFinishedMessage;
 import org.gbif.common.messaging.api.messages.ExtendedRecordAvailableMessage;
-import org.gbif.converter.Xml2Verbatim;
+import org.gbif.converters.XmlToAvroConverter;
 import org.gbif.crawler.pipelines.config.ConverterConfiguration;
 import org.gbif.crawler.pipelines.path.ArchiveToAvroPath;
 import org.gbif.crawler.pipelines.path.PathFactory;
@@ -41,7 +41,7 @@ public class XmlToAvroCallBack extends AbstractMessageCallback<CrawlFinishedMess
 
     ArchiveToAvroPath paths = PathFactory.create(XML).from(configuration, datasetUuid, message.getAttempt());
 
-    boolean isFileCreated = Xml2Verbatim.create()
+    boolean isFileCreated = XmlToAvroConverter.create()
       .xmlReaderParallelism(configuration.xmlReaderParallelism)
       .codecFactory(configuration.avroConfig.getCodec())
       .syncInterval(configuration.avroConfig.syncInterval)

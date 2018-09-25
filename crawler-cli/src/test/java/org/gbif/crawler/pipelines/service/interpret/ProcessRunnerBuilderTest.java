@@ -1,10 +1,15 @@
 package org.gbif.crawler.pipelines.service.interpret;
 
+import org.gbif.common.messaging.api.messages.ExtendedRecordAvailableMessage;
+import org.gbif.crawler.pipelines.config.InterpreterConfiguration;
 import org.gbif.crawler.pipelines.service.interpret.ProcessRunnerBuilder.RunnerEnum;
+
+import java.net.URI;
+import java.util.UUID;
 
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 public class ProcessRunnerBuilderTest {
 
@@ -16,8 +21,8 @@ public class ProcessRunnerBuilderTest {
 
   @Test(expected = NullPointerException.class)
   public void testEmptyParameters() {
-    // When
-    RunnerEnum runner = RunnerEnum.DIRECT;
+    // State
+    RunnerEnum runner = RunnerEnum.DISTRIBUTED;
 
     // Should
     ProcessRunnerBuilder.create().runner(runner).build();
@@ -25,49 +30,36 @@ public class ProcessRunnerBuilderTest {
 
   @Test
   public void testDirectRunnerCommand() {
-    // When
-    String expected =
-      "java -XX:+UseG1GC -Xms1G -Xmx1G -Dlogback.configurationFile=file.xml -cp java.jar org.gbif.Test "
-      + "--datasetId=de7ffb5e-c07b-42dc-8a88-f67a4465fe3d --attempt=1 --interpretationTypes=ALL --runner=DirectRunner "
-      + "--targetPath=tmp --inputPath=verbatim.avro --avroCompressionType=SNAPPY --avroSyncInterval=1 --hdfsSiteConfig=hdfs.xml "
-      + "--coreSiteConfig=core.xml --wsProperties=/path/ws.config";
+    // State
+    String expected = "java -XX:+UseG1GC -Xms1G -Xmx1G -Dlogback.configurationFile=file.xml -cp java.jar org.gbif.Test "
+                      + "--pipelineStep=VERBATIM_TO_INTERPRETED --datasetId=de7ffb5e-c07b-42dc-8a88-f67a4465fe3d --attempt=1 "
+                      + "--interpretationTypes=ALL --runner=SparkRunner --targetPath=tmp --inputPath=verbatim.avro "
+                      + "--avroCompressionType=SNAPPY --avroSyncInterval=1 --hdfsSiteConfig=hdfs.xml --coreSiteConfig=core.xml "
+                      + "--wsProperties=/path/ws.config";
 
-    RunnerEnum runner = RunnerEnum.DIRECT;
-    String datasetId = "de7ffb5e-c07b-42dc-8a88-f67a4465fe3d";
+    RunnerEnum runner = RunnerEnum.STANDALONE;
+
+    InterpreterConfiguration config = new InterpreterConfiguration();
+    config.standaloneJarPath = "java.jar";
+    config.standaloneMainClass = "org.gbif.Test";
+    config.targetDirectory = "tmp";
+    config.avroConfig.compressionType = "SNAPPY";
+    config.avroConfig.syncInterval = 1;
+    config.wsConfig = "/path/ws.config";
+    config.standaloneHeapSize = "1G";
+    config.standaloneStackSize = "1G";
+    config.coreSiteConfig = "core.xml";
+    config.hdfsSiteConfig = "hdfs.xml";
+    config.logConfigPath = "file.xml";
+
+    UUID datasetId = UUID.fromString("de7ffb5e-c07b-42dc-8a88-f67a4465fe3d");
     int attempt = 1;
-    String jarFullPath = "java.jar";
-    String mainClass = "org.gbif.Test";
-    String type = "ALL";
-    String input = "verbatim.avro";
-    String output = "tmp";
-    String avroType = "SNAPPY";
-    int avroSync = 1;
-    String wsConfig = "/path/ws.config";
-    String xmx = "1G";
-    String xms = "1G";
-    String core = "core.xml";
-    String hdfs = "hdfs.xml";
-    String log = "file.xml";
+    URI input = URI.create("verbatim.avro");
+    String[] types = {"ALL"};
+    ExtendedRecordAvailableMessage message = new ExtendedRecordAvailableMessage(datasetId, attempt, input, types);
 
-    // Expected
-    ProcessBuilder builder = ProcessRunnerBuilder.create()
-      .runner(runner)
-      .datasetId(datasetId)
-      .attempt(attempt)
-      .jarFullPath(jarFullPath)
-      .mainClass(mainClass)
-      .interpretationTypes(type)
-      .inputPath(input)
-      .targetPath(output)
-      .avroCompressionType(avroType)
-      .avroSyncInterval(avroSync)
-      .wsConfig(wsConfig)
-      .directStackSize(xms)
-      .directHeapSize(xmx)
-      .coreSiteConfig(core)
-      .hdfsSiteConfig(hdfs)
-      .logConfigPath(log)
-      .build();
+    // When
+    ProcessBuilder builder = ProcessRunnerBuilder.create().runner(runner).config(config).message(message).build();
 
     String result = builder.command().get(2);
 
@@ -79,54 +71,39 @@ public class ProcessRunnerBuilderTest {
   public void testSparkRunnerCommand() {
     // When
     String expected =
-      "spark2-submit --conf spark.default.parallelism=1 --conf spark.yarn.executor.memoryOverhead=1 --class org.gbif.Test "
-      + "--master yarn --deploy-mode cluster --executor-memory 1G --executor-cores 1 --num-executors 1 --driver-memory 4G "
-      + "java.jar --datasetId=de7ffb5e-c07b-42dc-8a88-f67a4465fe3d --attempt=1 --interpretationTypes=ALL --runner=SparkRunner "
-      + "--targetPath=tmp --inputPath=verbatim.avro --avroCompressionType=SNAPPY --avroSyncInterval=1 --hdfsSiteConfig=hdfs.xml "
-      + "--coreSiteConfig=core.xml --wsProperties=/path/ws.config";
+      "spark2-submit --conf spark.default.parallelism=1 --conf spark.executor.memoryOverhead=1 --class org.gbif.Test "
+      + "--master yarn --deploy-mode cluster --executor-memory 1G --executor-cores 1 --num-executors 1 "
+      + "--driver-memory 4G java.jar --datasetId=de7ffb5e-c07b-42dc-8a88-f67a4465fe3d --attempt=1 "
+      + "--interpretationTypes=ALL --runner=SparkRunner --targetPath=tmp --inputPath=verbatim.avro "
+      + "--avroCompressionType=SNAPPY --avroSyncInterval=1 --hdfsSiteConfig=hdfs.xml --coreSiteConfig=core.xml "
+      + "--wsProperties=/path/ws.config";
 
-    RunnerEnum runner = RunnerEnum.SPARK;
-    String datasetId = "de7ffb5e-c07b-42dc-8a88-f67a4465fe3d";
+    RunnerEnum runner = RunnerEnum.DISTRIBUTED;
+
+    InterpreterConfiguration config = new InterpreterConfiguration();
+    config.distributedJarPath = "java.jar";
+    config.distributedMainClass = "org.gbif.Test";
+    config.targetDirectory = "tmp";
+    config.sparkExecutorMemory = "1G";
+    config.sparkExecutorCores = 1;
+    config.sparkExecutorNumbers = 1;
+    config.sparkParallelism = 1;
+    config.sparkMemoryOverhead = 1;
+    config.avroConfig.compressionType = "SNAPPY";
+    config.avroConfig.syncInterval = 1;
+    config.wsConfig = "/path/ws.config";
+    config.sparkDriverMemory = "4G";
+    config.coreSiteConfig = "core.xml";
+    config.hdfsSiteConfig = "hdfs.xml";
+
+    UUID datasetId = UUID.fromString("de7ffb5e-c07b-42dc-8a88-f67a4465fe3d");
     int attempt = 1;
-    String jarFullPath = "java.jar";
-    String mainClass = "org.gbif.Test";
-    String type = "ALL";
-    String input = "verbatim.avro";
-    String output = "tmp";
-    String executorMemory = "1G";
-    Integer executorCores = 1;
-    Integer executorNumbers = 1;
-    Integer sparkParallelism = 1;
-    Integer memoryOverhead = 1;
-    String avroType = "SNAPPY";
-    int avroSync = 1;
-    String wsConfig = "/path/ws.config";
-    String driverMemory = "4G";
-    String core = "core.xml";
-    String hdfs = "hdfs.xml";
+    URI input = URI.create("verbatim.avro");
+    String[] types = {"ALL"};
+    ExtendedRecordAvailableMessage message = new ExtendedRecordAvailableMessage(datasetId, attempt, input, types);
 
     // Expected
-    ProcessBuilder builder = ProcessRunnerBuilder.create()
-      .runner(runner)
-      .datasetId(datasetId)
-      .attempt(attempt)
-      .jarFullPath(jarFullPath)
-      .mainClass(mainClass)
-      .interpretationTypes(type)
-      .inputPath(input)
-      .targetPath(output)
-      .sparkParallelism(sparkParallelism)
-      .sparkMemoryOverhead(memoryOverhead)
-      .sparkExecutorCores(executorCores)
-      .sparkExecutorMemory(executorMemory)
-      .sparkExecutorNumbers(executorNumbers)
-      .sparkDriverMemory(driverMemory)
-      .avroCompressionType(avroType)
-      .avroSyncInterval(avroSync)
-      .wsConfig(wsConfig)
-      .coreSiteConfig(core)
-      .hdfsSiteConfig(hdfs)
-      .build();
+    ProcessBuilder builder = ProcessRunnerBuilder.create().runner(runner).config(config).message(message).build();
 
     String result = builder.command().get(2);
 

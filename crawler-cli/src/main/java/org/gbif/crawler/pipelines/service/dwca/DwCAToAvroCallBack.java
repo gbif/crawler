@@ -4,10 +4,11 @@ import org.gbif.common.messaging.AbstractMessageCallback;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.DwcaValidationFinishedMessage;
 import org.gbif.common.messaging.api.messages.ExtendedRecordAvailableMessage;
-import org.gbif.converter.Dwca2Verbatim;
+import org.gbif.converters.DwcaToAvroConverter;
 import org.gbif.crawler.pipelines.config.ConverterConfiguration;
 import org.gbif.crawler.pipelines.path.ArchiveToAvroPath;
 import org.gbif.crawler.pipelines.path.PathFactory;
+
 import java.io.IOException;
 import java.net.URI;
 import java.util.Objects;
@@ -41,7 +42,7 @@ public class DwCAToAvroCallBack extends AbstractMessageCallback<DwcaValidationFi
 
     ArchiveToAvroPath paths = PathFactory.create(DWCA).from(configuration, datasetUuid, message.getAttempt());
 
-    boolean isFileCreated = Dwca2Verbatim.create()
+    boolean isFileCreated = DwcaToAvroConverter.create()
       .codecFactory(configuration.avroConfig.getCodec())
       .syncInterval(configuration.avroConfig.syncInterval)
       .hdfsSiteConfig(configuration.hdfsSiteConfig)

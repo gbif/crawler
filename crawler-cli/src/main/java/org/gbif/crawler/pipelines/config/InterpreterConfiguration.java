@@ -9,7 +9,7 @@ import javax.validation.constraints.NotNull;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParametersDelegate;
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 
 /**
  * Configuration required to start Interpretation Pipeline on provided dataset
@@ -73,35 +73,38 @@ public class InterpreterConfiguration {
   @NotNull
   public int sparkExecutorNumbers;
 
-  @Parameter(names = "--spark-driver-emory")
+  @Parameter(names = "--spark-driver-memory")
   @NotNull
   public String sparkDriverMemory;
 
-  @Parameter(names = "--direct-parallelism")
+  @Parameter(names = "--standalone-stack-size")
+  @NotNull
+  public String standaloneStackSize;
+
+  @Parameter(names = "--standalone-heap-size")
+  @NotNull
+  public String standaloneHeapSize;
+
+  @Parameter(names = "--switch-file-size-mb")
   @NotNull
   @Min(1)
-  public int directParallelism;
+  public int switchFileSizeMb;
 
-  @Parameter(names = "--direct-stack-size")
+  @Parameter(names = "--distributed-jar-path")
   @NotNull
-  public String directStackSize;
+  public String distributedJarPath;
 
-  @Parameter(names = "--direct-heap-size")
+  @Parameter(names = "--standalone-jar-path")
   @NotNull
-  public String directHeapSize;
+  public String standaloneJarPath;
 
-  @Parameter(names = "--switch-file-size")
+  @Parameter(names = "--standalone-main-class")
   @NotNull
-  @Min(1)
-  public long switchFileSize;
+  public String standaloneMainClass;
 
-  @Parameter(names = "--jar-full-path")
+  @Parameter(names = "--distributed-main-class")
   @NotNull
-  public String jarFullPath;
-
-  @Parameter(names = "--main-class")
-  @NotNull
-  public String mainClass;
+  public String distributedMainClass;
 
   @Parameter(names = "--target-directory")
   @NotNull
@@ -118,25 +121,26 @@ public class InterpreterConfiguration {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
       .add("messaging", messaging)
       .add("queueName", queueName)
       .add("poolSize", poolSize)
       .add("avroConfig", avroConfig)
       .add("hdfsSiteConfig", hdfsSiteConfig)
-      .add("taxonWsConfig", wsConfig)
+      .add("wsConfig", wsConfig)
       .add("otherUser", otherUser)
-      .add("directParallelism", directParallelism)
-      .add("directStackSize", directStackSize)
-      .add("directHeapSize", directHeapSize)
+      .add("standaloneStackSize", standaloneStackSize)
+      .add("standaloneHeapSize", standaloneHeapSize)
       .add("sparkParallelism", sparkParallelism)
       .add("sparkMemoryOverhead", sparkMemoryOverhead)
       .add("sparkExecutorMemory", sparkExecutorMemory)
       .add("sparkExecutorCores", sparkExecutorCores)
       .add("sparkExecutorNumbers", sparkExecutorNumbers)
-      .add("jarFullPath", jarFullPath)
+      .add("standaloneJarPath", standaloneJarPath)
+      .add("distributedJarPath", distributedJarPath)
       .add("targetPath", targetDirectory)
-      .add("mainClass", mainClass)
+      .add("distributedMainClass", distributedMainClass)
+      .add("standaloneMainClass", standaloneMainClass)
       .add("processErrorDirectory", processErrorDirectory)
       .add("processOutputDirectory", processOutputDirectory)
       .add("logConfigPath", logConfigPath)

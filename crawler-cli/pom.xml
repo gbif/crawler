@@ -114,10 +114,6 @@
       <artifactId>gbif-cli</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.gbif.pipelines</groupId>
-      <artifactId>core</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.gbif</groupId>
       <artifactId>dwc-api</artifactId>
     </dependency>
@@ -282,7 +278,7 @@
     </dependency>
     <dependency>
       <groupId>org.gbif.pipelines</groupId>
-      <artifactId>verbatim-converters</artifactId>
+      <artifactId>archives-converters</artifactId>
     </dependency>
     <dependency>
       <groupId>org.mockito</groupId>

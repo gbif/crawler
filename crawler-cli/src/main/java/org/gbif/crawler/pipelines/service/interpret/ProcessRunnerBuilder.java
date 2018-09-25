@@ -1,13 +1,12 @@
 package org.gbif.crawler.pipelines.service.interpret;
 
+import org.gbif.common.messaging.api.messages.ExtendedRecordAvailableMessage;
 import org.gbif.crawler.pipelines.config.InterpreterConfiguration;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.StringJoiner;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,217 +14,56 @@ import org.slf4j.LoggerFactory;
 /**
  * Class to build an instance of ProcessBuilder for direct or spark command
  */
-public class ProcessRunnerBuilder {
+class ProcessRunnerBuilder {
 
   public enum RunnerEnum {
-
-    DIRECT("DirectRunner"), SPARK("SparkRunner");
-
-    String name;
-
-    RunnerEnum(String name) {
-      this.name = name;
-    }
-
-    public String getName() {
-      return name;
-    }
-
+    STANDALONE, DISTRIBUTED
   }
 
   private static final Logger LOG = LoggerFactory.getLogger(ProcessRunnerBuilder.class);
 
   private static final String DELIMITER = " ";
 
-  private String user;
   private RunnerEnum runner;
-  private String datasetId;
-  private int attempt;
-  private Integer sparkParallelism;
-  private Integer sparkMemoryOverhead;
-  private String sparkExecutorMemory;
-  private Integer sparkExecutorCores;
-  private Integer sparkExecutorNumbers;
-  private String sparkDriverMemory;
-  private Integer directParallelism;
-  private String directStackSize;
-  private String directHeapSize;
-  private String jarFullPath;
-  private String mainClass;
-  private String interpretationTypes;
-  private String hdfsSiteConfig;
-  private String coreSiteConfig;
-  private String targetPath;
-  private String inputPath;
-  private String avroCompressionType;
-  private Integer avroSyncInterval;
-  private String wsConfig;
+  private InterpreterConfiguration config;
+  private ExtendedRecordAvailableMessage message;
   private String redirectErrorFile;
   private String redirectOutputFile;
-  private String logConfigPath;
 
-  public ProcessRunnerBuilder user(String user) {
-    this.user = user;
+  ProcessRunnerBuilder config(InterpreterConfiguration config) {
+    this.config = Objects.requireNonNull(config);
     return this;
   }
 
-  public ProcessRunnerBuilder runner(RunnerEnum runner) {
-    this.runner = runner;
+  ProcessRunnerBuilder message(ExtendedRecordAvailableMessage message) {
+    this.message = Objects.requireNonNull(message);
     return this;
   }
 
-  public ProcessRunnerBuilder sparkParallelism(Integer sparkParallelism) {
-    this.sparkParallelism = sparkParallelism;
+  ProcessRunnerBuilder runner(RunnerEnum runner) {
+    this.runner = Objects.requireNonNull(runner);
     return this;
   }
 
-  public ProcessRunnerBuilder sparkMemoryOverhead(Integer sparkMemoryOverhead) {
-    this.sparkMemoryOverhead = sparkMemoryOverhead;
-    return this;
-  }
-
-  public ProcessRunnerBuilder sparkExecutorMemory(String sparkExecutorMemory) {
-    this.sparkExecutorMemory = sparkExecutorMemory;
-    return this;
-  }
-
-  public ProcessRunnerBuilder sparkExecutorCores(Integer sparkExecutorCores) {
-    this.sparkExecutorCores = sparkExecutorCores;
-    return this;
-  }
-
-  public ProcessRunnerBuilder sparkExecutorNumbers(Integer sparkExecutorNumbers) {
-    this.sparkExecutorNumbers = sparkExecutorNumbers;
-    return this;
-  }
-
-  public ProcessRunnerBuilder sparkDriverMemory(String sparkDriverMemory) {
-    this.sparkDriverMemory = sparkDriverMemory;
-    return this;
-  }
-
-  public ProcessRunnerBuilder directParallelism(Integer directParallelism) {
-    this.directParallelism = directParallelism;
-    return this;
-  }
-
-  public ProcessRunnerBuilder directStackSize(String directStackSize) {
-    this.directStackSize = directStackSize;
-    return this;
-  }
-
-  public ProcessRunnerBuilder directHeapSize(String directHeapSize) {
-    this.directHeapSize = directHeapSize;
-    return this;
-  }
-
-  public ProcessRunnerBuilder jarFullPath(String jarFullPath) {
-    this.jarFullPath = jarFullPath;
-    return this;
-  }
-
-  public ProcessRunnerBuilder mainClass(String mainClass) {
-    this.mainClass = mainClass;
-    return this;
-  }
-
-  public ProcessRunnerBuilder datasetId(String datasetId) {
-    this.datasetId = datasetId;
-    return this;
-  }
-
-  public ProcessRunnerBuilder attempt(int attempt) {
-    this.attempt = attempt;
-    return this;
-  }
-
-  public ProcessRunnerBuilder interpretationTypes(String... interpretationTypes) {
-    this.interpretationTypes = Arrays.stream(interpretationTypes).collect(Collectors.joining(","));
-    return this;
-  }
-
-  public ProcessRunnerBuilder redirectErrorFile(String redirectErrorFile) {
+  ProcessRunnerBuilder redirectErrorFile(String redirectErrorFile) {
     this.redirectErrorFile = redirectErrorFile;
     return this;
   }
 
-  public ProcessRunnerBuilder redirectOutputFile(String redirectOutputFile) {
+  ProcessRunnerBuilder redirectOutputFile(String redirectOutputFile) {
     this.redirectOutputFile = redirectOutputFile;
     return this;
   }
 
-  public ProcessRunnerBuilder logConfigPath(String logConfigPath) {
-    this.logConfigPath = logConfigPath;
-    return this;
-  }
-
-  public ProcessRunnerBuilder hdfsSiteConfig(String hdfsSiteConfig) {
-    this.hdfsSiteConfig = hdfsSiteConfig;
-    return this;
-  }
-
-  public ProcessRunnerBuilder coreSiteConfig(String coreSiteConfig) {
-    this.coreSiteConfig = coreSiteConfig;
-    return this;
-  }
-
-  public ProcessRunnerBuilder targetPath(String targetPath) {
-    this.targetPath = targetPath;
-    return this;
-  }
-
-  public ProcessRunnerBuilder inputPath(String inputPath) {
-    this.inputPath = inputPath;
-    return this;
-  }
-
-  public ProcessRunnerBuilder avroCompressionType(String avroCompressionType) {
-    this.avroCompressionType = avroCompressionType;
-    return this;
-  }
-
-  public ProcessRunnerBuilder avroSyncInterval(Integer avroSyncInterval) {
-    this.avroSyncInterval = avroSyncInterval;
-    return this;
-  }
-
-  public ProcessRunnerBuilder wsConfig(String wsConfig) {
-    this.wsConfig = wsConfig;
-    return this;
-  }
-
-  public static ProcessRunnerBuilder create() {
+  static ProcessRunnerBuilder create() {
     return new ProcessRunnerBuilder();
   }
 
-  public static ProcessRunnerBuilder create(InterpreterConfiguration config) {
-    return ProcessRunnerBuilder.create()
-      .user(config.otherUser)
-      .directParallelism(config.directParallelism)
-      .directStackSize(config.directStackSize)
-      .directHeapSize(config.directHeapSize)
-      .sparkParallelism(config.sparkParallelism)
-      .sparkMemoryOverhead(config.sparkMemoryOverhead)
-      .sparkExecutorMemory(config.sparkExecutorMemory)
-      .sparkExecutorCores(config.sparkExecutorCores)
-      .sparkExecutorNumbers(config.sparkExecutorNumbers)
-      .sparkDriverMemory(config.sparkDriverMemory)
-      .jarFullPath(config.jarFullPath)
-      .mainClass(config.mainClass)
-      .hdfsSiteConfig(config.hdfsSiteConfig)
-      .coreSiteConfig(config.coreSiteConfig)
-      .targetPath(config.targetDirectory)
-      .avroCompressionType(config.avroConfig.compressionType)
-      .avroSyncInterval(config.avroConfig.syncInterval)
-      .logConfigPath(config.logConfigPath)
-      .wsConfig(config.wsConfig);
-  }
-
-  public ProcessBuilder build() {
-    if (RunnerEnum.DIRECT == runner) {
+  ProcessBuilder build() {
+    if (RunnerEnum.STANDALONE == runner) {
       return buildDirect();
     }
-    if (RunnerEnum.SPARK == runner) {
+    if (RunnerEnum.DISTRIBUTED == runner) {
       return buildSpark();
     }
     throw new IllegalArgumentException("Wrong runner type - " + runner);
@@ -237,14 +75,13 @@ public class ProcessRunnerBuilder {
   private ProcessBuilder buildDirect() {
     StringJoiner joiner = new StringJoiner(DELIMITER).add("java")
       .add("-XX:+UseG1GC")
-      .add("-Xms" + Objects.requireNonNull(directStackSize))
-      .add("-Xmx" + Objects.requireNonNull(directHeapSize))
-      .add("-Dlogback.configurationFile=" + Objects.requireNonNull(logConfigPath))
+      .add("-Xms" + Objects.requireNonNull(config.standaloneStackSize))
+      .add("-Xmx" + Objects.requireNonNull(config.standaloneHeapSize))
+      .add("-Dlogback.configurationFile=" + Objects.requireNonNull(config.logConfigPath))
       .add("-cp")
-      .add(Objects.requireNonNull(jarFullPath))
-      .add(Objects.requireNonNull(mainClass));
-
-    Optional.ofNullable(directParallelism).ifPresent(x -> joiner.add("--targetParallelism=" + x));
+      .add(Objects.requireNonNull(config.standaloneJarPath))
+      .add(Objects.requireNonNull(config.standaloneMainClass))
+      .add("--pipelineStep=VERBATIM_TO_INTERPRETED");
 
     return buildCommon(joiner);
   }
@@ -254,16 +91,16 @@ public class ProcessRunnerBuilder {
    */
   private ProcessBuilder buildSpark() {
     StringJoiner joiner = new StringJoiner(DELIMITER).add("spark2-submit")
-      .add("--conf spark.default.parallelism=" + Objects.requireNonNull(sparkParallelism))
-      .add("--conf spark.yarn.executor.memoryOverhead=" + Objects.requireNonNull(sparkMemoryOverhead))
-      .add("--class " + Objects.requireNonNull(mainClass))
+      .add("--conf spark.default.parallelism=" + config.sparkParallelism)
+      .add("--conf spark.executor.memoryOverhead=" + config.sparkMemoryOverhead)
+      .add("--class " + Objects.requireNonNull(config.distributedMainClass))
       .add("--master yarn")
       .add("--deploy-mode cluster")
-      .add("--executor-memory " + Objects.requireNonNull(sparkExecutorMemory))
-      .add("--executor-cores " + Objects.requireNonNull(sparkExecutorCores))
-      .add("--num-executors " + Objects.requireNonNull(sparkExecutorNumbers))
-      .add("--driver-memory " + Objects.requireNonNull(sparkDriverMemory))
-      .add(Objects.requireNonNull(jarFullPath));
+      .add("--executor-memory " + Objects.requireNonNull(config.sparkExecutorMemory))
+      .add("--executor-cores " + config.sparkExecutorCores)
+      .add("--num-executors " + config.sparkExecutorNumbers)
+      .add("--driver-memory " + config.sparkDriverMemory)
+      .add(Objects.requireNonNull(config.distributedJarPath));
 
     return buildCommon(joiner);
   }
@@ -272,22 +109,25 @@ public class ProcessRunnerBuilder {
    * Adds common properties to direct or spark process, for running Java pipelines with pipeline options
    */
   private ProcessBuilder buildCommon(StringJoiner command) {
+
+    String interpretationTypes = String.join(",", message.getInterpretTypes());
+
     // Common properties
-    command.add("--datasetId=" + Objects.requireNonNull(datasetId))
-      .add("--attempt=" + attempt)
+    command.add("--datasetId=" + Objects.requireNonNull(message.getDatasetUuid()))
+      .add("--attempt=" + message.getAttempt())
       .add("--interpretationTypes=" + Objects.requireNonNull(interpretationTypes))
-      .add("--runner=" + Objects.requireNonNull(runner).getName())
-      .add("--targetPath=" + Objects.requireNonNull(targetPath))
-      .add("--inputPath=" + Objects.requireNonNull(inputPath))
-      .add("--avroCompressionType=" + Objects.requireNonNull(avroCompressionType))
-      .add("--avroSyncInterval=" + Objects.requireNonNull(avroSyncInterval))
-      .add("--hdfsSiteConfig=" + Objects.requireNonNull(hdfsSiteConfig))
-      .add("--coreSiteConfig=" + Objects.requireNonNull(coreSiteConfig))
-      .add("--wsProperties=" + Objects.requireNonNull(wsConfig));
+      .add("--runner=SparkRunner")
+      .add("--targetPath=" + Objects.requireNonNull(config.targetDirectory))
+      .add("--inputPath=" + Objects.requireNonNull(message.getInputFile().toString()))
+      .add("--avroCompressionType=" + Objects.requireNonNull(config.avroConfig.compressionType))
+      .add("--avroSyncInterval=" + config.avroConfig.syncInterval)
+      .add("--hdfsSiteConfig=" + Objects.requireNonNull(config.hdfsSiteConfig))
+      .add("--coreSiteConfig=" + Objects.requireNonNull(config.coreSiteConfig))
+      .add("--wsProperties=" + Objects.requireNonNull(config.wsConfig));
 
     // Adds user name to run a command if it is necessary
     StringJoiner joiner = new StringJoiner(DELIMITER);
-    Optional.ofNullable(user).ifPresent(x -> joiner.add("sudo -u " + x));
+    Optional.ofNullable(config.otherUser).ifPresent(x -> joiner.add("sudo -u " + x));
     joiner.merge(command);
 
     // The result
