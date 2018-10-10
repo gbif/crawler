@@ -42,21 +42,21 @@
     <!-- Fixed to the version Curator uses, problems otherwise -->
     <freemarker.version>2.3.23</freemarker.version>
 
-    <dwc-api.version>1.19</dwc-api.version>
-    <dwca-io.version>2.1</dwca-io.version>
-    <gbif-api.version>0.68</gbif-api.version>
+    <dwc-api.version>1.20</dwc-api.version>
+    <dwca-io.version>2.2</dwca-io.version>
+    <gbif-api.version>0.71</gbif-api.version>
     <gbif-cli.version>0.13</gbif-cli.version>
-    <gbif-common-service.version>0.16</gbif-common-service.version>
-    <gbif-common-ws.version>0.40</gbif-common-ws.version>
+    <gbif-common-service.version>0.17</gbif-common-service.version>
+    <gbif-common-ws.version>0.43</gbif-common-ws.version>
     <gbif-common.version>0.40</gbif-common.version>
     <gbif-httputils.version>0.10</gbif-httputils.version>
     <gbif-microservice.version>0.7</gbif-microservice.version>
-    <gbif-occurrence.version>0.81</gbif-occurrence.version>
+    <gbif-occurrence.version>0.86</gbif-occurrence.version>
     <gbif-postal-service.version>0.25</gbif-postal-service.version>
-    <gbif-registry.version>2.86</gbif-registry.version>
+    <gbif-registry.version>2.91</gbif-registry.version>
     <gbif-wrangler.version>0.2</gbif-wrangler.version>
-    <gbif-pipelines-models.version>2.0.6-SNAPSHOT</gbif-pipelines-models.version>
-    <gbif-archives-converters.version>2.0.6-SNAPSHOT</gbif-archives-converters.version>
+    <gbif-pipelines-models.version>2.0.5</gbif-pipelines-models.version>
+    <gbif-archives-converters.version>2.0.5</gbif-archives-converters.version>
 
     <guava.version>18.0</guava.version>
     <guice.version>4.0</guice.version>
