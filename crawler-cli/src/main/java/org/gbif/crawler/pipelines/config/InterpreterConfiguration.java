@@ -52,8 +52,6 @@ public class InterpreterConfiguration {
   public String otherUser;
 
   @Parameter(names = "--spark-parallelism")
-  @NotNull
-  @Min(1)
   public int sparkParallelism;
 
   @Parameter(names = "--spark-memory-overhead")
