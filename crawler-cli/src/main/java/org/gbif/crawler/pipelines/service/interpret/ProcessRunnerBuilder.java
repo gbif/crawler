@@ -90,7 +90,13 @@ class ProcessRunnerBuilder {
    * Builds ProcessBuilder to process spark command
    */
   private ProcessBuilder buildSpark() {
-    StringJoiner joiner = new StringJoiner(DELIMITER).add("spark2-submit")
+    StringJoiner joiner = new StringJoiner(DELIMITER).add("spark2-submit");
+
+    Optional.ofNullable(config.metricsPropertiesPath).ifPresent(x -> joiner.add("--conf spark.metrics.conf=" + x));
+    Optional.ofNullable(config.extraClassPath).ifPresent(x -> joiner.add("--conf \"spark.driver.extraClassPath=" + x + "\""));
+    Optional.ofNullable(config.driverJavaOptions).ifPresent(x -> joiner.add("--driver-java-options \"" + x + "\""));
+
+    joiner
       .add("--conf spark.default.parallelism=" + config.sparkParallelism)
       .add("--conf spark.executor.memoryOverhead=" + config.sparkMemoryOverhead)
       .add("--class " + Objects.requireNonNull(config.distributedMainClass))

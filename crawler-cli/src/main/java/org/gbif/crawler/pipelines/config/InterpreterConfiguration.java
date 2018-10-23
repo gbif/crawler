@@ -119,6 +119,15 @@ public class InterpreterConfiguration {
   @Parameter(names = "--log-config-path")
   public String logConfigPath;
 
+  @Parameter(names = "--driver-java-options")
+  public String driverJavaOptions;
+
+  @Parameter(names = "--metrics-properties-path")
+  public String metricsPropertiesPath;
+
+  @Parameter(names = "--extra-class-path")
+  public String extraClassPath;
+
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
@@ -144,6 +153,9 @@ public class InterpreterConfiguration {
       .add("processErrorDirectory", processErrorDirectory)
       .add("processOutputDirectory", processOutputDirectory)
       .add("logConfigPath", logConfigPath)
+      .add("metricsPropertiesPath", metricsPropertiesPath)
+      .add("extraClassPath", extraClassPath)
+      .add("driverJavaOptions", driverJavaOptions)
       .toString();
   }
 }
