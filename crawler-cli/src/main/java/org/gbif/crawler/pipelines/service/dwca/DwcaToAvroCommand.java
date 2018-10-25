@@ -12,17 +12,17 @@ import org.kohsuke.MetaInfServices;
  * This command starts a service which listens to the {@link org.gbif.common.messaging.api.messages.DwcaValidationFinishedMessage } and perform conversion
  */
 @MetaInfServices(Command.class)
-public class DwCAToAvroCommand extends ServiceCommand {
+public class DwcaToAvroCommand extends ServiceCommand {
 
   private final ConverterConfiguration config = new ConverterConfiguration();
 
-  public DwCAToAvroCommand() {
+  public DwcaToAvroCommand() {
     super("dwca-to-avro");
   }
 
   @Override
   protected Service getService() {
-    return new DwCAToAvroService(config);
+    return new DwcaToAvroService(config);
   }
 
   @Override

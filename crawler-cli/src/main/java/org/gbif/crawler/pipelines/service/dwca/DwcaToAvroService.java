@@ -12,13 +12,14 @@ import org.slf4j.LoggerFactory;
 /**
  * A service which listens to the  {@link org.gbif.common.messaging.api.messages.DwcaValidationFinishedMessage } and perform conversion
  */
-public class DwCAToAvroService extends AbstractIdleService {
+public class DwcaToAvroService extends AbstractIdleService {
 
-  private static final Logger LOG = LoggerFactory.getLogger(DwCAToAvroService.class);
+  private static final Logger LOG = LoggerFactory.getLogger(DwcaToAvroService.class);
   private final ConverterConfiguration configuration;
   private MessageListener listener;
   private MessagePublisher publisher;
-  public DwCAToAvroService(ConverterConfiguration configuration) {
+
+  public DwcaToAvroService(ConverterConfiguration configuration) {
     this.configuration = configuration;
   }
 
@@ -28,7 +29,7 @@ public class DwCAToAvroService extends AbstractIdleService {
     // Prefetch is one, since this is a long-running process.
     listener = new MessageListener(configuration.messaging.getConnectionParameters(), 1);
     publisher = new DefaultMessagePublisher(configuration.messaging.getConnectionParameters());
-    listener.listen(configuration.queueName, configuration.poolSize, new DwCAToAvroCallBack(configuration,publisher));
+    listener.listen(configuration.queueName, configuration.poolSize, new DwcaToAvroCallBack(configuration,publisher));
   }
 
   @Override

@@ -1,13 +1,16 @@
 package org.gbif.crawler.pipelines.service.interpret;
 
 import org.gbif.common.messaging.AbstractMessageCallback;
+import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.ExtendedRecordAvailableMessage;
+import org.gbif.common.messaging.api.messages.IndexDatasetMessage;
 import org.gbif.crawler.pipelines.config.InterpreterConfiguration;
 import org.gbif.crawler.pipelines.service.interpret.ProcessRunnerBuilder.RunnerEnum;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.util.Objects;
 import java.util.UUID;
 
 import com.google.common.base.Strings;
@@ -24,9 +27,12 @@ public class InterpretationCallBack extends AbstractMessageCallback<ExtendedReco
 
   private static final Logger LOG = LoggerFactory.getLogger(InterpretationCallBack.class);
   private final InterpreterConfiguration config;
+  private final MessagePublisher publisher;
 
-  InterpretationCallBack(InterpreterConfiguration config) {
+  InterpretationCallBack(InterpreterConfiguration config, MessagePublisher publisher) {
+    Objects.requireNonNull(config, "Configuration cannot be null");
     this.config = config;
+    this.publisher = publisher;
   }
 
   @Override
@@ -34,6 +40,7 @@ public class InterpretationCallBack extends AbstractMessageCallback<ExtendedReco
     LOG.info("Message received: {}", message);
 
     UUID datasetId = message.getDatasetUuid();
+    int attempt = message.getAttempt();
 
     try {
 
@@ -47,18 +54,18 @@ public class InterpretationCallBack extends AbstractMessageCallback<ExtendedReco
       int numberOfTreads = (int) Math.ceil(fileSizeByte / (20d * 1024d * 1024d)); // 1 thread per 20MB
       config.sparkParallelism = numberOfTreads > 1 ? numberOfTreads : 1;
 
-      // Assembles a process and runs it
       LOG.info("Start the process. DatasetId - {}, InterpretTypes - {}, Runner type - {}", datasetId,
         message.getInterpretTypes(), runner);
 
       String errorDirectory = config.processErrorDirectory;
-      String error = errorDirectory != null ? errorDirectory + datasetId + "-error.log" : null;
+      String error = errorDirectory != null ? errorDirectory + datasetId + "-int-error.log" : null;
       LOG.info("Error file - {}", error);
 
       String outputDirectory = config.processOutputDirectory;
-      String output = outputDirectory != null ? outputDirectory + datasetId + "-output.log" : null;
+      String output = outputDirectory != null ? outputDirectory + datasetId + "-int-output.log" : null;
       LOG.info("Output file - {}", output);
 
+      // Assembles a process and runs it
       ProcessRunnerBuilder.create()
         .runner(runner)
         .config(config)
@@ -71,6 +78,16 @@ public class InterpretationCallBack extends AbstractMessageCallback<ExtendedReco
 
       LOG.info("Finish the process. DatasetId - {}, InterpretTypes - {}, Runner type - {}", datasetId,
         message.getInterpretTypes(), runner);
+
+      // Send message to MQ
+      if (Objects.nonNull(publisher)) {
+        try {
+          publisher.send(new IndexDatasetMessage(datasetId, attempt));
+          LOG.info("Message has been sent DatasetId - {}, Attempt - {}", datasetId, attempt);
+        } catch (IOException e) {
+          LOG.error("Could not send message for DatasetId [{}] : {}", datasetId, e.getMessage());
+        }
+      }
 
     } catch (InterruptedException | IOException ex) {
       LOG.error(ex.getMessage(), ex);

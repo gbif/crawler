@@ -22,13 +22,13 @@ import static org.gbif.crawler.pipelines.path.PathFactory.ArchiveTypeEnum.DWCA;
 /**
  * Call back which is called when the {@link org.gbif.common.messaging.api.messages.DwcaValidationFinishedMessage } is received.
  */
-public class DwCAToAvroCallBack extends AbstractMessageCallback<DwcaValidationFinishedMessage> {
+public class DwcaToAvroCallBack extends AbstractMessageCallback<DwcaValidationFinishedMessage> {
 
-  private static final Logger LOG = LoggerFactory.getLogger(DwCAToAvroCallBack.class);
+  private static final Logger LOG = LoggerFactory.getLogger(DwcaToAvroCallBack.class);
   private final ConverterConfiguration configuration;
   private final MessagePublisher publisher;
 
-  DwCAToAvroCallBack(ConverterConfiguration configuration, MessagePublisher publisher) {
+  DwcaToAvroCallBack(ConverterConfiguration configuration, MessagePublisher publisher) {
     Objects.requireNonNull(configuration, "Configuration cannot be null");
     this.configuration = configuration;
     this.publisher = publisher;
@@ -49,6 +49,8 @@ public class DwCAToAvroCallBack extends AbstractMessageCallback<DwcaValidationFi
       .convert(paths.getInputPath(), paths.getOutputPath());
 
     LOG.info("DWCA to avro conversion completed for {}, file was created - {}", datasetUuid, isFileCreated);
+
+    // Send message to MQ
     if (isFileCreated && Objects.nonNull(publisher)) {
       try {
         URI uri = paths.getOutputPath().toUri();

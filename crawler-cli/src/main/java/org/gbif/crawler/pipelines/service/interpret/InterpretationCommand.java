@@ -12,11 +12,11 @@ import org.kohsuke.MetaInfServices;
  * This command starts a service which listens to the {@link org.gbif.common.messaging.api.messages.ExtendedRecordAvailableMessage } and perform interpretation
  */
 @MetaInfServices(Command.class)
-public class InterpreterCommand extends ServiceCommand {
+public class InterpretationCommand extends ServiceCommand {
 
   private final InterpreterConfiguration config = new InterpreterConfiguration();
 
-  public InterpreterCommand() {
+  public InterpretationCommand() {
     super("interpret-dataset");
   }
 

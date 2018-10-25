@@ -8,6 +8,7 @@ import org.gbif.converters.XmlToAvroConverter;
 import org.gbif.crawler.pipelines.config.ConverterConfiguration;
 import org.gbif.crawler.pipelines.path.ArchiveToAvroPath;
 import org.gbif.crawler.pipelines.path.PathFactory;
+
 import java.io.IOException;
 import java.net.URI;
 import java.util.Objects;
@@ -50,6 +51,7 @@ public class XmlToAvroCallBack extends AbstractMessageCallback<CrawlFinishedMess
 
     LOG.info("XML to avro conversion completed for {}, file was created - {}", datasetUuid, isFileCreated);
 
+    // Send message to MQ
     if (isFileCreated && Objects.nonNull(publisher)) {
       try {
         URI uri = paths.getOutputPath().toUri();
