@@ -35,7 +35,7 @@
     <jdkLevel>1.8</jdkLevel>
     <release.tagNameBase>crawler</release.tagNameBase>
 
-    <amqp-client.version>3.5.6</amqp-client.version>
+    <amqp-client.version>4.8.0</amqp-client.version>
     <curator.version>4.0.1</curator.version>
     <curator-test.version>2.12.0</curator-test.version>
     <fest.version>2.0M10</fest.version>
@@ -52,7 +52,7 @@
     <gbif-httputils.version>0.10</gbif-httputils.version>
     <gbif-microservice.version>0.7</gbif-microservice.version>
     <gbif-occurrence.version>0.86</gbif-occurrence.version>
-    <gbif-postal-service.version>0.25</gbif-postal-service.version>
+    <gbif-postal-service.version>0.26-SNAPSHOT</gbif-postal-service.version>
     <gbif-registry.version>2.91</gbif-registry.version>
     <gbif-wrangler.version>0.2</gbif-wrangler.version>
     <gbif-pipelines-models.version>2.0.6</gbif-pipelines-models.version>
