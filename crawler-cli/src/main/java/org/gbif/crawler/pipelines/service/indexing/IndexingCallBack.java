@@ -44,7 +44,7 @@ public class IndexingCallBack extends AbstractMessageCallback<IndexDatasetMessag
       // Chooses a runner type
       int filesCount = getfileCount(config, message);
       RunnerEnum runner = filesCount > config.switchFilesNumber ? RunnerEnum.DISTRIBUTED : RunnerEnum.STANDALONE;
-      LOG.info("Spark Runner type - {}", runner);
+      LOG.info("Number of files - {}, Spark Runner type - {}", filesCount, runner);
 
       // Number of Spark threads
       config.sparkParallelism = filesCount;
