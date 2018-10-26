@@ -48,7 +48,7 @@ public class InterpretationCallBack extends AbstractMessageCallback<ExtendedReco
       long fileSizeByte = getfileSizeByte(message.getInputFile(), config.hdfsSiteConfig);
       long switchFileSizeByte = config.switchFileSizeMb * 1024L * 1024L;
       RunnerEnum runner = fileSizeByte > switchFileSizeByte ? RunnerEnum.DISTRIBUTED : RunnerEnum.STANDALONE;
-      LOG.info("Spark Runner type - {}", runner);
+      LOG.info("File size - {}, Spark Runner type - {}", fileSizeByte, runner);
 
       // Number of Spark threads
       int numberOfTreads = (int) Math.ceil(fileSizeByte / (20d * 1024d * 1024d)); // 1 thread per 20MB
