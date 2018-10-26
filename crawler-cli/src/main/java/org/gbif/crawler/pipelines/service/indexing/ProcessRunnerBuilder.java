@@ -136,6 +136,7 @@ final class ProcessRunnerBuilder {
       .add("--attempt=" + message.getAttempt())
       .add("--runner=SparkRunner")
       .add("--inputPath=" + Objects.requireNonNull(config.targetDirectory))
+      .add("--targetPath=" + Objects.requireNonNull(config.targetDirectory))
       .add("--hdfsSiteConfig=" + Objects.requireNonNull(config.hdfsSiteConfig))
       .add("--coreSiteConfig=" + Objects.requireNonNull(config.coreSiteConfig))
       .add("--esHosts=" + Objects.requireNonNull(esHosts))
