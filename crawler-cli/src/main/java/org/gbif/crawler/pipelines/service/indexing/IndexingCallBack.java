@@ -63,7 +63,7 @@ public class IndexingCallBack extends AbstractMessageCallback<IndexDatasetMessag
         .message(message)
         .runner(runner)
         .esIndexName(datasetId + "_" + attempt)
-        .esAlias(datasetId)
+        .esAlias(datasetId + "," + config.idxAlias)
         .redirectOutputFile(output)
         .redirectErrorFile(error)
         .build()

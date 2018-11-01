@@ -140,6 +140,9 @@ public class IndexingConfiguration {
   @Parameter(names = "--deploy-mode")
   public String deployMode;
 
+  @Parameter(names = "--idx-alias")
+  public String idxAlias;
+
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
