@@ -95,6 +95,7 @@ public class ProcessRunnerBuilderTest {
     config.sparkDriverMemory = "4G";
     config.coreSiteConfig = "core.xml";
     config.hdfsSiteConfig = "hdfs.xml";
+    config.deployMode = "cluster";
 
     UUID datasetId = UUID.fromString("de7ffb5e-c07b-42dc-8a88-f67a4465fe3d");
     int attempt = 1;
@@ -145,6 +146,7 @@ public class ProcessRunnerBuilderTest {
     config.metricsPropertiesPath = "metrics.properties";
     config.extraClassPath = "logstash-gelf.jar";
     config.driverJavaOptions = "-Dlog4j.configuration=file:log4j.properties";
+    config.deployMode = "cluster";
 
     UUID datasetId = UUID.fromString("de7ffb5e-c07b-42dc-8a88-f67a4465fe3d");
     int attempt = 1;
