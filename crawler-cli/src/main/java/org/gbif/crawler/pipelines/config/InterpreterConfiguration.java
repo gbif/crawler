@@ -126,6 +126,9 @@ public class InterpreterConfiguration {
   @Parameter(names = "--extra-class-path")
   public String extraClassPath;
 
+  @Parameter(names = "--deploy-mode")
+  public String deployMode;
+
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)

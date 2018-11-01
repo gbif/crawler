@@ -114,7 +114,7 @@ final class ProcessRunnerBuilder {
       .add("--conf spark.executor.memoryOverhead=" + config.sparkMemoryOverhead)
       .add("--class " + Objects.requireNonNull(config.distributedMainClass))
       .add("--master yarn")
-      .add("--deploy-mode cluster")
+      .add("--deploy-mode " + Objects.requireNonNull(config.deployMode))
       .add("--executor-memory " + Objects.requireNonNull(config.sparkExecutorMemory))
       .add("--executor-cores " + config.sparkExecutorCores)
       .add("--num-executors " + config.sparkExecutorNumbers)

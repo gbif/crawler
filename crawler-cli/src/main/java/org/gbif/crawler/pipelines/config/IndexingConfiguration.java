@@ -137,6 +137,9 @@ public class IndexingConfiguration {
   @Parameter(names = "--index-number-replicas")
   public Integer indexNumberReplicas;
 
+  @Parameter(names = "--deploy-mode")
+  public String deployMode;
+
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
