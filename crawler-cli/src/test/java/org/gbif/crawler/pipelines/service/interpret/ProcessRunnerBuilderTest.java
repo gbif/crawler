@@ -4,6 +4,7 @@ import org.gbif.common.messaging.api.messages.ExtendedRecordAvailableMessage;
 import org.gbif.crawler.pipelines.config.InterpreterConfiguration;
 import org.gbif.crawler.pipelines.service.interpret.ProcessRunnerBuilder.RunnerEnum;
 
+import java.io.IOException;
 import java.net.URI;
 import java.util.UUID;
 
@@ -14,13 +15,13 @@ import static org.junit.Assert.assertEquals;
 public class ProcessRunnerBuilderTest {
 
   @Test(expected = IllegalArgumentException.class)
-  public void testEmptyRunner() {
+  public void testEmptyRunner() throws IOException {
     // Should
     ProcessRunnerBuilder.create().build();
   }
 
   @Test(expected = NullPointerException.class)
-  public void testEmptyParameters() {
+  public void testEmptyParameters() throws IOException {
     // State
     RunnerEnum runner = RunnerEnum.DISTRIBUTED;
 
@@ -29,7 +30,7 @@ public class ProcessRunnerBuilderTest {
   }
 
   @Test
-  public void testDirectRunnerCommand() {
+  public void testDirectRunnerCommand() throws IOException {
     // State
     String expected = "java -XX:+UseG1GC -Xms1G -Xmx1G -Dlogback.configurationFile=file.xml -cp java.jar org.gbif.Test "
                       + "--pipelineStep=VERBATIM_TO_INTERPRETED --datasetId=de7ffb5e-c07b-42dc-8a88-f67a4465fe3d --attempt=1 "
@@ -68,7 +69,7 @@ public class ProcessRunnerBuilderTest {
   }
 
   @Test
-  public void testSparkRunnerCommand() {
+  public void testSparkRunnerCommand() throws IOException {
     // When
     String expected =
       "spark2-submit --conf spark.default.parallelism=1 --conf spark.executor.memoryOverhead=1 --class org.gbif.Test "
@@ -112,9 +113,8 @@ public class ProcessRunnerBuilderTest {
     assertEquals(expected, result);
   }
 
-
   @Test
-  public void testSparkRunnerCommandFull() {
+  public void testSparkRunnerCommandFull() throws IOException {
     // When
     String expected =
       "spark2-submit --conf spark.metrics.conf=metrics.properties --conf \"spark.driver.extraClassPath=logstash-gelf.jar\" "

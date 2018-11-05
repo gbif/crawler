@@ -4,9 +4,13 @@ import org.gbif.common.messaging.api.messages.ExtendedRecordAvailableMessage;
 import org.gbif.crawler.pipelines.config.InterpreterConfiguration;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.StringJoiner;
+import java.util.function.BiFunction;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,8 +31,6 @@ final class ProcessRunnerBuilder {
   private RunnerEnum runner;
   private InterpreterConfiguration config;
   private ExtendedRecordAvailableMessage message;
-  private String redirectErrorFile;
-  private String redirectOutputFile;
 
   ProcessRunnerBuilder config(InterpreterConfiguration config) {
     this.config = Objects.requireNonNull(config);
@@ -45,21 +47,11 @@ final class ProcessRunnerBuilder {
     return this;
   }
 
-  ProcessRunnerBuilder redirectErrorFile(String redirectErrorFile) {
-    this.redirectErrorFile = redirectErrorFile;
-    return this;
-  }
-
-  ProcessRunnerBuilder redirectOutputFile(String redirectOutputFile) {
-    this.redirectOutputFile = redirectOutputFile;
-    return this;
-  }
-
   static ProcessRunnerBuilder create() {
     return new ProcessRunnerBuilder();
   }
 
-  ProcessBuilder build() {
+  ProcessBuilder build() throws IOException {
     if (RunnerEnum.STANDALONE == runner) {
       return buildDirect();
     }
@@ -93,11 +85,11 @@ final class ProcessRunnerBuilder {
     StringJoiner joiner = new StringJoiner(DELIMITER).add("spark2-submit");
 
     Optional.ofNullable(config.metricsPropertiesPath).ifPresent(x -> joiner.add("--conf spark.metrics.conf=" + x));
-    Optional.ofNullable(config.extraClassPath).ifPresent(x -> joiner.add("--conf \"spark.driver.extraClassPath=" + x + "\""));
+    Optional.ofNullable(config.extraClassPath)
+      .ifPresent(x -> joiner.add("--conf \"spark.driver.extraClassPath=" + x + "\""));
     Optional.ofNullable(config.driverJavaOptions).ifPresent(x -> joiner.add("--driver-java-options \"" + x + "\""));
 
-    joiner
-      .add("--conf spark.default.parallelism=" + config.sparkParallelism)
+    joiner.add("--conf spark.default.parallelism=" + config.sparkParallelism)
       .add("--conf spark.executor.memoryOverhead=" + config.sparkMemoryOverhead)
       .add("--class " + Objects.requireNonNull(config.distributedMainClass))
       .add("--master yarn")
@@ -142,9 +134,23 @@ final class ProcessRunnerBuilder {
 
     ProcessBuilder builder = new ProcessBuilder("/bin/bash", "-c", result);
 
+    BiFunction<String, String, File> createDirfn = (String type, String path) -> {
+      try {
+        Files.createDirectories(Paths.get(path));
+        File file = new File(path + message.getDatasetUuid() + "_" + message.getAttempt() + "_int_" + type + ".log");
+        LOG.info("{} file - {}", type, file);
+        return file;
+      } catch (IOException ex) {
+        throw new RuntimeException(ex);
+      }
+    };
+
     // The command side outputs
-    Optional.ofNullable(redirectErrorFile).ifPresent(x -> builder.redirectError(new File(redirectErrorFile)));
-    Optional.ofNullable(redirectOutputFile).ifPresent(x -> builder.redirectOutput(new File(redirectOutputFile)));
+    Optional.ofNullable(config.processErrorDirectory)
+      .ifPresent(x -> builder.redirectError(createDirfn.apply("err", x)));
+    Optional.ofNullable(config.processOutputDirectory)
+      .ifPresent(x -> builder.redirectOutput(createDirfn.apply("out", x)));
+
     return builder;
   }
 

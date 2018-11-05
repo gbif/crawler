@@ -57,21 +57,11 @@ public class InterpretationCallBack extends AbstractMessageCallback<ExtendedReco
       LOG.info("Start the process. DatasetId - {}, InterpretTypes - {}, Runner type - {}", datasetId,
         message.getInterpretTypes(), runner);
 
-      String errorDirectory = config.processErrorDirectory;
-      String error = errorDirectory != null ? errorDirectory + datasetId + "-int-error.log" : null;
-      LOG.info("Error file - {}", error);
-
-      String outputDirectory = config.processOutputDirectory;
-      String output = outputDirectory != null ? outputDirectory + datasetId + "-int-output.log" : null;
-      LOG.info("Output file - {}", output);
-
       // Assembles a process and runs it
       ProcessRunnerBuilder.create()
         .runner(runner)
         .config(config)
         .message(message)
-        .redirectOutputFile(output)
-        .redirectErrorFile(error)
         .build()
         .start()
         .waitFor();

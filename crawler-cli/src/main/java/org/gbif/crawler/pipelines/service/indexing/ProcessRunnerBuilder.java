@@ -4,9 +4,13 @@ import org.gbif.common.messaging.api.messages.IndexDatasetMessage;
 import org.gbif.crawler.pipelines.config.IndexingConfiguration;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.StringJoiner;
+import java.util.function.BiFunction;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,8 +24,7 @@ final class ProcessRunnerBuilder {
     STANDALONE, DISTRIBUTED
   }
 
-  private static final Logger LOG = LoggerFactory.getLogger(
-    ProcessRunnerBuilder.class);
+  private static final Logger LOG = LoggerFactory.getLogger(ProcessRunnerBuilder.class);
 
   private static final String DELIMITER = " ";
 
@@ -30,8 +33,6 @@ final class ProcessRunnerBuilder {
   private RunnerEnum runner;
   private String esAlias;
   private String esIndexName;
-  private String redirectErrorFile;
-  private String redirectOutputFile;
 
   ProcessRunnerBuilder config(IndexingConfiguration config) {
     this.config = Objects.requireNonNull(config);
@@ -55,16 +56,6 @@ final class ProcessRunnerBuilder {
 
   ProcessRunnerBuilder esIndexName(String esIndexName) {
     this.esIndexName = Objects.requireNonNull(esIndexName);
-    return this;
-  }
-
-  ProcessRunnerBuilder redirectErrorFile(String redirectErrorFile) {
-    this.redirectErrorFile = redirectErrorFile;
-    return this;
-  }
-
-  ProcessRunnerBuilder redirectOutputFile(String redirectOutputFile) {
-    this.redirectOutputFile = redirectOutputFile;
     return this;
   }
 
@@ -106,11 +97,11 @@ final class ProcessRunnerBuilder {
     StringJoiner joiner = new StringJoiner(DELIMITER).add("spark2-submit");
 
     Optional.ofNullable(config.metricsPropertiesPath).ifPresent(x -> joiner.add("--conf spark.metrics.conf=" + x));
-    Optional.ofNullable(config.extraClassPath).ifPresent(x -> joiner.add("--conf \"spark.driver.extraClassPath=" + x + "\""));
+    Optional.ofNullable(config.extraClassPath)
+      .ifPresent(x -> joiner.add("--conf \"spark.driver.extraClassPath=" + x + "\""));
     Optional.ofNullable(config.driverJavaOptions).ifPresent(x -> joiner.add("--driver-java-options \"" + x + "\""));
 
-    joiner
-      .add("--conf spark.default.parallelism=" + config.sparkParallelism)
+    joiner.add("--conf spark.default.parallelism=" + config.sparkParallelism)
       .add("--conf spark.executor.memoryOverhead=" + config.sparkMemoryOverhead)
       .add("--class " + Objects.requireNonNull(config.distributedMainClass))
       .add("--master yarn")
@@ -150,7 +141,6 @@ final class ProcessRunnerBuilder {
     Optional.ofNullable(config.indexNumberShards).ifPresent(x -> command.add("--indexNumberShards=" + x));
     Optional.ofNullable(config.indexNumberReplicas).ifPresent(x -> command.add("--indexNumberReplicas=" + x));
 
-
     // Adds user name to run a command if it is necessary
     StringJoiner joiner = new StringJoiner(DELIMITER);
     Optional.ofNullable(config.otherUser).ifPresent(x -> joiner.add("sudo -u " + x));
@@ -162,9 +152,23 @@ final class ProcessRunnerBuilder {
 
     ProcessBuilder builder = new ProcessBuilder("/bin/bash", "-c", result);
 
+    BiFunction<String, String, File> createDirfn = (String type, String path) -> {
+      try {
+        Files.createDirectories(Paths.get(path));
+        File file = new File(path + message.getDatasetUuid() + "_" + message.getAttempt() + "_idx_" + type + ".log");
+        LOG.info("{} file - {}", type, file);
+        return file;
+      } catch (IOException ex) {
+        throw new RuntimeException(ex);
+      }
+    };
+
     // The command side outputs
-    Optional.ofNullable(redirectErrorFile).ifPresent(x -> builder.redirectError(new File(redirectErrorFile)));
-    Optional.ofNullable(redirectOutputFile).ifPresent(x -> builder.redirectOutput(new File(redirectOutputFile)));
+    Optional.ofNullable(config.processErrorDirectory)
+      .ifPresent(x -> builder.redirectError(createDirfn.apply("err", x)));
+    Optional.ofNullable(config.processOutputDirectory)
+      .ifPresent(x -> builder.redirectOutput(createDirfn.apply("out", x)));
+
     return builder;
   }
 

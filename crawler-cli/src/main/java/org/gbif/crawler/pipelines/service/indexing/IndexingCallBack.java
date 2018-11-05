@@ -53,14 +53,6 @@ public class IndexingCallBack extends AbstractMessageCallback<IndexDatasetMessag
       // Number of Spark threads
       config.sparkParallelism = filesCount;
 
-      String errorDirectory = config.processErrorDirectory;
-      String error = errorDirectory != null ? errorDirectory + datasetId + "-idx-error.log" : null;
-      LOG.info("Error file - {}", error);
-
-      String outputDirectory = config.processOutputDirectory;
-      String output = outputDirectory != null ? outputDirectory + datasetId + "-idx-output.log" : null;
-      LOG.info("Output file - {}", output);
-
       // Assembles a process and runs it
       ProcessRunnerBuilder.create()
         .config(config)
@@ -68,8 +60,6 @@ public class IndexingCallBack extends AbstractMessageCallback<IndexDatasetMessag
         .runner(runner)
         .esIndexName(datasetId + "_" + attempt)
         .esAlias(datasetId + "," + config.idxAlias)
-        .redirectOutputFile(output)
-        .redirectErrorFile(error)
         .build()
         .start()
         .waitFor();
