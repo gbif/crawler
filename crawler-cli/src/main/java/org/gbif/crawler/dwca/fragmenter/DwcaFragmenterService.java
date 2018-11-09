@@ -1,16 +1,17 @@
 package org.gbif.crawler.dwca.fragmenter;
 
 import org.gbif.api.model.crawler.ProcessState;
+import org.gbif.api.model.registry.Dataset;
+import org.gbif.api.service.registry.DatasetService;
 import org.gbif.api.vocabulary.DatasetType;
 import org.gbif.api.vocabulary.EndpointType;
 import org.gbif.api.vocabulary.OccurrenceSchemaType;
 import org.gbif.common.messaging.AbstractMessageCallback;
-import org.gbif.common.messaging.DefaultMessagePublisher;
-import org.gbif.common.messaging.MessageListener;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.DwcaMetasyncFinishedMessage;
 import org.gbif.common.messaging.api.messages.DwcaValidationFinishedMessage;
 import org.gbif.common.messaging.api.messages.OccurrenceFragmentedMessage;
+import org.gbif.crawler.dwca.DwcaService;
 import org.gbif.dwc.DwcFiles;
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.Term;
@@ -24,7 +25,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 
-import com.google.common.util.concurrent.AbstractIdleService;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.atomic.AtomicValue;
 import org.apache.curator.framework.recipes.atomic.DistributedAtomicLong;
@@ -47,21 +47,19 @@ import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_SAMPLE;
  * extract all {@link StarRecord} and hand them back to RabbitMQ as {@link OccurrenceFragmentedMessage}s.
  * While it does this it'll update appropriate counters in ZooKeeper.
  */
-public class DwcaFragmenterService extends AbstractIdleService {
+public class DwcaFragmenterService extends DwcaService {
 
   private static final Logger LOG = LoggerFactory.getLogger(DwcaFragmenterService.class);
   private final DwcaFragmenterConfiguration cfg;
-  private MessagePublisher publisher;
-  private MessageListener listener;
   private CuratorFramework curator;
 
   public DwcaFragmenterService(DwcaFragmenterConfiguration configuration) {
+    super(configuration);
     this.cfg = configuration;
   }
 
   @Override
   protected void startUp() throws Exception {
-
     if (!cfg.archiveRepository.exists() && !cfg.archiveRepository.isDirectory()) {
       throw new IllegalArgumentException(
         "Archive repository needs to be an existing directory: " + cfg.archiveRepository.getAbsolutePath());
@@ -71,13 +69,15 @@ public class DwcaFragmenterService extends AbstractIdleService {
         "Archive repository directory not writable: " + cfg.archiveRepository.getAbsolutePath());
     }
 
+    super.startUp();
+  }
+
+  @Override
+  protected void bindListeners() throws IOException {
     curator = cfg.zooKeeper.getCuratorFramework();
 
-    publisher = new DefaultMessagePublisher(cfg.messaging.getConnectionParameters());
-    // Prefetch is one, since this is a long-running process.
-    listener = new MessageListener(cfg.messaging.getConnectionParameters(), 1);
     listener.listen("dwca-fragmenter", cfg.poolSize,
-      new DwCaCallback(publisher, cfg.archiveRepository));
+        new DwCaCallback(datasetService, publisher, cfg.archiveRepository));
   }
 
   @Override
@@ -96,10 +96,12 @@ public class DwcaFragmenterService extends AbstractIdleService {
     private static final int COUNTER_UPDATE_FREQUENCY = 1000;
     private final MessagePublisher publisher;
     private final File archiveRepository;
+    private final DatasetService datasetService;
 
-    private DwCaCallback(MessagePublisher publisher, File archiveRepository) {
+    private DwCaCallback(DatasetService datasetService, MessagePublisher publisher, File archiveRepository) {
       this.publisher = publisher;
       this.archiveRepository = archiveRepository;
+      this.datasetService = datasetService;
     }
 
     @Override
@@ -109,7 +111,7 @@ public class DwcaFragmenterService extends AbstractIdleService {
 
       if (message.getDatasetType() == DatasetType.METADATA) {
         // for metadata only dataset this is the last step
-        // explicitly declare that no content is expected so the CoordinatorCleanup can pick it
+        // explicitly declare that no content is expected so the CoordinatorCleanup can pick it up.
         createOrUpdate(curator, datasetKey, PROCESS_STATE_OCCURRENCE, ProcessState.EMPTY);
         createOrUpdate(curator, datasetKey, PROCESS_STATE_CHECKLIST, ProcessState.EMPTY);
         createOrUpdate(curator, datasetKey, PROCESS_STATE_SAMPLE, ProcessState.EMPTY);
@@ -128,10 +130,27 @@ public class DwcaFragmenterService extends AbstractIdleService {
 
         int counter = 0;
         if (message.getDatasetType() == DatasetType.OCCURRENCE) {
-          counter = handleOccurrenceCore(datasetKey, archive, message);
+          // check license
+          if (licenseIsSupported(datasetKey)) {
+            counter = handleOccurrenceCore(datasetKey, archive, message);
+          } else {
+            LOG.error("Refusing to fragment occurrence core in dataset [{}] with unsupported license", datasetKey);
+            updateCounter(curator, datasetKey, PAGES_FRAGMENTED_ERROR, 1L);
+            createOrUpdate(curator, datasetKey, PROCESS_STATE_OCCURRENCE, ProcessState.EMPTY);
+            return;
+          }
         } else if (archive.getExtension(DwcTerm.Occurrence) != null) {
           // e.g. Sample and Taxon archives can have occurrences
-          counter = handleOccurrenceExtension(datasetKey, archive, DwcTerm.Occurrence, message);
+
+          // check license
+          if (licenseIsSupported(datasetKey)) {
+            counter = handleOccurrenceExtension(datasetKey, archive, DwcTerm.Occurrence, message);
+          } else {
+            LOG.error("Refusing to fragment occurrence extension in dataset [{}] with unsupported license", datasetKey);
+            updateCounter(curator, datasetKey, PAGES_FRAGMENTED_ERROR, 1L);
+            createOrUpdate(curator, datasetKey, PROCESS_STATE_OCCURRENCE, ProcessState.EMPTY);
+            return;
+          }
         } else {
           LOG.info("Ignoring DwC-A for dataset [{}] because it does not have Occurrence information.",
             message.getDatasetUuid());
@@ -256,6 +275,19 @@ public class DwcaFragmenterService extends AbstractIdleService {
       } catch (Exception e) {
         LOG.warn("Failed to update counter of pages crawled for [{}]", datasetKey, e);
       }
+    }
+
+    /**
+     * Check if the dataset's license is acceptable for us to process occurrences
+     */
+    private boolean licenseIsSupported(UUID datasetKey) {
+      Dataset dataset = datasetService.get(datasetKey);
+      if (dataset == null) {
+        LOG.error("Dataset {} not found when checking license", datasetKey);
+        return false;
+      }
+
+      return dataset.getLicense().isConcrete();
     }
   }
 }
