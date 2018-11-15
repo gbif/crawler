@@ -1,5 +1,6 @@
 package org.gbif.crawler.dwca.fragmenter;
 
+import org.gbif.api.model.crawler.FinishReason;
 import org.gbif.api.model.crawler.ProcessState;
 import org.gbif.api.model.registry.Dataset;
 import org.gbif.api.service.registry.DatasetService;
@@ -35,12 +36,7 @@ import org.slf4j.MDC;
 import static org.gbif.crawler.common.ZookeeperUtils.createOrUpdate;
 import static org.gbif.crawler.common.ZookeeperUtils.getCounter;
 import static org.gbif.crawler.common.ZookeeperUtils.updateCounter;
-import static org.gbif.crawler.constants.CrawlerNodePaths.FRAGMENTS_EMITTED;
-import static org.gbif.crawler.constants.CrawlerNodePaths.PAGES_FRAGMENTED_ERROR;
-import static org.gbif.crawler.constants.CrawlerNodePaths.PAGES_FRAGMENTED_SUCCESSFUL;
-import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_CHECKLIST;
-import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_OCCURRENCE;
-import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_SAMPLE;
+import static org.gbif.crawler.constants.CrawlerNodePaths.*;
 
 /**
  * This service will listen for {@link DwcaValidationFinishedMessage} from RabbitMQ and for every valid archive it will
@@ -125,6 +121,7 @@ public class DwcaFragmenterService extends DwcaService {
         } catch (IOException ioEx) {
           LOG.error("Could not open archive for dataset [{}] : {}", datasetKey, ioEx.getMessage());
           updateCounter(curator, datasetKey, PAGES_FRAGMENTED_ERROR, 1L);
+          createOrUpdate(curator, datasetKey, FINISHED_REASON, FinishReason.ABORT);
           return;
         }
 
@@ -136,7 +133,8 @@ public class DwcaFragmenterService extends DwcaService {
           } else {
             LOG.error("Refusing to fragment occurrence core in dataset [{}] with unsupported license", datasetKey);
             updateCounter(curator, datasetKey, PAGES_FRAGMENTED_ERROR, 1L);
-            createOrUpdate(curator, datasetKey, PROCESS_STATE_OCCURRENCE, ProcessState.EMPTY);
+            createOrUpdate(curator, datasetKey, PROCESS_STATE_OCCURRENCE, ProcessState.FINISHED);
+            createOrUpdate(curator, datasetKey, FINISHED_REASON, FinishReason.ABORT);
             return;
           }
         } else if (archive.getExtension(DwcTerm.Occurrence) != null) {
@@ -148,7 +146,8 @@ public class DwcaFragmenterService extends DwcaService {
           } else {
             LOG.error("Refusing to fragment occurrence extension in dataset [{}] with unsupported license", datasetKey);
             updateCounter(curator, datasetKey, PAGES_FRAGMENTED_ERROR, 1L);
-            createOrUpdate(curator, datasetKey, PROCESS_STATE_OCCURRENCE, ProcessState.EMPTY);
+            createOrUpdate(curator, datasetKey, PROCESS_STATE_OCCURRENCE, ProcessState.FINISHED);
+            createOrUpdate(curator, datasetKey, FINISHED_REASON, FinishReason.ABORT);
             return;
           }
         } else {

@@ -20,8 +20,13 @@ import static org.gbif.crawler.constants.CrawlerNodePaths.getCrawlInfoPath;
 
 public class ZookeeperUtils {
 
-  private static final String DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
   private static final Logger LOG = LoggerFactory.getLogger(ZookeeperUtils.class);
+
+  private static final String DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
+
+  private ZookeeperUtils() {
+    // NOP
+  }
 
   public static void createOrUpdate(CuratorFramework curator, String crawlPath, byte[] data) {
     try {

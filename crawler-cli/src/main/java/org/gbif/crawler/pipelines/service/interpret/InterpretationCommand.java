@@ -9,7 +9,7 @@ import org.kohsuke.MetaInfServices;
 
 /**
  * Entry class for cli command, to start service to interpret dataset available as avro.
- * This command starts a service which listens to the {@link org.gbif.common.messaging.api.messages.ExtendedRecordAvailableMessage } and perform interpretation
+ * This command starts a service which listens to the {@link org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage } and perform interpretation
  */
 @MetaInfServices(Command.class)
 public class InterpretationCommand extends ServiceCommand {

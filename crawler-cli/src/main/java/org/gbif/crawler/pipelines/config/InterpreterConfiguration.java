@@ -2,6 +2,7 @@ package org.gbif.crawler.pipelines.config;
 
 import org.gbif.common.messaging.config.MessagingConfiguration;
 import org.gbif.crawler.common.AvroWriteConfiguration;
+import org.gbif.crawler.common.ZooKeeperConfiguration;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
@@ -15,6 +16,11 @@ import com.google.common.base.MoreObjects;
  * Configuration required to start Interpretation Pipeline on provided dataset
  */
 public class InterpreterConfiguration {
+
+  @ParametersDelegate
+  @Valid
+  @NotNull
+  public ZooKeeperConfiguration zooKeeper = new ZooKeeperConfiguration();
 
   @ParametersDelegate
   @Valid
@@ -104,9 +110,9 @@ public class InterpreterConfiguration {
   @NotNull
   public String distributedMainClass;
 
-  @Parameter(names = "--target-directory")
+  @Parameter(names = "--repository-path")
   @NotNull
-  public String targetDirectory;
+  public String repositoryPath;
 
   @Parameter(names = "--process-error-directory")
   public String processErrorDirectory;
@@ -129,6 +135,9 @@ public class InterpreterConfiguration {
   @Parameter(names = "--deploy-mode")
   public String deployMode;
 
+  @Parameter(names = "--thread-per-mb")
+  public double threadPerMb = 20d; // 1 thread per each 20mb of a file
+
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
@@ -148,7 +157,7 @@ public class InterpreterConfiguration {
       .add("sparkExecutorNumbers", sparkExecutorNumbers)
       .add("standaloneJarPath", standaloneJarPath)
       .add("distributedJarPath", distributedJarPath)
-      .add("targetPath", targetDirectory)
+      .add("repositoryPath", repositoryPath)
       .add("distributedMainClass", distributedMainClass)
       .add("standaloneMainClass", standaloneMainClass)
       .add("processErrorDirectory", processErrorDirectory)

@@ -1,6 +1,6 @@
 package org.gbif.crawler.pipelines.service.interpret;
 
-import org.gbif.common.messaging.api.messages.ExtendedRecordAvailableMessage;
+import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage;
 import org.gbif.crawler.pipelines.config.InterpreterConfiguration;
 
 import java.io.File;
@@ -30,14 +30,15 @@ final class ProcessRunnerBuilder {
 
   private RunnerEnum runner;
   private InterpreterConfiguration config;
-  private ExtendedRecordAvailableMessage message;
+  private PipelinesVerbatimMessage message;
+  private String inputPath;
 
   ProcessRunnerBuilder config(InterpreterConfiguration config) {
     this.config = Objects.requireNonNull(config);
     return this;
   }
 
-  ProcessRunnerBuilder message(ExtendedRecordAvailableMessage message) {
+  ProcessRunnerBuilder message(PipelinesVerbatimMessage message) {
     this.message = Objects.requireNonNull(message);
     return this;
   }
@@ -47,11 +48,16 @@ final class ProcessRunnerBuilder {
     return this;
   }
 
+  ProcessRunnerBuilder inputPath(String inputPath) {
+    this.inputPath = Objects.requireNonNull(inputPath);
+    return this;
+  }
+
   static ProcessRunnerBuilder create() {
     return new ProcessRunnerBuilder();
   }
 
-  ProcessBuilder build() throws IOException {
+  ProcessBuilder build() {
     if (RunnerEnum.STANDALONE == runner) {
       return buildDirect();
     }
@@ -91,6 +97,8 @@ final class ProcessRunnerBuilder {
 
     joiner.add("--conf spark.default.parallelism=" + config.sparkParallelism)
       .add("--conf spark.executor.memoryOverhead=" + config.sparkMemoryOverhead)
+      .add("--conf spark.driver.userClassPathFirst=true")
+      .add("--conf spark.executor.userClassPathFirst=true")
       .add("--class " + Objects.requireNonNull(config.distributedMainClass))
       .add("--master yarn")
       .add("--deploy-mode " + Objects.requireNonNull(config.deployMode))
@@ -115,8 +123,8 @@ final class ProcessRunnerBuilder {
       .add("--attempt=" + message.getAttempt())
       .add("--interpretationTypes=" + Objects.requireNonNull(interpretationTypes))
       .add("--runner=SparkRunner")
-      .add("--targetPath=" + Objects.requireNonNull(config.targetDirectory))
-      .add("--inputPath=" + Objects.requireNonNull(message.getInputFile().toString()))
+      .add("--targetPath=" + Objects.requireNonNull(config.repositoryPath))
+      .add("--inputPath=" + Objects.requireNonNull(inputPath))
       .add("--avroCompressionType=" + Objects.requireNonNull(config.avroConfig.compressionType))
       .add("--avroSyncInterval=" + config.avroConfig.syncInterval)
       .add("--hdfsSiteConfig=" + Objects.requireNonNull(config.hdfsSiteConfig))

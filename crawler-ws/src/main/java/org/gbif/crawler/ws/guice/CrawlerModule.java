@@ -2,6 +2,8 @@ package org.gbif.crawler.ws.guice;
 
 import org.gbif.api.service.crawler.DatasetProcessService;
 import org.gbif.crawler.DatasetProcessServiceImpl;
+import org.gbif.crawler.pipelines.PipelinesProcessService;
+import org.gbif.crawler.pipelines.PipelinesProcessServiceImpl;
 import org.gbif.service.guice.PrivateServiceModule;
 
 import java.util.Properties;
@@ -34,7 +36,9 @@ class CrawlerModule extends PrivateServiceModule {
   @Override
   protected void configureService() {
     bind(DatasetProcessService.class).to(DatasetProcessServiceImpl.class).in(Scopes.SINGLETON);
+    bind(PipelinesProcessService.class).to(PipelinesProcessServiceImpl.class).in(Scopes.SINGLETON);
     expose(DatasetProcessService.class);
+    expose(PipelinesProcessService.class);
     expose(Executor.class);
     expose(CuratorFramework.class);
 

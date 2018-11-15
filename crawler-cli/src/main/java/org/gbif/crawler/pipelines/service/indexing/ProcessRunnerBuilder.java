@@ -1,6 +1,6 @@
 package org.gbif.crawler.pipelines.service.indexing;
 
-import org.gbif.common.messaging.api.messages.IndexDatasetMessage;
+import org.gbif.common.messaging.api.messages.PipelinesInterpretedMessage;
 import org.gbif.crawler.pipelines.config.IndexingConfiguration;
 
 import java.io.File;
@@ -29,7 +29,7 @@ final class ProcessRunnerBuilder {
   private static final String DELIMITER = " ";
 
   private IndexingConfiguration config;
-  private IndexDatasetMessage message;
+  private PipelinesInterpretedMessage message;
   private RunnerEnum runner;
   private String esAlias;
   private String esIndexName;
@@ -39,7 +39,7 @@ final class ProcessRunnerBuilder {
     return this;
   }
 
-  ProcessRunnerBuilder message(IndexDatasetMessage message) {
+  ProcessRunnerBuilder message(PipelinesInterpretedMessage message) {
     this.message = Objects.requireNonNull(message);
     return this;
   }
@@ -126,8 +126,8 @@ final class ProcessRunnerBuilder {
     command.add("--datasetId=" + Objects.requireNonNull(message.getDatasetUuid()))
       .add("--attempt=" + message.getAttempt())
       .add("--runner=SparkRunner")
-      .add("--inputPath=" + Objects.requireNonNull(config.targetDirectory))
-      .add("--targetPath=" + Objects.requireNonNull(config.targetDirectory))
+      .add("--inputPath=" + Objects.requireNonNull(config.repositoryPath))
+      .add("--targetPath=" + Objects.requireNonNull(config.repositoryPath))
       .add("--hdfsSiteConfig=" + Objects.requireNonNull(config.hdfsSiteConfig))
       .add("--coreSiteConfig=" + Objects.requireNonNull(config.coreSiteConfig))
       .add("--esHosts=" + Objects.requireNonNull(esHosts))

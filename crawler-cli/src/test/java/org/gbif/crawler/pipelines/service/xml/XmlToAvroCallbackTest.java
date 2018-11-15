@@ -1,13 +1,18 @@
 package org.gbif.crawler.pipelines.service.xml;
 
 import org.gbif.api.model.crawler.FinishReason;
-import org.gbif.common.messaging.api.messages.CrawlFinishedMessage;
+import org.gbif.common.messaging.api.messages.PipelinesXmlMessage;
 import org.gbif.crawler.pipelines.config.ConverterConfiguration;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.UUID;
 
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.curator.retry.RetryOneTime;
+import org.apache.curator.test.TestingServer;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
@@ -17,9 +22,10 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
-public class XmlToAvroCallBackTest {
+public class XmlToAvroCallbackTest {
 
   private static final String AVRO = "/verbatim.avro";
   private static final String STRING_UUID = "7ef15372-1387-11e2-bb2e-00145eb45e9a";
@@ -30,9 +36,11 @@ public class XmlToAvroCallBackTest {
   private static String hdfsUri;
   private static MiniDFSCluster cluster;
   private static FileSystem clusterFs;
+  private static CuratorFramework curator;
+  private static TestingServer server;
 
   @BeforeClass
-  public static void setUp() throws IOException {
+  public static void setUp() throws Exception {
     File baseDir = new File("minicluster").getAbsoluteFile();
     FileUtil.fullyDelete(baseDir);
     CONFIG.set(MiniDFSCluster.HDFS_MINIDFS_BASEDIR, baseDir.getAbsolutePath());
@@ -41,12 +49,22 @@ public class XmlToAvroCallBackTest {
     hdfsUri = "hdfs://localhost:" + cluster.getNameNodePort() + "/";
     cluster.waitClusterUp();
     clusterFs = cluster.getFileSystem();
+
+    server = new TestingServer();
+    curator = CuratorFrameworkFactory.builder()
+      .connectString(server.getConnectString())
+      .namespace("crawler")
+      .retryPolicy(new RetryOneTime(1))
+      .build();
+    curator.start();
   }
 
   @AfterClass
   public static void tearDown() throws IOException {
     clusterFs.close();
     cluster.shutdown();
+    curator.close();
+    server.stop();
   }
 
   @Test
@@ -55,10 +73,11 @@ public class XmlToAvroCallBackTest {
     int attempt = 61;
     ConverterConfiguration config = new ConverterConfiguration();
     config.archiveRepository = INPUT_DATASET_FOLDER;
-    config.extendedRecordRepository = hdfsUri;
+    config.repositoryPath = hdfsUri;
     config.xmlReaderParallelism = 4;
-    XmlToAvroCallBack callback = new XmlToAvroCallBack(config,null);
-    CrawlFinishedMessage message = new CrawlFinishedMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL);
+    XmlToAvroCallback callback = new XmlToAvroCallback(config, null, curator);
+    PipelinesXmlMessage message =
+      new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL, Collections.emptySet());
 
     // Expected
     callback.handleMessage(message);
@@ -75,10 +94,11 @@ public class XmlToAvroCallBackTest {
     int attempt = 60;
     ConverterConfiguration config = new ConverterConfiguration();
     config.archiveRepository = INPUT_DATASET_FOLDER;
-    config.extendedRecordRepository = hdfsUri;
+    config.repositoryPath = hdfsUri;
     config.xmlReaderParallelism = 4;
-    XmlToAvroCallBack callback = new XmlToAvroCallBack(config,null);
-    CrawlFinishedMessage message = new CrawlFinishedMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL);
+    XmlToAvroCallback callback = new XmlToAvroCallback(config, null, curator);
+    PipelinesXmlMessage message =
+      new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL, Collections.emptySet());
 
     // Expected
     callback.handleMessage(message);
@@ -95,10 +115,11 @@ public class XmlToAvroCallBackTest {
     int attempt = 62;
     ConverterConfiguration config = new ConverterConfiguration();
     config.archiveRepository = INPUT_DATASET_FOLDER;
-    config.extendedRecordRepository = hdfsUri;
+    config.repositoryPath = hdfsUri;
     config.xmlReaderParallelism = 4;
-    XmlToAvroCallBack callback = new XmlToAvroCallBack(config,null);
-    CrawlFinishedMessage message = new CrawlFinishedMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL);
+    XmlToAvroCallback callback = new XmlToAvroCallback(config, null, curator);
+    PipelinesXmlMessage message =
+      new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL, Collections.emptySet());
 
     // Expected
     callback.handleMessage(message);

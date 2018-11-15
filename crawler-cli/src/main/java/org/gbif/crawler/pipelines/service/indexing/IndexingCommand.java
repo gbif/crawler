@@ -9,7 +9,7 @@ import org.kohsuke.MetaInfServices;
 
 /**
  * Entry class for cli command, to start service to index interpreted dataset
- * This command starts a service which listens to the {@link org.gbif.common.messaging.api.messages } and perform conversion
+ * This command starts a service which listens to the {@link org.gbif.common.messaging.api.messages.PipelinesInterpretedMessage } and perform conversion
  */
 @MetaInfServices(Command.class)
 public class IndexingCommand extends ServiceCommand {
