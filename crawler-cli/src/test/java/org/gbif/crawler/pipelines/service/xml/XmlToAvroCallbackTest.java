@@ -19,7 +19,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 
-public class XmlToAvroCallBackTest {
+public class XmlToAvroCallbackTest {
 
   private static final String AVRO = "/verbatim.avro";
   private static final String STRING_UUID = "7ef15372-1387-11e2-bb2e-00145eb45e9a";

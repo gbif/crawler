@@ -23,7 +23,7 @@ import org.junit.Test;
 /**
  * Test dwca-to-avro commands message handling command on hdfs
  */
-public class DwcaToAvroCallBackTest {
+public class DwcaToAvroCallbackTest {
 
   private static final String DATASET_UUID_POS = "9bed66b3-4caa-42bb-9c93-71d7ba109dad";
   private static final String DUMMY_URL = "http://some.new.url";
