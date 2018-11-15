@@ -25,13 +25,13 @@ import org.slf4j.LoggerFactory;
 /**
  * Call back which is called when the {@link DwcaValidationFinishedMessage } is received.
  */
-public class IndexingCallBack extends AbstractMessageCallback<IndexDatasetMessage> {
+public class IndexingCallback extends AbstractMessageCallback<IndexDatasetMessage> {
 
-  private static final Logger LOG = LoggerFactory.getLogger(IndexingCallBack.class);
+  private static final Logger LOG = LoggerFactory.getLogger(IndexingCallback.class);
   private final IndexingConfiguration config;
   private final MessagePublisher publisher;
 
-  IndexingCallBack(IndexingConfiguration config, MessagePublisher publisher) {
+  IndexingCallback(IndexingConfiguration config, MessagePublisher publisher) {
     Objects.requireNonNull(config, "Configuration cannot be null");
     this.config = config;
     this.publisher = publisher;

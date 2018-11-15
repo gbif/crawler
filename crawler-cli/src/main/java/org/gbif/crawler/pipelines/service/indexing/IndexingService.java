@@ -29,7 +29,7 @@ public class IndexingService extends AbstractIdleService {
     // Prefetch is one, since this is a long-running process.
     listener = new MessageListener(configuration.messaging.getConnectionParameters(), 1);
     publisher = new DefaultMessagePublisher(configuration.messaging.getConnectionParameters());
-    listener.listen(configuration.queueName, configuration.poolSize, new IndexingCallBack(configuration, publisher));
+    listener.listen(configuration.queueName, configuration.poolSize, new IndexingCallback(configuration, publisher));
   }
 
   @Override

@@ -57,7 +57,7 @@ public class DwcaToAvroCallBackTest {
     ConverterConfiguration config = new ConverterConfiguration();
     config.archiveRepository = INPUT_DATASET_FOLDER;
     config.extendedRecordRepository = hdfsUri;
-    DwcaToAvroCallBack callback = new DwcaToAvroCallBack(config,null);
+    DwcaToAvroCallback callback = new DwcaToAvroCallback(config,null);
     UUID uuid = UUID.fromString(DATASET_UUID_POS);
     DwcaValidationReport reason = new DwcaValidationReport(uuid, "no reason");
     DwcaValidationFinishedMessage finishedMessage =

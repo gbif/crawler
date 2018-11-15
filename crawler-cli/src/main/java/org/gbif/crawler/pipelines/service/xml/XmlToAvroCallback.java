@@ -22,13 +22,13 @@ import static org.gbif.crawler.pipelines.path.PathFactory.ArchiveTypeEnum.XML;
 /**
  * Call back which is called when the {@link org.gbif.common.messaging.api.messages.CrawlFinishedMessage } is received.
  */
-public class XmlToAvroCallBack extends AbstractMessageCallback<CrawlFinishedMessage> {
+public class XmlToAvroCallback extends AbstractMessageCallback<CrawlFinishedMessage> {
 
-  private static final Logger LOG = LoggerFactory.getLogger(XmlToAvroCallBack.class);
+  private static final Logger LOG = LoggerFactory.getLogger(XmlToAvroCallback.class);
   private final ConverterConfiguration configuration;
   private final MessagePublisher publisher;
 
-  public XmlToAvroCallBack(ConverterConfiguration configuration, MessagePublisher publisher) {
+  public XmlToAvroCallback(ConverterConfiguration configuration, MessagePublisher publisher) {
     Objects.requireNonNull(configuration, "Configuration cannot be null");
     this.configuration = configuration;
     this.publisher = publisher;

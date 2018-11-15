@@ -23,13 +23,13 @@ import org.slf4j.LoggerFactory;
 /**
  * Call back which is called when the {@link org.gbif.common.messaging.api.messages.ExtendedRecordAvailableMessage } is received.
  */
-public class InterpretationCallBack extends AbstractMessageCallback<ExtendedRecordAvailableMessage> {
+public class InterpretationCallback extends AbstractMessageCallback<ExtendedRecordAvailableMessage> {
 
-  private static final Logger LOG = LoggerFactory.getLogger(InterpretationCallBack.class);
+  private static final Logger LOG = LoggerFactory.getLogger(InterpretationCallback.class);
   private final InterpreterConfiguration config;
   private final MessagePublisher publisher;
 
-  InterpretationCallBack(InterpreterConfiguration config, MessagePublisher publisher) {
+  InterpretationCallback(InterpreterConfiguration config, MessagePublisher publisher) {
     Objects.requireNonNull(config, "Configuration cannot be null");
     this.config = config;
     this.publisher = publisher;

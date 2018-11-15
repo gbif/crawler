@@ -22,13 +22,13 @@ import static org.gbif.crawler.pipelines.path.PathFactory.ArchiveTypeEnum.DWCA;
 /**
  * Call back which is called when the {@link org.gbif.common.messaging.api.messages.DwcaValidationFinishedMessage } is received.
  */
-public class DwcaToAvroCallBack extends AbstractMessageCallback<DwcaValidationFinishedMessage> {
+public class DwcaToAvroCallback extends AbstractMessageCallback<DwcaValidationFinishedMessage> {
 
-  private static final Logger LOG = LoggerFactory.getLogger(DwcaToAvroCallBack.class);
+  private static final Logger LOG = LoggerFactory.getLogger(DwcaToAvroCallback.class);
   private final ConverterConfiguration configuration;
   private final MessagePublisher publisher;
 
-  DwcaToAvroCallBack(ConverterConfiguration configuration, MessagePublisher publisher) {
+  DwcaToAvroCallback(ConverterConfiguration configuration, MessagePublisher publisher) {
     Objects.requireNonNull(configuration, "Configuration cannot be null");
     this.configuration = configuration;
     this.publisher = publisher;
