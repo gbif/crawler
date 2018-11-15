@@ -1,6 +1,7 @@
 package org.gbif.crawler.pipelines.config;
 
 import org.gbif.common.messaging.config.MessagingConfiguration;
+import org.gbif.crawler.common.ZooKeeperConfiguration;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
@@ -14,6 +15,11 @@ import com.google.common.base.MoreObjects;
  * Configuration required to start Indexing Pipeline on provided dataset
  */
 public class IndexingConfiguration {
+
+  @ParametersDelegate
+  @Valid
+  @NotNull
+  public ZooKeeperConfiguration zooKeeper = new ZooKeeperConfiguration();
 
   @ParametersDelegate
   @Valid
@@ -93,9 +99,9 @@ public class IndexingConfiguration {
   @NotNull
   public String distributedMainClass;
 
-  @Parameter(names = "--target-directory")
+  @Parameter(names = "--repository-path")
   @NotNull
-  public String targetDirectory;
+  public String repositoryPath;
 
   @Parameter(names = "--process-error-directory")
   public String processErrorDirectory;
@@ -160,7 +166,7 @@ public class IndexingConfiguration {
       .add("sparkExecutorNumbers", sparkExecutorNumbers)
       .add("standaloneJarPath", standaloneJarPath)
       .add("distributedJarPath", distributedJarPath)
-      .add("targetPath", targetDirectory)
+      .add("repositoryPath", repositoryPath)
       .add("distributedMainClass", distributedMainClass)
       .add("standaloneMainClass", standaloneMainClass)
       .add("processErrorDirectory", processErrorDirectory)

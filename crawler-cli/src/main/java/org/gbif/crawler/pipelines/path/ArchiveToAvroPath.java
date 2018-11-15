@@ -25,7 +25,8 @@ public abstract class ArchiveToAvroPath {
     //calculates and checks existence of DwC Archive
     inputPath = buildInputPath(configuration.archiveRepository, dataSetUuid, attempt);
     //calculates export path of avro as extended record
-    outputPath = buildOutputPath(configuration.extendedRecordRepository, dataSetUuid.toString(), String.valueOf(attempt), configuration.fileName);
+    outputPath = buildOutputPath(configuration.repositoryPath, dataSetUuid.toString(), String.valueOf(attempt),
+      configuration.fileName);
 
     return this;
   }

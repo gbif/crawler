@@ -119,7 +119,7 @@ public class ArchiveToAvroPathTest {
     private static ConverterConfiguration getConfig(String archiveRepo, String exportAvroURL) {
       ConverterConfiguration config = new ConverterConfiguration();
       config.archiveRepository = archiveRepo;
-      config.extendedRecordRepository = exportAvroURL;
+      config.repositoryPath = exportAvroURL;
       return config;
     }
 

@@ -2,20 +2,27 @@ package org.gbif.crawler.pipelines.config;
 
 import org.gbif.common.messaging.config.MessagingConfiguration;
 import org.gbif.crawler.common.AvroWriteConfiguration;
+import org.gbif.crawler.common.ZooKeeperConfiguration;
 
-import java.util.Arrays;
+import java.util.Collections;
+import java.util.Set;
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParametersDelegate;
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 
 /**
  * Configuration required to convert downloaded DwCArchive/ABCD and etc to avro (ExtendedRecord)
  */
 public class ConverterConfiguration {
+
+  @ParametersDelegate
+  @Valid
+  @NotNull
+  public ZooKeeperConfiguration zooKeeper = new ZooKeeperConfiguration();
 
   @ParametersDelegate
   @Valid
@@ -39,9 +46,9 @@ public class ConverterConfiguration {
   @NotNull
   public String archiveRepository;
 
-  @Parameter(names = "--extended-record-repository")
+  @Parameter(names = "--repository-path")
   @NotNull
-  public String extendedRecordRepository;
+  public String repositoryPath;
 
   @ParametersDelegate
   @Valid
@@ -53,7 +60,7 @@ public class ConverterConfiguration {
 
   @Parameter(names = "--interpret-types")
   @NotNull
-  public String[] interpretTypes = {"ALL"};
+  public Set<String> interpretTypes = Collections.singleton("ALL");
 
   @Parameter(names = "--file-name")
   @NotNull
@@ -61,7 +68,7 @@ public class ConverterConfiguration {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
       .add("queueName", queueName)
       .add("virtualHost", messaging.virtualHost)
       .add("userName", messaging.username)
@@ -71,13 +78,13 @@ public class ConverterConfiguration {
       .add("poolSize", poolSize)
       .add("xmlReaderParallelism", xmlReaderParallelism)
       .add("archiveRepository", archiveRepository)
-      .add("extendedRecordRepository", extendedRecordRepository)
+      .add("repositoryPath", repositoryPath)
       .add("fileName", fileName)
       .add("syncInterval", avroConfig.syncInterval)
       .add("compressionCodec", avroConfig.compressionType)
       .add("codecFactory", avroConfig.getCodec())
       .add("hdfsSiteConfig", hdfsSiteConfig)
-      .add("interpretTypes", Arrays.toString(interpretTypes))
+      .add("interpretTypes", interpretTypes.toString())
       .toString();
   }
 }

@@ -2,64 +2,73 @@ package org.gbif.crawler.pipelines.service.xml;
 
 import org.gbif.common.messaging.AbstractMessageCallback;
 import org.gbif.common.messaging.api.MessagePublisher;
-import org.gbif.common.messaging.api.messages.CrawlFinishedMessage;
-import org.gbif.common.messaging.api.messages.ExtendedRecordAvailableMessage;
+import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage;
+import org.gbif.common.messaging.api.messages.PipelinesXmlMessage;
 import org.gbif.converters.XmlToAvroConverter;
 import org.gbif.crawler.pipelines.config.ConverterConfiguration;
 import org.gbif.crawler.pipelines.path.ArchiveToAvroPath;
 import org.gbif.crawler.pipelines.path.PathFactory;
+import org.gbif.crawler.pipelines.service.PipelineCallback;
 
-import java.io.IOException;
-import java.net.URI;
-import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.curator.framework.CuratorFramework;
 
+import static org.gbif.crawler.constants.PipelinesNodePaths.XML_TO_VERBATIM;
 import static org.gbif.crawler.pipelines.path.PathFactory.ArchiveTypeEnum.XML;
+import static org.gbif.crawler.pipelines.service.PipelineCallback.Steps.VERBATIM_TO_INTERPRETED;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Call back which is called when the {@link org.gbif.common.messaging.api.messages.CrawlFinishedMessage } is received.
+ * Call back which is called when the {@link PipelinesXmlMessage} is received.
  */
-public class XmlToAvroCallback extends AbstractMessageCallback<CrawlFinishedMessage> {
+public class XmlToAvroCallback extends AbstractMessageCallback<PipelinesXmlMessage> {
 
-  private static final Logger LOG = LoggerFactory.getLogger(XmlToAvroCallback.class);
-  private final ConverterConfiguration configuration;
+  private final ConverterConfiguration config;
   private final MessagePublisher publisher;
+  private final CuratorFramework curator;
 
-  public XmlToAvroCallback(ConverterConfiguration configuration, MessagePublisher publisher) {
-    Objects.requireNonNull(configuration, "Configuration cannot be null");
-    this.configuration = configuration;
+  public XmlToAvroCallback(ConverterConfiguration config, MessagePublisher publisher, CuratorFramework curator) {
+    this.curator = checkNotNull(curator, "curator cannot be null");
+    this.config = checkNotNull(config, "config cannot be null");
     this.publisher = publisher;
   }
 
+  /**
+   * Handles a MQ {@link PipelinesXmlMessage} message
+   */
   @Override
-  public void handleMessage(CrawlFinishedMessage message) {
-    LOG.info("Received Download finished validation message {}", message);
+  public void handleMessage(PipelinesXmlMessage message) {
 
-    UUID datasetUuid = message.getDatasetUuid();
+    // Common variables
+    UUID datasetId = message.getDatasetUuid();
+    int attempt = message.getAttempt();
+    Set<String> steps = message.getPipelineSteps();
 
-    ArchiveToAvroPath paths = PathFactory.create(XML).from(configuration, datasetUuid, message.getAttempt());
+    // Main message processing logic, converts an ABCD archive to an avro file.
+    Runnable runnable = () -> {
+      ArchiveToAvroPath paths = PathFactory.create(XML).from(config, datasetId, attempt);
+      XmlToAvroConverter.create()
+        .xmlReaderParallelism(config.xmlReaderParallelism)
+        .codecFactory(config.avroConfig.getCodec())
+        .syncInterval(config.avroConfig.syncInterval)
+        .hdfsSiteConfig(config.hdfsSiteConfig)
+        .convert(paths.getInputPath(), paths.getOutputPath());
+    };
 
-    boolean isFileCreated = XmlToAvroConverter.create()
-      .xmlReaderParallelism(configuration.xmlReaderParallelism)
-      .codecFactory(configuration.avroConfig.getCodec())
-      .syncInterval(configuration.avroConfig.syncInterval)
-      .hdfsSiteConfig(configuration.hdfsSiteConfig)
-      .convert(paths.getInputPath(), paths.getOutputPath());
+    // Message callback handler, updates zookeeper info, runs process logic and sends next MQ message
+    PipelineCallback.create()
+      .incomingMessage(message)
+      .outgoingMessage(new PipelinesVerbatimMessage(datasetId, attempt, config.interpretTypes, steps))
+      .curator(curator)
+      .zkRootElementPath(XML_TO_VERBATIM)
+      .nextPipelinesStep(VERBATIM_TO_INTERPRETED.name())
+      .publisher(publisher)
+      .runnable(runnable)
+      .build()
+      .handleMessage();
 
-    LOG.info("XML to avro conversion completed for {}, file was created - {}", datasetUuid, isFileCreated);
-
-    // Send message to MQ
-    if (isFileCreated && Objects.nonNull(publisher)) {
-      try {
-        URI uri = paths.getOutputPath().toUri();
-        publisher.send(new ExtendedRecordAvailableMessage(datasetUuid, message.getAttempt(), uri, configuration.interpretTypes));
-        LOG.info("Message has been sent - {}", uri);
-      } catch (IOException e) {
-        LOG.error("Could not send message for dataset [{}] : {}", datasetUuid, e.getMessage());
-      }
-    }
   }
 }

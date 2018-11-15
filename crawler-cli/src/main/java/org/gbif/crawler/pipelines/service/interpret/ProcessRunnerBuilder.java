@@ -1,6 +1,6 @@
 package org.gbif.crawler.pipelines.service.interpret;
 
-import org.gbif.common.messaging.api.messages.ExtendedRecordAvailableMessage;
+import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage;
 import org.gbif.crawler.pipelines.config.InterpreterConfiguration;
 
 import java.io.File;
@@ -30,20 +30,26 @@ final class ProcessRunnerBuilder {
 
   private RunnerEnum runner;
   private InterpreterConfiguration config;
-  private ExtendedRecordAvailableMessage message;
+  private PipelinesVerbatimMessage message;
+  private String inputPath;
 
   ProcessRunnerBuilder config(InterpreterConfiguration config) {
     this.config = Objects.requireNonNull(config);
     return this;
   }
 
-  ProcessRunnerBuilder message(ExtendedRecordAvailableMessage message) {
+  ProcessRunnerBuilder message(PipelinesVerbatimMessage message) {
     this.message = Objects.requireNonNull(message);
     return this;
   }
 
   ProcessRunnerBuilder runner(RunnerEnum runner) {
     this.runner = Objects.requireNonNull(runner);
+    return this;
+  }
+
+  ProcessRunnerBuilder inputPath(String inputPath) {
+    this.inputPath = Objects.requireNonNull(inputPath);
     return this;
   }
 
@@ -117,8 +123,8 @@ final class ProcessRunnerBuilder {
       .add("--attempt=" + message.getAttempt())
       .add("--interpretationTypes=" + Objects.requireNonNull(interpretationTypes))
       .add("--runner=SparkRunner")
-      .add("--targetPath=" + Objects.requireNonNull(config.targetDirectory))
-      .add("--inputPath=" + Objects.requireNonNull(message.getInputFile().toString()))
+      .add("--targetPath=" + Objects.requireNonNull(config.repositoryPath))
+      .add("--inputPath=" + Objects.requireNonNull(inputPath))
       .add("--avroCompressionType=" + Objects.requireNonNull(config.avroConfig.compressionType))
       .add("--avroSyncInterval=" + config.avroConfig.syncInterval)
       .add("--hdfsSiteConfig=" + Objects.requireNonNull(config.hdfsSiteConfig))
