@@ -51,7 +51,7 @@ final class ProcessRunnerBuilder {
     return new ProcessRunnerBuilder();
   }
 
-  ProcessBuilder build() throws IOException {
+  ProcessBuilder build() {
     if (RunnerEnum.STANDALONE == runner) {
       return buildDirect();
     }
@@ -91,6 +91,8 @@ final class ProcessRunnerBuilder {
 
     joiner.add("--conf spark.default.parallelism=" + config.sparkParallelism)
       .add("--conf spark.executor.memoryOverhead=" + config.sparkMemoryOverhead)
+      .add("--conf spark.driver.userClassPathFirst=true")
+      .add("--conf spark.executor.userClassPathFirst=true")
       .add("--class " + Objects.requireNonNull(config.distributedMainClass))
       .add("--master yarn")
       .add("--deploy-mode " + Objects.requireNonNull(config.deployMode))
