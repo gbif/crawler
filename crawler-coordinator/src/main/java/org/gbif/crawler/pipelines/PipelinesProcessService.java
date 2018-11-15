@@ -11,6 +11,8 @@ public interface PipelinesProcessService {
 
   PipelinesProcessStatus getRunningPipelinesProcess(String crawlId);
 
+  void deleteRunningPipelinesProcess(String crawlId);
+
   Set<PipelinesProcessStatus> getPipelinesProcessesByDatasetKey(String datasetKey);
 
 }

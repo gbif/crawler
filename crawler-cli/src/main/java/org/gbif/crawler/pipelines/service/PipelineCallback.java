@@ -140,7 +140,7 @@ public class PipelineCallback {
       }
 
     } catch (Exception ex) {
-      String error = "Could not send incomingMessage for crawlId - " + crawlId + " : " + ex.getMessage();
+      String error = "Error for crawlId - " + crawlId + " : " + ex.getMessage();
       LOG.error(error);
 
       updateMonitoring(crawlId, Fn.ERROR_AVAILABILITY.apply(b.zkRootElementPath), Boolean.TRUE.toString());

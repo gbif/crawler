@@ -127,6 +127,23 @@ public class PipelinesProcessServiceImpl implements PipelinesProcessService {
     }
   }
 
+  /**
+   * Removes a Zookeeper monitoring root node by crawlId
+   *
+   * @param crawlId root node path
+   */
+  @Override
+  public void deleteRunningPipelinesProcess(String crawlId) {
+    try {
+      String path = getPipelinesInfoPath(crawlId);
+      if (checkExists(path)) {
+        curator.delete().deletingChildrenIfNeeded().forPath(path);
+      }
+    } catch (Exception ex) {
+      throw new ServiceUnavailableException("Error communicating with ZooKeeper", ex);
+    }
+  }
+
   @Override
   public Set<PipelinesProcessStatus> getPipelinesProcessesByDatasetKey(String datasetKey) {
     Set<PipelinesProcessStatus> set = new HashSet<>();

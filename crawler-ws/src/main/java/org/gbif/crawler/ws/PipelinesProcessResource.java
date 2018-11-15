@@ -5,6 +5,7 @@ import org.gbif.crawler.pipelines.PipelinesProcessStatus;
 import org.gbif.ws.util.ExtraMediaTypes;
 
 import java.util.Set;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -36,6 +37,17 @@ public class PipelinesProcessResource {
   @Path("crawlId/{crawlId}")
   public PipelinesProcessStatus getRunningPipelinesProcess(@PathParam("crawlId") String crawlId) {
     return service.getRunningPipelinesProcess(crawlId);
+  }
+
+  /**
+   * Removes a Zookeeper monitoring root node by crawlId
+   *
+   * @param crawlId is datasetKey_attempt (f10932cc-683e-46ab-93da-9605688a4f27_10)
+   */
+  @DELETE
+  @Path("crawlId/{crawlId}")
+  public void deleteRunningPipelinesProcess(@PathParam("crawlId") String crawlId) {
+    service.deleteRunningPipelinesProcess(crawlId);
   }
 
   /**
