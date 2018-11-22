@@ -109,9 +109,6 @@ public class IndexingConfiguration {
   @Parameter(names = "--process-output-directory")
   public String processOutputDirectory;
 
-  @Parameter(names = "--log-config-path")
-  public String logConfigPath;
-
   @Parameter(names = "--driver-java-options")
   public String driverJavaOptions;
 
@@ -171,7 +168,6 @@ public class IndexingConfiguration {
       .add("standaloneMainClass", standaloneMainClass)
       .add("processErrorDirectory", processErrorDirectory)
       .add("processOutputDirectory", processOutputDirectory)
-      .add("logConfigPath", logConfigPath)
       .add("metricsPropertiesPath", metricsPropertiesPath)
       .add("extraClassPath", extraClassPath)
       .add("driverJavaOptions", driverJavaOptions)
