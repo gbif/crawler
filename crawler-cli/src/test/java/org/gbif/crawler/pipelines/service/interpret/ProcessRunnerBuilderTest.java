@@ -33,8 +33,8 @@ public class ProcessRunnerBuilderTest {
   public void testDirectRunnerCommand() {
     // State
     String expected =
-      "java -XX:+UseG1GC -Xms1G -Xmx1G -Dlogback.configurationFile=file.xml -cp java.jar org.gbif.Test "
-      + "--pipelineStep=VERBATIM_TO_INTERPRETED --datasetId=de7ffb5e-c07b-42dc-8a88-f67a4465fe3d --attempt=1 "
+      "java -XX:+UseG1GC -Xms1G -Xmx1G -Dlog4j.configuration=file:/home/crap/config/log4j-indexing-pipeline.properties "
+      + "-cp java.jar org.gbif.Test --pipelineStep=VERBATIM_TO_INTERPRETED --datasetId=de7ffb5e-c07b-42dc-8a88-f67a4465fe3d --attempt=1 "
       + "--interpretationTypes=ALL --runner=SparkRunner --targetPath=tmp --inputPath=verbatim.avro "
       + "--avroCompressionType=SNAPPY --avroSyncInterval=1 --hdfsSiteConfig=hdfs.xml --coreSiteConfig=core.xml "
       + "--wsProperties=/path/ws.config";
@@ -52,7 +52,7 @@ public class ProcessRunnerBuilderTest {
     config.standaloneStackSize = "1G";
     config.coreSiteConfig = "core.xml";
     config.hdfsSiteConfig = "hdfs.xml";
-    config.logConfigPath = "file.xml";
+    config.driverJavaOptions="-Dlog4j.configuration=file:/home/crap/config/log4j-indexing-pipeline.properties";
 
     UUID datasetId = UUID.fromString("de7ffb5e-c07b-42dc-8a88-f67a4465fe3d");
     int attempt = 1;

@@ -75,7 +75,7 @@ final class ProcessRunnerBuilder {
       .add("-XX:+UseG1GC")
       .add("-Xms" + Objects.requireNonNull(config.standaloneStackSize))
       .add("-Xmx" + Objects.requireNonNull(config.standaloneHeapSize))
-      .add("-Dlogback.configurationFile=" + Objects.requireNonNull(config.logConfigPath))
+      .add(Objects.requireNonNull(config.driverJavaOptions))
       .add("-cp")
       .add(Objects.requireNonNull(config.standaloneJarPath))
       .add(Objects.requireNonNull(config.standaloneMainClass))
