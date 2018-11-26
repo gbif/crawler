@@ -17,7 +17,7 @@ public class PipelinesProcessStatus implements Serializable {
   private static final long serialVersionUID = -3992826055732414677L;
 
   private final String crawlId;
-  private Set<PipelinesStep> pipelinesSteps = new TreeSet<>(Comparator.comparing(PipelinesStep::getIdx));
+  private Set<PipelinesStep> pipelinesSteps = new TreeSet<>(Comparator.comparing(PipelinesStep::getStartDateTime));
 
   public PipelinesProcessStatus(String crawlId) {
     this.crawlId = crawlId;
@@ -39,20 +39,14 @@ public class PipelinesProcessStatus implements Serializable {
 
     private static final long serialVersionUID = 460047082156621659L;
 
-    private final int idx;
     private final String name;
     private LocalDateTime startDateTime;
     private LocalDateTime endDateTime;
     private Status error = new Status();
     private Status successful = new Status();
 
-    public PipelinesStep(int idx, String name) {
-      this.idx = idx;
+    public PipelinesStep(String name) {
       this.name = name;
-    }
-
-    public int getIdx() {
-      return idx;
     }
 
     public String getName() {
@@ -99,23 +93,6 @@ public class PipelinesProcessStatus implements Serializable {
       return this;
     }
 
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-      PipelinesStep step = (PipelinesStep) o;
-      return idx == step.idx && Objects.equal(name, step.name);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hashCode(idx, name);
-    }
-
     public static class Status implements Serializable {
 
       private static final long serialVersionUID = 1827285369622224859L;
@@ -140,6 +117,24 @@ public class PipelinesProcessStatus implements Serializable {
         this.message = message;
         return this;
       }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      PipelinesStep that = (PipelinesStep) o;
+      return Objects.equal(name, that.name) && Objects.equal(startDateTime, that.startDateTime) && Objects.equal(
+        endDateTime, that.endDateTime);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hashCode(name, startDateTime, endDateTime);
     }
   }
 

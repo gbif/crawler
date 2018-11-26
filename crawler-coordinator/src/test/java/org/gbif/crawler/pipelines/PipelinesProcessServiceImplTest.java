@@ -29,7 +29,6 @@ import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 @RunWith(MockitoJUnitRunner.class)
 public class PipelinesProcessServiceImplTest {
 
-  private static final LocalDateTime LOCAL_DATE_TIME = LocalDateTime.MAX;
   private static final String MESSAGE = "info";
   private static final Boolean AVAILABILITY = Boolean.TRUE;
 
@@ -113,8 +112,8 @@ public class PipelinesProcessServiceImplTest {
       Assert.assertTrue(crawlIds.contains(status.getCrawlId()));
       status.getPipelinesSteps().forEach(step -> {
         Assert.assertTrue(ALL_STEPS.contains(step.getName()));
-        Assert.assertEquals(LOCAL_DATE_TIME, step.getStartDateTime());
-        Assert.assertEquals(LOCAL_DATE_TIME, step.getEndDateTime());
+        Assert.assertNotNull(step.getStartDateTime());
+        Assert.assertNotNull(step.getEndDateTime());
         Assert.assertEquals(AVAILABILITY, step.getSuccessful().isAvailability());
         Assert.assertEquals(MESSAGE, step.getSuccessful().getMessage());
       });
@@ -141,8 +140,8 @@ public class PipelinesProcessServiceImplTest {
     Assert.assertEquals(crawlId, status.getCrawlId());
     status.getPipelinesSteps().forEach(step -> {
       Assert.assertTrue(ALL_STEPS.contains(step.getName()));
-      Assert.assertEquals(LOCAL_DATE_TIME, step.getStartDateTime());
-      Assert.assertEquals(LOCAL_DATE_TIME, step.getEndDateTime());
+      Assert.assertNotNull(step.getStartDateTime());
+      Assert.assertNotNull(step.getEndDateTime());
       Assert.assertEquals(AVAILABILITY, step.getSuccessful().isAvailability());
       Assert.assertEquals(MESSAGE, step.getSuccessful().getMessage());
     });
@@ -169,8 +168,8 @@ public class PipelinesProcessServiceImplTest {
       Assert.assertEquals(crawlId, status.getCrawlId());
       status.getPipelinesSteps().forEach(step -> {
         Assert.assertTrue(ALL_STEPS.contains(step.getName()));
-        Assert.assertEquals(LOCAL_DATE_TIME, step.getStartDateTime());
-        Assert.assertEquals(LOCAL_DATE_TIME, step.getEndDateTime());
+        Assert.assertNotNull(step.getStartDateTime());
+        Assert.assertNotNull(step.getEndDateTime());
         Assert.assertEquals(AVAILABILITY, step.getSuccessful().isAvailability());
         Assert.assertEquals(MESSAGE, step.getSuccessful().getMessage());
       });
@@ -234,7 +233,7 @@ public class PipelinesProcessServiceImplTest {
    * @param path    child node path
    */
   private void updateMonitoringDate(String crawlId, String path) throws Exception {
-    String value = LOCAL_DATE_TIME.atOffset(ZoneOffset.UTC).format(ISO_LOCAL_DATE_TIME);
+    String value = LocalDateTime.now().atOffset(ZoneOffset.UTC).format(ISO_LOCAL_DATE_TIME);
     updateMonitoring(crawlId, path, value);
   }
 

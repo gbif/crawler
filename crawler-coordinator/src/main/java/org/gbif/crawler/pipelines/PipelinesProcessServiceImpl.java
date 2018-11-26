@@ -9,13 +9,13 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.Comparator;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
-import java.util.function.Supplier;
 
 import com.google.common.base.Charsets;
 import com.google.inject.Inject;
@@ -57,7 +57,7 @@ public class PipelinesProcessServiceImpl implements PipelinesProcessService {
    */
   @Override
   public Set<PipelinesProcessStatus> getRunningPipelinesProcesses() {
-    Set<PipelinesProcessStatus> set = new HashSet<>();
+    Set<PipelinesProcessStatus> set = new TreeSet<>(Comparator.comparing(PipelinesProcessStatus::getCrawlId));
     try {
 
       String path = buildPath(PIPELINES_ROOT);
@@ -103,11 +103,10 @@ public class PipelinesProcessServiceImpl implements PipelinesProcessService {
       }
       // Here we're trying to load all information from Zookeeper into the DatasetProcessStatus object
       PipelinesProcessStatus status = new PipelinesProcessStatus(crawlId);
-      Supplier<Integer> nextIdxFn = () -> status.getPipelinesSteps().size() + 1;
 
       // ALL_STEPS - static set of all pipelines steps: DWCA_TO_AVRO, VERBATIM_TO_INTERPRETED and etc.
       for (String path: ALL_STEPS) {
-        PipelinesStep step = new PipelinesStep(nextIdxFn.get(), path);
+        PipelinesStep step = new PipelinesStep(path);
 
         getAsDate(crawlId, Fn.START_DATE.apply(path)).ifPresent(step::setStartDateTime);
         getAsDate(crawlId, Fn.END_DATE.apply(path)).ifPresent(step::setEndDateTime);
@@ -146,7 +145,7 @@ public class PipelinesProcessServiceImpl implements PipelinesProcessService {
 
   @Override
   public Set<PipelinesProcessStatus> getPipelinesProcessesByDatasetKey(String datasetKey) {
-    Set<PipelinesProcessStatus> set = new HashSet<>();
+    Set<PipelinesProcessStatus> set = new TreeSet<>(Comparator.comparing(PipelinesProcessStatus::getCrawlId));
     try {
 
       String path = buildPath(PIPELINES_ROOT);
