@@ -24,7 +24,7 @@ public class HdfsUtils {
   /**
    * Returns the file size in bytes
    *
-   * @param filePath       path to some file
+   * @param filePath path to some file
    * @param hdfsSiteConfig path to hdfs-site.xml config file
    */
   public static long getfileSizeByte(String filePath, String hdfsSiteConfig) throws IOException {
@@ -36,7 +36,7 @@ public class HdfsUtils {
   /**
    * Returns number of files in the directory
    *
-   * @param directoryPath  path to some directory
+   * @param directoryPath path to some directory
    * @param hdfsSiteConfig path to hdfs-site.xml config file
    */
   public static int getfileCount(String directoryPath, String hdfsSiteConfig) throws IOException {
@@ -55,9 +55,23 @@ public class HdfsUtils {
   }
 
   /**
+   * Removes a directory with content if the folder exists
+   *
+   * @param directoryPath path to some directory
+   * @param hdfsSiteConfig path to hdfs-site.xml config file
+   */
+  public static boolean deleteIfExist(String hdfsSiteConfig, String directoryPath) throws IOException {
+    URI fileUri = URI.create(directoryPath);
+    FileSystem fs = getFileSystem(fileUri, hdfsSiteConfig);
+
+    Path path = new Path(directoryPath);
+    return fs.exists(path) && fs.delete(path, true);
+  }
+
+  /**
    * Gets HDFS file system using config file or without if it doesn't exist
    *
-   * @param filePath       path to some file
+   * @param filePath path to some file
    * @param hdfsSiteConfig path to hdfs-site.xml config file
    */
   private static FileSystem getFileSystem(URI filePath, String hdfsSiteConfig) {
@@ -77,7 +91,8 @@ public class HdfsUtils {
 
       return FileSystem.get(filePath, config);
     } catch (IOException ex) {
-      throw new IllegalStateException("Can't get a valid filesystem from provided uri " + filePath, ex);
+      throw new IllegalStateException(
+          "Can't get a valid filesystem from provided uri " + filePath, ex);
     }
   }
 }

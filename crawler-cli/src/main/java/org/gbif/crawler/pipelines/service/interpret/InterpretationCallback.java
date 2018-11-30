@@ -52,6 +52,9 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
     // Main message processing logic, creates a terminal java process, which runs verbatim-to-interpreted pipeline
     Runnable runnable = () -> {
       try {
+
+        deleteInterpretationsIfExist(message, config);
+
         String path = String.join("/", config.repositoryPath, datasetId.toString(), attempt, "verbatim.avro");
 
         // Chooses a runner type by calculating file size
@@ -97,4 +100,26 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
 
   }
 
+  /**
+   * Deletes directories if a dataset with the same attempt was interpreted before
+   */
+  private static void deleteInterpretationsIfExist(
+      PipelinesVerbatimMessage message, InterpreterConfiguration config) throws IOException {
+    String datasetId = message.getDatasetUuid().toString();
+    String attempt = Integer.toString(message.getAttempt());
+    Set<String> steps = message.getInterpretTypes();
+
+    if (steps != null && !steps.isEmpty()) {
+
+      String path = String.join("/", config.repositoryPath, datasetId, attempt, "interpreted");
+
+      if (steps.contains("ALL")) {
+        HdfsUtils.deleteIfExist(config.hdfsSiteConfig, path);
+      } else {
+        for (String step : steps) {
+          HdfsUtils.deleteIfExist(config.hdfsSiteConfig, String.join("/", path, step.toLowerCase()));
+        }
+      }
+    }
+  }
 }

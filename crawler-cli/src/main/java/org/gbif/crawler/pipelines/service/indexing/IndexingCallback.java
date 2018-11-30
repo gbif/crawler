@@ -52,7 +52,7 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
     // Main message processing logic, creates a terminal java process, which runs interpreted-to-index pipeline
     Runnable runnable = () -> {
       try {
-        String path = String.join("/", config.repositoryPath, datasetId.toString(), attempt, "basic");
+        String path = String.join("/", config.repositoryPath, datasetId.toString(), attempt, "interpreted", "basic");
 
         // Chooses a runner type by calculating number of files
         int filesCount = HdfsUtils.getfileCount(path, config.hdfsSiteConfig);
