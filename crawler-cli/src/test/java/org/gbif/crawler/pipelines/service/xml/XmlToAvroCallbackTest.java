@@ -77,7 +77,7 @@ public class XmlToAvroCallbackTest {
     config.xmlReaderParallelism = 4;
     XmlToAvroCallback callback = new XmlToAvroCallback(config, null, curator);
     PipelinesXmlMessage message =
-      new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL, Collections.emptySet());
+      new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL, Collections.singleton("ALL"));
 
     // Expected
     callback.handleMessage(message);
@@ -98,7 +98,7 @@ public class XmlToAvroCallbackTest {
     config.xmlReaderParallelism = 4;
     XmlToAvroCallback callback = new XmlToAvroCallback(config, null, curator);
     PipelinesXmlMessage message =
-      new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL, Collections.emptySet());
+      new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL, Collections.singleton("ALL"));
 
     // Expected
     callback.handleMessage(message);
@@ -119,7 +119,7 @@ public class XmlToAvroCallbackTest {
     config.xmlReaderParallelism = 4;
     XmlToAvroCallback callback = new XmlToAvroCallback(config, null, curator);
     PipelinesXmlMessage message =
-      new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL, Collections.emptySet());
+      new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL, Collections.singleton("ALL"));
 
     // Expected
     callback.handleMessage(message);

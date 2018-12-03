@@ -78,7 +78,7 @@ public class DwcaToAvroCallbackTest {
     UUID uuid = UUID.fromString(DATASET_UUID_POS);
     DwcaValidationReport reason = new DwcaValidationReport(uuid, "no reason");
     PipelinesDwcaMessage message =
-      new PipelinesDwcaMessage(uuid, DatasetType.OCCURRENCE, URI.create(DUMMY_URL), 2, reason, Collections.emptySet());
+      new PipelinesDwcaMessage(uuid, DatasetType.OCCURRENCE, URI.create(DUMMY_URL), 2, reason, Collections.singleton("ALL"));
 
     // Expected
     callback.handleMessage(message);
