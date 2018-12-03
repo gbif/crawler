@@ -7,6 +7,7 @@ import org.gbif.common.messaging.api.messages.PipelinesInterpretedMessage;
 import org.gbif.crawler.pipelines.config.IndexingConfiguration;
 import org.gbif.crawler.pipelines.service.HdfsUtils;
 import org.gbif.crawler.pipelines.service.PipelineCallback;
+import org.gbif.crawler.pipelines.service.PipelineCallback.Steps;
 import org.gbif.crawler.pipelines.service.indexing.ProcessRunnerBuilder.RunnerEnum;
 
 import java.io.IOException;
@@ -18,7 +19,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static org.gbif.crawler.constants.PipelinesNodePaths.INTERPRETED_TO_INDEX;
-import static org.gbif.crawler.pipelines.service.PipelineCallback.Steps.INDEXING_FINISHED;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -85,7 +85,7 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
       .outgoingMessage(new PipelinesIndexedMessage(datasetId, message.getAttempt(), steps))
       .curator(curator)
       .zkRootElementPath(INTERPRETED_TO_INDEX)
-      .nextPipelinesStep(INDEXING_FINISHED.name())
+      .pipelinesStepName(Steps.INTERPRETED_TO_INDEX.name())
       .publisher(publisher)
       .runnable(runnable)
       .build()

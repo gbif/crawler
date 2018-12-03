@@ -1,7 +1,7 @@
 package org.gbif.crawler.constants;
 
 import java.util.Set;
-import java.util.function.Function;
+import java.util.function.UnaryOperator;
 import javax.annotation.Nullable;
 
 import com.google.common.collect.Sets;
@@ -23,13 +23,15 @@ public class PipelinesNodePaths {
 
   public static final String PIPELINES_ROOT = "pipelines";
 
+  public static final String SIZE = "size";
   public static final String DWCA_TO_VERBATIM = "dwcaToVerbatm";
   public static final String XML_TO_VERBATIM = "xmlToVerbatm";
   public static final String VERBATIM_TO_INTERPRETED = "verbatimToInterpreted";
   public static final String INTERPRETED_TO_INDEX = "interpretedToIndex";
+  public static final String HIVE_VIEW = "hiveView";
 
   public static final Set<String> ALL_STEPS =
-    Sets.newHashSet(XML_TO_VERBATIM, DWCA_TO_VERBATIM, VERBATIM_TO_INTERPRETED, INTERPRETED_TO_INDEX);
+    Sets.newHashSet(XML_TO_VERBATIM, DWCA_TO_VERBATIM, VERBATIM_TO_INTERPRETED, INTERPRETED_TO_INDEX, HIVE_VIEW);
 
   public static class Fn {
 
@@ -37,16 +39,16 @@ public class PipelinesNodePaths {
       // NOP
     }
 
-    public static final Function<String, String> START_DATE = s -> join(DELIMITER, s, START);
-    public static final Function<String, String> END_DATE = s -> join(DELIMITER, s, END);
+    public static final UnaryOperator<String> START_DATE = s -> join(DELIMITER, s, START);
+    public static final UnaryOperator<String> END_DATE = s -> join(DELIMITER, s, END);
 
-    public static final Function<String, String> ERROR = s -> s + join(DELIMITER, s, ERR);
-    public static final Function<String, String> ERROR_AVAILABILITY = s -> s + join(DELIMITER, s, ERR, DONE);
-    public static final Function<String, String> ERROR_MESSAGE = s -> s + join(DELIMITER, s, ERR, MESSAGE);
+    public static final UnaryOperator<String> ERROR = s -> s + join(DELIMITER, s, ERR);
+    public static final UnaryOperator<String> ERROR_AVAILABILITY = s -> s + join(DELIMITER, s, ERR, DONE);
+    public static final UnaryOperator<String> ERROR_MESSAGE = s -> s + join(DELIMITER, s, ERR, MESSAGE);
 
-    public static final Function<String, String> SUCCESSFUL = s -> s + join(DELIMITER, s, OK);
-    public static final Function<String, String> SUCCESSFUL_AVAILABILITY = s -> s + join(DELIMITER, s, OK, DONE);
-    public static final Function<String, String> SUCCESSFUL_MESSAGE = s -> s + join(DELIMITER, s, OK, MESSAGE);
+    public static final UnaryOperator<String> SUCCESSFUL = s -> s + join(DELIMITER, s, OK);
+    public static final UnaryOperator<String> SUCCESSFUL_AVAILABILITY = s -> s + join(DELIMITER, s, OK, DONE);
+    public static final UnaryOperator<String> SUCCESSFUL_MESSAGE = s -> s + join(DELIMITER, s, OK, MESSAGE);
   }
 
   private PipelinesNodePaths() {

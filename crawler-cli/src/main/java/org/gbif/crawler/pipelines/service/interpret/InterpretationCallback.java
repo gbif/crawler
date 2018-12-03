@@ -7,6 +7,7 @@ import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage;
 import org.gbif.crawler.pipelines.config.InterpreterConfiguration;
 import org.gbif.crawler.pipelines.service.HdfsUtils;
 import org.gbif.crawler.pipelines.service.PipelineCallback;
+import org.gbif.crawler.pipelines.service.PipelineCallback.Steps;
 import org.gbif.crawler.pipelines.service.interpret.ProcessRunnerBuilder.RunnerEnum;
 
 import java.io.IOException;
@@ -18,7 +19,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static org.gbif.crawler.constants.PipelinesNodePaths.VERBATIM_TO_INTERPRETED;
-import static org.gbif.crawler.pipelines.service.PipelineCallback.Steps.INTERPRETED_TO_INDEX;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -92,7 +92,7 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
       .outgoingMessage(new PipelinesInterpretedMessage(datasetId, message.getAttempt(), steps))
       .curator(curator)
       .zkRootElementPath(VERBATIM_TO_INTERPRETED)
-      .nextPipelinesStep(INTERPRETED_TO_INDEX.name())
+      .pipelinesStepName(Steps.VERBATIM_TO_INTERPRETED.name())
       .publisher(publisher)
       .runnable(runnable)
       .build()

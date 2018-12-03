@@ -9,6 +9,7 @@ import org.gbif.crawler.pipelines.config.ConverterConfiguration;
 import org.gbif.crawler.pipelines.path.ArchiveToAvroPath;
 import org.gbif.crawler.pipelines.path.PathFactory;
 import org.gbif.crawler.pipelines.service.PipelineCallback;
+import org.gbif.crawler.pipelines.service.PipelineCallback.Steps;
 
 import java.util.Set;
 import java.util.UUID;
@@ -17,7 +18,6 @@ import org.apache.curator.framework.CuratorFramework;
 
 import static org.gbif.crawler.constants.PipelinesNodePaths.DWCA_TO_VERBATIM;
 import static org.gbif.crawler.pipelines.path.PathFactory.ArchiveTypeEnum.DWCA;
-import static org.gbif.crawler.pipelines.service.PipelineCallback.Steps.VERBATIM_TO_INTERPRETED;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -63,7 +63,7 @@ public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMes
       .outgoingMessage(new PipelinesVerbatimMessage(datasetId, attempt, config.interpretTypes, steps))
       .curator(curator)
       .zkRootElementPath(DWCA_TO_VERBATIM)
-      .nextPipelinesStep(VERBATIM_TO_INTERPRETED.name())
+      .pipelinesStepName(Steps.DWCA_TO_VERBATIM.name())
       .publisher(publisher)
       .runnable(runnable)
       .build()
