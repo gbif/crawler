@@ -10,6 +10,8 @@ import java.util.UUID;
 
 import org.junit.Test;
 
+import static org.gbif.crawler.pipelines.service.PipelineCallback.Steps.ALL;
+
 import static org.junit.Assert.assertEquals;
 
 public class ProcessRunnerBuilderTest {
@@ -56,8 +58,8 @@ public class ProcessRunnerBuilderTest {
 
     UUID datasetId = UUID.fromString("de7ffb5e-c07b-42dc-8a88-f67a4465fe3d");
     int attempt = 1;
-    Set<String> types = Collections.singleton("ALL");
-    Set<String> steps = Collections.singleton("ALL");
+    Set<String> types = Collections.singleton(ALL.name());
+    Set<String> steps = Collections.singleton(ALL.name());
     PipelinesVerbatimMessage message = new PipelinesVerbatimMessage(datasetId, attempt, types, steps);
 
     // When
@@ -102,8 +104,8 @@ public class ProcessRunnerBuilderTest {
 
     UUID datasetId = UUID.fromString("de7ffb5e-c07b-42dc-8a88-f67a4465fe3d");
     int attempt = 1;
-    Set<String> types = Collections.singleton("ALL");
-    Set<String> steps = Collections.singleton("ALL");
+    Set<String> types = Collections.singleton(ALL.name());
+    Set<String> steps = Collections.singleton(ALL.name());
     PipelinesVerbatimMessage message = new PipelinesVerbatimMessage(datasetId, attempt, types, steps);
 
     // Expected
@@ -153,8 +155,8 @@ public class ProcessRunnerBuilderTest {
 
     UUID datasetId = UUID.fromString("de7ffb5e-c07b-42dc-8a88-f67a4465fe3d");
     int attempt = 1;
-    Set<String> types = Collections.singleton("ALL");
-    Set<String> steps = Collections.singleton("ALL");
+    Set<String> types = Collections.singleton(ALL.name());
+    Set<String> steps = Collections.singleton(ALL.name());
     PipelinesVerbatimMessage message = new PipelinesVerbatimMessage(datasetId, attempt, types, steps);
 
     // Expected

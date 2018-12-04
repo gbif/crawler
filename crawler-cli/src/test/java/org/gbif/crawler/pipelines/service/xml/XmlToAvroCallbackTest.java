@@ -22,6 +22,8 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import static org.gbif.crawler.pipelines.service.PipelineCallback.Steps.ALL;
+
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -77,7 +79,7 @@ public class XmlToAvroCallbackTest {
     config.xmlReaderParallelism = 4;
     XmlToAvroCallback callback = new XmlToAvroCallback(config, null, curator);
     PipelinesXmlMessage message =
-      new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL, Collections.singleton("ALL"));
+      new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL, Collections.singleton(ALL.name()));
 
     // Expected
     callback.handleMessage(message);
@@ -98,7 +100,7 @@ public class XmlToAvroCallbackTest {
     config.xmlReaderParallelism = 4;
     XmlToAvroCallback callback = new XmlToAvroCallback(config, null, curator);
     PipelinesXmlMessage message =
-      new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL, Collections.singleton("ALL"));
+      new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL, Collections.singleton(ALL.name()));
 
     // Expected
     callback.handleMessage(message);
@@ -119,7 +121,7 @@ public class XmlToAvroCallbackTest {
     config.xmlReaderParallelism = 4;
     XmlToAvroCallback callback = new XmlToAvroCallback(config, null, curator);
     PipelinesXmlMessage message =
-      new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL, Collections.singleton("ALL"));
+      new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL, Collections.singleton(ALL.name()));
 
     // Expected
     callback.handleMessage(message);

@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static org.gbif.crawler.constants.PipelinesNodePaths.VERBATIM_TO_INTERPRETED;
+import static org.gbif.crawler.pipelines.service.PipelineCallback.Steps.ALL;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -113,7 +114,7 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
 
       String path = String.join("/", config.repositoryPath, datasetId, attempt, "interpreted");
 
-      if (steps.contains("ALL")) {
+      if (steps.contains(ALL.name())) {
         HdfsUtils.deleteIfExist(config.hdfsSiteConfig, path);
       } else {
         for (String step : steps) {

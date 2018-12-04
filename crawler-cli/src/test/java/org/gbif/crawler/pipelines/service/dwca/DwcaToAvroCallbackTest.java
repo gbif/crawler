@@ -25,6 +25,8 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import static org.gbif.crawler.pipelines.service.PipelineCallback.Steps.ALL;
+
 /**
  * Test dwca-to-avro commands message handling command on hdfs
  */
@@ -78,7 +80,7 @@ public class DwcaToAvroCallbackTest {
     UUID uuid = UUID.fromString(DATASET_UUID_POS);
     DwcaValidationReport reason = new DwcaValidationReport(uuid, "no reason");
     PipelinesDwcaMessage message =
-      new PipelinesDwcaMessage(uuid, DatasetType.OCCURRENCE, URI.create(DUMMY_URL), 2, reason, Collections.singleton("ALL"));
+      new PipelinesDwcaMessage(uuid, DatasetType.OCCURRENCE, URI.create(DUMMY_URL), 2, reason, Collections.singleton(ALL.name()));
 
     // Expected
     callback.handleMessage(message);

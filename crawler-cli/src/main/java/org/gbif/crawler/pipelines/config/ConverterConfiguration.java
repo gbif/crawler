@@ -14,6 +14,8 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParametersDelegate;
 import com.google.common.base.MoreObjects;
 
+import static org.gbif.crawler.pipelines.service.PipelineCallback.Steps.ALL;
+
 /**
  * Configuration required to convert downloaded DwCArchive/ABCD and etc to avro (ExtendedRecord)
  */
@@ -60,7 +62,7 @@ public class ConverterConfiguration {
 
   @Parameter(names = "--interpret-types")
   @NotNull
-  public Set<String> interpretTypes = Collections.singleton("ALL");
+  public Set<String> interpretTypes = Collections.singleton(ALL.name());
 
   @Parameter(names = "--file-name")
   @NotNull

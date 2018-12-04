@@ -191,7 +191,7 @@ public class PipelineCallbackTest {
     String crawlId = datasetKey + "_" + attempt;
     String rootPath = DWCA_TO_VERBATIM;
     String nextStepName = Steps.DWCA_TO_VERBATIM.name();
-    Set<String> pipelineSteps = Collections.singleton("ALL");
+    Set<String> pipelineSteps = Collections.singleton(ALL.name());
     PipelineBasedMessage incomingMessage = createMessage(datasetKey, attempt, pipelineSteps);
     Runnable runnable = () -> {throw new RuntimeException("Oops!");};
     Message outgoingMessage = () -> null;
