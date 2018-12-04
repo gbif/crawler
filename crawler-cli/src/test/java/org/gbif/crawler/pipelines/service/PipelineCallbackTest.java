@@ -273,7 +273,7 @@ public class PipelineCallbackTest {
     Runnable runnable = () -> System.out.println("RUN!");
     Message outgoingMessage = () -> null;
 
-    updateMonitoring(crawlId, SIZE, String.valueOf(3));
+    updateMonitoring(crawlId, SIZE, String.valueOf(2));
 
     // When
     PipelineCallback.create()
@@ -290,7 +290,7 @@ public class PipelineCallbackTest {
     // Should
     Assert.assertTrue(checkExists(getPipelinesInfoPath(crawlId)));
     Assert.assertTrue(getAsString(crawlId, SIZE).isPresent());
-    Assert.assertEquals("4", getAsString(crawlId, SIZE).get());
+    Assert.assertEquals("3", getAsString(crawlId, SIZE).get());
 
     // Postprocess
     deleteMonitoringById(crawlId);

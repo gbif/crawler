@@ -145,8 +145,7 @@ public class PipelineCallback {
         updateMonitoring(crawlId, Fn.SUCCESSFUL_MESSAGE.apply(b.zkRootElementPath), info);
       }
 
-      LOG.info("Delete zookeeper node, crawlId - {}", crawlId);
-      int size = steps.contains(ALL.name()) ? Steps.values().length - 1 : steps.size();
+      int size = steps.contains(ALL.name()) ? Steps.values().length - 2 : steps.size();
       checkMonitoringById(size, crawlId);
 
     } catch (Exception ex) {
@@ -180,6 +179,7 @@ public class PipelineCallback {
         mutex.acquire();
         int counter = getAsInteger(crawlId, SIZE).orElse(0) + 1;
         if (counter >= size) {
+          LOG.info("Delete zookeeper node, crawlId - {}", crawlId);
           b.curator.delete().deletingChildrenIfNeeded().forPath(path);
         } else {
           updateMonitoring(crawlId, SIZE, Integer.toString(counter));
