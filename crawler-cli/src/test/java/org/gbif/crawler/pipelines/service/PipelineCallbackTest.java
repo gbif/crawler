@@ -4,7 +4,8 @@ import org.gbif.common.messaging.api.Message;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.PipelineBasedMessage;
 import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
-import org.gbif.crawler.pipelines.service.PipelineCallback.Steps;
+import org.gbif.crawler.pipelines.PipelineCallback;
+import org.gbif.crawler.pipelines.PipelineCallback.Steps;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -32,7 +33,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import static org.gbif.crawler.constants.PipelinesNodePaths.DWCA_TO_VERBATIM;
 import static org.gbif.crawler.constants.PipelinesNodePaths.SIZE;
 import static org.gbif.crawler.constants.PipelinesNodePaths.getPipelinesInfoPath;
-import static org.gbif.crawler.pipelines.service.PipelineCallback.Steps.ALL;
+import static org.gbif.crawler.pipelines.PipelineCallback.Steps.ALL;
 
 @RunWith(MockitoJUnitRunner.class)
 public class PipelineCallbackTest {
