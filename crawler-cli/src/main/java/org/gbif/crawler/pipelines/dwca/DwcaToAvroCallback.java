@@ -19,6 +19,7 @@ import org.apache.curator.framework.CuratorFramework;
 
 import com.google.common.base.Preconditions;
 
+import static org.gbif.api.vocabulary.DatasetType.OCCURRENCE;
 import static org.gbif.crawler.constants.PipelinesNodePaths.DWCA_TO_VERBATIM;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -43,24 +44,25 @@ public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMes
    */
   @Override
   public void handleMessage(PipelinesDwcaMessage message) {
+    if (OCCURRENCE == message.getDatasetType()) {
+      // Common variables
+      UUID datasetId = message.getDatasetUuid();
+      int attempt = message.getAttempt();
+      Set<String> steps = message.getPipelineSteps();
+      Runnable runnable = createRunnable(message);
 
-    // Common variables
-    UUID datasetId = message.getDatasetUuid();
-    int attempt = message.getAttempt();
-    Set<String> steps = message.getPipelineSteps();
-    Runnable runnable = createRunnable(message);
-
-    // Message callback handler, updates zookeeper info, runs process logic and sends next MQ message
-    PipelineCallback.create()
-        .incomingMessage(message)
-        .outgoingMessage(new PipelinesVerbatimMessage(datasetId, attempt, config.interpretTypes, steps))
-        .curator(curator)
-        .zkRootElementPath(DWCA_TO_VERBATIM)
-        .pipelinesStepName(Steps.DWCA_TO_VERBATIM.name())
-        .publisher(publisher)
-        .runnable(runnable)
-        .build()
-        .handleMessage();
+      // Message callback handler, updates zookeeper info, runs process logic and sends next MQ message
+      PipelineCallback.create()
+          .incomingMessage(message)
+          .outgoingMessage(new PipelinesVerbatimMessage(datasetId, attempt, config.interpretTypes, steps))
+          .curator(curator)
+          .zkRootElementPath(DWCA_TO_VERBATIM)
+          .pipelinesStepName(Steps.DWCA_TO_VERBATIM.name())
+          .publisher(publisher)
+          .runnable(runnable)
+          .build()
+          .handleMessage();
+    }
   }
 
   /**
