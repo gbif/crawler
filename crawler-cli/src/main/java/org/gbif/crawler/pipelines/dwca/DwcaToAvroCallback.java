@@ -2,9 +2,7 @@ package org.gbif.crawler.pipelines.dwca;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.Set;
-import java.util.StringJoiner;
 import java.util.UUID;
 
 import org.gbif.common.messaging.AbstractMessageCallback;
@@ -21,6 +19,7 @@ import com.google.common.base.Preconditions;
 
 import static org.gbif.api.vocabulary.DatasetType.OCCURRENCE;
 import static org.gbif.crawler.constants.PipelinesNodePaths.DWCA_TO_VERBATIM;
+import static org.gbif.crawler.pipelines.HdfsUtils.buildOutputPath;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -80,11 +79,17 @@ public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMes
       org.apache.hadoop.fs.Path outputPath =
           buildOutputPath(config.repositoryPath, datasetId.toString(), attempt, config.fileName);
 
+      org.apache.hadoop.fs.Path metaPath =
+          buildOutputPath(config.repositoryPath, datasetId.toString(), attempt, config.metaFileName);
+
       DwcaToAvroConverter.create()
           .codecFactory(config.avroConfig.getCodec())
           .syncInterval(config.avroConfig.syncInterval)
           .hdfsSiteConfig(config.hdfsSiteConfig)
-          .convert(inputPath, outputPath);
+          .inputPath(inputPath)
+          .outputPath(outputPath)
+          .metaPath(metaPath)
+          .convert();
     };
   }
 
@@ -96,15 +101,6 @@ public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMes
     Preconditions.checkState(directoryPath.toFile().exists(), "Directory - %s does not exist!", directoryPath);
 
     return directoryPath;
-  }
-
-  /**
-   * Store an Avro file on HDFS in /data/ingest/<datasetUUID>/<attemptID>/verbatim.avro
-   */
-  private org.apache.hadoop.fs.Path buildOutputPath(String... values) {
-    StringJoiner joiner = new StringJoiner(org.apache.hadoop.fs.Path.SEPARATOR);
-    Arrays.stream(values).forEach(joiner::add);
-    return new org.apache.hadoop.fs.Path(joiner.toString());
   }
 
 }

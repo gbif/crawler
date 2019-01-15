@@ -1,13 +1,15 @@
 package org.gbif.crawler.pipelines.indexing;
 
+import org.gbif.api.service.registry.DatasetService;
 import org.gbif.common.messaging.DefaultMessagePublisher;
 import org.gbif.common.messaging.MessageListener;
 import org.gbif.common.messaging.api.MessagePublisher;
 
-import com.google.common.util.concurrent.AbstractIdleService;
 import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.util.concurrent.AbstractIdleService;
 
 /**
  * A service which listens to the  {@link org.gbif.common.messaging.api.messages.PipelinesInterpretedMessage } and perform conversion
@@ -18,6 +20,7 @@ public class IndexingService extends AbstractIdleService {
   private final IndexingConfiguration config;
   private MessageListener listener;
   private MessagePublisher publisher;
+  private DatasetService datasetService;
   private CuratorFramework curator;
 
   public IndexingService(IndexingConfiguration config) {
@@ -30,9 +33,10 @@ public class IndexingService extends AbstractIdleService {
     // Prefetch is one, since this is a long-running process.
     listener = new MessageListener(config.messaging.getConnectionParameters(), 1);
     publisher = new DefaultMessagePublisher(config.messaging.getConnectionParameters());
+    datasetService = config.registry.newRegistryInjector().getInstance(DatasetService.class);
     curator = config.zooKeeper.getCuratorFramework();
 
-    listener.listen(config.queueName, config.poolSize, new IndexingCallback(config, publisher, curator));
+    listener.listen(config.queueName, config.poolSize, new IndexingCallback(config, publisher, datasetService, curator));
   }
 
   @Override

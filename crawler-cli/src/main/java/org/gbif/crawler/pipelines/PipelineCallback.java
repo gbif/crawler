@@ -1,27 +1,28 @@
 package org.gbif.crawler.pipelines;
 
-import org.gbif.common.messaging.api.Message;
-import org.gbif.common.messaging.api.MessagePublisher;
-import org.gbif.common.messaging.api.messages.PipelineBasedMessage;
-import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
-
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Optional;
 import java.util.Set;
 
-import com.google.common.base.Charsets;
+import org.gbif.common.messaging.api.Message;
+import org.gbif.common.messaging.api.MessagePublisher;
+import org.gbif.common.messaging.api.messages.PipelineBasedMessage;
+import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
+
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.locks.InterProcessMutex;
 import org.apache.zookeeper.CreateMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Charsets;
+
+import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+
 import static org.gbif.crawler.constants.PipelinesNodePaths.SIZE;
 import static org.gbif.crawler.constants.PipelinesNodePaths.getPipelinesInfoPath;
 import static org.gbif.crawler.pipelines.PipelineCallback.Steps.ALL;
-
-import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
 /**
  * Common class for building and handling a pipeline step. Contains {@link Builder} to simplify the creation process

@@ -1,15 +1,16 @@
 package org.gbif.crawler.pipelines.indexing;
 
 import org.gbif.common.messaging.config.MessagingConfiguration;
+import org.gbif.crawler.common.RegistryConfiguration;
 import org.gbif.crawler.common.ZooKeeperConfiguration;
-
-import javax.validation.Valid;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
+import org.gbif.pipelines.common.PipelinesVariables.Pipeline;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParametersDelegate;
 import com.google.common.base.MoreObjects;
+import javax.validation.Valid;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
 
 /**
  * Configuration required to start Indexing Pipeline on provided dataset
@@ -26,6 +27,11 @@ public class IndexingConfiguration {
   @NotNull
   public MessagingConfiguration messaging = new MessagingConfiguration();
 
+  @ParametersDelegate
+  @NotNull
+  @Valid
+  public RegistryConfiguration registry = new RegistryConfiguration();
+
   @Parameter(names = "--queue-name")
   @NotNull
   public String queueName;
@@ -34,6 +40,9 @@ public class IndexingConfiguration {
   @NotNull
   @Min(1)
   public int poolSize;
+
+  @Parameter(names = "--meta-file-name")
+  public String metaFileName = Pipeline.INTERPRETED_TO_INDEX + ".yml";
 
   @Parameter(names = "--hdfs-site-config")
   @NotNull
@@ -87,6 +96,11 @@ public class IndexingConfiguration {
   @NotNull
   @Min(1)
   public int switchFileSizeMb;
+
+  @Parameter(names = "--switch-records-number")
+  @NotNull
+  @Min(1)
+  public int switchRecordsNumber;
 
   @Parameter(names = "--distributed-jar-path")
   @NotNull
@@ -148,35 +162,63 @@ public class IndexingConfiguration {
   @Parameter(names = "--deploy-mode")
   public String deployMode;
 
-  @Parameter(names = "--idx-alias")
-  public String idxAlias;
+  @Parameter(names = "--index-alias")
+  public String indexAlias;
+
+  @Parameter(names = "--index-indep-records")
+  @NotNull
+  public Integer indexIndepRecord;
+
+  @Parameter(names = "--index-def-static-name")
+  @NotNull
+  public String indexDefStaticName;
+
+  @Parameter(names = "--index-def-static-date-duration-dd")
+  @NotNull
+  public Integer indexDefStaticDateDurationDd;
+
+  @Parameter(names = "--index-def-dynamic-name")
+  @NotNull
+  public String indexDefDynamicName;
+
+  @Parameter(names = "--index-records-per-shard")
+  @NotNull
+  public Integer indexRecordsPerShard;
 
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
-      .add("messaging", messaging)
-      .add("queueName", queueName)
-      .add("poolSize", poolSize)
-      .add("hdfsSiteConfig", hdfsSiteConfig)
-      .add("otherUser", otherUser)
-      .add("standaloneStackSize", standaloneStackSize)
-      .add("standaloneHeapSize", standaloneHeapSize)
-      .add("sparkParallelism", sparkParallelism)
-      .add("sparkMemoryOverhead", sparkMemoryOverhead)
-      .add("sparkExecutorMemory", sparkExecutorMemory)
-      .add("sparkExecutorCores", sparkExecutorCores)
-      .add("sparkExecutorNumbers", sparkExecutorNumbers)
-      .add("standaloneJarPath", standaloneJarPath)
-      .add("distributedJarPath", distributedJarPath)
-      .add("repositoryPath", repositoryPath)
-      .add("distributedMainClass", distributedMainClass)
-      .add("standaloneMainClass", standaloneMainClass)
-      .add("processErrorDirectory", processErrorDirectory)
-      .add("processOutputDirectory", processOutputDirectory)
-      .add("metricsPropertiesPath", metricsPropertiesPath)
-      .add("extraClassPath", extraClassPath)
-      .add("driverJavaOptions", driverJavaOptions)
-      .toString();
+        .add("messaging", messaging)
+        .add("queueName", queueName)
+        .add("poolSize", poolSize)
+        .add("hdfsSiteConfig", hdfsSiteConfig)
+        .add("otherUser", otherUser)
+        .add("standaloneStackSize", standaloneStackSize)
+        .add("standaloneHeapSize", standaloneHeapSize)
+        .add("sparkParallelism", sparkParallelism)
+        .add("sparkMemoryOverhead", sparkMemoryOverhead)
+        .add("sparkExecutorMemory", sparkExecutorMemory)
+        .add("sparkExecutorCores", sparkExecutorCores)
+        .add("sparkExecutorNumbers", sparkExecutorNumbers)
+        .add("standaloneJarPath", standaloneJarPath)
+        .add("distributedJarPath", distributedJarPath)
+        .add("repositoryPath", repositoryPath)
+        .add("distributedMainClass", distributedMainClass)
+        .add("standaloneMainClass", standaloneMainClass)
+        .add("processErrorDirectory", processErrorDirectory)
+        .add("processOutputDirectory", processOutputDirectory)
+        .add("metricsPropertiesPath", metricsPropertiesPath)
+        .add("extraClassPath", extraClassPath)
+        .add("driverJavaOptions", driverJavaOptions)
+        .add("indexIndepRecord", indexIndepRecord)
+        .add("indexDefStaticName", indexDefStaticName)
+        .add("indexIndepRecord", indexIndepRecord)
+        .add("indexDefDynamicName", indexDefDynamicName)
+        .add("indexDefStaticDate", indexDefStaticDateDurationDd)
+        .add("indexRecordsPerShard", indexRecordsPerShard)
+        .add("switchRecordsNumber", switchRecordsNumber)
+        .add("metaFileName", metaFileName)
+        .toString();
   }
 
 }

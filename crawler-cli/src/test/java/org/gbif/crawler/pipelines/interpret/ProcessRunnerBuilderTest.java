@@ -36,7 +36,7 @@ public class ProcessRunnerBuilderTest {
     String expected =
       "java -XX:+UseG1GC -Xms1G -Xmx1G -Dlog4j.configuration=file:/home/crap/config/log4j-indexing-pipeline.properties "
       + "-cp java.jar org.gbif.Test --pipelineStep=VERBATIM_TO_INTERPRETED --datasetId=de7ffb5e-c07b-42dc-8a88-f67a4465fe3d --attempt=1 "
-      + "--interpretationTypes=ALL --runner=SparkRunner --targetPath=tmp --inputPath=verbatim.avro "
+      + "--interpretationTypes=ALL --runner=SparkRunner --targetPath=tmp --metaFileName=verbatim-to-interpreted.yml --inputPath=verbatim.avro "
       + "--avroCompressionType=SNAPPY --avroSyncInterval=1 --hdfsSiteConfig=hdfs.xml --coreSiteConfig=core.xml "
       + "--wsProperties=/path/ws.config";
 
@@ -75,10 +75,10 @@ public class ProcessRunnerBuilderTest {
   public void testSparkRunnerCommand() {
     // When
     String expected =
-      "spark2-submit --conf spark.default.parallelism=1 --conf spark.executor.memoryOverhead=1 --class org.gbif.Test "
+      "spark2-submit --conf spark.default.parallelism=0 --conf spark.executor.memoryOverhead=1 --class org.gbif.Test "
       + "--master yarn --deploy-mode cluster --executor-memory 1G --executor-cores 1 --num-executors 1 "
       + "--driver-memory 4G java.jar --datasetId=de7ffb5e-c07b-42dc-8a88-f67a4465fe3d --attempt=1 "
-      + "--interpretationTypes=ALL --runner=SparkRunner --targetPath=tmp --inputPath=verbatim.avro "
+      + "--interpretationTypes=ALL --runner=SparkRunner --targetPath=tmp --metaFileName=verbatim-to-interpreted.yml --inputPath=verbatim.avro "
       + "--avroCompressionType=SNAPPY --avroSyncInterval=1 --hdfsSiteConfig=hdfs.xml --coreSiteConfig=core.xml "
       + "--wsProperties=/path/ws.config";
 
@@ -122,13 +122,12 @@ public class ProcessRunnerBuilderTest {
     // When
     String expected =
       "spark2-submit --conf spark.metrics.conf=metrics.properties --conf \"spark.driver.extraClassPath=logstash-gelf.jar\" "
-      + "--driver-java-options \"-Dlog4j.configuration=file:log4j.properties\" --conf spark.default.parallelism=1 "
-      + "--conf spark.executor.memoryOverhead=1 --class org.gbif.Test "
-      + "--master yarn --deploy-mode cluster --executor-memory 1G --executor-cores 1 --num-executors 1 "
-      + "--driver-memory 4G java.jar --datasetId=de7ffb5e-c07b-42dc-8a88-f67a4465fe3d --attempt=1 "
-      + "--interpretationTypes=ALL --runner=SparkRunner --targetPath=tmp --inputPath=verbatim.avro "
-      + "--avroCompressionType=SNAPPY --avroSyncInterval=1 --hdfsSiteConfig=hdfs.xml --coreSiteConfig=core.xml "
-      + "--wsProperties=/path/ws.config";
+          + "--driver-java-options \"-Dlog4j.configuration=file:log4j.properties\" --conf spark.default.parallelism=0 "
+          + "--conf spark.executor.memoryOverhead=1 --class org.gbif.Test --master yarn --deploy-mode cluster --executor-memory 1G "
+          + "--executor-cores 1 --num-executors 1 --driver-memory 4G java.jar --datasetId=de7ffb5e-c07b-42dc-8a88-f67a4465fe3d "
+          + "--attempt=1 --interpretationTypes=ALL --runner=SparkRunner --targetPath=tmp --metaFileName=verbatim-to-interpreted.yml "
+          + "--inputPath=verbatim.avro --avroCompressionType=SNAPPY --avroSyncInterval=1 --hdfsSiteConfig=hdfs.xml "
+          + "--coreSiteConfig=core.xml --wsProperties=/path/ws.config";
 
     RunnerEnum runner = RunnerEnum.DISTRIBUTED;
 

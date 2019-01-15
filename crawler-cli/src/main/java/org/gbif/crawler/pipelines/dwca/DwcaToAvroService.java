@@ -4,10 +4,11 @@ import org.gbif.common.messaging.DefaultMessagePublisher;
 import org.gbif.common.messaging.MessageListener;
 import org.gbif.common.messaging.api.MessagePublisher;
 
-import com.google.common.util.concurrent.AbstractIdleService;
 import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.util.concurrent.AbstractIdleService;
 
 /**
  * A service which listens to the  {@link org.gbif.common.messaging.api.messages.PipelinesDwcaMessage } and perform conversion

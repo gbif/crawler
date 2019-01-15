@@ -56,8 +56,8 @@
     <gbif-registry.version>2.91</gbif-registry.version>
     <gbif-registry.version>2.94</gbif-registry.version>
     <gbif-wrangler.version>0.2</gbif-wrangler.version>
-    <gbif-pipelines-models.version>2.0.6</gbif-pipelines-models.version>
-    <gbif-archives-converters.version>2.0.6</gbif-archives-converters.version>
+    <gbif-archives-converters.version>2.0.12</gbif-archives-converters.version>
+    <gbif-pipelines-common.version>2.0.12</gbif-pipelines-common.version>
 
     <guava.version>18.0</guava.version>
     <guice.version>4.0</guice.version>
@@ -239,13 +239,13 @@
       </dependency>
       <dependency>
         <groupId>org.gbif.pipelines</groupId>
-        <artifactId>models</artifactId>
-        <version>${gbif-pipelines-models.version}</version>
+        <artifactId>archives-converters</artifactId>
+        <version>${gbif-archives-converters.version}</version>
       </dependency>
       <dependency>
         <groupId>org.gbif.pipelines</groupId>
-        <artifactId>archives-converters</artifactId>
-        <version>${gbif-archives-converters.version}</version>
+        <artifactId>common</artifactId>
+        <version>${gbif-pipelines-common.version}</version>
       </dependency>
 
       <!-- Other -->

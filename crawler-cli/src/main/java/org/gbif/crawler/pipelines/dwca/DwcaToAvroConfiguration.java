@@ -1,18 +1,19 @@
 package org.gbif.crawler.pipelines.dwca;
 
+import java.util.Collections;
+import java.util.Set;
+
 import org.gbif.common.messaging.config.MessagingConfiguration;
 import org.gbif.crawler.common.AvroWriteConfiguration;
 import org.gbif.crawler.common.ZooKeeperConfiguration;
-
-import java.util.Collections;
-import java.util.Set;
-import javax.validation.Valid;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
+import org.gbif.pipelines.common.PipelinesVariables.Pipeline;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParametersDelegate;
 import com.google.common.base.MoreObjects;
+import javax.validation.Valid;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
 
 import static org.gbif.crawler.pipelines.PipelineCallback.Steps.ALL;
 
@@ -39,6 +40,9 @@ public class DwcaToAvroConfiguration {
   @NotNull
   @Min(1)
   public int poolSize;
+
+  @Parameter(names = "--meta-file-name")
+  public String metaFileName = Pipeline.DWCA_TO_VERBATIM + ".yml";
 
   @Parameter(names = "--archive-repository")
   @NotNull
@@ -82,6 +86,7 @@ public class DwcaToAvroConfiguration {
       .add("codecFactory", avroConfig.getCodec())
       .add("hdfsSiteConfig", hdfsSiteConfig)
       .add("interpretTypes", interpretTypes.toString())
+      .add("metaFileName", metaFileName)
       .toString();
   }
 }

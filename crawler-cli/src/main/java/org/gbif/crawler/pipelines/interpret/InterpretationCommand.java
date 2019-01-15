@@ -3,8 +3,9 @@ package org.gbif.crawler.pipelines.interpret;
 import org.gbif.cli.Command;
 import org.gbif.cli.service.ServiceCommand;
 
-import com.google.common.util.concurrent.Service;
 import org.kohsuke.MetaInfServices;
+
+import com.google.common.util.concurrent.Service;
 
 /**
  * Entry class for cli command, to start service to interpret dataset available as avro.

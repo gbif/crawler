@@ -1,10 +1,13 @@
 package org.gbif.crawler.pipelines;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URI;
+import java.util.Arrays;
+import java.util.StringJoiner;
 
-import com.google.common.base.Strings;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.LocatedFileStatus;
@@ -12,6 +15,8 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.RemoteIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Strings;
 
 public class HdfsUtils {
 
@@ -71,6 +76,34 @@ public class HdfsUtils {
   }
 
   /**
+   * TODO:!
+   */
+  public static String getValueByKey(String hdfsSiteConfig, String path, String key) throws IOException {
+    FileSystem fs = getFileSystem(URI.create(path), hdfsSiteConfig);
+    Path fsPath = new Path(path);
+    if (fs.exists(fsPath)) {
+      try (BufferedReader br = new BufferedReader(new InputStreamReader(fs.open(fsPath)))) {
+        return br.lines()
+            .map(x -> x.replace("\u0000", ""))
+            .filter(y -> y.startsWith(key))
+            .findFirst()
+            .map(z -> z.replace(key + ": ", ""))
+            .orElse("");
+      }
+    }
+    return "";
+  }
+
+  /**
+   * Store an Avro file on HDFS in /data/ingest/<datasetUUID>/<attemptID>/verbatim.avro
+   */
+  public static Path buildOutputPath(String... values) {
+    StringJoiner joiner = new StringJoiner(org.apache.hadoop.fs.Path.SEPARATOR);
+    Arrays.stream(values).forEach(joiner::add);
+    return new org.apache.hadoop.fs.Path(joiner.toString());
+  }
+
+  /**
    * Gets HDFS file system using config file or without if it doesn't exist
    *
    * @param filePath path to some file
@@ -93,8 +126,7 @@ public class HdfsUtils {
 
       return FileSystem.get(filePath, config);
     } catch (IOException ex) {
-      throw new IllegalStateException(
-          "Can't get a valid filesystem from provided uri " + filePath, ex);
+      throw new IllegalStateException("Can't get a valid filesystem from provided uri " + filePath, ex);
     }
   }
 }

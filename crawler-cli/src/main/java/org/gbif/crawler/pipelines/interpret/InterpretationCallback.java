@@ -11,7 +11,9 @@ import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage;
 import org.gbif.crawler.pipelines.HdfsUtils;
 import org.gbif.crawler.pipelines.PipelineCallback;
 import org.gbif.crawler.pipelines.PipelineCallback.Steps;
+import org.gbif.crawler.pipelines.dwca.DwcaToAvroConfiguration;
 import org.gbif.crawler.pipelines.interpret.ProcessRunnerBuilder.RunnerEnum;
+import org.gbif.pipelines.common.PipelinesVariables.Metrics;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
@@ -72,34 +74,29 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
         String datasetId = message.getDatasetUuid().toString();
         String attempt = Integer.toString(message.getAttempt());
 
-        deleteInterpretationsIfExist(message, config);
+        deleteInterpretationsIfExist(message);
 
-        // Chooses a runner type by calculating file size
+        long recordsNumber = getRecordNumber(message);
+
         String path = String.join("/", config.repositoryPath, datasetId, attempt, "verbatim.avro");
-        long fileSizeByte = HdfsUtils.getfileSizeByte(path, config.hdfsSiteConfig);
-        if (fileSizeByte < 0) {
-          throw new IllegalStateException("Failed interpretation on " + datasetId);
-        }
-        long switchFileSizeByte = config.switchFileSizeMb * 1024L * 1024L;
-        RunnerEnum runner = fileSizeByte > switchFileSizeByte ? RunnerEnum.DISTRIBUTED : RunnerEnum.STANDALONE;
-        LOG.info("File size - {}, Spark Runner type - {}", fileSizeByte, runner);
-
-        // Number of Spark threads
-        int numberOfTreads = (int) Math.ceil(fileSizeByte / (config.threadPerMb * 1024d * 1024d));
-        config.sparkParallelism = numberOfTreads > 1 ? numberOfTreads : 1;
+        int sparkParallelism = computeSparkParallelism(path, recordsNumber);
+        RunnerEnum runner = computeRunnerEnum(datasetId, attempt, recordsNumber);
 
         LOG.info("Start the process. DatasetId - {}, InterpretTypes - {}, Runner type - {}", datasetId,
             message.getInterpretTypes(), runner);
 
         // Assembles a terminal java process and runs it
-        ProcessRunnerBuilder.create()
+        int exitValue = ProcessRunnerBuilder.create()
             .runner(runner)
             .config(config)
             .message(message)
             .inputPath(path)
+            .sparkParallelism(sparkParallelism)
             .build()
             .start()
             .waitFor();
+
+        LOG.info("Process has been finished with exit value - {}", exitValue);
 
       } catch (InterruptedException | IOException ex) {
         LOG.error(ex.getMessage(), ex);
@@ -109,10 +106,53 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
   }
 
   /**
+   * TODO:!
+   */
+  private int computeSparkParallelism(String verbatimPath, long recordsNumber) throws IOException {
+
+    // Strategy 1: Chooses a runner type by number of records in a dataset
+    if (recordsNumber > 0) {
+      return (int) Math.ceil((double) recordsNumber / (double) config.sparkRecordsPerThread);
+    }
+
+    // Strategy 2: Chooses a runner type by calculating verbatim.avro file size
+    long fileSizeByte = HdfsUtils.getfileSizeByte(verbatimPath, config.hdfsSiteConfig);
+    int numberOfThreads = (int) Math.ceil(fileSizeByte / (config.threadPerMb * 1024d * 1024d));
+    return numberOfThreads > 1 ? numberOfThreads : 1;
+  }
+
+
+  /**
+   * TODO:!
+   */
+  private RunnerEnum computeRunnerEnum(String datasetId, String attempt, long recordsNumber) throws IOException {
+
+    RunnerEnum runner;
+
+    // Strategy 1: Chooses a runner type by number of records in a dataset
+    if (recordsNumber > 0) {
+      runner = recordsNumber >= config.switchRecordsNumber ? RunnerEnum.DISTRIBUTED : RunnerEnum.STANDALONE;
+      LOG.info("Records number - {}, Spark Runner type - {}", recordsNumber, runner);
+      return runner;
+    }
+
+    // Strategy 2: Chooses a runner type by calculating verbatim.avro file size
+    String verbatimPath = String.join("/", config.repositoryPath, datasetId, attempt, "verbatim.avro");
+    long fileSizeByte = HdfsUtils.getfileSizeByte(verbatimPath, config.hdfsSiteConfig);
+    if (fileSizeByte > 0) {
+      long switchFileSizeByte = config.switchFileSizeMb * 1024L * 1024L;
+      runner = fileSizeByte > switchFileSizeByte ? RunnerEnum.DISTRIBUTED : RunnerEnum.STANDALONE;
+      LOG.info("File size - {}, Spark Runner type - {}", fileSizeByte, runner);
+      return runner;
+    }
+
+    throw new IllegalStateException("Failed interpretation on " + datasetId);
+  }
+
+  /**
    * Deletes directories if a dataset with the same attempt was interpreted before
    */
-  private static void deleteInterpretationsIfExist(PipelinesVerbatimMessage message, InterpreterConfiguration config)
-      throws IOException {
+  private void deleteInterpretationsIfExist(PipelinesVerbatimMessage message) throws IOException {
     String datasetId = message.getDatasetUuid().toString();
     String attempt = Integer.toString(message.getAttempt());
     Set<String> steps = message.getInterpretTypes();
@@ -129,5 +169,15 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
         }
       }
     }
+  }
+
+  private long getRecordNumber(PipelinesVerbatimMessage message) throws IOException {
+    String datasetId = message.getDatasetUuid().toString();
+    String attempt = Integer.toString(message.getAttempt());
+    String metaFileName = new DwcaToAvroConfiguration().metaFileName;
+    String metaPath = String.join("/", config.repositoryPath, datasetId, attempt, metaFileName);
+
+    String recordsNumber = HdfsUtils.getValueByKey(config.hdfsSiteConfig, metaPath, Metrics.DWCA_TO_AVRO_COUNT);
+    return Long.parseLong(recordsNumber);
   }
 }

@@ -3,14 +3,14 @@ package org.gbif.crawler.pipelines.interpret;
 import org.gbif.common.messaging.config.MessagingConfiguration;
 import org.gbif.crawler.common.AvroWriteConfiguration;
 import org.gbif.crawler.common.ZooKeeperConfiguration;
-
-import javax.validation.Valid;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
+import org.gbif.pipelines.common.PipelinesVariables.Pipeline;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParametersDelegate;
 import com.google.common.base.MoreObjects;
+import javax.validation.Valid;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
 
 /**
  * Configuration required to start Interpretation Pipeline on provided dataset
@@ -36,6 +36,9 @@ public class InterpreterConfiguration {
   @Min(1)
   public int poolSize;
 
+  @Parameter(names = "--meta-file-name")
+  public String metaFileName = Pipeline.VERBATIM_TO_INTERPRETED + ".yml";
+
   @ParametersDelegate
   @Valid
   @NotNull
@@ -59,6 +62,9 @@ public class InterpreterConfiguration {
 
   @Parameter(names = "--spark-parallelism")
   public int sparkParallelism;
+
+  @Parameter(names = "--spark-records-per-thread")
+  public int sparkRecordsPerThread;
 
   @Parameter(names = "--spark-memory-overhead")
   @NotNull
@@ -93,6 +99,11 @@ public class InterpreterConfiguration {
   @NotNull
   @Min(1)
   public int switchFileSizeMb;
+
+  @Parameter(names = "--switch-records-number")
+  @NotNull
+  @Min(1)
+  public int switchRecordsNumber;
 
   @Parameter(names = "--distributed-jar-path")
   @NotNull
@@ -137,30 +148,33 @@ public class InterpreterConfiguration {
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
-      .add("messaging", messaging)
-      .add("queueName", queueName)
-      .add("poolSize", poolSize)
-      .add("avroConfig", avroConfig)
-      .add("hdfsSiteConfig", hdfsSiteConfig)
-      .add("wsConfig", wsConfig)
-      .add("otherUser", otherUser)
-      .add("standaloneStackSize", standaloneStackSize)
-      .add("standaloneHeapSize", standaloneHeapSize)
-      .add("sparkParallelism", sparkParallelism)
-      .add("sparkMemoryOverhead", sparkMemoryOverhead)
-      .add("sparkExecutorMemory", sparkExecutorMemory)
-      .add("sparkExecutorCores", sparkExecutorCores)
-      .add("sparkExecutorNumbers", sparkExecutorNumbers)
-      .add("standaloneJarPath", standaloneJarPath)
-      .add("distributedJarPath", distributedJarPath)
-      .add("repositoryPath", repositoryPath)
-      .add("distributedMainClass", distributedMainClass)
-      .add("standaloneMainClass", standaloneMainClass)
-      .add("processErrorDirectory", processErrorDirectory)
-      .add("processOutputDirectory", processOutputDirectory)
-      .add("metricsPropertiesPath", metricsPropertiesPath)
-      .add("extraClassPath", extraClassPath)
-      .add("driverJavaOptions", driverJavaOptions)
-      .toString();
+        .add("messaging", messaging)
+        .add("queueName", queueName)
+        .add("poolSize", poolSize)
+        .add("avroConfig", avroConfig)
+        .add("hdfsSiteConfig", hdfsSiteConfig)
+        .add("wsConfig", wsConfig)
+        .add("otherUser", otherUser)
+        .add("standaloneStackSize", standaloneStackSize)
+        .add("standaloneHeapSize", standaloneHeapSize)
+        .add("sparkParallelism", sparkParallelism)
+        .add("sparkMemoryOverhead", sparkMemoryOverhead)
+        .add("sparkExecutorMemory", sparkExecutorMemory)
+        .add("sparkExecutorCores", sparkExecutorCores)
+        .add("sparkExecutorNumbers", sparkExecutorNumbers)
+        .add("standaloneJarPath", standaloneJarPath)
+        .add("distributedJarPath", distributedJarPath)
+        .add("repositoryPath", repositoryPath)
+        .add("distributedMainClass", distributedMainClass)
+        .add("standaloneMainClass", standaloneMainClass)
+        .add("processErrorDirectory", processErrorDirectory)
+        .add("processOutputDirectory", processOutputDirectory)
+        .add("metricsPropertiesPath", metricsPropertiesPath)
+        .add("extraClassPath", extraClassPath)
+        .add("driverJavaOptions", driverJavaOptions)
+        .add("switchRecordsNumber", switchRecordsNumber)
+        .add("sparkRecordsPerThread", sparkRecordsPerThread)
+        .add("metaFileName", metaFileName)
+        .toString();
   }
 }

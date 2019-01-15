@@ -1,7 +1,5 @@
 package org.gbif.crawler.pipelines.indexing;
 
-import org.gbif.common.messaging.api.messages.PipelinesInterpretedMessage;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -10,6 +8,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.function.BiFunction;
+
+import org.gbif.common.messaging.api.messages.PipelinesInterpretedMessage;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +20,8 @@ import org.slf4j.LoggerFactory;
 final class ProcessRunnerBuilder {
 
   public enum RunnerEnum {
-    STANDALONE, DISTRIBUTED
+    STANDALONE,
+    DISTRIBUTED
   }
 
   private static final Logger LOG = LoggerFactory.getLogger(ProcessRunnerBuilder.class);
@@ -32,6 +33,8 @@ final class ProcessRunnerBuilder {
   private RunnerEnum runner;
   private String esAlias;
   private String esIndexName;
+  private Integer esShardsNumber;
+  private int sparkParallelism;
 
   ProcessRunnerBuilder config(IndexingConfiguration config) {
     this.config = Objects.requireNonNull(config);
@@ -48,13 +51,23 @@ final class ProcessRunnerBuilder {
     return this;
   }
 
+  ProcessRunnerBuilder sparkParallelism(int sparkParallelism) {
+    this.sparkParallelism = sparkParallelism > 0 ? sparkParallelism : config.sparkParallelism;
+    return this;
+  }
+
   ProcessRunnerBuilder esAlias(String esAlias) {
-    this.esAlias = Objects.requireNonNull(esAlias);
+    this.esAlias = esAlias == null || esAlias.isEmpty() ? null : esAlias;
     return this;
   }
 
   ProcessRunnerBuilder esIndexName(String esIndexName) {
     this.esIndexName = Objects.requireNonNull(esIndexName);
+    return this;
+  }
+
+  ProcessRunnerBuilder esShardsNumber(Integer esShardsNumber) {
+    this.esShardsNumber = esShardsNumber == null ? config.indexNumberShards : esShardsNumber;
     return this;
   }
 
@@ -77,14 +90,14 @@ final class ProcessRunnerBuilder {
    */
   private ProcessBuilder buildDirect() {
     StringJoiner joiner = new StringJoiner(DELIMITER).add("java")
-      .add("-XX:+UseG1GC")
-      .add("-Xms" + Objects.requireNonNull(config.standaloneStackSize))
-      .add("-Xmx" + Objects.requireNonNull(config.standaloneHeapSize))
-      .add(Objects.requireNonNull(config.driverJavaOptions))
-      .add("-cp")
-      .add(Objects.requireNonNull(config.standaloneJarPath))
-      .add(Objects.requireNonNull(config.standaloneMainClass))
-      .add("--pipelineStep=INTERPRETED_TO_ES_INDEX");
+        .add("-XX:+UseG1GC")
+        .add("-Xms" + Objects.requireNonNull(config.standaloneStackSize))
+        .add("-Xmx" + Objects.requireNonNull(config.standaloneHeapSize))
+        .add(Objects.requireNonNull(config.driverJavaOptions))
+        .add("-cp")
+        .add(Objects.requireNonNull(config.standaloneJarPath))
+        .add(Objects.requireNonNull(config.standaloneMainClass))
+        .add("--pipelineStep=INTERPRETED_TO_ES_INDEX");
 
     return buildCommon(joiner);
   }
@@ -97,19 +110,19 @@ final class ProcessRunnerBuilder {
 
     Optional.ofNullable(config.metricsPropertiesPath).ifPresent(x -> joiner.add("--conf spark.metrics.conf=" + x));
     Optional.ofNullable(config.extraClassPath)
-      .ifPresent(x -> joiner.add("--conf \"spark.driver.extraClassPath=" + x + "\""));
+        .ifPresent(x -> joiner.add("--conf \"spark.driver.extraClassPath=" + x + "\""));
     Optional.ofNullable(config.driverJavaOptions).ifPresent(x -> joiner.add("--driver-java-options \"" + x + "\""));
 
-    joiner.add("--conf spark.default.parallelism=" + config.sparkParallelism)
-      .add("--conf spark.executor.memoryOverhead=" + config.sparkMemoryOverhead)
-      .add("--class " + Objects.requireNonNull(config.distributedMainClass))
-      .add("--master yarn")
-      .add("--deploy-mode " + Objects.requireNonNull(config.deployMode))
-      .add("--executor-memory " + Objects.requireNonNull(config.sparkExecutorMemory))
-      .add("--executor-cores " + config.sparkExecutorCores)
-      .add("--num-executors " + config.sparkExecutorNumbers)
-      .add("--driver-memory " + config.sparkDriverMemory)
-      .add(Objects.requireNonNull(config.distributedJarPath));
+    joiner.add("--conf spark.default.parallelism=" + sparkParallelism)
+        .add("--conf spark.executor.memoryOverhead=" + config.sparkMemoryOverhead)
+        .add("--class " + Objects.requireNonNull(config.distributedMainClass))
+        .add("--master yarn")
+        .add("--deploy-mode " + Objects.requireNonNull(config.deployMode))
+        .add("--executor-memory " + Objects.requireNonNull(config.sparkExecutorMemory))
+        .add("--executor-cores " + config.sparkExecutorCores)
+        .add("--num-executors " + config.sparkExecutorNumbers)
+        .add("--driver-memory " + config.sparkDriverMemory)
+        .add(Objects.requireNonNull(config.distributedJarPath));
 
     return buildCommon(joiner);
   }
@@ -123,21 +136,22 @@ final class ProcessRunnerBuilder {
 
     // Common properties
     command.add("--datasetId=" + Objects.requireNonNull(message.getDatasetUuid()))
-      .add("--attempt=" + message.getAttempt())
-      .add("--runner=SparkRunner")
-      .add("--inputPath=" + Objects.requireNonNull(config.repositoryPath))
-      .add("--targetPath=" + Objects.requireNonNull(config.repositoryPath))
-      .add("--hdfsSiteConfig=" + Objects.requireNonNull(config.hdfsSiteConfig))
-      .add("--coreSiteConfig=" + Objects.requireNonNull(config.coreSiteConfig))
-      .add("--esHosts=" + Objects.requireNonNull(esHosts))
-      .add("--esAlias=" + Objects.requireNonNull(esAlias))
-      .add("--esIndexName=" + Objects.requireNonNull(esIndexName));
+        .add("--attempt=" + message.getAttempt())
+        .add("--runner=SparkRunner")
+        .add("--inputPath=" + Objects.requireNonNull(config.repositoryPath))
+        .add("--targetPath=" + Objects.requireNonNull(config.repositoryPath))
+        .add("--metaFileName=" + Objects.requireNonNull(config.metaFileName))
+        .add("--hdfsSiteConfig=" + Objects.requireNonNull(config.hdfsSiteConfig))
+        .add("--coreSiteConfig=" + Objects.requireNonNull(config.coreSiteConfig))
+        .add("--esHosts=" + Objects.requireNonNull(esHosts))
+        .add("--esIndexName=" + Objects.requireNonNull(esIndexName));
 
+    Optional.ofNullable(esAlias).ifPresent(x -> command.add("--esAlias=" + x));
     Optional.ofNullable(config.esMaxBatchSizeBytes).ifPresent(x -> command.add("--esMaxBatchSizeBytes=" + x));
     Optional.ofNullable(config.esMaxBatchSize).ifPresent(x -> command.add("--esMaxBatchSize=" + x));
     Optional.ofNullable(config.esSchemaPath).ifPresent(x -> command.add("--esSchemaPath=" + x));
     Optional.ofNullable(config.indexRefreshInterval).ifPresent(x -> command.add("--indexRefreshInterval=" + x));
-    Optional.ofNullable(config.indexNumberShards).ifPresent(x -> command.add("--indexNumberShards=" + x));
+    Optional.ofNullable(esShardsNumber).ifPresent(x -> command.add("--indexNumberShards=" + x));
     Optional.ofNullable(config.indexNumberReplicas).ifPresent(x -> command.add("--indexNumberReplicas=" + x));
 
     // Adds user name to run a command if it is necessary
@@ -164,9 +178,9 @@ final class ProcessRunnerBuilder {
 
     // The command side outputs
     Optional.ofNullable(config.processErrorDirectory)
-      .ifPresent(x -> builder.redirectError(createDirfn.apply("err", x)));
+        .ifPresent(x -> builder.redirectError(createDirfn.apply("err", x)));
     Optional.ofNullable(config.processOutputDirectory)
-      .ifPresent(x -> builder.redirectOutput(createDirfn.apply("out", x)));
+        .ifPresent(x -> builder.redirectOutput(createDirfn.apply("out", x)));
 
     return builder;
   }

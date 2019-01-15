@@ -3,13 +3,12 @@ package org.gbif.crawler.pipelines.hive;
 import org.gbif.common.messaging.config.MessagingConfiguration;
 import org.gbif.crawler.common.ZooKeeperConfiguration;
 
-import javax.validation.Valid;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
-
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParametersDelegate;
 import com.google.common.base.MoreObjects;
+import javax.validation.Valid;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
 
 /**
  * Configuration required to start Indexing Pipeline on provided dataset
