@@ -175,7 +175,7 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
 
     // Default dynamic index name for all other datasets
     idxName = config.indexDefDynamicName;
-    LOG.info("ES Index name - {}, recordsNumber - {}, config.indexIndepRecord - {}", idxName, recordsNumber, config.indexIndepRecord);
+    LOG.info("ES Index name - {}, lastChangedDate - {}, diff days - {}", idxName, lastChangedDate, diff);
     return idxName;
   }
 
