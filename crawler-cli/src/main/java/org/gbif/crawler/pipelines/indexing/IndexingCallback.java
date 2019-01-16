@@ -98,7 +98,11 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
             .start()
             .waitFor();
 
-        LOG.info("Process has been finished with exit value - {}", exitValue);
+        if (exitValue != 0) {
+          LOG.error("Process has been finished with exit value - {}", exitValue);
+        } else {
+          LOG.info("Process has been finished with exit value - {}", exitValue);
+        }
 
       } catch (InterruptedException | IOException ex) {
         LOG.error(ex.getMessage(), ex);
@@ -171,7 +175,7 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
 
     // Default dynamic index name for all other datasets
     idxName = config.indexDefDynamicName;
-    LOG.info("ES Index name - {}", idxName);
+    LOG.info("ES Index name - {}, recordsNumber - {}, config.indexIndepRecord - {}", idxName, recordsNumber, config.indexIndepRecord);
     return idxName;
   }
 

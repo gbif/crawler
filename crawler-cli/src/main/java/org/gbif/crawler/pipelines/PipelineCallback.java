@@ -156,6 +156,7 @@ public class PipelineCallback {
       updateMonitoring(crawlId, Fn.ERROR_AVAILABILITY.apply(b.zkRootElementPath), Boolean.TRUE.toString());
       updateMonitoring(crawlId, Fn.ERROR_MESSAGE.apply(b.zkRootElementPath), error);
     }
+    LOG.info("-------------------\n");
   }
 
   /**
