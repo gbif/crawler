@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.gbif.crawler</groupId>
     <artifactId>crawler-motherpom</artifactId>
-    <version>0.54-SNAPSHOT</version>
+    <version>0.55-SNAPSHOT</version>
   </parent>
 
   <artifactId>crawler-coordinator</artifactId>
