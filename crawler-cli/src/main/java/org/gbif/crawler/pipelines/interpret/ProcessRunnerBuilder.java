@@ -102,6 +102,7 @@ final class ProcessRunnerBuilder {
 
     joiner.add("--conf spark.default.parallelism=" + sparkParallelism)
         .add("--conf spark.executor.memoryOverhead=" + config.sparkMemoryOverhead)
+        .add("--conf spark.yarn.maxAppAttempts=1")
         .add("--class " + Objects.requireNonNull(config.distributedMainClass))
         .add("--master yarn")
         .add("--deploy-mode " + Objects.requireNonNull(config.deployMode))
