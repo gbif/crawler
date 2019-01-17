@@ -43,25 +43,28 @@ public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMes
    */
   @Override
   public void handleMessage(PipelinesDwcaMessage message) {
-    if (OCCURRENCE == message.getDatasetType()) {
-      // Common variables
-      UUID datasetId = message.getDatasetUuid();
-      int attempt = message.getAttempt();
-      Set<String> steps = message.getPipelineSteps();
-      Runnable runnable = createRunnable(message);
 
-      // Message callback handler, updates zookeeper info, runs process logic and sends next MQ message
-      PipelineCallback.create()
-          .incomingMessage(message)
-          .outgoingMessage(new PipelinesVerbatimMessage(datasetId, attempt, config.interpretTypes, steps))
-          .curator(curator)
-          .zkRootElementPath(DWCA_TO_VERBATIM)
-          .pipelinesStepName(Steps.DWCA_TO_VERBATIM.name())
-          .publisher(publisher)
-          .runnable(runnable)
-          .build()
-          .handleMessage();
+    if (OCCURRENCE != message.getDatasetType()) {
+      return;
     }
+
+    // Common variables
+    UUID datasetId = message.getDatasetUuid();
+    int attempt = message.getAttempt();
+    Set<String> steps = message.getPipelineSteps();
+    Runnable runnable = createRunnable(message);
+
+    // Message callback handler, updates zookeeper info, runs process logic and sends next MQ message
+    PipelineCallback.create()
+        .incomingMessage(message)
+        .outgoingMessage(new PipelinesVerbatimMessage(datasetId, attempt, config.interpretTypes, steps))
+        .curator(curator)
+        .zkRootElementPath(DWCA_TO_VERBATIM)
+        .pipelinesStepName(Steps.DWCA_TO_VERBATIM.name())
+        .publisher(publisher)
+        .runnable(runnable)
+        .build()
+        .handleMessage();
   }
 
   /**

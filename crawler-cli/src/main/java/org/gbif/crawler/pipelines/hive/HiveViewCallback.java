@@ -59,7 +59,7 @@ public class HiveViewCallback extends AbstractMessageCallback<PipelinesInterpret
       String attempt = Integer.toString(message.getAttempt());
       Set<String> steps = message.getPipelineSteps();
 
-      LOG.info("HELLO {} {} {}!", datasetId, attempt, steps.toString());
+      LOG.info("HELLO {} {} {}!", datasetId, attempt, steps);
     };
   }
 }

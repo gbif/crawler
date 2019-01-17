@@ -99,9 +99,9 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
             .waitFor();
 
         if (exitValue != 0) {
-          LOG.error("Process has been finished with exit value - {}", exitValue);
+          LOG.error("Process has been finished with exit value - {}, dataset - {}_{}", exitValue, datasetId, attempt);
         } else {
-          LOG.info("Process has been finished with exit value - {}", exitValue);
+          LOG.info("Process has been finished with exit value - {}, dataset - {}_{}", exitValue, datasetId, attempt);
         }
 
       } catch (InterruptedException | IOException ex) {
