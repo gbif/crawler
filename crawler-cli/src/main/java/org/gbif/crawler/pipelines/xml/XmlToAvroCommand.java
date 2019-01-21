@@ -16,7 +16,7 @@ public class XmlToAvroCommand extends ServiceCommand {
   private final XmlToAvroConfiguration configuration = new XmlToAvroConfiguration();
 
   public XmlToAvroCommand() {
-    super("xml-to-avro");
+    super("pipelines-xml-to-avro");
   }
 
   @Override

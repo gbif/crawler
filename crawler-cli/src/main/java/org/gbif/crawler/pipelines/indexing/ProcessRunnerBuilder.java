@@ -10,6 +10,7 @@ import java.util.StringJoiner;
 import java.util.function.BiFunction;
 
 import org.gbif.common.messaging.api.messages.PipelinesInterpretedMessage;
+import org.gbif.crawler.pipelines.PipelineCallback.Runner;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,18 +20,12 @@ import org.slf4j.LoggerFactory;
  */
 final class ProcessRunnerBuilder {
 
-  public enum RunnerEnum {
-    STANDALONE,
-    DISTRIBUTED
-  }
-
   private static final Logger LOG = LoggerFactory.getLogger(ProcessRunnerBuilder.class);
 
   private static final String DELIMITER = " ";
 
   private IndexingConfiguration config;
   private PipelinesInterpretedMessage message;
-  private RunnerEnum runner;
   private String esAlias;
   private String esIndexName;
   private Integer esShardsNumber;
@@ -43,11 +38,6 @@ final class ProcessRunnerBuilder {
 
   ProcessRunnerBuilder message(PipelinesInterpretedMessage message) {
     this.message = Objects.requireNonNull(message);
-    return this;
-  }
-
-  ProcessRunnerBuilder runner(RunnerEnum runner) {
-    this.runner = Objects.requireNonNull(runner);
     return this;
   }
 
@@ -76,13 +66,13 @@ final class ProcessRunnerBuilder {
   }
 
   ProcessBuilder build() {
-    if (RunnerEnum.STANDALONE == runner) {
+    if (Runner.STANDALONE.name().equals(config.processRunner)) {
       return buildDirect();
     }
-    if (RunnerEnum.DISTRIBUTED == runner) {
+    if (Runner.DISTRIBUTED.name().equals(config.processRunner)) {
       return buildSpark();
     }
-    throw new IllegalArgumentException("Wrong runner type - " + runner);
+    throw new IllegalArgumentException("Wrong runner type - " + config.processRunner);
   }
 
   /**

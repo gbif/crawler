@@ -29,7 +29,7 @@ public class IndexingService extends AbstractIdleService {
 
   @Override
   protected void startUp() throws Exception {
-    LOG.info("Started index-dataset service with parameters : {}", config);
+    LOG.info("Started pipelines-index-dataset service with parameters : {}", config);
     // Prefetch is one, since this is a long-running process.
     listener = new MessageListener(config.messaging.getConnectionParameters(), 1);
     publisher = new DefaultMessagePublisher(config.messaging.getConnectionParameters());
@@ -44,6 +44,6 @@ public class IndexingService extends AbstractIdleService {
     listener.close();
     publisher.close();
     curator.close();
-    LOG.info("Stopping index-dataset service");
+    LOG.info("Stopping pipelines-index-dataset service");
   }
 }

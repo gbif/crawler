@@ -17,7 +17,7 @@ public class IndexingCommand extends ServiceCommand {
   private final IndexingConfiguration config = new IndexingConfiguration();
 
   public IndexingCommand() {
-    super("index-dataset");
+    super("pipelines-index-dataset");
   }
 
   @Override

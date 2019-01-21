@@ -87,21 +87,6 @@ public class IndexingConfiguration {
   @NotNull
   public String standaloneHeapSize;
 
-  @Parameter(names = "--switch-files-number")
-  @NotNull
-  @Min(1)
-  public int switchFilesNumber;
-
-  @Parameter(names = "--switch-file-size-mb")
-  @NotNull
-  @Min(1)
-  public int switchFileSizeMb;
-
-  @Parameter(names = "--switch-records-number")
-  @NotNull
-  @Min(1)
-  public int switchRecordsNumber;
-
   @Parameter(names = "--distributed-jar-path")
   @NotNull
   public String distributedJarPath;
@@ -185,6 +170,10 @@ public class IndexingConfiguration {
   @NotNull
   public Integer indexRecordsPerShard;
 
+  @Parameter(names = "--process-runner")
+  @NotNull
+  public String processRunner;
+
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
@@ -216,8 +205,8 @@ public class IndexingConfiguration {
         .add("indexDefDynamicName", indexDefDynamicName)
         .add("indexDefStaticDate", indexDefStaticDateDurationDd)
         .add("indexRecordsPerShard", indexRecordsPerShard)
-        .add("switchRecordsNumber", switchRecordsNumber)
         .add("metaFileName", metaFileName)
+        .add("processRunner", processRunner)
         .toString();
   }
 

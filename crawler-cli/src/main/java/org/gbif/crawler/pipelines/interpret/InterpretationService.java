@@ -28,7 +28,7 @@ public class InterpretationService extends AbstractIdleService {
 
   @Override
   protected void startUp() throws Exception {
-    LOG.info("Started interpret-dataset service with parameters : {}", config);
+    LOG.info("Started pipelines-interpret-dataset service with parameters : {}", config);
     // Prefetch is one, since this is a long-running process.
     listener = new MessageListener(config.messaging.getConnectionParameters(), 1);
     publisher = new DefaultMessagePublisher(config.messaging.getConnectionParameters());
@@ -42,7 +42,7 @@ public class InterpretationService extends AbstractIdleService {
     listener.close();
     publisher.close();
     curator.close();
-    LOG.info("Stopping interpret-dataset service");
+    LOG.info("Stopping pipelines-interpret-dataset service");
   }
 
 }

@@ -52,7 +52,7 @@ public class XmlToAvroCallback extends AbstractMessageCallback<PipelinesXmlMessa
     // Message callback handler, updates zookeeper info, runs process logic and sends next MQ message
     PipelineCallback.create()
         .incomingMessage(message)
-        .outgoingMessage(new PipelinesVerbatimMessage(datasetId, attempt, config.interpretTypes, steps))
+        .outgoingMessage(new PipelinesVerbatimMessage(datasetId, attempt, config.interpretTypes, steps, null))
         .curator(curator)
         .zkRootElementPath(XML_TO_VERBATIM)
         .pipelinesStepName(Steps.XML_TO_VERBATIM.name())

@@ -16,12 +16,15 @@ import org.gbif.crawler.pipelines.HdfsUtils;
 import org.gbif.crawler.pipelines.PipelineCallback;
 import org.gbif.crawler.pipelines.PipelineCallback.Steps;
 import org.gbif.crawler.pipelines.dwca.DwcaToAvroConfiguration;
-import org.gbif.crawler.pipelines.indexing.ProcessRunnerBuilder.RunnerEnum;
 import org.gbif.pipelines.common.PipelinesVariables.Metrics;
+import org.gbif.pipelines.common.PipelinesVariables.Pipeline.Interpretation;
+import org.gbif.pipelines.common.PipelinesVariables.Pipeline.Interpretation.RecordType;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Strings;
 
 import static org.gbif.crawler.constants.PipelinesNodePaths.INTERPRETED_TO_INDEX;
 
@@ -38,7 +41,8 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
   private final DatasetService datasetService;
   private final CuratorFramework curator;
 
-  IndexingCallback(IndexingConfiguration config, MessagePublisher publisher, DatasetService datasetService, CuratorFramework curator) {
+  IndexingCallback(IndexingConfiguration config, MessagePublisher publisher, DatasetService datasetService,
+      CuratorFramework curator) {
     this.curator = checkNotNull(curator, "curator cannot be null");
     this.config = checkNotNull(config, "config cannot be null");
     this.datasetService = checkNotNull(datasetService, "config cannot be null");
@@ -51,14 +55,15 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
   @Override
   public void handleMessage(PipelinesInterpretedMessage message) {
 
-    UUID datasetId = message.getDatasetUuid();
-    Set<String> steps = message.getPipelineSteps();
+    if (!isMessageCorrect(message)) {
+      return;
+    }
+
     Runnable runnable = createRunnable(message);
 
     // Message callback handler, updates zookeeper info, runs process logic and sends next MQ message
     PipelineCallback.create()
         .incomingMessage(message)
-        .outgoingMessage(new PipelinesIndexedMessage(datasetId, message.getAttempt(), steps))
         .curator(curator)
         .zkRootElementPath(INTERPRETED_TO_INDEX)
         .pipelinesStepName(Steps.INTERPRETED_TO_INDEX.name())
@@ -66,6 +71,14 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
         .runnable(runnable)
         .build()
         .handleMessage();
+  }
+
+  /** TODO:DOC */
+  private boolean isMessageCorrect(PipelinesInterpretedMessage message) {
+    if (Strings.isNullOrEmpty(message.getRunner())) {
+      throw new IllegalArgumentException("Runner can't be null or empty " + message.toString());
+    }
+    return config.processRunner.equals(message.getRunner());
   }
 
   /**
@@ -83,13 +96,11 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
         String indexAlias = indexName.startsWith(datasetId) ? datasetId + "," + config.indexAlias : "";
         int numberOfShards = (int) Math.ceil((double) recordsNumber / (double) config.indexRecordsPerShard);
         int sparkParallelism = computeSparkParallelism(datasetId, attempt);
-        RunnerEnum runner = computeRunnerEnum(datasetId, attempt, recordsNumber, sparkParallelism);
 
         // Assembles a terminal java process and runs it
         int exitValue = ProcessRunnerBuilder.create()
             .config(config)
             .message(message)
-            .runner(runner)
             .sparkParallelism(sparkParallelism)
             .esIndexName(indexName)
             .esAlias(indexAlias)
@@ -111,41 +122,15 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
     };
   }
 
-  private int computeSparkParallelism(String datasetId, String attempt) throws IOException {
-    // Chooses a runner type by calculating number of files
-    String basicPath = String.join("/", config.repositoryPath, datasetId, attempt, "interpreted", "basic");
-    return HdfsUtils.getfileCount(basicPath, config.hdfsSiteConfig);
-  }
-
   /**
    * TODO:!
    */
-  private RunnerEnum computeRunnerEnum(String datasetId, String attempt, long recordsNumber, int sparkParallelism)
-      throws IOException {
-
-    RunnerEnum runner;
-
-    // Strategy 1: Chooses a runner type by number of records in a dataset
-    if (recordsNumber > 0) {
-      runner = recordsNumber >= config.switchRecordsNumber ? RunnerEnum.DISTRIBUTED : RunnerEnum.STANDALONE;
-      LOG.info("Records number - {}, Spark Runner type - {}", recordsNumber, runner);
-      return runner;
-    }
-
-    // Strategy 2: Chooses a runner type by calculating verbatim.avro file size
-    String verbatimPath = String.join("/", config.repositoryPath, datasetId, attempt, "verbatim.avro");
-    long fileSizeByte = HdfsUtils.getfileSizeByte(verbatimPath, config.hdfsSiteConfig);
-    if (fileSizeByte > 0) {
-      long switchFileSizeByte = config.switchFileSizeMb * 1024L * 1024L;
-      runner = fileSizeByte > switchFileSizeByte ? RunnerEnum.DISTRIBUTED : RunnerEnum.STANDALONE;
-      LOG.info("File size - {}, Spark Runner type - {}", fileSizeByte, runner);
-      return runner;
-    }
-
-    // Strategy 3: Chooses a runner type by number of files
-    runner = sparkParallelism > config.switchFilesNumber ? RunnerEnum.DISTRIBUTED : RunnerEnum.STANDALONE;
-    LOG.info("Number of files - {}, Spark Runner type - {}", sparkParallelism, runner);
-    return runner;
+  private int computeSparkParallelism(String datasetId, String attempt) throws IOException {
+    // Chooses a runner type by calculating number of files
+    String basic = RecordType.BASIC.name().toLowerCase();
+    String directoryName = Interpretation.DIRECTORY_NAME;
+    String basicPath = String.join("/", config.repositoryPath, datasetId, attempt, directoryName, basic);
+    return HdfsUtils.getfileCount(basicPath, config.hdfsSiteConfig);
   }
 
   /**
@@ -158,7 +143,8 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
 
     if (recordsNumber >= config.indexIndepRecord) {
       idxName = datasetId + "_" + attempt;
-      LOG.info("ES Index name - {}, recordsNumber - {}, config.indexIndepRecord - {}", idxName, recordsNumber, config.indexIndepRecord);
+      LOG.info("ES Index name - {}, recordsNumber - {}, config.indexIndepRecord - {}", idxName, recordsNumber,
+          config.indexIndepRecord);
       return idxName;
     }
 

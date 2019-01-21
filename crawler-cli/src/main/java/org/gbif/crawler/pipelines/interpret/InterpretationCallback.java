@@ -12,12 +12,16 @@ import org.gbif.crawler.pipelines.HdfsUtils;
 import org.gbif.crawler.pipelines.PipelineCallback;
 import org.gbif.crawler.pipelines.PipelineCallback.Steps;
 import org.gbif.crawler.pipelines.dwca.DwcaToAvroConfiguration;
-import org.gbif.crawler.pipelines.interpret.ProcessRunnerBuilder.RunnerEnum;
 import org.gbif.pipelines.common.PipelinesVariables.Metrics;
+import org.gbif.pipelines.common.PipelinesVariables.Pipeline;
+import org.gbif.pipelines.common.PipelinesVariables.Pipeline.Conversion;
+import org.gbif.pipelines.common.PipelinesVariables.Pipeline.Interpretation;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Strings;
 
 import static org.gbif.crawler.constants.PipelinesNodePaths.VERBATIM_TO_INTERPRETED;
 import static org.gbif.crawler.pipelines.PipelineCallback.Steps.ALL;
@@ -46,6 +50,10 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
   @Override
   public void handleMessage(PipelinesVerbatimMessage message) {
 
+    if (!isMessageCorrect(message)) {
+      return;
+    }
+
     // Common variables
     UUID datasetId = message.getDatasetUuid();
     Set<String> steps = message.getPipelineSteps();
@@ -54,7 +62,7 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
     // Message callback handler, updates zookeeper info, runs process logic and sends next MQ message
     PipelineCallback.create()
         .incomingMessage(message)
-        .outgoingMessage(new PipelinesInterpretedMessage(datasetId, message.getAttempt(), steps))
+        .outgoingMessage(new PipelinesInterpretedMessage(datasetId, message.getAttempt(), steps, null))
         .curator(curator)
         .zkRootElementPath(VERBATIM_TO_INTERPRETED)
         .pipelinesStepName(Steps.VERBATIM_TO_INTERPRETED.name())
@@ -63,6 +71,14 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
         .build()
         .handleMessage();
 
+  }
+
+  /** TODO:DOC */
+  private boolean isMessageCorrect(PipelinesVerbatimMessage message) {
+    if (Strings.isNullOrEmpty(message.getRunner())) {
+      throw new IllegalArgumentException("Runner can't be null or empty " + message.toString());
+    }
+    return config.processRunner.equals(message.getRunner());
   }
 
   /**
@@ -78,16 +94,14 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
 
         long recordsNumber = getRecordNumber(message);
 
-        String path = String.join("/", config.repositoryPath, datasetId, attempt, "verbatim.avro");
+        String verbatim = Conversion.FILE_NAME + Pipeline.AVRO_EXTENSION;
+        String path = String.join("/", config.repositoryPath, datasetId, attempt, verbatim);
         int sparkParallelism = computeSparkParallelism(path, recordsNumber);
-        RunnerEnum runner = computeRunnerEnum(datasetId, attempt, recordsNumber);
 
-        LOG.info("Start the process. DatasetId - {}, InterpretTypes - {}, Runner type - {}", datasetId,
-            message.getInterpretTypes(), runner);
+        LOG.info("Start the process. Message - {}", message);
 
         // Assembles a terminal java process and runs it
         int exitValue = ProcessRunnerBuilder.create()
-            .runner(runner)
             .config(config)
             .message(message)
             .inputPath(path)
@@ -125,34 +139,6 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
     return numberOfThreads > 1 ? numberOfThreads : 1;
   }
 
-
-  /**
-   * TODO:!
-   */
-  private RunnerEnum computeRunnerEnum(String datasetId, String attempt, long recordsNumber) throws IOException {
-
-    RunnerEnum runner;
-
-    // Strategy 1: Chooses a runner type by number of records in a dataset
-    if (recordsNumber > 0) {
-      runner = recordsNumber >= config.switchRecordsNumber ? RunnerEnum.DISTRIBUTED : RunnerEnum.STANDALONE;
-      LOG.info("Records number - {}, Spark Runner type - {}", recordsNumber, runner);
-      return runner;
-    }
-
-    // Strategy 2: Chooses a runner type by calculating verbatim.avro file size
-    String verbatimPath = String.join("/", config.repositoryPath, datasetId, attempt, "verbatim.avro");
-    long fileSizeByte = HdfsUtils.getfileSizeByte(verbatimPath, config.hdfsSiteConfig);
-    if (fileSizeByte > 0) {
-      long switchFileSizeByte = config.switchFileSizeMb * 1024L * 1024L;
-      runner = fileSizeByte > switchFileSizeByte ? RunnerEnum.DISTRIBUTED : RunnerEnum.STANDALONE;
-      LOG.info("File size - {}, Spark Runner type - {}", fileSizeByte, runner);
-      return runner;
-    }
-
-    throw new IllegalStateException("Failed interpretation on " + datasetId);
-  }
-
   /**
    * Deletes directories if a dataset with the same attempt was interpreted before
    */
@@ -163,7 +149,7 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
 
     if (steps != null && !steps.isEmpty()) {
 
-      String path = String.join("/", config.repositoryPath, datasetId, attempt, "interpreted");
+      String path = String.join("/", config.repositoryPath, datasetId, attempt, Interpretation.DIRECTORY_NAME);
 
       if (steps.contains(ALL.name())) {
         HdfsUtils.deleteIfExist(config.hdfsSiteConfig, path);

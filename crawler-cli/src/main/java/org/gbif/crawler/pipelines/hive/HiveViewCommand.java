@@ -17,7 +17,7 @@ public class HiveViewCommand extends ServiceCommand {
   private final HiveViewConfiguration config = new HiveViewConfiguration();
 
   public HiveViewCommand() {
-    super("hive-view");
+    super("pipelines-hive-view");
   }
 
   @Override

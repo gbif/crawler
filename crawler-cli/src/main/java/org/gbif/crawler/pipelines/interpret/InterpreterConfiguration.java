@@ -3,6 +3,7 @@ package org.gbif.crawler.pipelines.interpret;
 import org.gbif.common.messaging.config.MessagingConfiguration;
 import org.gbif.crawler.common.AvroWriteConfiguration;
 import org.gbif.crawler.common.ZooKeeperConfiguration;
+import org.gbif.crawler.pipelines.PipelineCallback.Runner;
 import org.gbif.pipelines.common.PipelinesVariables.Pipeline;
 
 import com.beust.jcommander.Parameter;
@@ -95,16 +96,6 @@ public class InterpreterConfiguration {
   @NotNull
   public String standaloneHeapSize;
 
-  @Parameter(names = "--switch-file-size-mb")
-  @NotNull
-  @Min(1)
-  public int switchFileSizeMb;
-
-  @Parameter(names = "--switch-records-number")
-  @NotNull
-  @Min(1)
-  public int switchRecordsNumber;
-
   @Parameter(names = "--distributed-jar-path")
   @NotNull
   public String distributedJarPath;
@@ -145,6 +136,10 @@ public class InterpreterConfiguration {
   @Parameter(names = "--thread-per-mb")
   public double threadPerMb = 20d; // 1 thread per each 20mb of a file
 
+  @Parameter(names = "--process-runner")
+  @NotNull
+  public String processRunner;
+
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
@@ -172,9 +167,9 @@ public class InterpreterConfiguration {
         .add("metricsPropertiesPath", metricsPropertiesPath)
         .add("extraClassPath", extraClassPath)
         .add("driverJavaOptions", driverJavaOptions)
-        .add("switchRecordsNumber", switchRecordsNumber)
         .add("sparkRecordsPerThread", sparkRecordsPerThread)
         .add("metaFileName", metaFileName)
+        .add("processRunner", processRunner)
         .toString();
   }
 }

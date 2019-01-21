@@ -44,7 +44,7 @@ public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMes
   @Override
   public void handleMessage(PipelinesDwcaMessage message) {
 
-    if (OCCURRENCE != message.getDatasetType()) {
+    if (!isMessageCorrect(message)) {
       return;
     }
 
@@ -57,7 +57,7 @@ public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMes
     // Message callback handler, updates zookeeper info, runs process logic and sends next MQ message
     PipelineCallback.create()
         .incomingMessage(message)
-        .outgoingMessage(new PipelinesVerbatimMessage(datasetId, attempt, config.interpretTypes, steps))
+        .outgoingMessage(new PipelinesVerbatimMessage(datasetId, attempt, config.interpretTypes, steps, null))
         .curator(curator)
         .zkRootElementPath(DWCA_TO_VERBATIM)
         .pipelinesStepName(Steps.DWCA_TO_VERBATIM.name())
@@ -66,6 +66,12 @@ public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMes
         .build()
         .handleMessage();
   }
+
+  /** TODO:DOC */
+  private boolean isMessageCorrect(PipelinesDwcaMessage message) {
+    return OCCURRENCE == message.getDatasetType();
+  }
+
 
   /**
    * Main message processing logic, converts a DwCA archive to an avro file.

@@ -30,6 +30,7 @@ public class XmlToAvroService extends AbstractIdleService {
 
   @Override
   protected void startUp() throws Exception {
+    LOG.info("Started pipelines-xml-to-avro service with parameters : {}", config);
     // create the listener.
     listener = new MessageListener(config.messaging.getConnectionParameters(), 1);
     // creates a binding between the queue specified in the configuration and the exchange and routing key specified in
@@ -45,7 +46,7 @@ public class XmlToAvroService extends AbstractIdleService {
     publisher.close();
     listener.close();
     curator.close();
-    LOG.info("Stopping xml-to-avro service");
+    LOG.info("Stopping pipelines-xml-to-avro service");
   }
 
 }

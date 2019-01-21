@@ -8,6 +8,7 @@ import java.util.Set;
 import org.gbif.common.messaging.api.Message;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.PipelineBasedMessage;
+import org.gbif.common.messaging.api.messages.PipelinesBalancerMessage;
 import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
 
 import org.apache.curator.framework.CuratorFramework;
@@ -15,6 +16,7 @@ import org.apache.curator.framework.recipes.locks.InterProcessMutex;
 import org.apache.zookeeper.CreateMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import com.google.common.base.Charsets;
 
@@ -31,7 +33,17 @@ import static org.gbif.crawler.pipelines.PipelineCallback.Steps.ALL;
 public class PipelineCallback {
 
   public enum Steps {
-    ALL, DWCA_TO_VERBATIM, XML_TO_VERBATIM, VERBATIM_TO_INTERPRETED, INTERPRETED_TO_INDEX, HIVE_VIEW
+    ALL,
+    DWCA_TO_VERBATIM,
+    XML_TO_VERBATIM,
+    VERBATIM_TO_INTERPRETED,
+    INTERPRETED_TO_INDEX,
+    HIVE_VIEW
+  }
+
+  public enum Runner {
+    STANDALONE,
+    DISTRIBUTED
   }
 
   private static final Logger LOG = LoggerFactory.getLogger(PipelineCallback.class);
@@ -123,8 +135,10 @@ public class PipelineCallback {
     }
 
     // Start main process
-    LOG.info("Message has been received {}", inMessage);
     String crawlId = inMessage.getDatasetUuid().toString() + "_" + inMessage.getAttempt();
+    MDC.put("crawlId", crawlId);
+
+    LOG.info("Message has been received {}", inMessage);
     try {
 
       updateMonitoringDate(crawlId, Fn.START_DATE.apply(b.zkRootElementPath));
@@ -139,7 +153,7 @@ public class PipelineCallback {
       if (b.outgoingMessage != null) {
         updateMonitoring(crawlId, Fn.SUCCESSFUL_AVAILABILITY.apply(b.zkRootElementPath), Boolean.TRUE.toString());
 
-        b.publisher.send(b.outgoingMessage);
+        b.publisher.send(new PipelinesBalancerMessage(b.outgoingMessage.getClass().getSimpleName(), b.outgoingMessage.toString()));
 
         String info = "Next message has been sent - " + b.outgoingMessage;
         LOG.info(info);
@@ -210,8 +224,8 @@ public class PipelineCallback {
    * Creates or updates a String value for a Zookeeper monitoring node
    *
    * @param crawlId root node path
-   * @param path    child node path
-   * @param value   some String value
+   * @param path child node path
+   * @param value some String value
    */
   private void updateMonitoring(String crawlId, String path, String value) {
     try {
@@ -231,7 +245,7 @@ public class PipelineCallback {
    * Creates or updates current LocalDateTime value for a Zookeeper monitoring node
    *
    * @param crawlId root node path
-   * @param path    child node path
+   * @param path child node path
    */
   private void updateMonitoringDate(String crawlId, String path) {
     String value = LocalDateTime.now(ZoneOffset.UTC).format(ISO_LOCAL_DATE_TIME);

@@ -1,5 +1,6 @@
 package org.gbif.crawler.dwca.fragmenter;
 
+import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage;
 import org.gbif.crawler.dwca.util.DwcaTestUtil;
 import org.gbif.dwc.Archive;
 import org.gbif.dwc.record.StarRecord;
@@ -8,6 +9,8 @@ import java.io.IOException;
 import java.util.Arrays;
 
 import org.junit.Test;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import static org.junit.Assert.assertTrue;
 
