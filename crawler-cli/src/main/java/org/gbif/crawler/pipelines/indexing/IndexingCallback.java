@@ -59,11 +59,14 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
       return;
     }
 
+    UUID datasetId = message.getDatasetUuid();
+    Set<String> steps = message.getPipelineSteps();
     Runnable runnable = createRunnable(message);
 
     // Message callback handler, updates zookeeper info, runs process logic and sends next MQ message
     PipelineCallback.create()
         .incomingMessage(message)
+        .outgoingMessage(new PipelinesIndexedMessage(datasetId, message.getAttempt(), steps, null))
         .curator(curator)
         .zkRootElementPath(INTERPRETED_TO_INDEX)
         .pipelinesStepName(Steps.INTERPRETED_TO_INDEX.name())

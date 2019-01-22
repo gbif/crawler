@@ -5,9 +5,11 @@ import java.io.IOException;
 import org.gbif.common.messaging.AbstractMessageCallback;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.PipelinesBalancerMessage;
+import org.gbif.common.messaging.api.messages.PipelinesIndexedMessage;
 import org.gbif.common.messaging.api.messages.PipelinesInterpretedMessage;
 import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage;
 import org.gbif.crawler.pipelines.runner.handler.InterpretedMessageHandler;
+import org.gbif.crawler.pipelines.runner.handler.PipelinesIndexedMessageHandler;
 import org.gbif.crawler.pipelines.runner.handler.VerbatimMessageHandler;
 
 import org.slf4j.Logger;
@@ -38,6 +40,8 @@ public class BalancerCallback extends AbstractMessageCallback<PipelinesBalancerM
         VerbatimMessageHandler.handle(config, publisher, message);
       } else if (PipelinesInterpretedMessage.class.getSimpleName().equals(className)) {
         InterpretedMessageHandler.handle(config, publisher, message);
+      } else if (PipelinesIndexedMessage.class.getSimpleName().equals(className)) {
+        PipelinesIndexedMessageHandler.handle(config, publisher, message);
       } else {
         LOG.error("Handler for {} wasn't found!", className);
       }
