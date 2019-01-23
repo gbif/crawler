@@ -3,7 +3,6 @@ package org.gbif.crawler.pipelines.interpret;
 import org.gbif.common.messaging.config.MessagingConfiguration;
 import org.gbif.crawler.common.AvroWriteConfiguration;
 import org.gbif.crawler.common.ZooKeeperConfiguration;
-import org.gbif.crawler.pipelines.PipelineCallback.Runner;
 import org.gbif.pipelines.common.PipelinesVariables.Pipeline;
 
 import com.beust.jcommander.Parameter;
@@ -63,6 +62,9 @@ public class InterpreterConfiguration {
 
   @Parameter(names = "--spark-parallelism")
   public int sparkParallelism;
+
+  @Parameter(names = "--spark-parallelism-max")
+  public int sparkParallelismMax;
 
   @Parameter(names = "--spark-records-per-thread")
   public int sparkRecordsPerThread;
@@ -170,6 +172,7 @@ public class InterpreterConfiguration {
         .add("sparkRecordsPerThread", sparkRecordsPerThread)
         .add("metaFileName", metaFileName)
         .add("processRunner", processRunner)
+        .add("sparkParallelismMax", sparkParallelismMax)
         .toString();
   }
 }

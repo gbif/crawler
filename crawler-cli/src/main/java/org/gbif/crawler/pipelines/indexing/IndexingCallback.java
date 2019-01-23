@@ -131,14 +131,15 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
   }
 
   /**
-   * Computes the number of thread for spark.default.parallelism
+   * Computes the number of thread for spark.default.parallelism, top limit is config.sparkParallelismMax
    */
   private int computeSparkParallelism(String datasetId, String attempt) throws IOException {
     // Chooses a runner type by calculating number of files
     String basic = RecordType.BASIC.name().toLowerCase();
     String directoryName = Interpretation.DIRECTORY_NAME;
     String basicPath = String.join("/", config.repositoryPath, datasetId, attempt, directoryName, basic);
-    return HdfsUtils.getfileCount(basicPath, config.hdfsSiteConfig);
+    int count = HdfsUtils.getfileCount(basicPath, config.hdfsSiteConfig);
+    return count > config.sparkParallelismMax ? config.sparkParallelismMax : count;
   }
 
   /**

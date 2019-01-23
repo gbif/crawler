@@ -129,13 +129,15 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
   }
 
   /**
-   * Compute the number of thread for spark.default.parallelism, remember YARN will create the same number of files
+   * Compute the number of thread for spark.default.parallelism, top limit is config.sparkParallelismMax
+   * Remember YARN will create the same number of files
    */
   private int computeSparkParallelism(String verbatimPath, long recordsNumber) throws IOException {
 
     // Strategy 1: Chooses a runner type by number of records in a dataset
     if (recordsNumber > 0) {
-      return (int) Math.ceil((double) recordsNumber / (double) config.sparkRecordsPerThread);
+      int count = (int) Math.ceil((double) recordsNumber / (double) config.sparkRecordsPerThread);
+      return count > config.sparkParallelismMax ? config.sparkParallelismMax : count;
     }
 
     // Strategy 2: Chooses a runner type by calculating verbatim.avro file size

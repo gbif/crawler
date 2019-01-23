@@ -58,6 +58,9 @@ public class IndexingConfiguration {
   @Parameter(names = "--spark-parallelism")
   public int sparkParallelism;
 
+  @Parameter(names = "--spark-parallelism-max")
+  public int sparkParallelismMax;
+
   @Parameter(names = "--spark-memory-overhead")
   @NotNull
   @Min(1)
@@ -207,6 +210,7 @@ public class IndexingConfiguration {
         .add("indexRecordsPerShard", indexRecordsPerShard)
         .add("metaFileName", metaFileName)
         .add("processRunner", processRunner)
+        .add("sparkParallelismMax", sparkParallelismMax)
         .toString();
   }
 
