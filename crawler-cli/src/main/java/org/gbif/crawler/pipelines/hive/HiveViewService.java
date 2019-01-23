@@ -11,8 +11,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.util.concurrent.AbstractIdleService;
 
 /**
- * A service which listens to the {@link
- * org.gbif.common.messaging.api.messages.PipelinesInterpretedMessage } and perform conversion
+ * A service which listens to the {@link org.gbif.common.messaging.api.messages.PipelinesInterpretedMessage }
  */
 public class HiveViewService extends AbstractIdleService {
 

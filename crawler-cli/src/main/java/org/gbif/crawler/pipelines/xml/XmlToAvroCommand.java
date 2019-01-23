@@ -8,7 +8,7 @@ import org.kohsuke.MetaInfServices;
 import com.google.common.util.concurrent.Service;
 
 /**
- * CLI {@link Command} to convert XML files to Avro.
+ * CLI {@link Command} to convert XML files (ABCD archives) to Avro.
  */
 @MetaInfServices(Command.class)
 public class XmlToAvroCommand extends ServiceCommand {

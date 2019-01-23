@@ -25,6 +25,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Callback which is called when the {@link PipelinesDwcaMessage} is received.
+ * <p>
+ * The main method is {@link DwcaToAvroCallback#handleMessage}
  */
 public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMessage> {
 
@@ -67,7 +69,9 @@ public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMes
         .handleMessage();
   }
 
-  /** TODO:DOC */
+  /**
+   * Only correct messages can be handled, by now is only OCCURRENCE type messages
+   */
   private boolean isMessageCorrect(PipelinesDwcaMessage message) {
     return OCCURRENCE == message.getDatasetType();
   }
@@ -82,15 +86,18 @@ public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMes
       UUID datasetId = message.getDatasetUuid();
       String attempt = String.valueOf(message.getAttempt());
 
-      //calculates and checks existence of DwC Archive
+      // Calculates and checks existence of DwC Archive
       Path inputPath = buildInputPath(config.archiveRepository, datasetId);
-      //calculates export path of avro as extended record
+
+      // Calculates export path of avro as extended record
       org.apache.hadoop.fs.Path outputPath =
           buildOutputPath(config.repositoryPath, datasetId.toString(), attempt, config.fileName);
 
+      // Calculates metadata path, the yaml file with total number of converted records
       org.apache.hadoop.fs.Path metaPath =
           buildOutputPath(config.repositoryPath, datasetId.toString(), attempt, config.metaFileName);
 
+      // Run main conversion process
       DwcaToAvroConverter.create()
           .codecFactory(config.avroConfig.getCodec())
           .syncInterval(config.avroConfig.syncInterval)

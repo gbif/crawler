@@ -24,6 +24,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Call back which is called when the {@link PipelinesXmlMessage} is received.
+ * <p>
+ * The main method is {@link XmlToAvroCallback#handleMessage}
  */
 public class XmlToAvroCallback extends AbstractMessageCallback<PipelinesXmlMessage> {
 
@@ -70,15 +72,18 @@ public class XmlToAvroCallback extends AbstractMessageCallback<PipelinesXmlMessa
       UUID datasetId = message.getDatasetUuid();
       String attempt = String.valueOf(message.getAttempt());
 
-      //calculates and checks existence of DwC Archive
+      // Calculates and checks existence of DwC Archive
       Path inputPath = buildInputPath(config.archiveRepository, datasetId, attempt);
-      //calculates export path of avro as extended record
+
+      // Calculates export path of avro as extended record
       org.apache.hadoop.fs.Path outputPath =
           buildOutputPath(config.repositoryPath, datasetId.toString(), attempt, config.fileName);
 
+      // Calculates metadata path, the yaml file with total number of converted records
       org.apache.hadoop.fs.Path metaPath =
           buildOutputPath(config.repositoryPath, datasetId.toString(), attempt, config.metaFileName);
 
+      // Run main conversion process
       XmlToAvroConverter.create()
           .xmlReaderParallelism(config.xmlReaderParallelism)
           .codecFactory(config.avroConfig.getCodec())

@@ -18,6 +18,9 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Strings;
 
+/**
+ * Utils help to work with HDFS files
+ */
 public class HdfsUtils {
 
   private static final Logger LOG = LoggerFactory.getLogger(HdfsUtils.class);
@@ -64,8 +67,8 @@ public class HdfsUtils {
   /**
    * Removes a directory with content if the folder exists
    *
-   * @param directoryPath path to some directory
    * @param hdfsSiteConfig path to hdfs-site.xml config file
+   * @param directoryPath path to some directory
    */
   public static boolean deleteIfExist(String hdfsSiteConfig, String directoryPath) throws IOException {
     URI fileUri = URI.create(directoryPath);
@@ -76,7 +79,11 @@ public class HdfsUtils {
   }
 
   /**
-   * TODO:!
+   * Reads a yaml file and returns value by key
+   *
+   * @param hdfsSiteConfig path to hdfs-site.xml config file
+   * @param path to a yaml file
+   * @param key to value in yaml
    */
   public static String getValueByKey(String hdfsSiteConfig, String path, String key) throws IOException {
     FileSystem fs = getFileSystem(URI.create(path), hdfsSiteConfig);

@@ -1,14 +1,14 @@
-package org.gbif.crawler.pipelines.runner.handler;
+package org.gbif.crawler.pipelines.balancer.handler;
 
 import java.io.IOException;
 
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.PipelinesBalancerMessage;
-import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage;
+import org.gbif.common.messaging.api.messages.PipelinesInterpretedMessage;
 import org.gbif.crawler.pipelines.HdfsUtils;
 import org.gbif.crawler.pipelines.PipelineCallback.Runner;
+import org.gbif.crawler.pipelines.balancer.BalancerConfiguration;
 import org.gbif.crawler.pipelines.dwca.DwcaToAvroConfiguration;
-import org.gbif.crawler.pipelines.runner.BalancerConfiguration;
 import org.gbif.pipelines.common.PipelinesVariables.Metrics;
 import org.gbif.pipelines.common.PipelinesVariables.Pipeline;
 import org.gbif.pipelines.common.PipelinesVariables.Pipeline.Conversion;
@@ -18,28 +18,45 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-public class VerbatimMessageHandler {
+/**
+ * Populates and sends the {@link PipelinesInterpretedMessage} message, the main method
+ * is {@link InterpretedMessageHandler#handle}
+ */
+public class InterpretedMessageHandler {
 
-  private static final Logger LOG = LoggerFactory.getLogger(VerbatimMessageHandler.class);
+  private static final Logger LOG = LoggerFactory.getLogger(InterpretedMessageHandler.class);
 
-  private VerbatimMessageHandler() {
-  }
-
-  public static void handle(BalancerConfiguration config, MessagePublisher publisher, PipelinesBalancerMessage message)
-      throws IOException {
-
-    LOG.info("Process PipelinesVerbatimMessage - {}", message);
-
-    ObjectMapper mapper = new ObjectMapper();
-    PipelinesVerbatimMessage m = mapper.readValue(message.getPayload(), PipelinesVerbatimMessage.class);
-    String runner = computeRunner(config, m).name();
-    publisher.send(new PipelinesVerbatimMessage(m.getDatasetUuid(), m.getAttempt(), m.getInterpretTypes(), m.getPipelineSteps(), runner));
+  private InterpretedMessageHandler() {
+    // NOP
   }
 
   /**
-   * TODO:!
+   * Main handler, basically computes the runner type and sends to the same consumer
    */
-  private static Runner computeRunner(BalancerConfiguration config, PipelinesVerbatimMessage message)
+  public static void handle(BalancerConfiguration config, MessagePublisher publisher, PipelinesBalancerMessage message)
+      throws IOException {
+
+    LOG.info("Process PipelinesInterpretedMessage - {}", message);
+
+    // Populate message fields
+    ObjectMapper mapper = new ObjectMapper();
+    PipelinesInterpretedMessage m = mapper.readValue(message.getPayload(), PipelinesInterpretedMessage.class);
+    String runner = computeRunner(config, m).name();
+
+    PipelinesInterpretedMessage outputMessage =
+        new PipelinesInterpretedMessage(m.getDatasetUuid(), m.getAttempt(), m.getPipelineSteps(), runner);
+
+    publisher.send(outputMessage);
+
+    LOG.info("The message has been sent - {}", outputMessage);
+  }
+
+  /**
+   * Copmutes runner type:
+   * Strategy 1 - Chooses a runner type by number of records in a dataset
+   * Strategy 2 - Chooses a runner type by calculating verbatim.avro file size
+   */
+  private static Runner computeRunner(BalancerConfiguration config, PipelinesInterpretedMessage message)
       throws IOException {
 
     String datasetId = message.getDatasetUuid().toString();
@@ -69,7 +86,11 @@ public class VerbatimMessageHandler {
     throw new IllegalStateException("Runner computation is failed " + datasetId);
   }
 
-  private static long getRecordNumber(BalancerConfiguration config, PipelinesVerbatimMessage message)
+  /**
+   * Reads number of records from a dwca-to-avro metadata file, verbatim-to-interpreted contains attempted records
+   * count, which is not accurate enough
+   */
+  private static long getRecordNumber(BalancerConfiguration config, PipelinesInterpretedMessage message)
       throws IOException {
     String datasetId = message.getDatasetUuid().toString();
     String attempt = Integer.toString(message.getAttempt());
@@ -79,6 +100,5 @@ public class VerbatimMessageHandler {
     String recordsNumber = HdfsUtils.getValueByKey(config.hdfsSiteConfig, metaPath, Metrics.DWCA_TO_AVRO_COUNT);
     return Long.parseLong(recordsNumber);
   }
-
 
 }

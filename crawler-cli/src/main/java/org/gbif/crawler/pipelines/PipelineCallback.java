@@ -1,8 +1,5 @@
 package org.gbif.crawler.pipelines;
 
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.util.Optional;
 import java.util.Set;
 
 import org.gbif.common.messaging.api.Message;
@@ -12,26 +9,19 @@ import org.gbif.common.messaging.api.messages.PipelinesBalancerMessage;
 import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
 
 import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.recipes.locks.InterProcessMutex;
-import org.apache.zookeeper.CreateMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
-import com.google.common.base.Charsets;
-
-import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
-
-import static org.gbif.crawler.constants.PipelinesNodePaths.SIZE;
-import static org.gbif.crawler.constants.PipelinesNodePaths.getPipelinesInfoPath;
 import static org.gbif.crawler.pipelines.PipelineCallback.Steps.ALL;
 
 /**
  * Common class for building and handling a pipeline step. Contains {@link Builder} to simplify the creation process
- * and main handling process. Please see {@link PipelineCallback#handleMessage()}
+ * and main handling process. Please see the main method {@link PipelineCallback#handleMessage}
  */
 public class PipelineCallback {
 
+  // General steps, each step is a microservice
   public enum Steps {
     ALL,
     DWCA_TO_VERBATIM,
@@ -41,6 +31,7 @@ public class PipelineCallback {
     HIVE_VIEW
   }
 
+  // General runners, STANDALONE - run an app using local resources, DISTRIBUTED - run an app using YARN cluster
   public enum Runner {
     STANDALONE,
     DISTRIBUTED
@@ -72,36 +63,57 @@ public class PipelineCallback {
     private String zkRootElementPath;
     private Runnable runnable;
 
+    /**
+     * @param publisher MQ message publisher
+     */
     public Builder publisher(MessagePublisher publisher) {
       this.publisher = publisher;
       return this;
     }
 
+    /**
+     * @param curator Zookeeper client
+     */
     public Builder curator(CuratorFramework curator) {
       this.curator = curator;
       return this;
     }
 
+    /**
+     * @param incomingMessage incoming MQ message to handle
+     */
     public Builder incomingMessage(PipelineBasedMessage incomingMessage) {
       this.incomingMessage = incomingMessage;
       return this;
     }
 
+    /**
+     * @param outgoingMessage outgoing MQ message for the next pipeline step
+     */
     public Builder outgoingMessage(Message outgoingMessage) {
       this.outgoingMessage = outgoingMessage;
       return this;
     }
 
+    /**
+     * @param pipelinesStepName the next pipeline step name - {@link Steps}
+     */
     public Builder pipelinesStepName(String pipelinesStepName) {
       this.pipelinesStepName = pipelinesStepName;
       return this;
     }
 
+    /**
+     * @param zkRootElementPath path to store metrics information in zookeeper
+     */
     public Builder zkRootElementPath(String zkRootElementPath) {
       this.zkRootElementPath = zkRootElementPath;
       return this;
     }
 
+    /**
+     * @param runnable the main process to run
+     */
     public Builder runnable(Runnable runnable) {
       this.runnable = runnable;
       return this;
@@ -113,13 +125,13 @@ public class PipelineCallback {
   }
 
   /**
-   * The main handling process:
+   * The main process handling:
    * <p>
    * 1) Receives a MQ message
    * 2) Updates Zookeeper start date monitoring metrics
    * 3) Runs runnable function, which is the main message processing logic
    * 4) Updates Zookeeper end date monitoring metrics
-   * 5) Sends a message to the next MQ listener
+   * 5) Sends a wrapped message to Balancer microservice
    * 6) Updates Zookeeper successful or error monitoring metrics
    * 7) Cleans Zookeeper monitoring metrics if the received message is the last
    */
@@ -141,114 +153,45 @@ public class PipelineCallback {
     LOG.info("Message has been received {}", inMessage);
     try {
 
-      updateMonitoringDate(crawlId, Fn.START_DATE.apply(b.zkRootElementPath));
+      String startDatePath = Fn.START_DATE.apply(b.zkRootElementPath);
+      ZookeeperUtils.updateMonitoringDate(b.curator, crawlId, startDatePath);
 
       LOG.info("Handler has been started, crawlId - {}", crawlId);
       b.runnable.run();
       LOG.info("Handler has been finished, crawlId - {}", crawlId);
 
-      updateMonitoringDate(crawlId, Fn.END_DATE.apply(b.zkRootElementPath));
+      String endDatePath = Fn.END_DATE.apply(b.zkRootElementPath);
+      ZookeeperUtils.updateMonitoringDate(b.curator, crawlId, endDatePath);
 
-      // Send outgoingMessage to MQ
+      // Send a wrapped outgoing message to Balancer queue
       if (b.outgoingMessage != null) {
-        updateMonitoring(crawlId, Fn.SUCCESSFUL_AVAILABILITY.apply(b.zkRootElementPath), Boolean.TRUE.toString());
+        String successfulPath = Fn.SUCCESSFUL_AVAILABILITY.apply(b.zkRootElementPath);
+        ZookeeperUtils.updateMonitoring(b.curator, crawlId, successfulPath, Boolean.TRUE.toString());
 
-        b.publisher.send(new PipelinesBalancerMessage(b.outgoingMessage.getClass().getSimpleName(), b.outgoingMessage.toString()));
+        String nextMessageClassName = b.outgoingMessage.getClass().getSimpleName();
+        String messgePayload = b.outgoingMessage.toString();
+        b.publisher.send(new PipelinesBalancerMessage(nextMessageClassName, messgePayload));
 
         String info = "Next message has been sent - " + b.outgoingMessage;
         LOG.info(info);
-        updateMonitoring(crawlId, Fn.SUCCESSFUL_MESSAGE.apply(b.zkRootElementPath), info);
+
+        String successfulMessagePath = Fn.SUCCESSFUL_MESSAGE.apply(b.zkRootElementPath);
+        ZookeeperUtils.updateMonitoring(b.curator, crawlId, successfulMessagePath, info);
       }
 
+      // Change zookeeper counter for passed steps
       int size = steps.contains(ALL.name()) ? Steps.values().length - 2 : steps.size();
-      checkMonitoringById(size, crawlId);
+      ZookeeperUtils.checkMonitoringById(b.curator, size, crawlId);
 
     } catch (Exception ex) {
       String error = "Error for crawlId - " + crawlId + " : " + ex.getMessage();
       LOG.error(error);
 
-      updateMonitoring(crawlId, Fn.ERROR_AVAILABILITY.apply(b.zkRootElementPath), Boolean.TRUE.toString());
-      updateMonitoring(crawlId, Fn.ERROR_MESSAGE.apply(b.zkRootElementPath), error);
+      String errorPath = Fn.ERROR_AVAILABILITY.apply(b.zkRootElementPath);
+      ZookeeperUtils.updateMonitoring(b.curator, crawlId, errorPath, Boolean.TRUE.toString());
+
+      String errorMessagePath = Fn.ERROR_MESSAGE.apply(b.zkRootElementPath);
+      ZookeeperUtils.updateMonitoring(b.curator, crawlId, errorMessagePath, error);
     }
-  }
-
-  /**
-   * Check exists a Zookeeper monitoring root node by crawlId
-   *
-   * @param crawlId root node path
-   */
-  private boolean checkExists(String crawlId) throws Exception {
-    return b.curator.checkExists().forPath(crawlId) != null;
-  }
-
-  /**
-   * Removes a Zookeeper monitoring root node by crawlId
-   *
-   * @param crawlId root node path
-   */
-  private void checkMonitoringById(int size, String crawlId) {
-    try {
-      String path = getPipelinesInfoPath(crawlId);
-      if (checkExists(path)) {
-        InterProcessMutex mutex = new InterProcessMutex(b.curator, path);
-        mutex.acquire();
-        int counter = getAsInteger(crawlId, SIZE).orElse(0) + 1;
-        if (counter >= size) {
-          LOG.info("Delete zookeeper node, crawlId - {}", crawlId);
-          b.curator.delete().deletingChildrenIfNeeded().forPath(path);
-        } else {
-          updateMonitoring(crawlId, SIZE, Integer.toString(counter));
-        }
-        mutex.release();
-      }
-    } catch (Exception ex) {
-      LOG.error("Exception while updating ZooKeeper", ex);
-    }
-  }
-
-  /**
-   * Read value from Zookeeper as a {@link String}
-   */
-  private Optional<Integer> getAsInteger(String crawlId, String path) throws Exception {
-    String infoPath = getPipelinesInfoPath(crawlId, path);
-    if (checkExists(infoPath)) {
-      byte[] responseData = b.curator.getData().forPath(infoPath);
-      if (responseData != null && responseData.length > 0) {
-        return Optional.of(Integer.valueOf(new String(responseData, Charsets.UTF_8)));
-      }
-    }
-    return Optional.empty();
-  }
-
-  /**
-   * Creates or updates a String value for a Zookeeper monitoring node
-   *
-   * @param crawlId root node path
-   * @param path child node path
-   * @param value some String value
-   */
-  private void updateMonitoring(String crawlId, String path, String value) {
-    try {
-      String fullPath = getPipelinesInfoPath(crawlId, path);
-      byte[] bytes = value.getBytes(Charsets.UTF_8);
-      if (checkExists(fullPath)) {
-        b.curator.setData().forPath(fullPath, bytes);
-      } else {
-        b.curator.create().creatingParentsIfNeeded().withMode(CreateMode.EPHEMERAL).forPath(fullPath, bytes);
-      }
-    } catch (Exception ex) {
-      LOG.error("Exception while updating ZooKeeper", ex);
-    }
-  }
-
-  /**
-   * Creates or updates current LocalDateTime value for a Zookeeper monitoring node
-   *
-   * @param crawlId root node path
-   * @param path child node path
-   */
-  private void updateMonitoringDate(String crawlId, String path) {
-    String value = LocalDateTime.now(ZoneOffset.UTC).format(ISO_LOCAL_DATE_TIME);
-    updateMonitoring(crawlId, path, value);
   }
 }

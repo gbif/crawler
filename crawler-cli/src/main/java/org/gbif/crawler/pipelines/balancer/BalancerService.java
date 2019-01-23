@@ -1,4 +1,4 @@
-package org.gbif.crawler.pipelines.runner;
+package org.gbif.crawler.pipelines.balancer;
 
 import org.gbif.common.messaging.DefaultMessagePublisher;
 import org.gbif.common.messaging.MessageListener;
@@ -10,8 +10,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.util.concurrent.AbstractIdleService;
 
 /**
- * A service which listens to the {@link
- * org.gbif.common.messaging.api.messages.PipelinesBalancerMessage } and perform conversion
+ * A service which listens to the {@link org.gbif.common.messaging.api.messages.PipelinesBalancerMessage }
  */
 public class BalancerService extends AbstractIdleService {
 

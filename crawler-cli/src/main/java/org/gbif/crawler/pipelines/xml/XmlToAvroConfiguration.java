@@ -7,6 +7,7 @@ import org.gbif.common.messaging.config.MessagingConfiguration;
 import org.gbif.crawler.common.AvroWriteConfiguration;
 import org.gbif.crawler.common.ZooKeeperConfiguration;
 import org.gbif.pipelines.common.PipelinesVariables.Pipeline;
+import org.gbif.pipelines.common.PipelinesVariables.Pipeline.Conversion;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParametersDelegate;
@@ -18,7 +19,7 @@ import javax.validation.constraints.NotNull;
 import static org.gbif.crawler.pipelines.PipelineCallback.Steps.ALL;
 
 /**
- * Configuration required to convert downloaded DwCArchive/ABCD and etc to avro (ExtendedRecord)
+ * Configuration required to convert downloaded ABCD and etc to avro (ExtendedRecord)
  */
 public class XmlToAvroConfiguration {
 
@@ -70,7 +71,7 @@ public class XmlToAvroConfiguration {
 
   @Parameter(names = "--file-name")
   @NotNull
-  public String fileName = "verbatim.avro";
+  public String fileName = Conversion.FILE_NAME + Pipeline.AVRO_EXTENSION;
 
   @Override
   public String toString() {

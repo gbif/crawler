@@ -17,7 +17,11 @@ import static org.gbif.crawler.constants.PipelinesNodePaths.HIVE_VIEW;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-/** Callback which is called when the {@link PipelinesInterpretedMessage} is received. */
+/**
+ * Callback which is called when the {@link PipelinesInterpretedMessage} is received.
+ * <p>
+ * The main method is {@link HiveViewCallback#handleMessage}
+ */
 public class HiveViewCallback extends AbstractMessageCallback<PipelinesInterpretedMessage> {
 
   private static final Logger LOG = LoggerFactory.getLogger(HiveViewCallback.class);

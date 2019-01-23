@@ -7,6 +7,7 @@ import org.gbif.common.messaging.config.MessagingConfiguration;
 import org.gbif.crawler.common.AvroWriteConfiguration;
 import org.gbif.crawler.common.ZooKeeperConfiguration;
 import org.gbif.pipelines.common.PipelinesVariables.Pipeline;
+import org.gbif.pipelines.common.PipelinesVariables.Pipeline.Conversion;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParametersDelegate;
@@ -18,7 +19,7 @@ import javax.validation.constraints.NotNull;
 import static org.gbif.crawler.pipelines.PipelineCallback.Steps.ALL;
 
 /**
- * Configuration required to convert downloaded DwCArchive/ABCD and etc to avro (ExtendedRecord)
+ * Configuration required to convert downloaded DwCArchive and etc to avro (ExtendedRecord)
  */
 public class DwcaToAvroConfiguration {
 
@@ -66,27 +67,27 @@ public class DwcaToAvroConfiguration {
 
   @Parameter(names = "--file-name")
   @NotNull
-  public String fileName = "verbatim.avro";
+  public String fileName = Conversion.FILE_NAME + Pipeline.AVRO_EXTENSION;
 
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
-      .add("queueName", queueName)
-      .add("virtualHost", messaging.virtualHost)
-      .add("userName", messaging.username)
-      .add("password", messaging.password)
-      .add("port", messaging.port)
-      .add("connectionHost", messaging.host)
-      .add("poolSize", poolSize)
-      .add("archiveRepository", archiveRepository)
-      .add("repositoryPath", repositoryPath)
-      .add("fileName", fileName)
-      .add("syncInterval", avroConfig.syncInterval)
-      .add("compressionCodec", avroConfig.compressionType)
-      .add("codecFactory", avroConfig.getCodec())
-      .add("hdfsSiteConfig", hdfsSiteConfig)
-      .add("interpretTypes", interpretTypes.toString())
-      .add("metaFileName", metaFileName)
-      .toString();
+        .add("queueName", queueName)
+        .add("virtualHost", messaging.virtualHost)
+        .add("userName", messaging.username)
+        .add("password", messaging.password)
+        .add("port", messaging.port)
+        .add("connectionHost", messaging.host)
+        .add("poolSize", poolSize)
+        .add("archiveRepository", archiveRepository)
+        .add("repositoryPath", repositoryPath)
+        .add("fileName", fileName)
+        .add("syncInterval", avroConfig.syncInterval)
+        .add("compressionCodec", avroConfig.compressionType)
+        .add("codecFactory", avroConfig.getCodec())
+        .add("hdfsSiteConfig", hdfsSiteConfig)
+        .add("interpretTypes", interpretTypes.toString())
+        .add("metaFileName", metaFileName)
+        .toString();
   }
 }

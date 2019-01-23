@@ -8,8 +8,8 @@ import org.kohsuke.MetaInfServices;
 import com.google.common.util.concurrent.Service;
 
 /**
- * Entry class for cli command, to start service to index interpreted dataset
- * This command starts a service which listens to the {@link org.gbif.common.messaging.api.messages.PipelinesInterpretedMessage } and perform conversion
+ * Entry class for cli command, to start service to process Hive View
+ * This command starts a service which listens to the {@link org.gbif.common.messaging.api.messages.PipelinesInterpretedMessage }
  */
 @MetaInfServices(Command.class)
 public class HiveViewCommand extends ServiceCommand {

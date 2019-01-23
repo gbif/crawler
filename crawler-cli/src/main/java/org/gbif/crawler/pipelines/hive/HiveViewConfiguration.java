@@ -11,7 +11,7 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
 /**
- * Configuration required to start Indexing Pipeline on provided dataset
+ * Configuration required to start Hive View processing
  */
 public class HiveViewConfiguration {
 

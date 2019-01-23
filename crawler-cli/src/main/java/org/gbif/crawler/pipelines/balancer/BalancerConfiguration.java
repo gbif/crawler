@@ -1,4 +1,4 @@
-package org.gbif.crawler.pipelines.runner;
+package org.gbif.crawler.pipelines.balancer;
 
 import org.gbif.common.messaging.config.MessagingConfiguration;
 
@@ -10,7 +10,7 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
 /**
- * Configuration required to start Indexing Pipeline on provided dataset
+ * Configuration required to start Balancer service
  */
 public class BalancerConfiguration {
 

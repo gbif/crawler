@@ -32,6 +32,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Callback which is called when the {@link PipelinesInterpretedMessage} is received.
+ * <p>
+ * The main method is {@link IndexingCallback#handleMessage}
  */
 public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpretedMessage> {
 
@@ -76,7 +78,10 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
         .handleMessage();
   }
 
-  /** TODO:DOC */
+  /**
+   * Only correct messages can be handled, by now is only messages with the same runner as runner in service config
+   * {@link IndexingConfiguration#processRunner}
+   */
   private boolean isMessageCorrect(PipelinesInterpretedMessage message) {
     if (Strings.isNullOrEmpty(message.getRunner())) {
       throw new IllegalArgumentException("Runner can't be null or empty " + message.toString());
@@ -126,7 +131,7 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
   }
 
   /**
-   * TODO:!
+   * Computes the number of thread for spark.default.parallelism
    */
   private int computeSparkParallelism(String datasetId, String attempt) throws IOException {
     // Chooses a runner type by calculating number of files
@@ -137,7 +142,10 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
   }
 
   /**
-   * TODO:!
+   * Computes the name for ES index:
+   * Case 1 - Independent index for datasets where number of records more than config.indexIndepRecord
+   * Case 2 - Default static index name for datasets where last changed date more than config.indexDefStaticDateDurationDd
+   * Case 3 - Default dynamic index name for all other datasets
    */
   private String computeIndexName(String datasetId, String attempt, long recordsNumber) {
 
@@ -152,7 +160,7 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
     }
 
     // Default static index name for datasets where last changed date more than config.indexDefStaticDateDurationDd
-    Date lastChangedDate = getLastChangetDate(datasetId);
+    Date lastChangedDate = getLastChangedDate(datasetId);
 
     long diffInMillies = Math.abs(new Date().getTime() - lastChangedDate.getTime());
     long diff = TimeUnit.DAYS.convert(diffInMillies, TimeUnit.MILLISECONDS);
@@ -169,15 +177,16 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
   }
 
   /**
-   * TODO:!
+   * Uses Registry to ask the last changed date for a dataset
    */
-  private Date getLastChangetDate(String datasetId) {
+  private Date getLastChangedDate(String datasetId) {
     Dataset dataset = datasetService.get(UUID.fromString(datasetId));
     return dataset.getModified();
   }
 
   /**
-   * TODO:!
+   * Reads number of records from a dwca-to-avro metadata file, verbatim-to-interpreted contains attempted records
+   * count, which is not accurate enough
    */
   private long getRecordNumber(PipelinesInterpretedMessage message) throws IOException {
     String datasetId = message.getDatasetUuid().toString();

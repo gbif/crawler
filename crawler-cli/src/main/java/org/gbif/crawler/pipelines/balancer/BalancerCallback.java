@@ -1,4 +1,4 @@
-package org.gbif.crawler.pipelines.runner;
+package org.gbif.crawler.pipelines.balancer;
 
 import java.io.IOException;
 
@@ -8,19 +8,26 @@ import org.gbif.common.messaging.api.messages.PipelinesBalancerMessage;
 import org.gbif.common.messaging.api.messages.PipelinesIndexedMessage;
 import org.gbif.common.messaging.api.messages.PipelinesInterpretedMessage;
 import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage;
-import org.gbif.crawler.pipelines.runner.handler.InterpretedMessageHandler;
-import org.gbif.crawler.pipelines.runner.handler.PipelinesIndexedMessageHandler;
-import org.gbif.crawler.pipelines.runner.handler.VerbatimMessageHandler;
+import org.gbif.crawler.pipelines.balancer.handler.InterpretedMessageHandler;
+import org.gbif.crawler.pipelines.balancer.handler.PipelinesIndexedMessageHandler;
+import org.gbif.crawler.pipelines.balancer.handler.VerbatimMessageHandler;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-/** Callback which is called when the {@link PipelinesBalancerMessage} is received. */
+/**
+ * Callback which is called when the {@link PipelinesBalancerMessage} is received.
+ * <p>
+ * The general point is to populate a message with necessary fields and resend the message to the right service.
+ * <p>
+ * The main method is {@link BalancerCallback#handleMessage}
+ */
 public class BalancerCallback extends AbstractMessageCallback<PipelinesBalancerMessage> {
 
   private static final Logger LOG = LoggerFactory.getLogger(BalancerCallback.class);
+
   private final BalancerConfiguration config;
   private final MessagePublisher publisher;
 
@@ -35,6 +42,8 @@ public class BalancerCallback extends AbstractMessageCallback<PipelinesBalancerM
     LOG.info("The message has been revievd - {}", message);
 
     String className = message.getMessageClass();
+
+    // Select handler by message class name
     try {
       if (PipelinesVerbatimMessage.class.getSimpleName().equals(className)) {
         VerbatimMessageHandler.handle(config, publisher, message);

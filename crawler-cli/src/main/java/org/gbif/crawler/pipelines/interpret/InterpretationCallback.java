@@ -30,6 +30,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Callback which is called when the {@link PipelinesVerbatimMessage} is received.
+ * <p>
+ * The main method is {@link InterpretationCallback#handleMessage}
  */
 public class InterpretationCallback extends AbstractMessageCallback<PipelinesVerbatimMessage> {
 
@@ -73,7 +75,10 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
 
   }
 
-  /** TODO:DOC */
+  /**
+   * Only correct messages can be handled, by now is only messages with the same runner as runner in service config
+   * {@link InterpreterConfiguration#processRunner}
+   */
   private boolean isMessageCorrect(PipelinesVerbatimMessage message) {
     if (Strings.isNullOrEmpty(message.getRunner())) {
       throw new IllegalArgumentException("Runner can't be null or empty " + message.toString());
@@ -124,7 +129,7 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
   }
 
   /**
-   * TODO:!
+   * Compute the number of thread for spark.default.parallelism, remember YARN will create the same number of files
    */
   private int computeSparkParallelism(String verbatimPath, long recordsNumber) throws IOException {
 
@@ -161,6 +166,9 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
     }
   }
 
+  /**
+   * Reads number of records from a dwca-to-avro metadata file
+   */
   private long getRecordNumber(PipelinesVerbatimMessage message) throws IOException {
     String datasetId = message.getDatasetUuid().toString();
     String attempt = Integer.toString(message.getAttempt());
