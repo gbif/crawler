@@ -123,6 +123,10 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
           LOG.info("Process has been finished with exit value - {}, dataset - {}_{}", exitValue, datasetId, attempt);
         }
 
+        LOG.info("Deleting beam temporal folders");
+        String tempPath = String.join("/", config.repositoryPath, datasetId, attempt);
+        HdfsUtils.deleteDirectoryByPrefix(config.hdfsSiteConfig, tempPath, ".temp-beam");
+
       } catch (InterruptedException | IOException ex) {
         LOG.error(ex.getMessage(), ex);
         throw new IllegalStateException("Failed indexing on " + message.getDatasetUuid(), ex);
