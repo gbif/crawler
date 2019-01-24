@@ -90,6 +90,11 @@ final class ProcessRunnerBuilder {
     Optional.ofNullable(config.extraClassPath).ifPresent(x -> joiner.add("--conf \"spark.driver.extraClassPath=" + x + "\""));
     Optional.ofNullable(config.driverJavaOptions).ifPresent(x -> joiner.add("--driver-java-options \"" + x + "\""));
 
+
+    if (sparkParallelism < 1) {
+      throw new IllegalArgumentException("sparkParallelism can't be 0");
+    }
+
     joiner.add("--conf spark.default.parallelism=" + sparkParallelism)
         .add("--conf spark.executor.memoryOverhead=" + config.sparkMemoryOverhead)
         .add("--conf spark.yarn.maxAppAttempts=1")

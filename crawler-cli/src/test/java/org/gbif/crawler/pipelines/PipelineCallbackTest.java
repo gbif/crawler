@@ -1,4 +1,4 @@
-package org.gbif.crawler.pipelines.service;
+package org.gbif.crawler.pipelines;
 
 import org.gbif.common.messaging.api.Message;
 import org.gbif.common.messaging.api.MessagePublisher;

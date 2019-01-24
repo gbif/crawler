@@ -99,9 +99,12 @@ final class ProcessRunnerBuilder {
     StringJoiner joiner = new StringJoiner(DELIMITER).add("spark2-submit");
 
     Optional.ofNullable(config.metricsPropertiesPath).ifPresent(x -> joiner.add("--conf spark.metrics.conf=" + x));
-    Optional.ofNullable(config.extraClassPath)
-        .ifPresent(x -> joiner.add("--conf \"spark.driver.extraClassPath=" + x + "\""));
+    Optional.ofNullable(config.extraClassPath).ifPresent(x -> joiner.add("--conf \"spark.driver.extraClassPath=" + x + "\""));
     Optional.ofNullable(config.driverJavaOptions).ifPresent(x -> joiner.add("--driver-java-options \"" + x + "\""));
+
+    if (sparkParallelism < 1) {
+      throw new IllegalArgumentException("sparkParallelism can't be 0");
+    }
 
     joiner.add("--conf spark.default.parallelism=" + sparkParallelism)
         .add("--conf spark.executor.memoryOverhead=" + config.sparkMemoryOverhead)
