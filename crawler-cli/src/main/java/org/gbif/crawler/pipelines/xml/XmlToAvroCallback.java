@@ -92,6 +92,7 @@ public class XmlToAvroCallback extends AbstractMessageCallback<PipelinesXmlMessa
           .inputPath(inputPath)
           .outputPath(outputPath)
           .metaPath(metaPath)
+          .idHashPrefix(datasetId.toString())
           .convert();
     };
   }

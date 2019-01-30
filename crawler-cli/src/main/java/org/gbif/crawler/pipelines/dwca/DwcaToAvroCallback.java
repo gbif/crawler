@@ -105,6 +105,7 @@ public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMes
           .inputPath(inputPath)
           .outputPath(outputPath)
           .metaPath(metaPath)
+          .idHashPrefix(datasetId.toString())
           .convert();
     };
   }
