@@ -53,6 +53,10 @@ public class XmlToAvroConfiguration {
   @NotNull
   public String archiveRepository;
 
+  @Parameter(names = "--archive-repository-subdir")
+  @NotNull
+  public Set<String> archiveRepositorySubdir;
+
   @Parameter(names = "--repository-path")
   @NotNull
   public String repositoryPath;

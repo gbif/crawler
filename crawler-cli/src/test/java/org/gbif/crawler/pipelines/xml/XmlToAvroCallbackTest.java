@@ -30,7 +30,7 @@ public class XmlToAvroCallbackTest {
   private static final String AVRO = "/verbatim.avro";
   private static final String STRING_UUID = "7ef15372-1387-11e2-bb2e-00145eb45e9a";
   private static final UUID DATASET_UUID = UUID.fromString(STRING_UUID);
-  private static final String INPUT_DATASET_FOLDER = "dataset/xml";
+  private static final String INPUT_DATASET_FOLDER = "dataset";
 
   private static final Configuration CONFIG = new Configuration();
   private static String hdfsUri;
@@ -75,6 +75,7 @@ public class XmlToAvroCallbackTest {
     config.archiveRepository = INPUT_DATASET_FOLDER;
     config.repositoryPath = hdfsUri;
     config.xmlReaderParallelism = 4;
+    config.archiveRepositorySubdir = Collections.singleton("xml");
     XmlToAvroCallback callback = new XmlToAvroCallback(config, null, curator);
     PipelinesXmlMessage message =
         new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL, Collections.singleton(ALL.name()));
@@ -96,6 +97,7 @@ public class XmlToAvroCallbackTest {
     config.archiveRepository = INPUT_DATASET_FOLDER;
     config.repositoryPath = hdfsUri;
     config.xmlReaderParallelism = 4;
+    config.archiveRepositorySubdir = Collections.singleton("xml");
     XmlToAvroCallback callback = new XmlToAvroCallback(config, null, curator);
     PipelinesXmlMessage message =
         new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL, Collections.singleton(ALL.name()));
@@ -117,6 +119,7 @@ public class XmlToAvroCallbackTest {
     config.archiveRepository = INPUT_DATASET_FOLDER;
     config.repositoryPath = hdfsUri;
     config.xmlReaderParallelism = 4;
+    config.archiveRepositorySubdir = Collections.singleton("xml");
     XmlToAvroCallback callback = new XmlToAvroCallback(config, null, curator);
     PipelinesXmlMessage message =
         new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL, Collections.singleton(ALL.name()));

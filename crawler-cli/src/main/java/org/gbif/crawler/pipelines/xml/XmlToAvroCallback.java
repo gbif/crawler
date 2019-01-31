@@ -1,5 +1,6 @@
 package org.gbif.crawler.pipelines.xml;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Set;
@@ -14,8 +15,6 @@ import org.gbif.crawler.pipelines.PipelineCallback;
 import org.gbif.crawler.pipelines.PipelineCallback.Steps;
 
 import org.apache.curator.framework.CuratorFramework;
-
-import com.google.common.base.Preconditions;
 
 import static org.gbif.crawler.constants.PipelinesNodePaths.XML_TO_VERBATIM;
 import static org.gbif.crawler.pipelines.HdfsUtils.buildOutputPath;
@@ -73,7 +72,7 @@ public class XmlToAvroCallback extends AbstractMessageCallback<PipelinesXmlMessa
       String attempt = String.valueOf(message.getAttempt());
 
       // Calculates and checks existence of DwC Archive
-      Path inputPath = buildInputPath(config.archiveRepository, datasetId, attempt);
+      Path inputPath = buildInputPath(datasetId, attempt);
 
       // Calculates export path of avro as extended record
       org.apache.hadoop.fs.Path outputPath =
@@ -101,15 +100,27 @@ public class XmlToAvroCallback extends AbstractMessageCallback<PipelinesXmlMessa
    * Input path result example, directory - /mnt/auto/crawler/xml/9bed66b3-4caa-42bb-9c93-71d7ba109dad/2,
    * if directory is absent, tries check a tar archive  - /mnt/auto/crawler/xml/9bed66b3-4caa-42bb-9c93-71d7ba109dad/2.tar.xz
    */
-  private Path buildInputPath(String archiveRepository, UUID dataSetUuid, String attempt) {
-    Path directoryPath = Paths.get(archiveRepository, dataSetUuid.toString(), String.valueOf(attempt));
-    if (!directoryPath.toFile().exists()) {
-      String filePath = directoryPath.toString() + ".tar.xz";
-      Path archivePath = Paths.get(filePath);
-      Preconditions.checkState(archivePath.toFile().exists(), "Directory - %s or archive %s does not exist!",
-          directoryPath, archivePath);
-      return archivePath;
+  private Path buildInputPath(UUID dataSetUuid, String attempt) {
+
+    Path directoryPath = config.archiveRepositorySubdir.stream()
+        .map(subdir -> Paths.get(config.archiveRepository, subdir, dataSetUuid.toString()).toFile())
+        .filter(File::exists)
+        .findFirst()
+        .orElseThrow(() -> new IllegalArgumentException("Can't find directory for dataset - " + dataSetUuid))
+        .toPath();
+
+    // Check dir, as an example - /mnt/auto/crawler/xml/9bed66b3-4caa-42bb-9c93-71d7ba109dad/2
+    Path sibling = directoryPath.resolve(String.valueOf(attempt));
+    if (sibling.toFile().exists()) {
+      return sibling;
     }
+    // Check dir, as an example - /mnt/auto/crawler/xml/9bed66b3-4caa-42bb-9c93-71d7ba109dad/2.tar.xz
+    sibling = directoryPath.resolve(attempt + ".tar.xz");
+    if (sibling.toFile().exists()) {
+      return sibling;
+    }
+    // Return general
     return directoryPath;
+
   }
 }

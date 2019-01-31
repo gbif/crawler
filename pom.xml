@@ -56,8 +56,8 @@
     <gbif-registry.version>2.91</gbif-registry.version>
     <gbif-registry.version>2.94</gbif-registry.version>
     <gbif-wrangler.version>0.2</gbif-wrangler.version>
-    <gbif-archives-converters.version>2.0.16</gbif-archives-converters.version>
-    <gbif-pipelines-common.version>2.0.16</gbif-pipelines-common.version>
+    <gbif-archives-converters.version>2.0.17</gbif-archives-converters.version>
+    <gbif-pipelines-common.version>2.0.17</gbif-pipelines-common.version>
 
     <guava.version>18.0</guava.version>
     <guice.version>4.0</guice.version>

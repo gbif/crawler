@@ -98,6 +98,9 @@ public class VerbatimMessageHandler {
     String metaPath = String.join("/", config.repositoryPath, datasetId, attempt, metaFileName);
 
     String recordsNumber = HdfsUtils.getValueByKey(config.hdfsSiteConfig, metaPath, Metrics.DWCA_TO_AVRO_COUNT);
+    if (recordsNumber == null || recordsNumber.isEmpty()) {
+      throw new IllegalArgumentException("Please check dwca-to-avro metadata yaml file, recordsNumber can't be null or empty!");
+    }
     return Long.parseLong(recordsNumber);
   }
 
