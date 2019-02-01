@@ -1,10 +1,13 @@
 package org.gbif.crawler.pipelines.xml;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import org.gbif.common.messaging.AbstractMessageCallback;
 import org.gbif.common.messaging.api.MessagePublisher;
@@ -15,6 +18,8 @@ import org.gbif.crawler.pipelines.PipelineCallback;
 import org.gbif.crawler.pipelines.PipelineCallback.Steps;
 
 import org.apache.curator.framework.CuratorFramework;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.gbif.crawler.constants.PipelinesNodePaths.XML_TO_VERBATIM;
 import static org.gbif.crawler.pipelines.HdfsUtils.buildOutputPath;
@@ -27,6 +32,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * The main method is {@link XmlToAvroCallback#handleMessage}
  */
 public class XmlToAvroCallback extends AbstractMessageCallback<PipelinesXmlMessage> {
+
+  private static final Logger LOG = LoggerFactory.getLogger(XmlToAvroCallback.class);
+
+  private static final String TAR_EXT = ".tar.xz";
 
   private final XmlToAvroConfiguration config;
   private final MessagePublisher publisher;
@@ -114,11 +123,39 @@ public class XmlToAvroCallback extends AbstractMessageCallback<PipelinesXmlMessa
     if (sibling.toFile().exists()) {
       return sibling;
     }
+
     // Check dir, as an example - /mnt/auto/crawler/xml/9bed66b3-4caa-42bb-9c93-71d7ba109dad/2.tar.xz
-    sibling = directoryPath.resolve(attempt + ".tar.xz");
+    sibling = directoryPath.resolve(attempt + TAR_EXT);
     if (sibling.toFile().exists()) {
       return sibling;
     }
+
+    // TODO: Do we need this? Try to find last attempt
+    try (Stream<Path> walk = Files.list(directoryPath)) {
+      String parsedAttempt = walk.map(Path::toFile)
+          .map(File::getName)
+          .map(name -> name.replace(TAR_EXT, ""))
+          .filter(f -> f.matches("[0-9]+"))
+          .map(Integer::valueOf)
+          .max(Integer::compareTo)
+          .map(String::valueOf)
+          .orElse("0");
+
+      // Check dir, as an example - /mnt/auto/crawler/xml/9bed66b3-4caa-42bb-9c93-71d7ba109dad/2
+      sibling = directoryPath.resolve(parsedAttempt);
+      if (sibling.toFile().exists()) {
+        return sibling;
+      }
+
+      // Check dir, as an example - /mnt/auto/crawler/xml/9bed66b3-4caa-42bb-9c93-71d7ba109dad/2.tar.xz
+      sibling = directoryPath.resolve(parsedAttempt + TAR_EXT);
+      if (sibling.toFile().exists()) {
+        return sibling;
+      }
+    } catch (IOException ex) {
+      LOG.error(ex.getMessage(), ex);
+    }
+
     // Return general
     return directoryPath;
 
