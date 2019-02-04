@@ -121,10 +121,6 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
           LOG.info("Process has been finished with exit value - {}", exitValue);
         }
 
-        LOG.info("Deleting beam temporal folders");
-        String tempPath = String.join("/", config.repositoryPath, datasetId, attempt);
-        HdfsUtils.deleteDirectoryByPrefix(config.hdfsSiteConfig, tempPath, ".temp-beam");
-
       } catch (InterruptedException | IOException ex) {
         LOG.error(ex.getMessage(), ex);
         throw new IllegalStateException("Failed interpretation on " + message.getDatasetUuid().toString(), ex);

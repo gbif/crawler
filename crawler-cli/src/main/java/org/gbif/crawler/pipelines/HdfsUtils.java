@@ -6,12 +6,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.util.Arrays;
-import java.util.List;
 import java.util.StringJoiner;
-import java.util.stream.Collectors;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.LocatedFileStatus;
 import org.apache.hadoop.fs.Path;
@@ -102,39 +99,6 @@ public class HdfsUtils {
       }
     }
     return "";
-  }
-
-  /**
-   * Deletes all directories and subdirectories(recursively) by file prefix name.
-   * <p>
-   * Example: all directories with '.temp-' prefix in direcory '89aad0bb-654f-483c-8711-2c00551033ae/3'
-   *
-   * @param hdfsSiteConfig path to hdfs-site.xml config file
-   * @param directoryPath to a directory
-   * @param filePrefix file name prefix
-   */
-  public static void deleteDirectoryByPrefix(String hdfsSiteConfig, String directoryPath, String filePrefix)
-      throws IOException {
-    URI fileUri = URI.create(directoryPath);
-    FileSystem fs = getFileSystem(fileUri, hdfsSiteConfig);
-    deleteDirectoryByPrefix(fs, new Path(directoryPath), filePrefix);
-  }
-
-  private static void deleteDirectoryByPrefix(FileSystem fs, Path directoryPath, String filePrefix) throws IOException {
-    FileStatus[] status = fs.listStatus(directoryPath);
-    List<Path> list = Arrays.stream(status)
-        .filter(FileStatus::isDirectory)
-        .map(FileStatus::getPath)
-        .collect(Collectors.toList());
-
-    for (Path dir : list) {
-      if (dir.getName().startsWith(filePrefix)) {
-        fs.delete(dir, true);
-      } else {
-        deleteDirectoryByPrefix(fs, dir, filePrefix);
-      }
-    }
-
   }
 
   /**
