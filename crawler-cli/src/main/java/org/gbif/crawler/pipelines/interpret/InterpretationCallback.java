@@ -15,7 +15,6 @@ import org.gbif.crawler.pipelines.dwca.DwcaToAvroConfiguration;
 import org.gbif.pipelines.common.PipelinesVariables.Metrics;
 import org.gbif.pipelines.common.PipelinesVariables.Pipeline;
 import org.gbif.pipelines.common.PipelinesVariables.Pipeline.Conversion;
-import org.gbif.pipelines.common.PipelinesVariables.Pipeline.Interpretation;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
@@ -24,7 +23,6 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.Strings;
 
 import static org.gbif.crawler.constants.PipelinesNodePaths.VERBATIM_TO_INTERPRETED;
-import static org.gbif.crawler.pipelines.PipelineCallback.Steps.ALL;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -95,8 +93,6 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
         String datasetId = message.getDatasetUuid().toString();
         String attempt = Integer.toString(message.getAttempt());
 
-        deleteInterpretationsIfExist(message);
-
         long recordsNumber = getRecordNumber(message);
 
         String verbatim = Conversion.FILE_NAME + Pipeline.AVRO_EXTENSION;
@@ -144,28 +140,6 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
     long fileSizeByte = HdfsUtils.getfileSizeByte(verbatimPath, config.hdfsSiteConfig);
     int numberOfThreads = (int) Math.ceil(fileSizeByte / (config.threadPerMb * 1024d * 1024d));
     return numberOfThreads > 1 ? numberOfThreads : 1;
-  }
-
-  /**
-   * Deletes directories if a dataset with the same attempt was interpreted before
-   */
-  private void deleteInterpretationsIfExist(PipelinesVerbatimMessage message) throws IOException {
-    String datasetId = message.getDatasetUuid().toString();
-    String attempt = Integer.toString(message.getAttempt());
-    Set<String> steps = message.getInterpretTypes();
-
-    if (steps != null && !steps.isEmpty()) {
-
-      String path = String.join("/", config.repositoryPath, datasetId, attempt, Interpretation.DIRECTORY_NAME);
-
-      if (steps.contains(ALL.name())) {
-        HdfsUtils.deleteIfExist(config.hdfsSiteConfig, path);
-      } else {
-        for (String step : steps) {
-          HdfsUtils.deleteIfExist(config.hdfsSiteConfig, String.join("/", path, step.toLowerCase()));
-        }
-      }
-    }
   }
 
   /**

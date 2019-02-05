@@ -65,20 +65,6 @@ public class HdfsUtils {
   }
 
   /**
-   * Removes a directory with content if the folder exists
-   *
-   * @param hdfsSiteConfig path to hdfs-site.xml config file
-   * @param directoryPath path to some directory
-   */
-  public static boolean deleteIfExist(String hdfsSiteConfig, String directoryPath) throws IOException {
-    URI fileUri = URI.create(directoryPath);
-    FileSystem fs = getFileSystem(fileUri, hdfsSiteConfig);
-
-    Path path = new Path(directoryPath);
-    return fs.exists(path) && fs.delete(path, true);
-  }
-
-  /**
    * Reads a yaml file and returns value by key
    *
    * @param hdfsSiteConfig path to hdfs-site.xml config file
