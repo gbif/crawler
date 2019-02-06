@@ -139,6 +139,7 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
     String directoryName = Interpretation.DIRECTORY_NAME;
     String basicPath = String.join("/", config.repositoryPath, datasetId, attempt, directoryName, basic);
     int count = HdfsUtils.getfileCount(basicPath, config.hdfsSiteConfig);
+    count *= 2; // 2 Times more threads than files
     return count > config.sparkParallelismMax ? config.sparkParallelismMax : count;
   }
 
