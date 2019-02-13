@@ -82,9 +82,11 @@ public class ProcessRunnerBuilderTest {
     config.distributedJarPath = "java.jar";
     config.distributedMainClass = "org.gbif.Test";
     config.repositoryPath = "tmp";
-    config.sparkExecutorMemory = "1G";
+    config.sparkExecutorMemoryGbMax = 10;
+    config.sparkExecutorMemoryGbMin = 1;
     config.sparkExecutorCores = 1;
-    config.sparkExecutorNumbers = 1;
+    config.sparkExecutorNumbersMin = 1;
+    config.sparkExecutorNumbersMax = 2;
     config.sparkParallelism = 1;
     config.sparkMemoryOverhead = 1;
     config.avroConfig.compressionType = "SNAPPY";
@@ -109,6 +111,8 @@ public class ProcessRunnerBuilderTest {
             .message(message)
             .inputPath("verbatim.avro")
             .sparkParallelism(1)
+            .sparkExecutorMemory("1G")
+            .sparkExecutorNumbers(1)
             .build();
 
     String result = builder.command().get(2);
@@ -133,9 +137,11 @@ public class ProcessRunnerBuilderTest {
     config.distributedJarPath = "java.jar";
     config.distributedMainClass = "org.gbif.Test";
     config.repositoryPath = "tmp";
-    config.sparkExecutorMemory = "1G";
+    config.sparkExecutorMemoryGbMax = 10;
+    config.sparkExecutorMemoryGbMin = 1;
     config.sparkExecutorCores = 1;
-    config.sparkExecutorNumbers = 1;
+    config.sparkExecutorNumbersMin = 1;
+    config.sparkExecutorNumbersMax = 2;
     config.sparkParallelism = 1;
     config.sparkMemoryOverhead = 1;
     config.avroConfig.compressionType = "SNAPPY";
@@ -163,6 +169,8 @@ public class ProcessRunnerBuilderTest {
             .message(message)
             .inputPath("verbatim.avro")
             .sparkParallelism(1)
+            .sparkExecutorMemory("1G")
+            .sparkExecutorNumbers(1)
             .build();
 
     String result = builder.command().get(2);

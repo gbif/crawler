@@ -27,6 +27,8 @@ final class ProcessRunnerBuilder {
   private InterpreterConfiguration config;
   private PipelinesVerbatimMessage message;
   private int sparkParallelism;
+  private int sparkExecutorNumbers;
+  private String sparkExecutorMemory;
   private String inputPath;
 
   ProcessRunnerBuilder config(InterpreterConfiguration config) {
@@ -41,6 +43,16 @@ final class ProcessRunnerBuilder {
 
   ProcessRunnerBuilder sparkParallelism(int sparkParallelism) {
     this.sparkParallelism = sparkParallelism > 0 ? sparkParallelism : config.sparkParallelism;
+    return this;
+  }
+
+  ProcessRunnerBuilder sparkExecutorNumbers(int sparkExecutorNumbers) {
+    this.sparkExecutorNumbers = sparkExecutorNumbers;
+    return this;
+  }
+
+  ProcessRunnerBuilder sparkExecutorMemory(String sparkExecutorMemory) {
+    this.sparkExecutorMemory = sparkExecutorMemory;
     return this;
   }
 
@@ -101,9 +113,9 @@ final class ProcessRunnerBuilder {
         .add("--class " + Objects.requireNonNull(config.distributedMainClass))
         .add("--master yarn")
         .add("--deploy-mode " + Objects.requireNonNull(config.deployMode))
-        .add("--executor-memory " + Objects.requireNonNull(config.sparkExecutorMemory))
+        .add("--executor-memory " + Objects.requireNonNull(sparkExecutorMemory))
         .add("--executor-cores " + config.sparkExecutorCores)
-        .add("--num-executors " + config.sparkExecutorNumbers)
+        .add("--num-executors " + sparkExecutorNumbers)
         .add("--driver-memory " + config.sparkDriverMemory)
         .add(Objects.requireNonNull(config.distributedJarPath));
 

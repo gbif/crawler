@@ -66,17 +66,27 @@ public class IndexingConfiguration {
   @Min(1)
   public int sparkMemoryOverhead;
 
-  @Parameter(names = "--spark-executor-memory")
+  @Parameter(names = "--spark-executor-memory-gb-min")
   @NotNull
-  public String sparkExecutorMemory;
+  @Min(1)
+  public int sparkExecutorMemoryGbMin;
+
+  @Parameter(names = "--spark-executor-memory-gb-max")
+  @NotNull
+  public int sparkExecutorMemoryGbMax;
 
   @Parameter(names = "--spark-executor-cores")
   @NotNull
   public int sparkExecutorCores;
 
-  @Parameter(names = "--spark-executor-numbers")
+  @Parameter(names = "--spark-executor-numbers-min")
   @NotNull
-  public int sparkExecutorNumbers;
+  @Min(1)
+  public int sparkExecutorNumbersMin;
+
+  @Parameter(names = "--spark-executor-numbers-max")
+  @NotNull
+  public int sparkExecutorNumbersMax;
 
   @Parameter(names = "--spark-driver-memory")
   @NotNull
@@ -189,9 +199,11 @@ public class IndexingConfiguration {
         .add("standaloneHeapSize", standaloneHeapSize)
         .add("sparkParallelism", sparkParallelism)
         .add("sparkMemoryOverhead", sparkMemoryOverhead)
-        .add("sparkExecutorMemory", sparkExecutorMemory)
+        .add("sparkExecutorMemoryGbMin", sparkExecutorMemoryGbMin)
+        .add("sparkExecutorMemoryGbMax", sparkExecutorMemoryGbMax)
         .add("sparkExecutorCores", sparkExecutorCores)
-        .add("sparkExecutorNumbers", sparkExecutorNumbers)
+        .add("sparkExecutorNumbersMin", sparkExecutorNumbersMin)
+        .add("sparkExecutorNumbersMax", sparkExecutorNumbersMax)
         .add("standaloneJarPath", standaloneJarPath)
         .add("distributedJarPath", distributedJarPath)
         .add("repositoryPath", repositoryPath)

@@ -104,12 +104,16 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
         String indexAlias = indexName.startsWith(datasetId) ? datasetId + "," + config.indexAlias : "";
         int numberOfShards = (int) Math.ceil((double) recordsNumber / (double) config.indexRecordsPerShard);
         int sparkParallelism = computeSparkParallelism(datasetId, attempt);
+        int sparkExecutorNumbers = computeSparkExecutorNumbers(recordsNumber);
+        String sparkExecutorMemory = computeSparkExecutorMemory(recordsNumber, sparkExecutorNumbers);
 
         // Assembles a terminal java process and runs it
         int exitValue = ProcessRunnerBuilder.create()
             .config(config)
             .message(message)
             .sparkParallelism(sparkParallelism)
+            .sparkExecutorMemory(sparkExecutorMemory)
+            .sparkExecutorNumbers(sparkExecutorNumbers)
             .esIndexName(indexName)
             .esAlias(indexAlias)
             .esShardsNumber(numberOfShards)
@@ -144,9 +148,35 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
   }
 
   /**
+   * Computes the memory for executor in Gb, where min is config.sparkExecutorMemoryGbMin and
+   * max is config.sparkExecutorMemoryGbMax
+   * <p>
+   * 65_536d is found empirically salt
+   */
+  private String computeSparkExecutorMemory(long recordsNumber, int sparkExecutorNumbers) {
+    int memoryGb = (int) Math.ceil(recordsNumber / (double) sparkExecutorNumbers / 65_536d);
+    memoryGb = memoryGb < config.sparkExecutorMemoryGbMin ? config.sparkExecutorMemoryGbMin :
+        memoryGb > config.sparkExecutorMemoryGbMax ? config.sparkExecutorMemoryGbMax : memoryGb;
+    return memoryGb + "G";
+  }
+
+  /**
+   * Computes the numbers of executors, where min is config.sparkExecutorNumbersMin and
+   * max is config.sparkExecutorNumbersMax
+   * <p>
+   * 500_000d is records per executor
+   */
+  private int computeSparkExecutorNumbers(long recordsNumber) {
+    int sparkExecutorNumbers = (int) Math.ceil(recordsNumber / 500_000d);
+    return sparkExecutorNumbers < config.sparkExecutorNumbersMin ? config.sparkExecutorNumbersMin :
+        sparkExecutorNumbers > config.sparkExecutorNumbersMax ? config.sparkExecutorNumbersMax : sparkExecutorNumbers;
+  }
+
+  /**
    * Computes the name for ES index:
    * Case 1 - Independent index for datasets where number of records more than config.indexIndepRecord
-   * Case 2 - Default static index name for datasets where last changed date more than config.indexDefStaticDateDurationDd
+   * Case 2 - Default static index name for datasets where last changed date more than
+   * config.indexDefStaticDateDurationDd
    * Case 3 - Default dynamic index name for all other datasets
    */
   private String computeIndexName(String datasetId, String attempt, long recordsNumber) {

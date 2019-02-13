@@ -98,6 +98,8 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
         String verbatim = Conversion.FILE_NAME + Pipeline.AVRO_EXTENSION;
         String path = String.join("/", config.repositoryPath, datasetId, attempt, verbatim);
         int sparkParallelism = computeSparkParallelism(path, recordsNumber);
+        int sparkExecutorNumbers = computeSparkExecutorNumbers(recordsNumber);
+        String sparkExecutorMemory = computeSparkExecutorMemory(recordsNumber, sparkExecutorNumbers);
 
         LOG.info("Start the process. Message - {}", message);
 
@@ -107,6 +109,8 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
             .message(message)
             .inputPath(path)
             .sparkParallelism(sparkParallelism)
+            .sparkExecutorMemory(sparkExecutorMemory)
+            .sparkExecutorNumbers(sparkExecutorNumbers)
             .build()
             .start()
             .waitFor();
@@ -140,6 +144,32 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
     long fileSizeByte = HdfsUtils.getfileSizeByte(verbatimPath, config.hdfsSiteConfig);
     int numberOfThreads = (int) Math.ceil(fileSizeByte / (config.threadPerMb * 1024d * 1024d));
     return numberOfThreads > 1 ? numberOfThreads : 1;
+  }
+
+
+  /**
+   * Computes the memory for executor in Gb, where min is config.sparkExecutorMemoryGbMin and
+   * max is config.sparkExecutorMemoryGbMax
+   * <p>
+   * 231_168d is found empirically salt 192d
+   */
+  private String computeSparkExecutorMemory(long recordsNumber, int sparkExecutorNumbers) {
+    int memoryGb = (int) Math.ceil(recordsNumber / (double) sparkExecutorNumbers / 231_168d);
+    memoryGb = memoryGb < config.sparkExecutorMemoryGbMin ? config.sparkExecutorMemoryGbMin :
+        memoryGb > config.sparkExecutorMemoryGbMax ? config.sparkExecutorMemoryGbMax : memoryGb;
+    return memoryGb + "G";
+  }
+
+  /**
+   * Computes the numbers of executors, where min is config.sparkExecutorNumbersMin and
+   * max is config.sparkExecutorNumbersMax
+   * <p>
+   * 500_000d is records per executor
+   */
+  private int computeSparkExecutorNumbers(long recordsNumber) {
+    int sparkExecutorNumbers = (int) Math.ceil(recordsNumber / 500_000d);
+    return sparkExecutorNumbers < config.sparkExecutorNumbersMin ? config.sparkExecutorNumbersMin :
+        sparkExecutorNumbers > config.sparkExecutorNumbersMax ? config.sparkExecutorNumbersMax : sparkExecutorNumbers;
   }
 
   /**
