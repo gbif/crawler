@@ -29,6 +29,7 @@ import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.Aggregations;
 import org.elasticsearch.search.aggregations.bucket.terms.ParsedStringTerms;
 import org.elasticsearch.search.aggregations.metrics.max.ParsedMax;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
@@ -271,7 +272,16 @@ public class PipelinesProcessServiceImpl implements PipelinesProcessService {
     if (client != null) {
       try {
         SearchResponse search = client.search(getEsMetricQuery(crawlId));
-        ParsedStringTerms uniqueName = search.getAggregations().get("unique_name");
+
+        Aggregations aggregations = search.getAggregations();
+        if (aggregations == null) {
+          return Collections.emptySet();
+        }
+
+        ParsedStringTerms uniqueName = aggregations.get("unique_name");
+        if (uniqueName == null) {
+          return Collections.emptySet();
+        }
 
         return uniqueName.getBuckets().stream().map(x -> {
           String keyAsString = x.getKeyAsString();
