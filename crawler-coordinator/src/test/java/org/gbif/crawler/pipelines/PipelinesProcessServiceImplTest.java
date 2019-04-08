@@ -1,15 +1,13 @@
 package org.gbif.crawler.pipelines;
 
-import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
-
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Set;
 import java.util.concurrent.Executors;
 
-import com.google.common.base.Charsets;
-import com.google.common.collect.Sets;
+import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
+
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.RetryOneTime;
@@ -21,10 +19,13 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import static org.gbif.crawler.constants.PipelinesNodePaths.ALL_STEPS;
-import static org.gbif.crawler.constants.PipelinesNodePaths.getPipelinesInfoPath;
+import com.google.common.base.Charsets;
+import com.google.common.collect.Sets;
 
 import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+
+import static org.gbif.crawler.constants.PipelinesNodePaths.ALL_STEPS;
+import static org.gbif.crawler.constants.PipelinesNodePaths.getPipelinesInfoPath;
 
 @RunWith(MockitoJUnitRunner.class)
 public class PipelinesProcessServiceImplTest {
@@ -38,17 +39,17 @@ public class PipelinesProcessServiceImplTest {
   private final PipelinesProcessServiceImpl service;
 
   public PipelinesProcessServiceImplTest() {
-    service = new PipelinesProcessServiceImpl(curator, Executors.newSingleThreadExecutor());
+    service = new PipelinesProcessServiceImpl(curator, Executors.newSingleThreadExecutor(), null, "test");
   }
 
   @BeforeClass
   public static void setUp() throws Exception {
     server = new TestingServer();
     curator = CuratorFrameworkFactory.builder()
-      .connectString(server.getConnectString())
-      .namespace("crawler")
-      .retryPolicy(new RetryOneTime(1))
-      .build();
+        .connectString(server.getConnectString())
+        .namespace("crawler")
+        .retryPolicy(new RetryOneTime(1))
+        .build();
     curator.start();
   }
 
@@ -96,8 +97,8 @@ public class PipelinesProcessServiceImplTest {
   public void testGetRunningPipelinesProcesses() throws Exception {
     // State
     Set<String> crawlIds =
-      Sets.newHashSet("a731e3b1-bc81-4c1f-aad7-aba75ce3cf3b_1", "be6cd2ff-bcc0-46a5-877e-1fe6e4ef8483_2");
-    for (String crawlId: crawlIds) {
+        Sets.newHashSet("a731e3b1-bc81-4c1f-aad7-aba75ce3cf3b_1", "be6cd2ff-bcc0-46a5-877e-1fe6e4ef8483_2");
+    for (String crawlId : crawlIds) {
       addStatusToZookeeper(crawlId);
     }
 
@@ -120,7 +121,7 @@ public class PipelinesProcessServiceImplTest {
     });
 
     // Postprocess
-    for (String crawlId: crawlIds) {
+    for (String crawlId : crawlIds) {
       deleteMonitoringById(crawlId);
     }
   }
@@ -180,7 +181,7 @@ public class PipelinesProcessServiceImplTest {
   }
 
   private void addStatusToZookeeper(String crawlId) throws Exception {
-    for (String path: ALL_STEPS) {
+    for (String path : ALL_STEPS) {
       updateMonitoringDate(crawlId, Fn.START_DATE.apply(path));
       updateMonitoringDate(crawlId, Fn.END_DATE.apply(path));
       updateMonitoring(crawlId, Fn.SUCCESSFUL_AVAILABILITY.apply(path), AVAILABILITY.toString());
@@ -213,8 +214,8 @@ public class PipelinesProcessServiceImplTest {
    * Creates or updates a String value for a Zookeeper monitoring node
    *
    * @param crawlId root node path
-   * @param path    child node path
-   * @param value   some String value
+   * @param path child node path
+   * @param value some String value
    */
   private void updateMonitoring(String crawlId, String path, String value) throws Exception {
     String fullPath = getPipelinesInfoPath(crawlId, path);
@@ -230,11 +231,10 @@ public class PipelinesProcessServiceImplTest {
    * Creates or updates current LocalDateTime value for a Zookeeper monitoring node
    *
    * @param crawlId root node path
-   * @param path    child node path
+   * @param path child node path
    */
   private void updateMonitoringDate(String crawlId, String path) throws Exception {
     String value = LocalDateTime.now().atOffset(ZoneOffset.UTC).format(ISO_LOCAL_DATE_TIME);
     updateMonitoring(crawlId, path, value);
   }
-
 }

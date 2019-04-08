@@ -1,10 +1,8 @@
 package org.gbif.crawler.pipelines;
 
-import org.gbif.api.exception.ServiceUnavailableException;
-import org.gbif.crawler.DatasetProcessServiceImpl;
-import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
-import org.gbif.crawler.pipelines.PipelinesProcessStatus.PipelinesStep;
-
+import java.io.IOException;
+import java.text.DecimalFormat;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -16,12 +14,30 @@ import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
+import java.util.stream.Collectors;
+
+import org.gbif.api.exception.ServiceUnavailableException;
+import org.gbif.crawler.DatasetProcessServiceImpl;
+import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
+import org.gbif.crawler.pipelines.PipelinesProcessStatus.MetricInfo;
+import org.gbif.crawler.pipelines.PipelinesProcessStatus.PipelinesStep;
+
+import org.apache.curator.framework.CuratorFramework;
+import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.bucket.terms.ParsedStringTerms;
+import org.elasticsearch.search.aggregations.metrics.max.ParsedMax;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Charsets;
 import com.google.inject.Inject;
-import org.apache.curator.framework.CuratorFramework;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.google.inject.name.Named;
 
 import static org.gbif.crawler.constants.CrawlerNodePaths.buildPath;
 import static org.gbif.crawler.constants.PipelinesNodePaths.ALL_STEPS;
@@ -37,19 +53,27 @@ public class PipelinesProcessServiceImpl implements PipelinesProcessService {
 
   private static final Logger LOG = LoggerFactory.getLogger(DatasetProcessServiceImpl.class);
 
+  private static final String FILTER_NAME = "org.gbif.pipelines.transforms.";
+  private static final DecimalFormat DF = new DecimalFormat("0");
+
   private final CuratorFramework curator;
   private final Executor executor;
+  private final RestHighLevelClient client;
+  private final String envPrefix;
 
   /**
    * Creates a CrawlerMetricsService. Responsible for interacting with a ZooKeeper instance in a read-only fashion.
    *
-   * @param curator  to access ZooKeeper
+   * @param curator to access ZooKeeper
    * @param executor to run the thread pool
    */
   @Inject
-  public PipelinesProcessServiceImpl(CuratorFramework curator, Executor executor) {
+  public PipelinesProcessServiceImpl(CuratorFramework curator, Executor executor, RestHighLevelClient client,
+      @Named("pipelines.envPrefix") String envPrefix) {
     this.curator = checkNotNull(curator, "curator can't be null");
     this.executor = checkNotNull(executor, "executor can't be null");
+    this.client = client;
+    this.envPrefix = envPrefix;
   }
 
   /**
@@ -68,10 +92,10 @@ public class PipelinesProcessServiceImpl implements PipelinesProcessService {
 
       // Reads all nodes in async mode
       CompletableFuture[] futures = curator.getChildren()
-        .forPath(path)
-        .stream()
-        .map(id -> CompletableFuture.runAsync(() -> set.add(getRunningPipelinesProcess(id)), executor))
-        .toArray(CompletableFuture[]::new);
+          .forPath(path)
+          .stream()
+          .map(id -> CompletableFuture.runAsync(() -> set.add(getRunningPipelinesProcess(id)), executor))
+          .toArray(CompletableFuture[]::new);
 
       // Waits all threads
       CompletableFuture.allOf(futures).get();
@@ -105,20 +129,11 @@ public class PipelinesProcessServiceImpl implements PipelinesProcessService {
       PipelinesProcessStatus status = new PipelinesProcessStatus(crawlId);
 
       // ALL_STEPS - static set of all pipelines steps: DWCA_TO_AVRO, VERBATIM_TO_INTERPRETED and etc.
-      for (String path: ALL_STEPS) {
-        PipelinesStep step = new PipelinesStep(path);
+      getStepInfo(crawlId).forEach(step -> step.getStep().ifPresent(status::addStep));
 
-        getAsDate(crawlId, Fn.START_DATE.apply(path)).ifPresent(step::setStartDateTime);
-        getAsDate(crawlId, Fn.END_DATE.apply(path)).ifPresent(step::setEndDateTime);
+      // Gets metrics info fro ELK
+      getMetricInfo(crawlId).forEach(status::addMericInfo);
 
-        getAsBoolean(crawlId, Fn.ERROR_AVAILABILITY.apply(path)).ifPresent(step.getError()::setAvailability);
-        getAsString(crawlId, Fn.ERROR_MESSAGE.apply(path)).ifPresent(step.getError()::setMessage);
-
-        getAsBoolean(crawlId, Fn.SUCCESSFUL_AVAILABILITY.apply(path)).ifPresent(step.getSuccessful()::setAvailability);
-        getAsString(crawlId, Fn.SUCCESSFUL_MESSAGE.apply(path)).ifPresent(step.getSuccessful()::setMessage);
-
-        step.getStep().ifPresent(status::addStep);
-      }
       return status;
     } catch (Exception ex) {
       LOG.error("crawlId {}", crawlId, ex.getCause());
@@ -156,11 +171,11 @@ public class PipelinesProcessServiceImpl implements PipelinesProcessService {
 
       // Reads all nodes in async mode
       CompletableFuture[] futures = curator.getChildren()
-        .forPath(path)
-        .stream()
-        .filter(node -> node.startsWith(datasetKey))
-        .map(id -> CompletableFuture.runAsync(() -> set.add(getRunningPipelinesProcess(id)), executor))
-        .toArray(CompletableFuture[]::new);
+          .forPath(path)
+          .stream()
+          .filter(node -> node.startsWith(datasetKey))
+          .map(id -> CompletableFuture.runAsync(() -> set.add(getRunningPipelinesProcess(id)), executor))
+          .toArray(CompletableFuture[]::new);
 
       // Waits all threads
       CompletableFuture.allOf(futures).get();
@@ -174,6 +189,30 @@ public class PipelinesProcessServiceImpl implements PipelinesProcessService {
     }
 
     return set;
+  }
+
+  /**
+   * Gets step info from ZK
+   */
+  private Set<PipelinesStep> getStepInfo(String crawlId) {
+    return ALL_STEPS.stream().map(path -> {
+      PipelinesStep step = new PipelinesStep(path);
+
+      try {
+        getAsDate(crawlId, Fn.START_DATE.apply(path)).ifPresent(step::setStartDateTime);
+
+        getAsDate(crawlId, Fn.END_DATE.apply(path)).ifPresent(step::setEndDateTime);
+
+        getAsBoolean(crawlId, Fn.ERROR_AVAILABILITY.apply(path)).ifPresent(step.getError()::setAvailability);
+        getAsString(crawlId, Fn.ERROR_MESSAGE.apply(path)).ifPresent(step.getError()::setMessage);
+
+        getAsBoolean(crawlId, Fn.SUCCESSFUL_AVAILABILITY.apply(path)).ifPresent(step.getSuccessful()::setAvailability);
+        getAsString(crawlId, Fn.SUCCESSFUL_MESSAGE.apply(path)).ifPresent(step.getSuccessful()::setMessage);
+      } catch (Exception ex) {
+        LOG.error(ex.getMessage(), ex);
+      }
+      return step;
+    }).collect(Collectors.toSet());
   }
 
   /**
@@ -223,5 +262,91 @@ public class PipelinesProcessServiceImpl implements PipelinesProcessService {
       LOG.warn("Boolean was not parsed successfully: [{}]: {}", data.orElse(crawlId), ex);
       return Optional.empty();
     }
+  }
+
+  /**
+   * Gets metrics info from ELK
+   */
+  private Set<MetricInfo> getMetricInfo(String crawlId) {
+    if (client != null) {
+      try {
+        SearchResponse search = client.search(getEsMetricQuery(crawlId));
+        ParsedStringTerms uniqueName = search.getAggregations().get("unique_name");
+
+        return uniqueName.getBuckets().stream().map(x -> {
+          String keyAsString = x.getKeyAsString();
+          String keyFormatted = keyAsString.substring(keyAsString.indexOf(FILTER_NAME) + FILTER_NAME.length());
+
+          ParsedMax value = x.getAggregations().get("max_value");
+          double valueDouble = value.getValue();
+          String valueFormatted = DF.format(valueDouble);
+
+          return new MetricInfo(keyFormatted, valueFormatted);
+        }).collect(Collectors.toSet());
+
+      } catch (IOException ex) {
+        LOG.error(ex.getMessage(), ex);
+      }
+    }
+    return Collections.emptySet();
+  }
+
+  /**
+   * ES query like:
+   *
+   * <pre>{@code
+   *
+   * {
+   *   "size": 0,
+   *   "aggs": {
+   *     "unique_name": {
+   *       "terms": {"field": "name.keyword"},
+   *       "aggs": {
+   *         "max_value": {
+   *           "max": {"field": "value"}
+   *         }
+   *       }
+   *     }
+   *   },
+   *   "query": {
+   *     "bool": {
+   *       "must": [
+   *         {"match": {"datasetId": "7a25f7aa-03fb-4322-aaeb-66719e1a9527"}},
+   *         {"match": {"attempt": "52"}},
+   *         {"match": {"type": "GAUGE"}},
+   *         {"match_phrase_prefix": { "name": "driver.PipelinesOptionsFactory"}}
+   *       ]
+   *     }
+   *   }
+   * }
+   *
+   * }</pre>
+   */
+  private SearchRequest getEsMetricQuery(String crawlId) {
+
+    String[] ids = crawlId.split("_");
+    String year = String.valueOf(LocalDate.now().getYear());
+
+    // ES query
+    SearchRequest searchRequest = new SearchRequest(envPrefix + "-pipeline-metric-" + year + ".*");
+    SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+
+    // Must
+    BoolQueryBuilder booleanQuery = QueryBuilders.boolQuery();
+    booleanQuery.must(QueryBuilders.matchQuery("datasetId", ids[0]));
+    booleanQuery.must(QueryBuilders.matchQuery("attempt", ids[1]));
+    booleanQuery.must(QueryBuilders.matchQuery("type", "GAUGE"));
+    booleanQuery.must(QueryBuilders.matchPhrasePrefixQuery("name", "driver.PipelinesOptionsFactory"));
+    searchSourceBuilder.query(booleanQuery);
+
+    // Aggr
+    searchSourceBuilder.aggregation(AggregationBuilders.terms("unique_name")
+        .field("name.keyword")
+        .subAggregation(AggregationBuilders.max("max_value").field("value")));
+
+    searchSourceBuilder.size(0);
+    searchRequest.source(searchSourceBuilder);
+
+    return searchRequest;
   }
 }
