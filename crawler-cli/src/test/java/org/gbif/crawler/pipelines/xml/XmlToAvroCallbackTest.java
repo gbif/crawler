@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.UUID;
 
 import org.gbif.api.model.crawler.FinishReason;
+import org.gbif.api.vocabulary.EndpointType;
 import org.gbif.common.messaging.api.messages.PipelinesXmlMessage;
 
 import org.apache.curator.framework.CuratorFramework;
@@ -78,7 +79,7 @@ public class XmlToAvroCallbackTest {
     config.archiveRepositorySubdir = Collections.singleton("xml");
     XmlToAvroCallback callback = new XmlToAvroCallback(config, null, curator);
     PipelinesXmlMessage message =
-        new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL, Collections.singleton(ALL.name()));
+        new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL, Collections.singleton(ALL.name()), EndpointType.DWC_ARCHIVE);
 
     // Expected
     callback.handleMessage(message);
@@ -100,7 +101,7 @@ public class XmlToAvroCallbackTest {
     config.archiveRepositorySubdir = Collections.singleton("xml");
     XmlToAvroCallback callback = new XmlToAvroCallback(config, null, curator);
     PipelinesXmlMessage message =
-        new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL, Collections.singleton(ALL.name()));
+        new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL, Collections.singleton(ALL.name()), EndpointType.DWC_ARCHIVE);
 
     // Expected
     callback.handleMessage(message);
@@ -122,7 +123,7 @@ public class XmlToAvroCallbackTest {
     config.archiveRepositorySubdir = Collections.singleton("xml");
     XmlToAvroCallback callback = new XmlToAvroCallback(config, null, curator);
     PipelinesXmlMessage message =
-        new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL, Collections.singleton(ALL.name()));
+        new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL, Collections.singleton(ALL.name()), EndpointType.DWC_ARCHIVE);
 
     // Expected
     callback.handleMessage(message);

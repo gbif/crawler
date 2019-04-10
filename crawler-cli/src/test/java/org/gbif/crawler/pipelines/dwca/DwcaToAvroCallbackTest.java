@@ -2,6 +2,7 @@ package org.gbif.crawler.pipelines.dwca;
 
 import org.gbif.api.model.crawler.DwcaValidationReport;
 import org.gbif.api.vocabulary.DatasetType;
+import org.gbif.api.vocabulary.EndpointType;
 import org.gbif.common.messaging.api.messages.PipelinesDwcaMessage;
 
 import java.io.File;
@@ -79,7 +80,7 @@ public class DwcaToAvroCallbackTest {
     UUID uuid = UUID.fromString(DATASET_UUID_POS);
     DwcaValidationReport reason = new DwcaValidationReport(uuid, "no reason");
     PipelinesDwcaMessage message =
-      new PipelinesDwcaMessage(uuid, DatasetType.OCCURRENCE, URI.create(DUMMY_URL), 2, reason, Collections.singleton(ALL.name()));
+      new PipelinesDwcaMessage(uuid, DatasetType.OCCURRENCE, URI.create(DUMMY_URL), 2, reason, Collections.singleton(ALL.name()), EndpointType.DWC_ARCHIVE);
 
     // Expected
     callback.handleMessage(message);

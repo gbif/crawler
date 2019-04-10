@@ -73,7 +73,7 @@ class XmlCrawlConsumer extends CrawlConsumer {
 
     crawler.addListener(new CrawlerZooKeeperUpdatingListener(builder.getCrawlConfiguration(), curator));
     crawler.addListener(new LoggingCrawlListener(builder.getCrawlConfiguration()));
-    crawler.addListener(new MessagingCrawlListener(publisher, builder.getCrawlConfiguration()));
+    crawler.addListener(new MessagingCrawlListener(publisher, builder.getCrawlConfiguration(), crawlJob.getEndpointType()));
     if (responseArchive != null) {
       crawler.addListener(new ResultPersistingListener(responseArchive, builder.getCrawlConfiguration()));
     }

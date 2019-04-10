@@ -13,3 +13,5 @@ target
 dependency-reduced-pom.xml
 minicluster
 tmp
+
+crawler-coordinator/logs/registry-metasync\.log
