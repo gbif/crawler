@@ -18,6 +18,7 @@ import org.apache.curator.framework.CuratorFramework;
 import com.google.common.base.Preconditions;
 
 import static org.gbif.api.vocabulary.DatasetType.OCCURRENCE;
+import static org.gbif.api.vocabulary.DatasetType.SAMPLING_EVENT;
 import static org.gbif.crawler.constants.PipelinesNodePaths.DWCA_TO_VERBATIM;
 import static org.gbif.crawler.pipelines.HdfsUtils.buildOutputPath;
 
@@ -73,9 +74,8 @@ public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMes
    * Only correct messages can be handled, by now is only OCCURRENCE type messages
    */
   private boolean isMessageCorrect(PipelinesDwcaMessage message) {
-    return OCCURRENCE == message.getDatasetType();
+    return OCCURRENCE == message.getDatasetType() || SAMPLING_EVENT == message.getDatasetType();
   }
-
 
   /**
    * Main message processing logic, converts a DwCA archive to an avro file.
