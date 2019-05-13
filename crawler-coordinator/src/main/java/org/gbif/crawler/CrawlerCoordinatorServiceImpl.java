@@ -139,7 +139,7 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
     }
 
     // Sort the remaining ones
-    Collections.sort(result, ENDPOINT_COMPARATOR);
+    result.sort(ENDPOINT_COMPARATOR);
     return result;
   }
 

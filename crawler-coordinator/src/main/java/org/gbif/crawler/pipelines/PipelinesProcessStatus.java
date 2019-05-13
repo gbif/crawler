@@ -3,14 +3,14 @@ package org.gbif.crawler.pipelines;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 
-import com.google.common.base.Objects;
-
 /**
- * Base POJO model for the Pipleines monitoring service
+ * Base POJO model for the Pipelines monitoring service
  */
 public class PipelinesProcessStatus implements Serializable {
 
@@ -18,6 +18,7 @@ public class PipelinesProcessStatus implements Serializable {
 
   private final String crawlId;
   private Set<PipelinesStep> pipelinesSteps = new TreeSet<>(Comparator.comparing(PipelinesStep::getStartDateTime));
+  private Set<MetricInfo> metricInfos = new HashSet<>();
 
   public PipelinesProcessStatus(String crawlId) {
     this.crawlId = crawlId;
@@ -31,8 +32,16 @@ public class PipelinesProcessStatus implements Serializable {
     return pipelinesSteps;
   }
 
+  public Set<MetricInfo> getMetricInfos() {
+    return metricInfos;
+  }
+
   public void addStep(PipelinesStep step) {
     pipelinesSteps.add(step);
+  }
+
+  public void addMericInfo(MetricInfo metricInfo) {
+    metricInfos.add(metricInfo);
   }
 
   public static class PipelinesStep implements Serializable {
@@ -128,14 +137,54 @@ public class PipelinesProcessStatus implements Serializable {
         return false;
       }
       PipelinesStep that = (PipelinesStep) o;
-      return Objects.equal(name, that.name) && Objects.equal(startDateTime, that.startDateTime) && Objects.equal(
-        endDateTime, that.endDateTime);
+      return Objects.equals(name, that.name) &&
+          Objects.equals(startDateTime, that.startDateTime) &&
+          Objects.equals(endDateTime, that.endDateTime);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hashCode(name, startDateTime, endDateTime);
+      return Objects.hash(name, startDateTime, endDateTime);
     }
   }
+
+  public static class MetricInfo implements Serializable {
+
+    private static final long serialVersionUID = 1872427841009786709L;
+
+    private String name;
+    private String value;
+
+    public MetricInfo(String name, String value) {
+      this.name = name;
+      this.value = value;
+    }
+
+    public String getName() {
+      return name;
+    }
+
+    public String getValue() {
+      return value;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      MetricInfo that = (MetricInfo) o;
+      return name.equals(that.name) && value.equals(that.value);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(name, value);
+    }
+  }
+
 
 }
