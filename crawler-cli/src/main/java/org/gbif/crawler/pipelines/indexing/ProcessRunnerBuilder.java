@@ -113,6 +113,7 @@ final class ProcessRunnerBuilder {
     Optional.ofNullable(config.metricsPropertiesPath).ifPresent(x -> joiner.add("--conf spark.metrics.conf=" + x));
     Optional.ofNullable(config.extraClassPath).ifPresent(x -> joiner.add("--conf \"spark.driver.extraClassPath=" + x + "\""));
     Optional.ofNullable(config.driverJavaOptions).ifPresent(x -> joiner.add("--driver-java-options \"" + x + "\""));
+    Optional.ofNullable(config.yarnQueue).ifPresent(x -> joiner.add("--queue " + x));
 
     if (sparkParallelism < 1) {
       throw new IllegalArgumentException("sparkParallelism can't be 0");
