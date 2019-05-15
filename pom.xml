@@ -49,7 +49,7 @@
     <gbif-common-service.version>0.17</gbif-common-service.version>
     <gbif-common-ws.version>0.43</gbif-common-ws.version>
     <gbif-common.version>0.45</gbif-common.version>
-    <gbif-httputils.version>0.11</gbif-httputils.version>
+    <gbif-httputils.version>0.12</gbif-httputils.version>
     <gbif-microservice.version>0.7</gbif-microservice.version>
     <gbif-occurrence.version>0.86</gbif-occurrence.version>
     <gbif-postal-service.version>0.29</gbif-postal-service.version>

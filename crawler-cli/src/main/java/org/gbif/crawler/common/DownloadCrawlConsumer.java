@@ -19,6 +19,7 @@ import org.slf4j.MDC;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.UUID;
 
 import static org.gbif.crawler.common.ZookeeperUtils.createOrUpdate;
@@ -67,8 +68,14 @@ public abstract class DownloadCrawlConsumer extends CrawlConsumer {
 
       if (status.getStatusCode() == HttpStatus.SC_NOT_MODIFIED) {
         notModified(datasetKey);
+        Files.createLink(
+            new File(archiveRepository, datasetKey + "." + crawlJob.getAttempt() + getSuffix()).toPath(),
+            localFile.toPath());
       } else if (HttpUtil.success(status)) {
         success(datasetKey, crawlJob);
+        Files.createLink(
+            new File(archiveRepository, datasetKey + "." + crawlJob.getAttempt() + getSuffix()).toPath(),
+            localFile.toPath());
       } else {
         failed(datasetKey);
         throw new IllegalStateException("HTTP " + status.getStatusCode() + ". Failed to download archive for dataset "
