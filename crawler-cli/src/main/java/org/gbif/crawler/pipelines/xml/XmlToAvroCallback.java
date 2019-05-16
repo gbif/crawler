@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -21,8 +22,10 @@ import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static org.gbif.crawler.constants.PipelinesNodePaths.ALL_STEPS;
 import static org.gbif.crawler.constants.PipelinesNodePaths.XML_TO_VERBATIM;
 import static org.gbif.crawler.pipelines.HdfsUtils.buildOutputPath;
+import static org.gbif.crawler.pipelines.PipelineCallback.Steps.ALL;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -52,6 +55,10 @@ public class XmlToAvroCallback extends AbstractMessageCallback<PipelinesXmlMessa
    */
   @Override
   public void handleMessage(PipelinesXmlMessage message) {
+
+    if (message.getPipelineSteps().isEmpty()) {
+      message.setPipelineSteps(Collections.singleton(ALL.name()));
+    }
 
     // Common variables
     UUID datasetId = message.getDatasetUuid();

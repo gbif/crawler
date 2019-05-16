@@ -2,6 +2,7 @@ package org.gbif.crawler.pipelines.dwca;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
 
@@ -21,6 +22,7 @@ import static org.gbif.api.vocabulary.DatasetType.OCCURRENCE;
 import static org.gbif.api.vocabulary.DatasetType.SAMPLING_EVENT;
 import static org.gbif.crawler.constants.PipelinesNodePaths.DWCA_TO_VERBATIM;
 import static org.gbif.crawler.pipelines.HdfsUtils.buildOutputPath;
+import static org.gbif.crawler.pipelines.PipelineCallback.Steps.ALL;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -49,6 +51,10 @@ public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMes
 
     if (!isMessageCorrect(message)) {
       return;
+    }
+
+    if (message.getPipelineSteps().isEmpty()) {
+      message.setPipelineSteps(Collections.singleton(ALL.name()));
     }
 
     // Common variables
