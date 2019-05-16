@@ -151,6 +151,9 @@ public class InterpreterConfiguration {
   @NotNull
   public String processRunner;
 
+  @Parameter(names = "--yarn-queue")
+  public String yarnQueue;
+
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
@@ -184,6 +187,7 @@ public class InterpreterConfiguration {
         .add("metaFileName", metaFileName)
         .add("processRunner", processRunner)
         .add("sparkParallelismMax", sparkParallelismMax)
+        .add("yarnQueue", yarnQueue)
         .toString();
   }
 }
