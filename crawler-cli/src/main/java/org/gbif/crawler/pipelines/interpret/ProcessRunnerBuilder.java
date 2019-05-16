@@ -143,7 +143,7 @@ final class ProcessRunnerBuilder {
         .add("--hdfsSiteConfig=" + Objects.requireNonNull(config.hdfsSiteConfig))
         .add("--coreSiteConfig=" + Objects.requireNonNull(config.coreSiteConfig))
         .add("--properties=" + Objects.requireNonNull(config.wsConfig))
-        .add("--endpointType=" + Objects.requireNonNull(message.getEndpointType()));
+        .add("--endPointType=" + Objects.requireNonNull(message.getEndpointType()));
 
     // Adds user name to run a command if it is necessary
     StringJoiner joiner = new StringJoiner(DELIMITER);
