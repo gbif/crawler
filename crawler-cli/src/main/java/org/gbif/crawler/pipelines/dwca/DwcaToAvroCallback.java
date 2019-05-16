@@ -60,7 +60,7 @@ public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMes
     // Message callback handler, updates zookeeper info, runs process logic and sends next MQ message
     PipelineCallback.create()
         .incomingMessage(message)
-        .outgoingMessage(new PipelinesVerbatimMessage(datasetId, attempt, config.interpretTypes, steps, null))
+        .outgoingMessage(new PipelinesVerbatimMessage(datasetId, attempt, config.interpretTypes, steps, null, message.getEndpointType()))
         .curator(curator)
         .zkRootElementPath(DWCA_TO_VERBATIM)
         .pipelinesStepName(Steps.DWCA_TO_VERBATIM.name())

@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
 
+import org.gbif.api.vocabulary.EndpointType;
 import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage;
 import org.gbif.crawler.pipelines.PipelineCallback.Runner;
 
@@ -35,7 +36,7 @@ public class ProcessRunnerBuilderTest {
             + "-cp java.jar org.gbif.Test --pipelineStep=VERBATIM_TO_INTERPRETED --datasetId=de7ffb5e-c07b-42dc-8a88-f67a4465fe3d --attempt=1 "
             + "--interpretationTypes=ALL --runner=SparkRunner --targetPath=tmp --metaFileName=verbatim-to-interpreted.yml --inputPath=verbatim.avro "
             + "--avroCompressionType=SNAPPY --avroSyncInterval=1 --hdfsSiteConfig=hdfs.xml --coreSiteConfig=core.xml "
-            + "--properties=/path/ws.config";
+            + "--properties=/path/ws.config --endPointType=DWC_ARCHIVE";
 
     InterpreterConfiguration config = new InterpreterConfiguration();
     config.standaloneJarPath = "java.jar";
@@ -55,7 +56,7 @@ public class ProcessRunnerBuilderTest {
     int attempt = 1;
     Set<String> types = Collections.singleton(ALL.name());
     Set<String> steps = Collections.singleton(ALL.name());
-    PipelinesVerbatimMessage message = new PipelinesVerbatimMessage(datasetId, attempt, types, steps, null);
+    PipelinesVerbatimMessage message = new PipelinesVerbatimMessage(datasetId, attempt, types, steps, null, EndpointType.DWC_ARCHIVE);
 
     // When
     ProcessBuilder builder =
@@ -76,7 +77,7 @@ public class ProcessRunnerBuilderTest {
             + "--driver-memory 4G java.jar --datasetId=de7ffb5e-c07b-42dc-8a88-f67a4465fe3d --attempt=1 --interpretationTypes=ALL "
             + "--runner=SparkRunner --targetPath=tmp --metaFileName=verbatim-to-interpreted.yml --inputPath=verbatim.avro "
             + "--avroCompressionType=SNAPPY --avroSyncInterval=1 --hdfsSiteConfig=hdfs.xml --coreSiteConfig=core.xml "
-            + "--properties=/path/ws.config";
+            + "--properties=/path/ws.config --endPointType=DWC_ARCHIVE";
 
     InterpreterConfiguration config = new InterpreterConfiguration();
     config.distributedJarPath = "java.jar";
@@ -102,7 +103,7 @@ public class ProcessRunnerBuilderTest {
     int attempt = 1;
     Set<String> types = Collections.singleton(ALL.name());
     Set<String> steps = Collections.singleton(ALL.name());
-    PipelinesVerbatimMessage message = new PipelinesVerbatimMessage(datasetId, attempt, types, steps, null);
+    PipelinesVerbatimMessage message = new PipelinesVerbatimMessage(datasetId, attempt, types, steps, null, EndpointType.DWC_ARCHIVE);
 
     // Expected
     ProcessBuilder builder =
@@ -131,7 +132,7 @@ public class ProcessRunnerBuilderTest {
             + "--deploy-mode cluster --executor-memory 1G --executor-cores 1 --num-executors 1 --driver-memory 4G java.jar "
             + "--datasetId=de7ffb5e-c07b-42dc-8a88-f67a4465fe3d --attempt=1 --interpretationTypes=ALL --runner=SparkRunner "
             + "--targetPath=tmp --metaFileName=verbatim-to-interpreted.yml --inputPath=verbatim.avro --avroCompressionType=SNAPPY "
-            + "--avroSyncInterval=1 --hdfsSiteConfig=hdfs.xml --coreSiteConfig=core.xml --properties=/path/ws.config";
+            + "--avroSyncInterval=1 --hdfsSiteConfig=hdfs.xml --coreSiteConfig=core.xml --properties=/path/ws.config --endPointType=DWC_ARCHIVE";
 
     InterpreterConfiguration config = new InterpreterConfiguration();
     config.distributedJarPath = "java.jar";
@@ -161,7 +162,7 @@ public class ProcessRunnerBuilderTest {
     int attempt = 1;
     Set<String> types = Collections.singleton(ALL.name());
     Set<String> steps = Collections.singleton(ALL.name());
-    PipelinesVerbatimMessage message = new PipelinesVerbatimMessage(datasetId, attempt, types, steps, null);
+    PipelinesVerbatimMessage message = new PipelinesVerbatimMessage(datasetId, attempt, types, steps, null, EndpointType.DWC_ARCHIVE);
 
     // Expected
     ProcessBuilder builder =

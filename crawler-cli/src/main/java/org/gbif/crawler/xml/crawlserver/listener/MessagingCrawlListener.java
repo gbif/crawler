@@ -1,13 +1,10 @@
 package org.gbif.crawler.xml.crawlserver.listener;
 
 import org.gbif.api.model.crawler.FinishReason;
+import org.gbif.api.vocabulary.EndpointType;
 import org.gbif.common.messaging.api.Message;
 import org.gbif.common.messaging.api.MessagePublisher;
-import org.gbif.common.messaging.api.messages.CrawlErrorMessage;
-import org.gbif.common.messaging.api.messages.CrawlFinishedMessage;
-import org.gbif.common.messaging.api.messages.CrawlRequestMessage;
-import org.gbif.common.messaging.api.messages.CrawlResponseMessage;
-import org.gbif.common.messaging.api.messages.CrawlStartedMessage;
+import org.gbif.common.messaging.api.messages.*;
 import org.gbif.crawler.CrawlConfiguration;
 import org.gbif.crawler.CrawlContext;
 import org.gbif.crawler.CrawlListener;
@@ -31,6 +28,8 @@ public class MessagingCrawlListener<CTX extends CrawlContext> implements CrawlLi
 
   private final CrawlConfiguration configuration;
 
+  private final EndpointType endpointType;
+
   private CrawlContext lastContext;
 
   private int totalRecordCount;
@@ -42,9 +41,10 @@ public class MessagingCrawlListener<CTX extends CrawlContext> implements CrawlLi
    */
   private long duration;
 
-  public MessagingCrawlListener(MessagePublisher publisher, CrawlConfiguration configuration) {
+  public MessagingCrawlListener(MessagePublisher publisher, CrawlConfiguration configuration, EndpointType endpointType) {
     this.publisher = checkNotNull(publisher);
     this.configuration = checkNotNull(configuration);
+    this.endpointType = endpointType;
   }
 
   @Override
@@ -111,7 +111,7 @@ public class MessagingCrawlListener<CTX extends CrawlContext> implements CrawlLi
 
   private void finishCrawl(FinishReason reason) {
     Message msg =
-      new CrawlFinishedMessage(configuration.getDatasetKey(), configuration.getAttempt(), totalRecordCount, reason);
+      new CrawlFinishedMessage(configuration.getDatasetKey(), configuration.getAttempt(), totalRecordCount, reason, endpointType);
     sendMessageSilently(msg);
   }
 

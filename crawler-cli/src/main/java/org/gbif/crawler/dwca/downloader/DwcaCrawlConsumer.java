@@ -33,7 +33,12 @@ public class DwcaCrawlConsumer extends DownloadCrawlConsumer {
 
   @Override
   protected DatasetBasedMessage createFinishedMessage(CrawlJob crawlJob) {
-    return new DwcaDownloadFinishedMessage(crawlJob.getDatasetKey(), crawlJob.getTargetUrl(), crawlJob.getAttempt(), new Date(), true);
+    return new DwcaDownloadFinishedMessage(crawlJob.getDatasetKey(),
+                                           crawlJob.getTargetUrl(),
+                                           crawlJob.getAttempt(),
+                                           new Date(),
+                                           true,
+                                           crawlJob.getEndpointType());
   }
 
   @Override

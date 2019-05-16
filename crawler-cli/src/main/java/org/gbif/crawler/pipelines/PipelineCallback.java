@@ -169,8 +169,8 @@ public class PipelineCallback {
         ZookeeperUtils.updateMonitoring(b.curator, crawlId, successfulPath, Boolean.TRUE.toString());
 
         String nextMessageClassName = b.outgoingMessage.getClass().getSimpleName();
-        String messgePayload = b.outgoingMessage.toString();
-        b.publisher.send(new PipelinesBalancerMessage(nextMessageClassName, messgePayload));
+        String messagePayload = b.outgoingMessage.toString();
+        b.publisher.send(new PipelinesBalancerMessage(nextMessageClassName, messagePayload));
 
         String info = "Next message has been sent - " + b.outgoingMessage;
         LOG.info(info);
