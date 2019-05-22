@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import org.gbif.api.vocabulary.EndpointType;
 import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage;
+import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage.ValidationResult;
 import org.gbif.crawler.pipelines.PipelineCallback.Runner;
 
 import org.junit.Test;
@@ -36,7 +37,7 @@ public class ProcessRunnerBuilderTest {
             + "-cp java.jar org.gbif.Test --pipelineStep=VERBATIM_TO_INTERPRETED --datasetId=de7ffb5e-c07b-42dc-8a88-f67a4465fe3d --attempt=1 "
             + "--interpretationTypes=ALL --runner=SparkRunner --targetPath=tmp --metaFileName=verbatim-to-interpreted.yml --inputPath=verbatim.avro "
             + "--avroCompressionType=SNAPPY --avroSyncInterval=1 --hdfsSiteConfig=hdfs.xml --coreSiteConfig=core.xml "
-            + "--properties=/path/ws.config --endPointType=DWC_ARCHIVE";
+            + "--properties=/path/ws.config --endPointType=DWC_ARCHIVE --tripletValid=true --occurrenceIdValid=true";
 
     InterpreterConfiguration config = new InterpreterConfiguration();
     config.standaloneJarPath = "java.jar";
@@ -56,7 +57,9 @@ public class ProcessRunnerBuilderTest {
     int attempt = 1;
     Set<String> types = Collections.singleton(ALL.name());
     Set<String> steps = Collections.singleton(ALL.name());
-    PipelinesVerbatimMessage message = new PipelinesVerbatimMessage(datasetId, attempt, types, steps, null, EndpointType.DWC_ARCHIVE);
+    PipelinesVerbatimMessage message =
+        new PipelinesVerbatimMessage(datasetId, attempt, types, steps, null, EndpointType.DWC_ARCHIVE,
+            new ValidationResult(true, true));
 
     // When
     ProcessBuilder builder =
@@ -73,11 +76,12 @@ public class ProcessRunnerBuilderTest {
     // When
     String expected =
         "spark2-submit --conf spark.default.parallelism=1 --conf spark.executor.memoryOverhead=1 --conf spark.yarn.maxAppAttempts=1 "
+            + "--conf spark.dynamicAllocation.enabled=false "
             + "--class org.gbif.Test --master yarn --deploy-mode cluster --executor-memory 1G --executor-cores 1 --num-executors 1 "
             + "--driver-memory 4G java.jar --datasetId=de7ffb5e-c07b-42dc-8a88-f67a4465fe3d --attempt=1 --interpretationTypes=ALL "
             + "--runner=SparkRunner --targetPath=tmp --metaFileName=verbatim-to-interpreted.yml --inputPath=verbatim.avro "
             + "--avroCompressionType=SNAPPY --avroSyncInterval=1 --hdfsSiteConfig=hdfs.xml --coreSiteConfig=core.xml "
-            + "--properties=/path/ws.config --endPointType=DWC_ARCHIVE";
+            + "--properties=/path/ws.config --endPointType=DWC_ARCHIVE --tripletValid=true --occurrenceIdValid=true";
 
     InterpreterConfiguration config = new InterpreterConfiguration();
     config.distributedJarPath = "java.jar";
@@ -103,7 +107,9 @@ public class ProcessRunnerBuilderTest {
     int attempt = 1;
     Set<String> types = Collections.singleton(ALL.name());
     Set<String> steps = Collections.singleton(ALL.name());
-    PipelinesVerbatimMessage message = new PipelinesVerbatimMessage(datasetId, attempt, types, steps, null, EndpointType.DWC_ARCHIVE);
+    PipelinesVerbatimMessage message =
+        new PipelinesVerbatimMessage(datasetId, attempt, types, steps, null, EndpointType.DWC_ARCHIVE,
+            new ValidationResult(true, true));
 
     // Expected
     ProcessBuilder builder =
@@ -128,7 +134,8 @@ public class ProcessRunnerBuilderTest {
     String expected =
         "spark2-submit --conf spark.metrics.conf=metrics.properties --conf \"spark.driver.extraClassPath=logstash-gelf.jar\" "
             + "--driver-java-options \"-Dlog4j.configuration=file:log4j.properties\" --queue pipelines --conf spark.default.parallelism=1 "
-            + "--conf spark.executor.memoryOverhead=1 --conf spark.yarn.maxAppAttempts=1 --class org.gbif.Test --master yarn "
+            + "--conf spark.executor.memoryOverhead=1 --conf spark.yarn.maxAppAttempts=1 --conf spark.dynamicAllocation.enabled=false "
+            + "--class org.gbif.Test --master yarn "
             + "--deploy-mode cluster --executor-memory 1G --executor-cores 1 --num-executors 1 --driver-memory 4G java.jar "
             + "--datasetId=de7ffb5e-c07b-42dc-8a88-f67a4465fe3d --attempt=1 --interpretationTypes=ALL --runner=SparkRunner "
             + "--targetPath=tmp --metaFileName=verbatim-to-interpreted.yml --inputPath=verbatim.avro --avroCompressionType=SNAPPY "
@@ -162,7 +169,8 @@ public class ProcessRunnerBuilderTest {
     int attempt = 1;
     Set<String> types = Collections.singleton(ALL.name());
     Set<String> steps = Collections.singleton(ALL.name());
-    PipelinesVerbatimMessage message = new PipelinesVerbatimMessage(datasetId, attempt, types, steps, null, EndpointType.DWC_ARCHIVE);
+    PipelinesVerbatimMessage message =
+        new PipelinesVerbatimMessage(datasetId, attempt, types, steps, null, EndpointType.DWC_ARCHIVE, null);
 
     // Expected
     ProcessBuilder builder =

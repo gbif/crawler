@@ -140,6 +140,9 @@ public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMes
    */
   private static boolean tripletsValid(DwcaValidationReport validationReport) {
     OccurrenceValidationReport report = validationReport.getOccurrenceReport();
+    if (report == null) {
+      return true;
+    }
     return report.getUniqueTriplets() > 0
         && report.getCheckedRecords() - report.getRecordsWithInvalidTriplets() == report.getUniqueTriplets();
   }
@@ -150,6 +153,9 @@ public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMes
    */
   private static boolean occurrenceIdsValid(DwcaValidationReport validationReport) {
     OccurrenceValidationReport report = validationReport.getOccurrenceReport();
+    if (report == null) {
+      return true;
+    }
     return report.getCheckedRecords() > 0 && report.getUniqueOccurrenceIds() == report.getCheckedRecords();
   }
 

@@ -99,10 +99,10 @@ final class ProcessRunnerBuilder {
     StringJoiner joiner = new StringJoiner(DELIMITER).add("spark2-submit");
 
     Optional.ofNullable(config.metricsPropertiesPath).ifPresent(x -> joiner.add("--conf spark.metrics.conf=" + x));
-    Optional.ofNullable(config.extraClassPath).ifPresent(x -> joiner.add("--conf \"spark.driver.extraClassPath=" + x + "\""));
+    Optional.ofNullable(config.extraClassPath)
+        .ifPresent(x -> joiner.add("--conf \"spark.driver.extraClassPath=" + x + "\""));
     Optional.ofNullable(config.driverJavaOptions).ifPresent(x -> joiner.add("--driver-java-options \"" + x + "\""));
     Optional.ofNullable(config.yarnQueue).ifPresent(x -> joiner.add("--queue " + x));
-
 
     if (sparkParallelism < 1) {
       throw new IllegalArgumentException("sparkParallelism can't be 0");
@@ -111,6 +111,7 @@ final class ProcessRunnerBuilder {
     joiner.add("--conf spark.default.parallelism=" + sparkParallelism)
         .add("--conf spark.executor.memoryOverhead=" + config.sparkMemoryOverhead)
         .add("--conf spark.yarn.maxAppAttempts=1")
+        .add("--conf spark.dynamicAllocation.enabled=false")
         .add("--class " + Objects.requireNonNull(config.distributedMainClass))
         .add("--master yarn")
         .add("--deploy-mode " + Objects.requireNonNull(config.deployMode))
@@ -144,6 +145,12 @@ final class ProcessRunnerBuilder {
         .add("--coreSiteConfig=" + Objects.requireNonNull(config.coreSiteConfig))
         .add("--properties=" + Objects.requireNonNull(config.wsConfig))
         .add("--endPointType=" + Objects.requireNonNull(message.getEndpointType()));
+
+    Optional.ofNullable(message.getValidationResult())
+        .ifPresent(vr -> command
+            .add("--tripletValid=" + vr.isTripletValid())
+            .add("--occurrenceIdValid=" + vr.isOccurrenceIdValid())
+        );
 
     // Adds user name to run a command if it is necessary
     StringJoiner joiner = new StringJoiner(DELIMITER);

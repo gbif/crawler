@@ -10,9 +10,11 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
 
+import org.gbif.api.vocabulary.EndpointType;
 import org.gbif.common.messaging.AbstractMessageCallback;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage;
+import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage.ValidationResult;
 import org.gbif.common.messaging.api.messages.PipelinesXmlMessage;
 import org.gbif.converters.XmlToAvroConverter;
 import org.gbif.crawler.pipelines.PipelineCallback;
@@ -22,7 +24,6 @@ import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.gbif.crawler.constants.PipelinesNodePaths.ALL_STEPS;
 import static org.gbif.crawler.constants.PipelinesNodePaths.XML_TO_VERBATIM;
 import static org.gbif.crawler.pipelines.HdfsUtils.buildOutputPath;
 import static org.gbif.crawler.pipelines.PipelineCallback.Steps.ALL;
@@ -65,11 +66,14 @@ public class XmlToAvroCallback extends AbstractMessageCallback<PipelinesXmlMessa
     int attempt = message.getAttempt();
     Set<String> steps = message.getPipelineSteps();
     Runnable runnable = createRunnable(message);
+    EndpointType endpointType = message.getEndpointType();
+    ValidationResult validationResult = new ValidationResult(true, true);
 
     // Message callback handler, updates zookeeper info, runs process logic and sends next MQ message
     PipelineCallback.create()
         .incomingMessage(message)
-        .outgoingMessage(new PipelinesVerbatimMessage(datasetId, attempt, config.interpretTypes, steps, null, message.getEndpointType()))
+        .outgoingMessage(new PipelinesVerbatimMessage(datasetId, attempt, config.interpretTypes, steps, null,
+            endpointType, validationResult))
         .curator(curator)
         .zkRootElementPath(XML_TO_VERBATIM)
         .pipelinesStepName(Steps.XML_TO_VERBATIM.name())
