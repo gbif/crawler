@@ -6,10 +6,14 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
 
+import org.gbif.api.model.crawler.DwcaValidationReport;
+import org.gbif.api.model.crawler.OccurrenceValidationReport;
+import org.gbif.api.vocabulary.EndpointType;
 import org.gbif.common.messaging.AbstractMessageCallback;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.PipelinesDwcaMessage;
 import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage;
+import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage.ValidationResult;
 import org.gbif.converters.DwcaToAvroConverter;
 import org.gbif.crawler.pipelines.PipelineCallback;
 import org.gbif.crawler.pipelines.PipelineCallback.Steps;
@@ -62,11 +66,15 @@ public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMes
     int attempt = message.getAttempt();
     Set<String> steps = message.getPipelineSteps();
     Runnable runnable = createRunnable(message);
+    EndpointType endpointType = message.getEndpointType();
+    ValidationResult validationResult = new ValidationResult(tripletsValid(message.getValidationReport()),
+        occurrenceIdsValid(message.getValidationReport()));
 
     // Message callback handler, updates zookeeper info, runs process logic and sends next MQ message
     PipelineCallback.create()
         .incomingMessage(message)
-        .outgoingMessage(new PipelinesVerbatimMessage(datasetId, attempt, config.interpretTypes, steps, null, message.getEndpointType()))
+        .outgoingMessage(new PipelinesVerbatimMessage(datasetId, attempt, config.interpretTypes, steps, null,
+            endpointType, validationResult))
         .curator(curator)
         .zkRootElementPath(DWCA_TO_VERBATIM)
         .pipelinesStepName(Steps.DWCA_TO_VERBATIM.name())
@@ -124,6 +132,25 @@ public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMes
     Preconditions.checkState(directoryPath.toFile().exists(), "Directory - %s does not exist!", directoryPath);
 
     return directoryPath;
+  }
+
+  /**
+   * For XML datasets triplets are always valid. For DwC-A datasets triplets are valid if there are more than 0 unique
+   * triplets in the dataset, and exactly 0 triplets referenced by more than one record.
+   */
+  private static boolean tripletsValid(DwcaValidationReport validationReport) {
+    OccurrenceValidationReport report = validationReport.getOccurrenceReport();
+    return report.getUniqueTriplets() > 0
+        && report.getCheckedRecords() - report.getRecordsWithInvalidTriplets() == report.getUniqueTriplets();
+  }
+
+  /**
+   * For XML datasets occurrenceIds are always accepted. For DwC-A datasets occurrenceIds are valid if each record has a
+   * unique occurrenceId.
+   */
+  private static boolean occurrenceIdsValid(DwcaValidationReport validationReport) {
+    OccurrenceValidationReport report = validationReport.getOccurrenceReport();
+    return report.getCheckedRecords() > 0 && report.getUniqueOccurrenceIds() == report.getCheckedRecords();
   }
 
 }

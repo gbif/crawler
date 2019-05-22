@@ -156,7 +156,7 @@ final class ProcessRunnerBuilder {
 
     ProcessBuilder builder = new ProcessBuilder("/bin/bash", "-c", result);
 
-    BiFunction<String, String, File> createDirfn = (String type, String path) -> {
+    BiFunction<String, String, File> createDirFn = (String type, String path) -> {
       try {
         Files.createDirectories(Paths.get(path));
         File file = new File(path + message.getDatasetUuid() + "_" + message.getAttempt() + "_int_" + type + ".log");
@@ -169,9 +169,9 @@ final class ProcessRunnerBuilder {
 
     // The command side outputs
     Optional.ofNullable(config.processErrorDirectory)
-        .ifPresent(x -> builder.redirectError(createDirfn.apply("err", x)));
+        .ifPresent(x -> builder.redirectError(createDirFn.apply("err", x)));
     Optional.ofNullable(config.processOutputDirectory)
-        .ifPresent(x -> builder.redirectOutput(createDirfn.apply("out", x)));
+        .ifPresent(x -> builder.redirectOutput(createDirFn.apply("out", x)));
 
     return builder;
   }
