@@ -63,6 +63,9 @@ public class InterpreterConfiguration {
   @Parameter(names = "--spark-parallelism")
   public int sparkParallelism;
 
+  @Parameter(names = "--spark-parallelism-min")
+  public int sparkParallelismMin;
+
   @Parameter(names = "--spark-parallelism-max")
   public int sparkParallelismMax;
 
@@ -187,6 +190,7 @@ public class InterpreterConfiguration {
         .add("metaFileName", metaFileName)
         .add("processRunner", processRunner)
         .add("sparkParallelismMax", sparkParallelismMax)
+        .add("sparkParallelismMin", sparkParallelismMin)
         .add("yarnQueue", yarnQueue)
         .toString();
   }

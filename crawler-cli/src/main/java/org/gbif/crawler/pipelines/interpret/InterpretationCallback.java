@@ -143,7 +143,8 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
     // Strategy 2: Chooses a runner type by calculating verbatim.avro file size
     long fileSizeByte = HdfsUtils.getfileSizeByte(verbatimPath, config.hdfsSiteConfig);
     int numberOfThreads = (int) Math.ceil(fileSizeByte / (config.threadPerMb * 1024d * 1024d));
-    return numberOfThreads > 1 ? numberOfThreads : 1;
+    return (numberOfThreads > 1 && numberOfThreads > config.sparkParallelismMin) ? numberOfThreads :
+        config.sparkParallelismMin;
   }
 
 
