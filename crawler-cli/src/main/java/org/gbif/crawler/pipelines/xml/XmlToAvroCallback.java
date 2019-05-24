@@ -67,7 +67,7 @@ public class XmlToAvroCallback extends AbstractMessageCallback<PipelinesXmlMessa
     Set<String> steps = message.getPipelineSteps();
     Runnable runnable = createRunnable(message);
     EndpointType endpointType = message.getEndpointType();
-    ValidationResult validationResult = new ValidationResult(true, true);
+    ValidationResult validationResult = new ValidationResult(true, true, null);
 
     // Message callback handler, updates zookeeper info, runs process logic and sends next MQ message
     PipelineCallback.create()

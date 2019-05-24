@@ -68,7 +68,7 @@ public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMes
     Runnable runnable = createRunnable(message);
     EndpointType endpointType = message.getEndpointType();
     ValidationResult validationResult = new ValidationResult(tripletsValid(message.getValidationReport()),
-        occurrenceIdsValid(message.getValidationReport()));
+        occurrenceIdsValid(message.getValidationReport()), null);
 
     // Message callback handler, updates zookeeper info, runs process logic and sends next MQ message
     PipelineCallback.create()

@@ -42,7 +42,7 @@ final class ProcessRunnerBuilder {
   }
 
   ProcessRunnerBuilder sparkParallelism(int sparkParallelism) {
-    this.sparkParallelism = sparkParallelism > 0 ? sparkParallelism : config.sparkParallelism;
+    this.sparkParallelism = sparkParallelism > 0 ? sparkParallelism : config.sparkParallelismMin;
     return this;
   }
 
@@ -151,6 +151,10 @@ final class ProcessRunnerBuilder {
             .add("--tripletValid=" + vr.isTripletValid())
             .add("--occurrenceIdValid=" + vr.isOccurrenceIdValid())
         );
+
+    Optional.ofNullable(message.getValidationResult()).ifPresent(vr ->
+        Optional.ofNullable(vr.isUseExtendedRecordId()).ifPresent(x -> command.add("--useExtendedRecordId=" + x))
+    );
 
     // Adds user name to run a command if it is necessary
     StringJoiner joiner = new StringJoiner(DELIMITER);
