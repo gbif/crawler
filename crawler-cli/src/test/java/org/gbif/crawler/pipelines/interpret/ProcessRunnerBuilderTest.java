@@ -59,7 +59,7 @@ public class ProcessRunnerBuilderTest {
     Set<String> steps = Collections.singleton(ALL.name());
     PipelinesVerbatimMessage message =
         new PipelinesVerbatimMessage(datasetId, attempt, types, steps, null, EndpointType.DWC_ARCHIVE, null,
-            new ValidationResult(true, true, null));
+            new ValidationResult(true, true, null, 100));
 
     // When
     ProcessBuilder builder =
@@ -109,7 +109,7 @@ public class ProcessRunnerBuilderTest {
     Set<String> steps = Collections.singleton(ALL.name());
     PipelinesVerbatimMessage message =
         new PipelinesVerbatimMessage(datasetId, attempt, types, steps, null, EndpointType.DWC_ARCHIVE, "something",
-            new ValidationResult(true, true, true));
+            new ValidationResult(true, true, true, null));
 
     // Expected
     ProcessBuilder builder =

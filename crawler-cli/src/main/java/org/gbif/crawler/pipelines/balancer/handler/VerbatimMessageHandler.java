@@ -92,6 +92,11 @@ public class VerbatimMessageHandler {
    */
   private static long getRecordNumber(BalancerConfiguration config, PipelinesVerbatimMessage message)
       throws IOException {
+
+    if (message.getValidationResult() != null && message.getValidationResult().getNumberOfRecords() != null) {
+      return message.getValidationResult().getNumberOfRecords();
+    }
+
     String datasetId = message.getDatasetUuid().toString();
     String attempt = Integer.toString(message.getAttempt());
     String metaFileName = new DwcaToAvroConfiguration().metaFileName;

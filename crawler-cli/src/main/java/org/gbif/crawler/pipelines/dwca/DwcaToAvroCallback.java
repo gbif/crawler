@@ -6,7 +6,6 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
 
-import org.gbif.api.model.crawler.DwcaValidationReport;
 import org.gbif.api.model.crawler.OccurrenceValidationReport;
 import org.gbif.api.vocabulary.EndpointType;
 import org.gbif.common.messaging.AbstractMessageCallback;
@@ -67,8 +66,9 @@ public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMes
     Set<String> steps = message.getPipelineSteps();
     Runnable runnable = createRunnable(message);
     EndpointType endpointType = message.getEndpointType();
-    ValidationResult validationResult = new ValidationResult(tripletsValid(message.getValidationReport()),
-        occurrenceIdsValid(message.getValidationReport()), null);
+    OccurrenceValidationReport occReport = message.getValidationReport().getOccurrenceReport();
+    Integer numberOfRecords = occReport == null ? null : occReport.getCheckedRecords();
+    ValidationResult validationResult = new ValidationResult(tripletsValid(occReport), occurrenceIdsValid(occReport), null, numberOfRecords);
 
     // Message callback handler, updates zookeeper info, runs process logic and sends next MQ message
     PipelineCallback.create()
@@ -139,8 +139,7 @@ public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMes
    * For XML datasets triplets are always valid. For DwC-A datasets triplets are valid if there are more than 0 unique
    * triplets in the dataset, and exactly 0 triplets referenced by more than one record.
    */
-  private static boolean tripletsValid(DwcaValidationReport validationReport) {
-    OccurrenceValidationReport report = validationReport.getOccurrenceReport();
+  private static boolean tripletsValid(OccurrenceValidationReport report) {
     if (report == null) {
       return true;
     }
@@ -152,8 +151,7 @@ public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMes
    * For XML datasets occurrenceIds are always accepted. For DwC-A datasets occurrenceIds are valid if each record has a
    * unique occurrenceId.
    */
-  private static boolean occurrenceIdsValid(DwcaValidationReport validationReport) {
-    OccurrenceValidationReport report = validationReport.getOccurrenceReport();
+  private static boolean occurrenceIdsValid(OccurrenceValidationReport report) {
     if (report == null) {
       return true;
     }

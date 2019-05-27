@@ -175,9 +175,14 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
   }
 
   /**
-   * Reads number of records from a dwca-to-avro metadata file
+   * Reads number of records from the message or dwca-to-avro metadata file
    */
   private long getRecordNumber(PipelinesVerbatimMessage message) throws IOException {
+
+    if (message.getValidationResult() != null && message.getValidationResult().getNumberOfRecords() != null) {
+      return message.getValidationResult().getNumberOfRecords();
+    }
+
     String datasetId = message.getDatasetUuid().toString();
     String attempt = Integer.toString(message.getAttempt());
     String metaFileName = new DwcaToAvroConfiguration().metaFileName;
