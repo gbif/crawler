@@ -59,10 +59,15 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
     Set<String> steps = message.getPipelineSteps();
     Runnable runnable = createRunnable(message);
 
+    Integer recordsNumber = null;
+    if (message.getValidationResult() != null && message.getValidationResult().getNumberOfRecords() != null) {
+      recordsNumber = message.getValidationResult().getNumberOfRecords();
+    }
+
     // Message callback handler, updates zookeeper info, runs process logic and sends next MQ message
     PipelineCallback.create()
         .incomingMessage(message)
-        .outgoingMessage(new PipelinesInterpretedMessage(datasetId, message.getAttempt(), steps, null))
+        .outgoingMessage(new PipelinesInterpretedMessage(datasetId, message.getAttempt(), steps, recordsNumber, null))
         .curator(curator)
         .zkRootElementPath(VERBATIM_TO_INTERPRETED)
         .pipelinesStepName(Steps.VERBATIM_TO_INTERPRETED.name())

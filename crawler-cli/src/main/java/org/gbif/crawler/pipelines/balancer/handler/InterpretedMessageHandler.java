@@ -44,7 +44,7 @@ public class InterpretedMessageHandler {
     String runner = computeRunner(config, m).name();
 
     PipelinesInterpretedMessage outputMessage =
-        new PipelinesInterpretedMessage(m.getDatasetUuid(), m.getAttempt(), m.getPipelineSteps(), runner);
+        new PipelinesInterpretedMessage(m.getDatasetUuid(), m.getAttempt(), m.getPipelineSteps(), m.getNumberOfRecords(), runner);
 
     publisher.send(outputMessage);
 
@@ -92,6 +92,10 @@ public class InterpretedMessageHandler {
    */
   private static long getRecordNumber(BalancerConfiguration config, PipelinesInterpretedMessage message)
       throws IOException {
+    if (message.getNumberOfRecords() != null) {
+      return message.getNumberOfRecords();
+    }
+
     String datasetId = message.getDatasetUuid().toString();
     String attempt = Integer.toString(message.getAttempt());
     String metaFileName = new DwcaToAvroConfiguration().metaFileName;

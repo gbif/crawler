@@ -231,6 +231,10 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
    * count, which is not accurate enough
    */
   private long getRecordNumber(PipelinesInterpretedMessage message) throws IOException {
+    if (message.getNumberOfRecords() != null) {
+      return message.getNumberOfRecords();
+    }
+
     String datasetId = message.getDatasetUuid().toString();
     String attempt = Integer.toString(message.getAttempt());
     String metaFileName = new DwcaToAvroConfiguration().metaFileName;

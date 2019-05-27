@@ -51,7 +51,7 @@ public class ProcessRunnerBuilderTest {
     UUID datasetId = UUID.fromString("de7ffb5e-c07b-42dc-8a88-f67a4465fe3d");
     int attempt = 1;
     Set<String> steps = Collections.singleton(ALL.name());
-    PipelinesInterpretedMessage message = new PipelinesInterpretedMessage(datasetId, attempt, steps, null);
+    PipelinesInterpretedMessage message = new PipelinesInterpretedMessage(datasetId, attempt, steps, 100, null);
 
     String indexName = "occurrence";
 
@@ -101,7 +101,7 @@ public class ProcessRunnerBuilderTest {
     UUID datasetId = UUID.fromString("de7ffb5e-c07b-42dc-8a88-f67a4465fe3d");
     int attempt = 1;
     Set<String> steps = Collections.singleton(ALL.name());
-    PipelinesInterpretedMessage message = new PipelinesInterpretedMessage(datasetId, attempt, steps, null);
+    PipelinesInterpretedMessage message = new PipelinesInterpretedMessage(datasetId, attempt, steps, null, null);
 
     String indexName = "occurrence";
 
@@ -160,7 +160,7 @@ public class ProcessRunnerBuilderTest {
     UUID datasetId = UUID.fromString("de7ffb5e-c07b-42dc-8a88-f67a4465fe3d");
     int attempt = 1;
     Set<String> steps = Collections.singleton(ALL.name());
-    PipelinesInterpretedMessage message = new PipelinesInterpretedMessage(datasetId, attempt, steps, null);
+    PipelinesInterpretedMessage message = new PipelinesInterpretedMessage(datasetId, attempt, steps, 100, null);
 
     String indexName = "occurrence";
 
