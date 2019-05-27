@@ -102,7 +102,7 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
 
         String indexName = computeIndexName(datasetId, attempt, recordsNumber);
         String indexAlias = indexName.startsWith(datasetId) ? datasetId + "," + config.indexAlias : "";
-        int numberOfShards = (int) Math.ceil((double) recordsNumber / (double) config.indexRecordsPerShard);
+        int numberOfShards = computeNumberOfShards(indexName, recordsNumber);
         int sparkParallelism = computeSparkParallelism(datasetId, attempt);
         int sparkExecutorNumbers = computeSparkExecutorNumbers(recordsNumber);
         String sparkExecutorMemory = computeSparkExecutorMemory(recordsNumber, sparkExecutorNumbers);
@@ -206,6 +206,16 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
     idxName = config.indexDefDynamicName;
     LOG.info("ES Index name - {}, lastChangedDate - {}, diff days - {}", idxName, lastChangedDate, diff);
     return idxName;
+  }
+
+  private int computeNumberOfShards(String indexName, long recordsNumber) {
+    if (indexName.equals(config.indexDefDynamicName)) {
+      return config.indexDefDynamicShardNumber;
+    }
+    if (indexName.equals(config.indexDefStaticName)) {
+      return config.indexDefStaticNameShardNumber;
+    }
+    return (int) Math.ceil((double) recordsNumber / (double) config.indexRecordsPerShard);
   }
 
   /**

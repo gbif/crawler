@@ -171,6 +171,10 @@ public class IndexingConfiguration {
   @NotNull
   public String indexDefStaticName;
 
+  @Parameter(names = "--index-def-static-shard-number")
+  @NotNull
+  public Integer indexDefStaticNameShardNumber;
+
   @Parameter(names = "--index-def-static-date-duration-dd")
   @NotNull
   public Integer indexDefStaticDateDurationDd;
@@ -178,6 +182,10 @@ public class IndexingConfiguration {
   @Parameter(names = "--index-def-dynamic-name")
   @NotNull
   public String indexDefDynamicName;
+
+  @Parameter(names = "--index-def-dynamic-shard-number")
+  @NotNull
+  public Integer indexDefDynamicShardNumber;
 
   @Parameter(names = "--index-records-per-shard")
   @NotNull
