@@ -96,7 +96,8 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
         long recordsNumber = getRecordNumber(message);
 
         String verbatim = Conversion.FILE_NAME + Pipeline.AVRO_EXTENSION;
-        String path = String.join("/", config.repositoryPath, datasetId, attempt, verbatim);
+        String path = message.getExtraPath() != null ? message.getExtraPath() :
+            String.join("/", config.repositoryPath, datasetId, attempt, verbatim);
         int sparkParallelism = computeSparkParallelism(path, recordsNumber);
         int sparkExecutorNumbers = computeSparkExecutorNumbers(recordsNumber);
         String sparkExecutorMemory = computeSparkExecutorMemory(recordsNumber, sparkExecutorNumbers);

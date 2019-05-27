@@ -73,7 +73,7 @@ public class XmlToAvroCallback extends AbstractMessageCallback<PipelinesXmlMessa
     PipelineCallback.create()
         .incomingMessage(message)
         .outgoingMessage(new PipelinesVerbatimMessage(datasetId, attempt, config.interpretTypes, steps, null,
-            endpointType, validationResult))
+            endpointType, null, validationResult))
         .curator(curator)
         .zkRootElementPath(XML_TO_VERBATIM)
         .pipelinesStepName(Steps.XML_TO_VERBATIM.name())

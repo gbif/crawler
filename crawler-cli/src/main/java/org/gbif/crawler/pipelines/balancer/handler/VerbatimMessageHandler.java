@@ -45,7 +45,7 @@ public class VerbatimMessageHandler {
 
     PipelinesVerbatimMessage outputMessage =
         new PipelinesVerbatimMessage(m.getDatasetUuid(), m.getAttempt(), m.getInterpretTypes(), m.getPipelineSteps(),
-            runner, m.getEndpointType(), m.getValidationResult());
+            runner, m.getEndpointType(), m.getExtraPath(), m.getValidationResult());
 
     publisher.send(outputMessage);
 
