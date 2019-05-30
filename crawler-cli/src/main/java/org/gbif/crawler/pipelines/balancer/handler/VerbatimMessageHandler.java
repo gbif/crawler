@@ -93,10 +93,6 @@ public class VerbatimMessageHandler {
   private static long getRecordNumber(BalancerConfiguration config, PipelinesVerbatimMessage message)
       throws IOException {
 
-    if (message.getValidationResult() != null && message.getValidationResult().getNumberOfRecords() != null) {
-      return message.getValidationResult().getNumberOfRecords();
-    }
-
     String datasetId = message.getDatasetUuid().toString();
     String attempt = Integer.toString(message.getAttempt());
     String metaFileName = new DwcaToAvroConfiguration().metaFileName;
@@ -104,7 +100,12 @@ public class VerbatimMessageHandler {
 
     String recordsNumber = HdfsUtils.getValueByKey(config.hdfsSiteConfig, metaPath, Metrics.DWCA_TO_AVRO_COUNT);
     if (recordsNumber == null || recordsNumber.isEmpty()) {
-      throw new IllegalArgumentException("Please check dwca-to-avro metadata yaml file, recordsNumber can't be null or empty!");
+      if (message.getValidationResult() != null && message.getValidationResult().getNumberOfRecords() != null) {
+        return message.getValidationResult().getNumberOfRecords();
+      } else {
+        throw new IllegalArgumentException(
+            "Please check dwca-to-avro metadata yaml file or message records number, recordsNumber can't be null or empty!");
+      }
     }
     return Long.parseLong(recordsNumber);
   }

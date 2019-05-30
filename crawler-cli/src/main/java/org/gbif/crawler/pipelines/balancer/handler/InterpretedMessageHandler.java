@@ -44,7 +44,8 @@ public class InterpretedMessageHandler {
     String runner = computeRunner(config, m).name();
 
     PipelinesInterpretedMessage outputMessage =
-        new PipelinesInterpretedMessage(m.getDatasetUuid(), m.getAttempt(), m.getPipelineSteps(), m.getNumberOfRecords(), runner);
+        new PipelinesInterpretedMessage(m.getDatasetUuid(), m.getAttempt(), m.getPipelineSteps(),
+            m.getNumberOfRecords(), runner);
 
     publisher.send(outputMessage);
 
@@ -92,9 +93,6 @@ public class InterpretedMessageHandler {
    */
   private static long getRecordNumber(BalancerConfiguration config, PipelinesInterpretedMessage message)
       throws IOException {
-    if (message.getNumberOfRecords() != null) {
-      return message.getNumberOfRecords();
-    }
 
     String datasetId = message.getDatasetUuid().toString();
     String attempt = Integer.toString(message.getAttempt());
@@ -102,6 +100,14 @@ public class InterpretedMessageHandler {
     String metaPath = String.join("/", config.repositoryPath, datasetId, attempt, metaFileName);
 
     String recordsNumber = HdfsUtils.getValueByKey(config.hdfsSiteConfig, metaPath, Metrics.DWCA_TO_AVRO_COUNT);
+    if (recordsNumber == null || recordsNumber.isEmpty()) {
+      if (message.getNumberOfRecords() != null) {
+        return message.getNumberOfRecords();
+      } else {
+        throw new IllegalArgumentException(
+            "Please check dwca-to-avro metadata yaml file or message records number, recordsNumber can't be null or empty!");
+      }
+    }
     return Long.parseLong(recordsNumber);
   }
 
