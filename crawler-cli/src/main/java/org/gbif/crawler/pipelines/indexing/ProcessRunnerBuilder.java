@@ -69,7 +69,7 @@ final class ProcessRunnerBuilder {
   }
 
   ProcessRunnerBuilder esShardsNumber(Integer esShardsNumber) {
-    this.esShardsNumber = esShardsNumber == null ? config.indexNumberShards : esShardsNumber;
+    this.esShardsNumber = Objects.requireNonNull(esShardsNumber);
     return this;
   }
 
