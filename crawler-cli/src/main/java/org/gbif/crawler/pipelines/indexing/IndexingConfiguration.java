@@ -198,6 +198,11 @@ public class IndexingConfiguration {
   @Parameter(names = "--yarn-queue")
   public String yarnQueue;
 
+  @Parameter(names = "--ws-config")
+  @Valid
+  @NotNull
+  public String wsConfig;
+
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
@@ -235,6 +240,7 @@ public class IndexingConfiguration {
         .add("processRunner", processRunner)
         .add("sparkParallelismMax", sparkParallelismMax)
         .add("yarnQueue", yarnQueue)
+        .add("wsConfig", wsConfig)
         .toString();
   }
 

@@ -53,7 +53,7 @@ public class VerbatimMessageHandler {
   }
 
   /**
-   * Copmutes runner type:
+   * Computes runner type:
    * Strategy 1 - Chooses a runner type by number of records in a dataset
    * Strategy 2 - Chooses a runner type by calculating verbatim.avro file size
    */
