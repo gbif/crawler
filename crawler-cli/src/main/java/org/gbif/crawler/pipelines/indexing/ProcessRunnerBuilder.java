@@ -111,7 +111,8 @@ final class ProcessRunnerBuilder {
     StringJoiner joiner = new StringJoiner(DELIMITER).add("spark2-submit");
 
     Optional.ofNullable(config.metricsPropertiesPath).ifPresent(x -> joiner.add("--conf spark.metrics.conf=" + x));
-    Optional.ofNullable(config.extraClassPath).ifPresent(x -> joiner.add("--conf \"spark.driver.extraClassPath=" + x + "\""));
+    Optional.ofNullable(config.extraClassPath)
+        .ifPresent(x -> joiner.add("--conf \"spark.driver.extraClassPath=" + x + "\""));
     Optional.ofNullable(config.driverJavaOptions).ifPresent(x -> joiner.add("--driver-java-options \"" + x + "\""));
     Optional.ofNullable(config.yarnQueue).ifPresent(x -> joiner.add("--queue " + x));
 
@@ -174,7 +175,7 @@ final class ProcessRunnerBuilder {
 
     ProcessBuilder builder = new ProcessBuilder("/bin/bash", "-c", result);
 
-    BiFunction<String, String, File> createDirfn = (String type, String path) -> {
+    BiFunction<String, String, File> createDirFn = (String type, String path) -> {
       try {
         Files.createDirectories(Paths.get(path));
         File file = new File(path + message.getDatasetUuid() + "_" + message.getAttempt() + "_idx_" + type + ".log");
@@ -184,12 +185,18 @@ final class ProcessRunnerBuilder {
         throw new RuntimeException(ex);
       }
     };
-
     // The command side outputs
-    Optional.ofNullable(config.processErrorDirectory)
-        .ifPresent(x -> builder.redirectError(createDirfn.apply("err", x)));
-    Optional.ofNullable(config.processOutputDirectory)
-        .ifPresent(x -> builder.redirectOutput(createDirfn.apply("out", x)));
+    if (config.processErrorDirectory != null) {
+      builder.redirectError(createDirFn.apply("err", config.processErrorDirectory));
+    } else {
+      builder.redirectError(new File("/dev/null"));
+    }
+
+    if (config.processOutputDirectory != null) {
+      builder.redirectOutput(createDirFn.apply("out", config.processOutputDirectory));
+    } else {
+      builder.redirectOutput(new File("/dev/null"));
+    }
 
     return builder;
   }

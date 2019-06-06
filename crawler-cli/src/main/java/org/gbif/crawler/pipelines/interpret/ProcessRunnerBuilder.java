@@ -179,10 +179,17 @@ final class ProcessRunnerBuilder {
     };
 
     // The command side outputs
-    Optional.ofNullable(config.processErrorDirectory)
-        .ifPresent(x -> builder.redirectError(createDirFn.apply("err", x)));
-    Optional.ofNullable(config.processOutputDirectory)
-        .ifPresent(x -> builder.redirectOutput(createDirFn.apply("out", x)));
+    if (config.processErrorDirectory != null) {
+      builder.redirectError(createDirFn.apply("err", config.processErrorDirectory));
+    } else {
+      builder.redirectError(new File("/dev/null"));
+    }
+
+    if (config.processOutputDirectory != null) {
+      builder.redirectOutput(createDirFn.apply("out", config.processOutputDirectory));
+    } else {
+      builder.redirectOutput(new File("/dev/null"));
+    }
 
     return builder;
   }
