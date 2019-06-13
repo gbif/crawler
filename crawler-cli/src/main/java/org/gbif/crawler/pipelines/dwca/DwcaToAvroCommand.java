@@ -17,7 +17,7 @@ public class DwcaToAvroCommand extends ServiceCommand {
   private final DwcaToAvroConfiguration config = new DwcaToAvroConfiguration();
 
   public DwcaToAvroCommand() {
-    super("pipelines-dwca-to-avro");
+    super("pipelines-to-avro-from-dwca");
   }
 
   @Override

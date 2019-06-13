@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -24,9 +23,10 @@ import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.Sets;
+
 import static org.gbif.crawler.constants.PipelinesNodePaths.XML_TO_VERBATIM;
 import static org.gbif.crawler.pipelines.HdfsUtils.buildOutputPath;
-import static org.gbif.crawler.pipelines.PipelineCallback.Steps.ALL;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -60,14 +60,18 @@ public class XmlToAvroCallback extends AbstractMessageCallback<PipelinesXmlMessa
     LOG.info("Message handler began - {}", message);
 
     if (message.getPipelineSteps().isEmpty()) {
-      message.setPipelineSteps(Collections.singleton(ALL.name()));
+      message.setPipelineSteps(Sets.newHashSet(
+          Steps.XML_TO_VERBATIM.name(),
+          Steps.VERBATIM_TO_INTERPRETED.name(),
+          Steps.INTERPRETED_TO_INDEX.name()
+      ));
     }
 
     // Common variables
     UUID datasetId = message.getDatasetUuid();
     int attempt = message.getAttempt();
     Set<String> steps = message.getPipelineSteps();
-    Runnable runnable = createRunnable(message);
+    Runnable runnable = createRunnable(config, datasetId, String.valueOf(attempt));
     EndpointType endpointType = message.getEndpointType();
     ValidationResult validationResult = new ValidationResult(true, true, null, null);
 
@@ -90,13 +94,11 @@ public class XmlToAvroCallback extends AbstractMessageCallback<PipelinesXmlMessa
   /**
    * Main message processing logic, converts an ABCD archive to an avro file.
    */
-  private Runnable createRunnable(PipelinesXmlMessage message) {
+  public static Runnable createRunnable(XmlToAvroConfiguration config, UUID datasetId, String attempt) {
     return () -> {
-      UUID datasetId = message.getDatasetUuid();
-      String attempt = String.valueOf(message.getAttempt());
 
       // Calculates and checks existence of DwC Archive
-      Path inputPath = buildInputPath(datasetId, attempt);
+      Path inputPath = buildInputPath(config, datasetId, attempt);
 
       // Calculates export path of avro as extended record
       org.apache.hadoop.fs.Path outputPath =
@@ -115,7 +117,6 @@ public class XmlToAvroCallback extends AbstractMessageCallback<PipelinesXmlMessa
           .inputPath(inputPath)
           .outputPath(outputPath)
           .metaPath(metaPath)
-          .idHashPrefix(datasetId.toString())
           .convert();
     };
   }
@@ -124,7 +125,7 @@ public class XmlToAvroCallback extends AbstractMessageCallback<PipelinesXmlMessa
    * Input path result example, directory - /mnt/auto/crawler/xml/9bed66b3-4caa-42bb-9c93-71d7ba109dad/2,
    * if directory is absent, tries check a tar archive  - /mnt/auto/crawler/xml/9bed66b3-4caa-42bb-9c93-71d7ba109dad/2.tar.xz
    */
-  private Path buildInputPath(UUID dataSetUuid, String attempt) {
+  private static Path buildInputPath(XmlToAvroConfiguration config, UUID dataSetUuid, String attempt) {
 
     Path directoryPath = config.archiveRepositorySubdir.stream()
         .map(subdir -> Paths.get(config.archiveRepository, subdir, dataSetUuid.toString()).toFile())

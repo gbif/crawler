@@ -109,7 +109,7 @@ public class PipelinesProcessServiceImplTest {
     Assert.assertEquals(2, set.size());
     set.forEach(status -> {
       Assert.assertNotNull(status);
-      Assert.assertEquals(5, status.getPipelinesSteps().size());
+      Assert.assertEquals(6, status.getPipelinesSteps().size());
       Assert.assertTrue(crawlIds.contains(status.getCrawlId()));
       status.getPipelinesSteps().forEach(step -> {
         Assert.assertTrue(ALL_STEPS.contains(step.getName()));
@@ -137,7 +137,7 @@ public class PipelinesProcessServiceImplTest {
 
     // Should
     Assert.assertNotNull(status);
-    Assert.assertEquals(5, status.getPipelinesSteps().size());
+    Assert.assertEquals(6, status.getPipelinesSteps().size());
     Assert.assertEquals(crawlId, status.getCrawlId());
     status.getPipelinesSteps().forEach(step -> {
       Assert.assertTrue(ALL_STEPS.contains(step.getName()));
@@ -165,7 +165,7 @@ public class PipelinesProcessServiceImplTest {
     Assert.assertEquals(1, set.size());
     set.forEach(status -> {
       Assert.assertNotNull(status);
-      Assert.assertEquals(5, status.getPipelinesSteps().size());
+      Assert.assertEquals(6, status.getPipelinesSteps().size());
       Assert.assertEquals(crawlId, status.getCrawlId());
       status.getPipelinesSteps().forEach(step -> {
         Assert.assertTrue(ALL_STEPS.contains(step.getName()));

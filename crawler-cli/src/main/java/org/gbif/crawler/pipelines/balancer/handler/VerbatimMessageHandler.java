@@ -5,6 +5,7 @@ import java.io.IOException;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.PipelinesBalancerMessage;
 import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage;
+import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage.ValidationResult;
 import org.gbif.crawler.pipelines.HdfsUtils;
 import org.gbif.crawler.pipelines.PipelineCallback.Runner;
 import org.gbif.crawler.pipelines.balancer.BalancerConfiguration;
@@ -41,11 +42,17 @@ public class VerbatimMessageHandler {
     // Populate message fields
     ObjectMapper mapper = new ObjectMapper();
     PipelinesVerbatimMessage m = mapper.readValue(message.getPayload(), PipelinesVerbatimMessage.class);
-    String runner = computeRunner(config, m).name();
+    long recordsNumber = getRecordNumber(config, m);
+    String runner = computeRunner(config, m, recordsNumber).name();
+
+    ValidationResult result = m.getValidationResult();
+    if (result.getNumberOfRecords() == null) {
+      result.setNumberOfRecords(recordsNumber);
+    }
 
     PipelinesVerbatimMessage outputMessage =
         new PipelinesVerbatimMessage(m.getDatasetUuid(), m.getAttempt(), m.getInterpretTypes(), m.getPipelineSteps(),
-            runner, m.getEndpointType(), m.getExtraPath(), m.getValidationResult());
+            runner, m.getEndpointType(), m.getExtraPath(), result);
 
     publisher.send(outputMessage);
 
@@ -57,12 +64,12 @@ public class VerbatimMessageHandler {
    * Strategy 1 - Chooses a runner type by number of records in a dataset
    * Strategy 2 - Chooses a runner type by calculating verbatim.avro file size
    */
-  private static Runner computeRunner(BalancerConfiguration config, PipelinesVerbatimMessage message)
+  private static Runner computeRunner(BalancerConfiguration config, PipelinesVerbatimMessage message,
+      long recordsNumber)
       throws IOException {
 
     String datasetId = message.getDatasetUuid().toString();
     String attempt = String.valueOf(message.getAttempt());
-    long recordsNumber = getRecordNumber(config, message);
 
     Runner runner;
 
@@ -88,7 +95,7 @@ public class VerbatimMessageHandler {
   }
 
   /**
-   * Reads number of records from a dwca-to-avro metadata file
+   * Reads number of records from a archive-to-avro metadata file
    */
   private static long getRecordNumber(BalancerConfiguration config, PipelinesVerbatimMessage message)
       throws IOException {
@@ -98,17 +105,16 @@ public class VerbatimMessageHandler {
     String metaFileName = new DwcaToAvroConfiguration().metaFileName;
     String metaPath = String.join("/", config.repositoryPath, datasetId, attempt, metaFileName);
 
-    String recordsNumber = HdfsUtils.getValueByKey(config.hdfsSiteConfig, metaPath, Metrics.DWCA_TO_AVRO_COUNT);
+    String recordsNumber = HdfsUtils.getValueByKey(config.hdfsSiteConfig, metaPath, Metrics.ARCHIVE_TO_ER_COUNT);
     if (recordsNumber == null || recordsNumber.isEmpty()) {
       if (message.getValidationResult() != null && message.getValidationResult().getNumberOfRecords() != null) {
         return message.getValidationResult().getNumberOfRecords();
       } else {
         throw new IllegalArgumentException(
-            "Please check dwca-to-avro metadata yaml file or message records number, recordsNumber can't be null or empty!");
+            "Please check archive-to-avro metadata yaml file or message records number, recordsNumber can't be null or empty!");
       }
     }
     return Long.parseLong(recordsNumber);
   }
-
 
 }

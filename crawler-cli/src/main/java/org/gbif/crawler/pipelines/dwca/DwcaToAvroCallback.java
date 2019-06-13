@@ -2,7 +2,6 @@ package org.gbif.crawler.pipelines.dwca;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
 
@@ -22,12 +21,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Sets;
 
 import static org.gbif.api.vocabulary.DatasetType.OCCURRENCE;
 import static org.gbif.api.vocabulary.DatasetType.SAMPLING_EVENT;
 import static org.gbif.crawler.constants.PipelinesNodePaths.DWCA_TO_VERBATIM;
 import static org.gbif.crawler.pipelines.HdfsUtils.buildOutputPath;
-import static org.gbif.crawler.pipelines.PipelineCallback.Steps.ALL;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -63,7 +62,11 @@ public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMes
     }
 
     if (message.getPipelineSteps().isEmpty()) {
-      message.setPipelineSteps(Collections.singleton(ALL.name()));
+      message.setPipelineSteps(Sets.newHashSet(
+          Steps.DWCA_TO_VERBATIM.name(),
+          Steps.VERBATIM_TO_INTERPRETED.name(),
+          Steps.INTERPRETED_TO_INDEX.name()
+      ));
     }
 
     // Common variables
@@ -73,14 +76,16 @@ public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMes
     Runnable runnable = createRunnable(message);
     EndpointType endpointType = message.getEndpointType();
     OccurrenceValidationReport occReport = message.getValidationReport().getOccurrenceReport();
-    Integer numberOfRecords = occReport == null ? null : occReport.getCheckedRecords();
-    ValidationResult validationResult = new ValidationResult(tripletsValid(occReport), occurrenceIdsValid(occReport), null, numberOfRecords);
+    Long numberOfRecords = occReport == null ? null : (long) occReport.getCheckedRecords();
+    ValidationResult validationResult =
+        new ValidationResult(tripletsValid(occReport), occurrenceIdsValid(occReport), null, numberOfRecords);
 
     // Message callback handler, updates zookeeper info, runs process logic and sends next MQ message
     PipelineCallback.create()
         .incomingMessage(message)
         .outgoingMessage(
-            new PipelinesVerbatimMessage(datasetId, attempt, config.interpretTypes, steps, null, endpointType, null,  validationResult)
+            new PipelinesVerbatimMessage(datasetId, attempt, config.interpretTypes, steps, null, endpointType, null,
+                validationResult)
         )
         .curator(curator)
         .zkRootElementPath(DWCA_TO_VERBATIM)
@@ -128,7 +133,6 @@ public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMes
           .inputPath(inputPath)
           .outputPath(outputPath)
           .metaPath(metaPath)
-          .idHashPrefix(datasetId.toString())
           .convert();
     };
   }

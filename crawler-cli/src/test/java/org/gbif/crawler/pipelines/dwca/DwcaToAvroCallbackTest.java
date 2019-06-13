@@ -1,15 +1,15 @@
 package org.gbif.crawler.pipelines.dwca;
 
-import org.gbif.api.model.crawler.DwcaValidationReport;
-import org.gbif.api.vocabulary.DatasetType;
-import org.gbif.api.vocabulary.EndpointType;
-import org.gbif.common.messaging.api.messages.PipelinesDwcaMessage;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Collections;
 import java.util.UUID;
+
+import org.gbif.api.model.crawler.DwcaValidationReport;
+import org.gbif.api.vocabulary.DatasetType;
+import org.gbif.api.vocabulary.EndpointType;
+import org.gbif.common.messaging.api.messages.PipelinesDwcaMessage;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
@@ -28,7 +28,7 @@ import org.junit.Test;
 import static org.gbif.crawler.pipelines.PipelineCallback.Steps.ALL;
 
 /**
- * Test dwca-to-avro commands message handling command on hdfs
+ * Test archive-to-avro commands message handling command on hdfs
  */
 public class DwcaToAvroCallbackTest {
 

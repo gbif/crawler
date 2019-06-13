@@ -26,6 +26,7 @@ public class PipelineCallback {
     ALL,
     DWCA_TO_VERBATIM,
     XML_TO_VERBATIM,
+    ABCD_TO_VERBATIM,
     VERBATIM_TO_INTERPRETED,
     INTERPRETED_TO_INDEX,
     HIVE_VIEW
@@ -180,7 +181,7 @@ public class PipelineCallback {
       }
 
       // Change zookeeper counter for passed steps
-      int size = steps.contains(ALL.name()) ? Steps.values().length - 2 : steps.size();
+      int size = steps.contains(ALL.name()) ? Steps.values().length - 3 : steps.size();
       ZookeeperUtils.checkMonitoringById(b.curator, size, crawlId);
 
     } catch (Exception ex) {

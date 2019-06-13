@@ -1,6 +1,8 @@
 package org.gbif.crawler.abcda.downloader;
 
-import org.apache.curator.framework.CuratorFramework;
+import java.io.File;
+import java.util.Date;
+
 import org.gbif.api.model.crawler.CrawlJob;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.AbcdaDownloadFinishedMessage;
@@ -8,8 +10,7 @@ import org.gbif.common.messaging.api.messages.DatasetBasedMessage;
 import org.gbif.crawler.abcda.AbcdaConfiguration;
 import org.gbif.crawler.common.DownloadCrawlConsumer;
 
-import java.io.File;
-import java.util.Date;
+import org.apache.curator.framework.CuratorFramework;
 
 /**
  * Consumer of the crawler queue that runs the actual ABCD archive download and emits a AbcdaDownloadFinishedMessage
@@ -23,7 +24,7 @@ public class AbcdaCrawlConsumer extends DownloadCrawlConsumer {
 
   @Override
   protected DatasetBasedMessage createFinishedMessage(CrawlJob crawlJob) {
-    return new AbcdaDownloadFinishedMessage(crawlJob.getDatasetKey(), crawlJob.getTargetUrl(), crawlJob.getAttempt(), new Date(), true);
+    return new AbcdaDownloadFinishedMessage(crawlJob.getDatasetKey(), crawlJob.getTargetUrl(), crawlJob.getAttempt(), new Date(), true, crawlJob.getEndpointType());
   }
 
   @Override

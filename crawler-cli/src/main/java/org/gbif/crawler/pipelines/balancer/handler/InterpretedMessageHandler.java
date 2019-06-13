@@ -41,11 +41,14 @@ public class InterpretedMessageHandler {
     // Populate message fields
     ObjectMapper mapper = new ObjectMapper();
     PipelinesInterpretedMessage m = mapper.readValue(message.getPayload(), PipelinesInterpretedMessage.class);
-    String runner = computeRunner(config, m).name();
+
+    long recordsNumber = getRecordNumber(config, m);
+
+    String runner = computeRunner(config, m, recordsNumber).name();
 
     PipelinesInterpretedMessage outputMessage =
         new PipelinesInterpretedMessage(m.getDatasetUuid(), m.getAttempt(), m.getPipelineSteps(),
-            m.getNumberOfRecords(), runner);
+            recordsNumber, runner);
 
     publisher.send(outputMessage);
 
@@ -53,16 +56,15 @@ public class InterpretedMessageHandler {
   }
 
   /**
-   * Copmutes runner type:
+   * Computes runner type:
    * Strategy 1 - Chooses a runner type by number of records in a dataset
    * Strategy 2 - Chooses a runner type by calculating verbatim.avro file size
    */
-  private static Runner computeRunner(BalancerConfiguration config, PipelinesInterpretedMessage message)
+  private static Runner computeRunner(BalancerConfiguration config, PipelinesInterpretedMessage message, long recordsNumber)
       throws IOException {
 
     String datasetId = message.getDatasetUuid().toString();
     String attempt = String.valueOf(message.getAttempt());
-    long recordsNumber = getRecordNumber(config, message);
 
     Runner runner;
 
@@ -88,7 +90,7 @@ public class InterpretedMessageHandler {
   }
 
   /**
-   * Reads number of records from a dwca-to-avro metadata file, verbatim-to-interpreted contains attempted records
+   * Reads number of records from a archive-to-avro metadata file, verbatim-to-interpreted contains attempted records
    * count, which is not accurate enough
    */
   private static long getRecordNumber(BalancerConfiguration config, PipelinesInterpretedMessage message)
@@ -99,13 +101,13 @@ public class InterpretedMessageHandler {
     String metaFileName = new DwcaToAvroConfiguration().metaFileName;
     String metaPath = String.join("/", config.repositoryPath, datasetId, attempt, metaFileName);
 
-    String recordsNumber = HdfsUtils.getValueByKey(config.hdfsSiteConfig, metaPath, Metrics.DWCA_TO_AVRO_COUNT);
+    String recordsNumber = HdfsUtils.getValueByKey(config.hdfsSiteConfig, metaPath, Metrics.ARCHIVE_TO_ER_COUNT);
     if (recordsNumber == null || recordsNumber.isEmpty()) {
       if (message.getNumberOfRecords() != null) {
         return message.getNumberOfRecords();
       } else {
         throw new IllegalArgumentException(
-            "Please check dwca-to-avro metadata yaml file or message records number, recordsNumber can't be null or empty!");
+            "Please check archive-to-avro metadata yaml file or message records number, recordsNumber can't be null or empty!");
       }
     }
     return Long.parseLong(recordsNumber);

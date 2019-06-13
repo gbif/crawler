@@ -43,7 +43,7 @@ public class XmlToAvroConfiguration {
   public int poolSize;
 
   @Parameter(names = "--meta-file-name")
-  public String metaFileName = Pipeline.DWCA_TO_VERBATIM + ".yml";
+  public String metaFileName = Pipeline.ARCHIVE_TO_VERBATIM + ".yml";
 
   @Parameter(names = "--xml-reader-parallelism")
   @Min(1)

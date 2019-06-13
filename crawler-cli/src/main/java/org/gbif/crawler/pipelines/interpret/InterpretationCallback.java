@@ -61,7 +61,7 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
     Set<String> steps = message.getPipelineSteps();
     Runnable runnable = createRunnable(message);
 
-    Integer recordsNumber = null;
+    Long recordsNumber = null;
     if (message.getValidationResult() != null && message.getValidationResult().getNumberOfRecords() != null) {
       recordsNumber = message.getValidationResult().getNumberOfRecords();
     }
@@ -184,7 +184,7 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
   }
 
   /**
-   * Reads number of records from the message or dwca-to-avro metadata file
+   * Reads number of records from the message or archive-to-avro metadata file
    */
   private long getRecordNumber(PipelinesVerbatimMessage message) throws IOException {
     String datasetId = message.getDatasetUuid().toString();
@@ -192,13 +192,13 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
     String metaFileName = new DwcaToAvroConfiguration().metaFileName;
     String metaPath = String.join("/", config.repositoryPath, datasetId, attempt, metaFileName);
 
-    String recordsNumber = HdfsUtils.getValueByKey(config.hdfsSiteConfig, metaPath, Metrics.DWCA_TO_AVRO_COUNT);
+    String recordsNumber = HdfsUtils.getValueByKey(config.hdfsSiteConfig, metaPath, Metrics.ARCHIVE_TO_ER_COUNT);
     if (recordsNumber == null || recordsNumber.isEmpty()) {
       if (message.getValidationResult() != null && message.getValidationResult().getNumberOfRecords() != null) {
         return message.getValidationResult().getNumberOfRecords();
       } else {
         throw new IllegalArgumentException(
-            "Please check dwca-to-avro metadata yaml file or message records number, recordsNumber can't be null or empty!");
+            "Please check archive-to-avro metadata yaml file or message records number, recordsNumber can't be null or empty!");
       }
     }
     return Long.parseLong(recordsNumber);

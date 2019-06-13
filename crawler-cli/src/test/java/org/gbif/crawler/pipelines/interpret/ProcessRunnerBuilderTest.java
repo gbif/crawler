@@ -59,7 +59,7 @@ public class ProcessRunnerBuilderTest {
     Set<String> steps = Collections.singleton(ALL.name());
     PipelinesVerbatimMessage message =
         new PipelinesVerbatimMessage(datasetId, attempt, types, steps, null, EndpointType.DWC_ARCHIVE, null,
-            new ValidationResult(true, true, null, 100));
+            new ValidationResult(true, true, null, 100L));
 
     // When
     ProcessBuilder builder =
