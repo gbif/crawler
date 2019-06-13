@@ -18,6 +18,8 @@ import org.gbif.crawler.pipelines.PipelineCallback;
 import org.gbif.crawler.pipelines.PipelineCallback.Steps;
 
 import org.apache.curator.framework.CuratorFramework;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
 
@@ -36,6 +38,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMessage> {
 
+  private static final Logger LOG = LoggerFactory.getLogger(DwcaToAvroCallback.class);
+
   private final DwcaToAvroConfiguration config;
   private final MessagePublisher publisher;
   private final CuratorFramework curator;
@@ -51,6 +55,8 @@ public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMes
    */
   @Override
   public void handleMessage(PipelinesDwcaMessage message) {
+
+    LOG.info("Message handler began - {}", message);
 
     if (!isMessageCorrect(message)) {
       return;
@@ -83,6 +89,8 @@ public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMes
         .runnable(runnable)
         .build()
         .handleMessage();
+
+    LOG.info("Message handler ended - {}", message);
   }
 
   /**

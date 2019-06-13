@@ -39,6 +39,8 @@ public class HiveViewCallback extends AbstractMessageCallback<PipelinesInterpret
   @Override
   public void handleMessage(PipelinesInterpretedMessage message) {
 
+    LOG.info("Message handler began - {}", message);
+
     Runnable runnable = createRunnable(message);
 
     // Message callback handler, updates zookeeper info, runs process logic and sends next MQ message
@@ -51,6 +53,8 @@ public class HiveViewCallback extends AbstractMessageCallback<PipelinesInterpret
         .runnable(runnable)
         .build()
         .handleMessage();
+
+    LOG.info("Message handler ended - {}", message);
   }
 
   /**

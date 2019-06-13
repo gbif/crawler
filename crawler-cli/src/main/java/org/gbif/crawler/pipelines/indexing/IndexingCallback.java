@@ -57,6 +57,8 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
   @Override
   public void handleMessage(PipelinesInterpretedMessage message) {
 
+    LOG.info("Message handler began - {}", message);
+
     if (!isMessageCorrect(message)) {
       return;
     }
@@ -76,6 +78,8 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
         .runnable(runnable)
         .build()
         .handleMessage();
+
+    LOG.info("Message handler ended - {}", message);
   }
 
   /**

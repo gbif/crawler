@@ -50,6 +50,8 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
   @Override
   public void handleMessage(PipelinesVerbatimMessage message) {
 
+    LOG.info("Message handler began - {}", message);
+
     if (!isMessageCorrect(message)) {
       return;
     }
@@ -75,6 +77,8 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
         .runnable(runnable)
         .build()
         .handleMessage();
+
+    LOG.info("Message handler ended - {}", message);
 
   }
 

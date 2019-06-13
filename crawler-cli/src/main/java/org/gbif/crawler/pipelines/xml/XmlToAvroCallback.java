@@ -57,6 +57,8 @@ public class XmlToAvroCallback extends AbstractMessageCallback<PipelinesXmlMessa
   @Override
   public void handleMessage(PipelinesXmlMessage message) {
 
+    LOG.info("Message handler began - {}", message);
+
     if (message.getPipelineSteps().isEmpty()) {
       message.setPipelineSteps(Collections.singleton(ALL.name()));
     }
@@ -81,6 +83,8 @@ public class XmlToAvroCallback extends AbstractMessageCallback<PipelinesXmlMessa
         .runnable(runnable)
         .build()
         .handleMessage();
+
+    LOG.info("Message handler ended - {}", message);
   }
 
   /**

@@ -39,7 +39,7 @@ public class BalancerCallback extends AbstractMessageCallback<PipelinesBalancerM
   /** Handles a MQ {@link PipelinesBalancerMessage} message */
   @Override
   public void handleMessage(PipelinesBalancerMessage message) {
-    LOG.info("The message has been revievd - {}", message);
+    LOG.info("Message handler began - {}", message);
 
     String className = message.getMessageClass();
 
@@ -57,6 +57,8 @@ public class BalancerCallback extends AbstractMessageCallback<PipelinesBalancerM
     } catch (IOException ex) {
       LOG.error("Exception during balancing the message", ex);
     }
+
+    LOG.info("Message handler ended - {}", message);
   }
 
 }
