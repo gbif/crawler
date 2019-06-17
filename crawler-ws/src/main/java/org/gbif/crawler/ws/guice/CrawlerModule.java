@@ -5,6 +5,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 import org.gbif.api.service.crawler.DatasetProcessService;
+import org.gbif.api.service.registry.DatasetService;
 import org.gbif.crawler.DatasetProcessServiceImpl;
 import org.gbif.crawler.pipelines.PipelinesProcessService;
 import org.gbif.crawler.pipelines.PipelinesProcessServiceImpl;
@@ -43,6 +44,7 @@ class CrawlerModule extends PrivateServiceModule {
     bind(PipelinesProcessService.class).to(PipelinesProcessServiceImpl.class).in(Scopes.SINGLETON);
     expose(DatasetProcessService.class);
     expose(PipelinesProcessService.class);
+    expose(DatasetService.class);
     expose(Executor.class);
     expose(CuratorFramework.class);
     expose(RestHighLevelClient.class);
