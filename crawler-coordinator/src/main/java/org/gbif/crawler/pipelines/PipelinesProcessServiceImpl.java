@@ -64,7 +64,7 @@ public class PipelinesProcessServiceImpl implements PipelinesProcessService {
   private final Executor executor;
   private final RestHighLevelClient client;
   private final String envPrefix;
-  private final DatasetService datasetService;
+  private final DatasetService datasetService = null;
 
   /**
    * Creates a CrawlerMetricsService. Responsible for interacting with a ZooKeeper instance in a read-only fashion.
@@ -77,12 +77,12 @@ public class PipelinesProcessServiceImpl implements PipelinesProcessService {
       CuratorFramework curator,
       Executor executor,
       RestHighLevelClient client,
-      DatasetService datasetService,
+      //DatasetService datasetService,
       @Named("pipelines.envPrefix") String envPrefix
   ) {
     this.curator = checkNotNull(curator, "curator can't be null");
     this.executor = checkNotNull(executor, "executor can't be null");
-    this.datasetService = datasetService;
+    //this.datasetService = datasetService;
     this.client = client;
     this.envPrefix = envPrefix;
   }
