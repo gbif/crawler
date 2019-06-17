@@ -5,14 +5,10 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-import org.gbif.api.model.registry.Dataset;
-import org.gbif.api.service.registry.DatasetService;
-import org.gbif.api.vocabulary.DatasetType;
 import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
 import org.gbif.crawler.pipelines.PipelinesProcessStatus.PipelinesStep;
 import org.gbif.crawler.pipelines.PipelinesProcessStatus.PipelinesStep.Status;
@@ -26,7 +22,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import com.google.common.base.Charsets;
@@ -42,7 +37,6 @@ import static org.gbif.crawler.constants.PipelinesNodePaths.INTERPRETED_TO_INDEX
 import static org.gbif.crawler.constants.PipelinesNodePaths.VERBATIM_TO_INTERPRETED;
 import static org.gbif.crawler.constants.PipelinesNodePaths.XML_TO_VERBATIM;
 import static org.gbif.crawler.constants.PipelinesNodePaths.getPipelinesInfoPath;
-import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class PipelinesProcessServiceImplTest {
@@ -88,15 +82,10 @@ public class PipelinesProcessServiceImplTest {
     });
   };
 
-  @Mock
-  private DatasetService datasetService;
+
   private CuratorFramework curator;
   private TestingServer server;
   private PipelinesProcessServiceImpl service;
-  private UUID uuid1 = UUID.fromString("a731e3b1-bc81-4c1f-aad7-aba75ce3cf3b");
-  private UUID uuid2 = UUID.fromString("be6cd2ff-bcc0-46a5-877e-1fe6e4ef8483");
-  private Dataset dataset1 = new Dataset();
-  private Dataset dataset2 = new Dataset();
 
 
   @Before
@@ -108,12 +97,8 @@ public class PipelinesProcessServiceImplTest {
         .retryPolicy(new RetryOneTime(1))
         .build();
     curator.start();
-    dataset1.setType(DatasetType.OCCURRENCE);
-    dataset2.setType(DatasetType.OCCURRENCE);
-    when(datasetService.get(uuid1)).thenReturn(dataset1);
-    when(datasetService.get(uuid2)).thenReturn(dataset2);
     service =
-        new PipelinesProcessServiceImpl(curator, Executors.newSingleThreadExecutor(), null, datasetService, "test");
+        new PipelinesProcessServiceImpl(curator, Executors.newSingleThreadExecutor(), null, "test");
   }
 
   @After
