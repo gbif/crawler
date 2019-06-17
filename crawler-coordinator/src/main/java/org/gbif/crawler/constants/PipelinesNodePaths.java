@@ -18,6 +18,7 @@ public class PipelinesNodePaths {
   private static final String ERR = "error";
   private static final String START = "startDate";
   private static final String END = "endDate";
+  private static final String RUNNER_TYPE = "runner";
   private static final String MESSAGE = "message";
   private static final String DONE = "availability";
 
@@ -43,6 +44,8 @@ public class PipelinesNodePaths {
 
     public static final UnaryOperator<String> START_DATE = s -> join(DELIMITER, s, START);
     public static final UnaryOperator<String> END_DATE = s -> join(DELIMITER, s, END);
+
+    public static final UnaryOperator<String> RUNNER = s -> join(DELIMITER, s, RUNNER_TYPE);
 
     public static final UnaryOperator<String> ERROR = s -> s + join(DELIMITER, s, ERR);
     public static final UnaryOperator<String> ERROR_AVAILABILITY = s -> s + join(DELIMITER, s, ERR, DONE);

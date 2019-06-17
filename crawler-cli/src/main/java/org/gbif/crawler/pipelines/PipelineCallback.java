@@ -5,7 +5,13 @@ import java.util.Set;
 import org.gbif.common.messaging.api.Message;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.PipelineBasedMessage;
+import org.gbif.common.messaging.api.messages.PipelinesAbcdMessage;
 import org.gbif.common.messaging.api.messages.PipelinesBalancerMessage;
+import org.gbif.common.messaging.api.messages.PipelinesDwcaMessage;
+import org.gbif.common.messaging.api.messages.PipelinesIndexedMessage;
+import org.gbif.common.messaging.api.messages.PipelinesInterpretedMessage;
+import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage;
+import org.gbif.common.messaging.api.messages.PipelinesXmlMessage;
 import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
 
 import org.apache.curator.framework.CuratorFramework;
@@ -35,7 +41,8 @@ public class PipelineCallback {
   // General runners, STANDALONE - run an app using local resources, DISTRIBUTED - run an app using YARN cluster
   public enum Runner {
     STANDALONE,
-    DISTRIBUTED
+    DISTRIBUTED,
+    UNKNOWN
   }
 
   private static final Logger LOG = LoggerFactory.getLogger(PipelineCallback.class);
@@ -157,6 +164,9 @@ public class PipelineCallback {
       String startDatePath = Fn.START_DATE.apply(b.zkRootElementPath);
       ZookeeperUtils.updateMonitoringDate(b.curator, crawlId, startDatePath);
 
+      String runnerPath = Fn.RUNNER.apply(b.zkRootElementPath);
+      ZookeeperUtils.updateMonitoring(b.curator, crawlId, runnerPath, getRunner(inMessage));
+
       LOG.info("Handler has been started, crawlId - {}", crawlId);
       b.runnable.run();
       LOG.info("Handler has been finished, crawlId - {}", crawlId);
@@ -194,5 +204,28 @@ public class PipelineCallback {
       String errorMessagePath = Fn.ERROR_MESSAGE.apply(b.zkRootElementPath);
       ZookeeperUtils.updateMonitoring(b.curator, crawlId, errorMessagePath, error);
     }
+  }
+
+  private String getRunner(PipelineBasedMessage inMessage) {
+
+    if (inMessage instanceof PipelinesAbcdMessage
+        || inMessage instanceof PipelinesXmlMessage
+        || inMessage instanceof PipelinesDwcaMessage) {
+      return Runner.STANDALONE.name();
+    }
+
+    if (inMessage instanceof PipelinesIndexedMessage) {
+      return ((PipelinesIndexedMessage) inMessage).getRunner();
+    }
+
+    if (inMessage instanceof PipelinesInterpretedMessage) {
+      return ((PipelinesInterpretedMessage) inMessage).getRunner();
+    }
+
+    if (inMessage instanceof PipelinesVerbatimMessage) {
+      return ((PipelinesVerbatimMessage) inMessage).getRunner();
+    }
+
+    return Runner.UNKNOWN.name();
   }
 }

@@ -221,6 +221,7 @@ public class PipelinesProcessServiceImpl implements PipelinesProcessService {
         Optional<Boolean> isSuccessful = getAsBoolean(crawlId, Fn.SUCCESSFUL_AVAILABILITY.apply(path));
         Optional<String> successfulMessageOpt = getAsString(crawlId, Fn.SUCCESSFUL_MESSAGE.apply(path));
 
+        getAsString(crawlId, Fn.RUNNER.apply(path)).ifPresent(step::setRunner);
         startDateOpt.ifPresent(x -> step.setStarted(x.toString()));
         endDateOpt.ifPresent(x -> step.setFinished(x.toString()));
 

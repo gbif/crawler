@@ -75,9 +75,10 @@ public class PipelinesProcessStatus implements Serializable {
 
   public static class PipelinesStep implements Serializable {
 
-    private static final long serialVersionUID = 460047082156621660L;
+    private static final long serialVersionUID = 460047082156621661L;
 
     private final String name;
+    private String runner;
     private String started;
     private String finished;
     private Status state;
@@ -85,6 +86,15 @@ public class PipelinesProcessStatus implements Serializable {
 
     public PipelinesStep(String name) {
       this.name = name;
+    }
+
+    public String getRunner() {
+      return runner;
+    }
+
+    public PipelinesStep setRunner(String runner) {
+      this.runner = runner;
+      return this;
     }
 
     public String getStarted() {
