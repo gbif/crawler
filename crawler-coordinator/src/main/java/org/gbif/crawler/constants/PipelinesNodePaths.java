@@ -24,6 +24,7 @@ public class PipelinesNodePaths {
   public static final String PIPELINES_ROOT = "pipelines";
 
   public static final String SIZE = "size";
+
   public static final String DWCA_TO_VERBATIM = "dwcaToVerbatim";
   public static final String XML_TO_VERBATIM = "xmlToVerbatim";
   public static final String ABCD_TO_VERBATIM = "abcdToVerbatim";

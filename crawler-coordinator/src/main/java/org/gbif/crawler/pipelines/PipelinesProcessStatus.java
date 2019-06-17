@@ -1,7 +1,6 @@
 package org.gbif.crawler.pipelines;
 
 import java.io.Serializable;
-import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Objects;
@@ -14,11 +13,14 @@ import java.util.TreeSet;
  */
 public class PipelinesProcessStatus implements Serializable {
 
-  private static final long serialVersionUID = -3992826055732414677L;
+  private static final long serialVersionUID = -3992826055732414678L;
 
   private final String crawlId;
-  private Set<PipelinesStep> pipelinesSteps = new TreeSet<>(Comparator.comparing(PipelinesStep::getStartDateTime));
-  private Set<MetricInfo> metricInfos = new HashSet<>();
+  private String datasetKey;
+  private String attempt;
+  private String datasetTitle;
+  private Set<PipelinesStep> steps = new TreeSet<>(Comparator.comparing(PipelinesStep::getStarted));
+  private Set<MetricInfo> metrics = new HashSet<>();
 
   public PipelinesProcessStatus(String crawlId) {
     this.crawlId = crawlId;
@@ -29,122 +31,110 @@ public class PipelinesProcessStatus implements Serializable {
   }
 
   public Set<PipelinesStep> getPipelinesSteps() {
-    return pipelinesSteps;
+    return steps;
   }
 
   public Set<MetricInfo> getMetricInfos() {
-    return metricInfos;
+    return metrics;
+  }
+
+  public String getDatasetKey() {
+    return datasetKey;
+  }
+
+  public PipelinesProcessStatus setDatasetKey(String datasetKey) {
+    this.datasetKey = datasetKey;
+    return this;
+  }
+
+  public String getAttempt() {
+    return attempt;
+  }
+
+  public PipelinesProcessStatus setAttempt(String attempt) {
+    this.attempt = attempt;
+    return this;
+  }
+
+  public String getDatasetTitle() {
+    return datasetTitle;
+  }
+
+  public PipelinesProcessStatus setDatasetTitle(String datasetTitle) {
+    this.datasetTitle = datasetTitle;
+    return this;
   }
 
   public void addStep(PipelinesStep step) {
-    pipelinesSteps.add(step);
+    steps.add(step);
   }
 
   public void addMericInfo(MetricInfo metricInfo) {
-    metricInfos.add(metricInfo);
+    metrics.add(metricInfo);
   }
 
   public static class PipelinesStep implements Serializable {
 
-    private static final long serialVersionUID = 460047082156621659L;
+    private static final long serialVersionUID = 460047082156621660L;
 
     private final String name;
-    private LocalDateTime startDateTime;
-    private LocalDateTime endDateTime;
-    private Status error = new Status();
-    private Status successful = new Status();
+    private String started;
+    private String finished;
+    private Status state;
+    private String message;
 
     public PipelinesStep(String name) {
       this.name = name;
+    }
+
+    public String getStarted() {
+      return started;
+    }
+
+    public PipelinesStep setStarted(String started) {
+      this.started = started;
+      return this;
+    }
+
+    public String getFinished() {
+      return finished;
+    }
+
+    public PipelinesStep setFinished(String finished) {
+      this.finished = finished;
+      return this;
+    }
+
+    public Status getState() {
+      return state;
+    }
+
+    public PipelinesStep setState(Status state) {
+      this.state = state;
+      return this;
+    }
+
+    public String getMessage() {
+      return message;
+    }
+
+    public PipelinesStep setMessage(String message) {
+      this.message = message;
+      return this;
     }
 
     public String getName() {
       return name;
     }
 
-    public LocalDateTime getStartDateTime() {
-      return startDateTime;
-    }
-
-    public PipelinesStep setStartDateTime(LocalDateTime startDate) {
-      this.startDateTime = startDate;
-      return this;
-    }
-
-    public LocalDateTime getEndDateTime() {
-      return endDateTime;
-    }
-
-    public PipelinesStep setEndDateTime(LocalDateTime endDate) {
-      this.endDateTime = endDate;
-      return this;
-    }
-
     public Optional<PipelinesStep> getStep() {
-      return startDateTime != null || endDateTime != null ? Optional.of(this) : Optional.empty();
+      return started != null || finished != null ? Optional.of(this) : Optional.empty();
     }
 
-    public Status getError() {
-      return error;
-    }
-
-    public PipelinesStep setError(Status error) {
-      this.error = error;
-      return this;
-    }
-
-    public Status getSuccessful() {
-      return successful;
-    }
-
-    public PipelinesStep setSuccessful(Status successful) {
-      this.successful = successful;
-      return this;
-    }
-
-    public static class Status implements Serializable {
-
-      private static final long serialVersionUID = 1827285369622224859L;
-
-      private boolean availability = false;
-      private String message = "";
-
-      public boolean isAvailability() {
-        return availability;
-      }
-
-      public Status setAvailability(boolean availability) {
-        this.availability = availability;
-        return this;
-      }
-
-      public String getMessage() {
-        return message;
-      }
-
-      public Status setMessage(String message) {
-        this.message = message;
-        return this;
-      }
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-      PipelinesStep that = (PipelinesStep) o;
-      return Objects.equals(name, that.name) &&
-          Objects.equals(startDateTime, that.startDateTime) &&
-          Objects.equals(endDateTime, that.endDateTime);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(name, startDateTime, endDateTime);
+    public enum Status {
+      RUNNING,
+      FAILED,
+      COMPLETED
     }
   }
 

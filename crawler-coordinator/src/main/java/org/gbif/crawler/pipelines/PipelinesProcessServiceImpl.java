@@ -21,6 +21,7 @@ import org.gbif.crawler.DatasetProcessServiceImpl;
 import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
 import org.gbif.crawler.pipelines.PipelinesProcessStatus.MetricInfo;
 import org.gbif.crawler.pipelines.PipelinesProcessStatus.PipelinesStep;
+import org.gbif.crawler.pipelines.PipelinesProcessStatus.PipelinesStep.Status;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.elasticsearch.action.search.SearchRequest;
@@ -200,15 +201,27 @@ public class PipelinesProcessServiceImpl implements PipelinesProcessService {
       PipelinesStep step = new PipelinesStep(path);
 
       try {
-        getAsDate(crawlId, Fn.START_DATE.apply(path)).ifPresent(step::setStartDateTime);
 
-        getAsDate(crawlId, Fn.END_DATE.apply(path)).ifPresent(step::setEndDateTime);
+        Optional<LocalDateTime> startDateOpt = getAsDate(crawlId, Fn.START_DATE.apply(path));
+        Optional<LocalDateTime> endDateOpt = getAsDate(crawlId, Fn.END_DATE.apply(path));
+        Optional<Boolean> isErrorOpt = getAsBoolean(crawlId, Fn.ERROR_AVAILABILITY.apply(path));
+        Optional<String> errorMessageOpt = getAsString(crawlId, Fn.ERROR_MESSAGE.apply(path));
+        Optional<Boolean> isSuccessful = getAsBoolean(crawlId, Fn.SUCCESSFUL_AVAILABILITY.apply(path));
+        Optional<String> successfulMessageOpt = getAsString(crawlId, Fn.SUCCESSFUL_MESSAGE.apply(path));
 
-        getAsBoolean(crawlId, Fn.ERROR_AVAILABILITY.apply(path)).ifPresent(step.getError()::setAvailability);
-        getAsString(crawlId, Fn.ERROR_MESSAGE.apply(path)).ifPresent(step.getError()::setMessage);
+        startDateOpt.ifPresent(x -> step.setStarted(x.toString()));
+        endDateOpt.ifPresent(x -> step.setFinished(x.toString()));
 
-        getAsBoolean(crawlId, Fn.SUCCESSFUL_AVAILABILITY.apply(path)).ifPresent(step.getSuccessful()::setAvailability);
-        getAsString(crawlId, Fn.SUCCESSFUL_MESSAGE.apply(path)).ifPresent(step.getSuccessful()::setMessage);
+        if (isErrorOpt.isPresent()) {
+          step.setState(Status.FAILED);
+          errorMessageOpt.ifPresent(step::setMessage);
+        } else if (isSuccessful.isPresent()) {
+          step.setState(Status.COMPLETED);
+          successfulMessageOpt.ifPresent(step::setMessage);
+        } else if (startDateOpt.isPresent() && !endDateOpt.isPresent()) {
+          step.setState(Status.RUNNING);
+        }
+
       } catch (Exception ex) {
         LOG.error(ex.getMessage(), ex);
       }
