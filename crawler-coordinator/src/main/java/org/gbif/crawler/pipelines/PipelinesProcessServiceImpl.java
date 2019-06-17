@@ -11,12 +11,14 @@ import java.util.Comparator;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
 import org.gbif.api.exception.ServiceUnavailableException;
+import org.gbif.api.service.registry.DatasetService;
 import org.gbif.crawler.DatasetProcessServiceImpl;
 import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
 import org.gbif.crawler.pipelines.PipelinesProcessStatus.MetricInfo;
@@ -62,6 +64,7 @@ public class PipelinesProcessServiceImpl implements PipelinesProcessService {
   private final Executor executor;
   private final RestHighLevelClient client;
   private final String envPrefix;
+  private final DatasetService datasetService;
 
   /**
    * Creates a CrawlerMetricsService. Responsible for interacting with a ZooKeeper instance in a read-only fashion.
@@ -70,10 +73,16 @@ public class PipelinesProcessServiceImpl implements PipelinesProcessService {
    * @param executor to run the thread pool
    */
   @Inject
-  public PipelinesProcessServiceImpl(CuratorFramework curator, Executor executor, RestHighLevelClient client,
-      @Named("pipelines.envPrefix") String envPrefix) {
+  public PipelinesProcessServiceImpl(
+      CuratorFramework curator,
+      Executor executor,
+      RestHighLevelClient client,
+      DatasetService datasetService,
+      @Named("pipelines.envPrefix") String envPrefix
+  ) {
     this.curator = checkNotNull(curator, "curator can't be null");
     this.executor = checkNotNull(executor, "executor can't be null");
+    this.datasetService = datasetService;
     this.client = client;
     this.envPrefix = envPrefix;
   }
@@ -129,6 +138,10 @@ public class PipelinesProcessServiceImpl implements PipelinesProcessService {
       }
       // Here we're trying to load all information from Zookeeper into the DatasetProcessStatus object
       PipelinesProcessStatus status = new PipelinesProcessStatus(crawlId);
+      String[] ids = crawlId.split("_");
+      status.setDatasetKey(ids[0]);
+      status.setAttempt(ids[1]);
+      Optional.ofNullable(datasetService).ifPresent(s -> status.setDatasetTitle(s.get(UUID.fromString(ids[0])).getTitle()));
 
       // ALL_STEPS - static set of all pipelines steps: DWCA_TO_AVRO, VERBATIM_TO_INTERPRETED and etc.
       getStepInfo(crawlId).forEach(step -> step.getStep().ifPresent(status::addStep));
@@ -201,7 +214,6 @@ public class PipelinesProcessServiceImpl implements PipelinesProcessService {
       PipelinesStep step = new PipelinesStep(path);
 
       try {
-
         Optional<LocalDateTime> startDateOpt = getAsDate(crawlId, Fn.START_DATE.apply(path));
         Optional<LocalDateTime> endDateOpt = getAsDate(crawlId, Fn.END_DATE.apply(path));
         Optional<Boolean> isErrorOpt = getAsBoolean(crawlId, Fn.ERROR_AVAILABILITY.apply(path));
