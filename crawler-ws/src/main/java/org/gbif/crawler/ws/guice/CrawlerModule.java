@@ -5,9 +5,11 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 import org.gbif.api.service.crawler.DatasetProcessService;
+import org.gbif.api.service.registry.DatasetService;
 import org.gbif.crawler.DatasetProcessServiceImpl;
 import org.gbif.crawler.pipelines.PipelinesProcessService;
 import org.gbif.crawler.pipelines.PipelinesProcessServiceImpl;
+import org.gbif.registry.ws.client.DatasetWsClient;
 import org.gbif.service.guice.PrivateServiceModule;
 
 import org.apache.curator.framework.CuratorFramework;
@@ -23,6 +25,7 @@ import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
+import com.sun.jersey.api.client.Client;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -46,6 +49,7 @@ class CrawlerModule extends PrivateServiceModule {
     expose(Executor.class);
     expose(CuratorFramework.class);
     expose(RestHighLevelClient.class);
+    expose(DatasetService.class);
 
     expose(String.class).annotatedWith(Names.named("overcrawledReportFilePath"));
     expose(String.class).annotatedWith(Names.named("pipelines.envPrefix"));
@@ -59,16 +63,16 @@ class CrawlerModule extends PrivateServiceModule {
   @Singleton
   @Inject
   public CuratorFramework provideZookeperResource(
-    @Named("crawl.server") String url,
-    @Named("crawl.namespace") String crawlNamespace,
-    @Named("crawl.server.retryAttempts") Integer retryAttempts,
-    @Named("crawl.server.retryDelayMs") Integer retryWait
+      @Named("crawl.server") String url,
+      @Named("crawl.namespace") String crawlNamespace,
+      @Named("crawl.server.retryAttempts") Integer retryAttempts,
+      @Named("crawl.server.retryDelayMs") Integer retryWait
   ) {
     CuratorFramework client = CuratorFrameworkFactory.builder()
-      .connectString(url)
-      .namespace(crawlNamespace)
-      .retryPolicy(new ExponentialBackoffRetry(retryWait, retryAttempts))
-      .build();
+        .connectString(url)
+        .namespace(crawlNamespace)
+        .retryPolicy(new ExponentialBackoffRetry(retryWait, retryAttempts))
+        .build();
     client.start();
     return client;
   }
@@ -86,14 +90,25 @@ class CrawlerModule extends PrivateServiceModule {
   }
 
   /**
-   * Provides an RestHighLevelClient to use for various threading related things. This is shared between all requests.
+   * Provides an RestHighLevelClient to use for Elasticsearch queries. This is shared between all requests.
    *
    * @param esUrl url to Elasticsearch instance
    */
   @Provides
   @Singleton
-  public RestHighLevelClient provideEsRestClient(@Named("pipelines.esUrl") String esUrl){
+  public RestHighLevelClient provideEsRestClient(@Named("pipelines.esUrl") String esUrl) {
     return new RestHighLevelClient(RestClient.builder(HttpHost.create(esUrl)).build());
+  }
+
+  /**
+   * Provides an DatasetService to query info about datasets. This is shared between all requests.
+   *
+   * @param url to registry
+   */
+  @Provides
+  @Singleton
+  public DatasetService provideDatasetService(Client client, @Named("registry.ws.url") String url) {
+    return new DatasetWsClient(client.resource(url), null);
   }
 
 }
