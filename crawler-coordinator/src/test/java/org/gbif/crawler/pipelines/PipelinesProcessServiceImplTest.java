@@ -54,9 +54,9 @@ public class PipelinesProcessServiceImplTest {
 
     s.forEach(status -> {
       Assert.assertNotNull(status);
-      Assert.assertEquals(6, status.getPipelinesSteps().size());
+      Assert.assertEquals(6, status.getSteps().size());
       Assert.assertTrue(ids.contains(status.getCrawlId()));
-      status.getPipelinesSteps().forEach(step -> {
+      status.getSteps().forEach(step -> {
 
         if (step.getName().equals(DWCA_TO_VERBATIM)
             || step.getName().equals(XML_TO_VERBATIM)
@@ -126,7 +126,7 @@ public class PipelinesProcessServiceImplTest {
 
     // Should
     Assert.assertNotNull(status);
-    Assert.assertEquals(0, status.getPipelinesSteps().size());
+    Assert.assertEquals(0, status.getSteps().size());
   }
 
   @Test

@@ -9,8 +9,9 @@ import org.gbif.api.service.registry.DatasetService;
 import org.gbif.crawler.DatasetProcessServiceImpl;
 import org.gbif.crawler.pipelines.PipelinesProcessService;
 import org.gbif.crawler.pipelines.PipelinesProcessServiceImpl;
-import org.gbif.registry.ws.client.DatasetWsClient;
+import org.gbif.registry.ws.client.guice.RegistryWsClientModule;
 import org.gbif.service.guice.PrivateServiceModule;
+import org.gbif.ws.client.guice.AnonymousAuthModule;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
@@ -19,13 +20,13 @@ import org.apache.http.HttpHost;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
 
+import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
-import com.sun.jersey.api.client.Client;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -107,8 +108,10 @@ class CrawlerModule extends PrivateServiceModule {
    */
   @Provides
   @Singleton
-  public DatasetService provideDatasetService(Client client, @Named("registry.ws.url") String url) {
-    return new DatasetWsClient(client.resource(url), null);
+  public DatasetService provideDatasetService(@Named("registry.ws.url") String url) {
+    Properties p = new Properties();
+    p.setProperty("registry.ws.url", url);
+    return Guice.createInjector(new RegistryWsClientModule(p), new AnonymousAuthModule()).getInstance(DatasetService.class);
   }
 
 }

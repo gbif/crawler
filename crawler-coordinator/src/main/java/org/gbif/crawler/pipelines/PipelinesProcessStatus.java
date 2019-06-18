@@ -30,11 +30,11 @@ public class PipelinesProcessStatus implements Serializable {
     return crawlId;
   }
 
-  public Set<PipelinesStep> getPipelinesSteps() {
+  public Set<PipelinesStep> getSteps() {
     return steps;
   }
 
-  public Set<MetricInfo> getMetricInfos() {
+  public Set<MetricInfo> getMetrics() {
     return metrics;
   }
 
