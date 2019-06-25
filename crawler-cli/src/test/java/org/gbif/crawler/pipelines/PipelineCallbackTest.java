@@ -1,12 +1,5 @@
 package org.gbif.crawler.pipelines;
 
-import org.gbif.common.messaging.api.Message;
-import org.gbif.common.messaging.api.MessagePublisher;
-import org.gbif.common.messaging.api.messages.PipelineBasedMessage;
-import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
-import org.gbif.crawler.pipelines.PipelineCallback;
-import org.gbif.crawler.pipelines.PipelineCallback.Steps;
-
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -16,7 +9,12 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
-import com.google.common.base.Charsets;
+import org.gbif.common.messaging.api.Message;
+import org.gbif.common.messaging.api.MessagePublisher;
+import org.gbif.common.messaging.api.messages.PipelineBasedMessage;
+import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
+import org.gbif.crawler.pipelines.PipelineCallback.Steps;
+
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.RetryOneTime;
@@ -29,6 +27,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+
+import com.google.common.base.Charsets;
 
 import static org.gbif.crawler.constants.PipelinesNodePaths.DWCA_TO_VERBATIM;
 import static org.gbif.crawler.constants.PipelinesNodePaths.SIZE;
@@ -83,19 +83,43 @@ public class PipelineCallbackTest {
 
     // When
     PipelineCallback.create()
-      .incomingMessage(incomingMessage)
-      .outgoingMessage(outgoingMessage)
-      .curator(curator)
-      .zkRootElementPath(rootPath)
-      .pipelinesStepName(nextStepName)
-      .runnable(runnable)
-      .publisher(publisher)
-      .build()
-      .handleMessage();
+        .incomingMessage(incomingMessage)
+        .outgoingMessage(outgoingMessage)
+        .curator(curator)
+        .zkRootElementPath(rootPath)
+        .pipelinesStepName(nextStepName)
+        .runnable(runnable)
+        .publisher(publisher)
+        .build()
+        .handleMessage();
+
+    Optional<LocalDateTime> startDate = getAsDate(crawlId, Fn.START_DATE.apply(DWCA_TO_VERBATIM));
+    Optional<LocalDateTime> endDate = getAsDate(crawlId, Fn.END_DATE.apply(DWCA_TO_VERBATIM));
+
+    // Run second time to check
+    PipelineCallback.create()
+        .incomingMessage(incomingMessage)
+        .outgoingMessage(outgoingMessage)
+        .curator(curator)
+        .zkRootElementPath(rootPath)
+        .pipelinesStepName(nextStepName)
+        .runnable(runnable)
+        .publisher(publisher)
+        .build()
+        .handleMessage();
+
+    Optional<LocalDateTime> startDateTwo = getAsDate(crawlId, Fn.START_DATE.apply(DWCA_TO_VERBATIM));
+    Optional<LocalDateTime> endDateTwo = getAsDate(crawlId, Fn.END_DATE.apply(DWCA_TO_VERBATIM));
 
     // Should
-    Assert.assertTrue(getAsDate(crawlId, Fn.START_DATE.apply(DWCA_TO_VERBATIM)).isPresent());
-    Assert.assertTrue(getAsDate(crawlId, Fn.END_DATE.apply(DWCA_TO_VERBATIM)).isPresent());
+    Assert.assertTrue(startDate.isPresent());
+    Assert.assertTrue(endDate.isPresent());
+
+    Assert.assertTrue(startDateTwo.isPresent());
+    Assert.assertTrue(endDateTwo.isPresent());
+
+    Assert.assertEquals(startDate.get(), startDateTwo.get());
+    Assert.assertEquals(endDate.get(), endDateTwo.get());
 
     Assert.assertTrue(getAsBoolean(crawlId, Fn.ERROR_AVAILABILITY.apply(DWCA_TO_VERBATIM)).isPresent());
     Assert.assertTrue(getAsString(crawlId, Fn.ERROR_MESSAGE.apply(DWCA_TO_VERBATIM)).isPresent());

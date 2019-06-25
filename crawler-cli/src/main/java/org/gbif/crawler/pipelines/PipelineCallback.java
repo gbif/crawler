@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
+import static org.gbif.crawler.constants.PipelinesNodePaths.getPipelinesInfoPath;
 import static org.gbif.crawler.pipelines.PipelineCallback.Steps.ALL;
 
 /**
@@ -160,6 +161,11 @@ public class PipelineCallback {
 
     LOG.info("Message has been received {}", inMessage);
     try {
+
+      if (ZookeeperUtils.checkExists(b.curator, getPipelinesInfoPath(crawlId, b.zkRootElementPath))) {
+        LOG.warn("Dataset is already in pipelines queue, please check the pipeline-ingestion monitoring tool - {}", crawlId);
+        return;
+      }
 
       String startDatePath = Fn.START_DATE.apply(b.zkRootElementPath);
       ZookeeperUtils.updateMonitoringDate(b.curator, crawlId, startDatePath);
