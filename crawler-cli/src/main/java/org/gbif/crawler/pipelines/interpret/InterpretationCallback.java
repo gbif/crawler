@@ -19,6 +19,7 @@ import org.gbif.pipelines.common.PipelinesVariables.Pipeline.Conversion;
 import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import com.google.common.base.Strings;
 
@@ -50,6 +51,8 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
   @Override
   public void handleMessage(PipelinesVerbatimMessage message) {
 
+    MDC.put("datasetId", message.getDatasetUuid().toString());
+    MDC.put("attempt", String.valueOf(message.getAttempt()));
     LOG.info("Message handler began - {}", message);
 
     if (!isMessageCorrect(message)) {

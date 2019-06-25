@@ -19,6 +19,7 @@ import org.gbif.crawler.pipelines.PipelineCallback.Steps;
 import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
@@ -55,6 +56,8 @@ public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMes
   @Override
   public void handleMessage(PipelinesDwcaMessage message) {
 
+    MDC.put("datasetId", message.getDatasetUuid().toString());
+    MDC.put("attempt", String.valueOf(message.getAttempt()));
     LOG.info("Message handler began - {}", message);
 
     if (!isMessageCorrect(message)) {

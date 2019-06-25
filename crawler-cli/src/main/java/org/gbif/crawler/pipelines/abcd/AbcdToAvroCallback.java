@@ -18,6 +18,7 @@ import org.gbif.crawler.pipelines.xml.XmlToAvroConfiguration;
 import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import com.google.common.collect.Sets;
 
@@ -50,6 +51,8 @@ public class AbcdToAvroCallback extends AbstractMessageCallback<PipelinesAbcdMes
   @Override
   public void handleMessage(PipelinesAbcdMessage message) {
 
+    MDC.put("datasetId", message.getDatasetUuid().toString());
+    MDC.put("attempt", String.valueOf(message.getAttempt()));
     LOG.info("Message handler began - {}", message);
 
     if (message.getPipelineSteps().isEmpty()) {

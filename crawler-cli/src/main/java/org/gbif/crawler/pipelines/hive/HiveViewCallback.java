@@ -12,6 +12,7 @@ import org.gbif.crawler.pipelines.PipelineCallback.Steps;
 import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import static org.gbif.crawler.constants.PipelinesNodePaths.HIVE_VIEW;
 
@@ -39,6 +40,8 @@ public class HiveViewCallback extends AbstractMessageCallback<PipelinesInterpret
   @Override
   public void handleMessage(PipelinesInterpretedMessage message) {
 
+    MDC.put("datasetId", message.getDatasetUuid().toString());
+    MDC.put("attempt", String.valueOf(message.getAttempt()));
     LOG.info("Message handler began - {}", message);
 
     Runnable runnable = createRunnable(message);
