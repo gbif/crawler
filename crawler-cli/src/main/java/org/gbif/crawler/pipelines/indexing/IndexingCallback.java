@@ -105,7 +105,7 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
         long recordsNumber = getRecordNumber(message);
 
         String indexName = computeIndexName(datasetId, attempt, recordsNumber);
-        String indexAlias = indexName.startsWith(datasetId) ? datasetId + "," + config.indexAlias : "";
+        String indexAlias = indexName.startsWith(datasetId) ? datasetId + "," + config.indexAlias : config.indexAlias;
         int numberOfShards = computeNumberOfShards(indexName, recordsNumber);
         int sparkParallelism = computeSparkParallelism(datasetId, attempt);
         int sparkExecutorNumbers = computeSparkExecutorNumbers(recordsNumber);
