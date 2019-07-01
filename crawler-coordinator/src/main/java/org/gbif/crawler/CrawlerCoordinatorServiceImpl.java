@@ -8,6 +8,8 @@ import org.gbif.api.model.registry.Endpoint;
 import org.gbif.api.model.registry.MachineTag;
 import org.gbif.api.service.registry.DatasetService;
 import org.gbif.api.util.MachineTagUtils;
+import org.gbif.api.util.comparators.EndpointCreatedComparator;
+import org.gbif.api.util.comparators.EndpointPriorityComparator;
 import org.gbif.api.vocabulary.EndpointType;
 import org.gbif.crawler.constants.CrawlerNodePaths;
 
