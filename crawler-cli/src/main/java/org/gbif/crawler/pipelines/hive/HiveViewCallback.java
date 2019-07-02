@@ -41,7 +41,7 @@ public class HiveViewCallback extends AbstractMessageCallback<PipelinesInterpret
   public void handleMessage(PipelinesInterpretedMessage message) {
 
     MDC.put("datasetId", message.getDatasetUuid().toString());
-    MDC.put("attempt", String.valueOf(message.getAttempt()));
+    MDC.put("attempt", message.getAttempt().toString());
     LOG.info("Message handler began - {}", message);
 
     Runnable runnable = createRunnable(message);
@@ -67,7 +67,7 @@ public class HiveViewCallback extends AbstractMessageCallback<PipelinesInterpret
     return () -> {
       // Common variables
       UUID datasetId = message.getDatasetUuid();
-      String attempt = Integer.toString(message.getAttempt());
+      String attempt = message.getAttempt().toString();
       Set<String> steps = message.getPipelineSteps();
 
       LOG.info("HELLO {} {} {}!", datasetId, attempt, steps);

@@ -1,6 +1,7 @@
 package org.gbif.crawler.pipelines.indexing;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.Date;
 import java.util.Set;
 import java.util.UUID;
@@ -58,22 +59,25 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
   @Override
   public void handleMessage(PipelinesInterpretedMessage message) {
 
-    MDC.put("datasetId", message.getDatasetUuid().toString());
-    MDC.put("attempt", String.valueOf(message.getAttempt()));
+    UUID datasetId = message.getDatasetUuid();
+    Integer attempt = message.getAttempt();
+
+    MDC.put("datasetId", datasetId.toString());
+    MDC.put("attempt", attempt.toString());
     LOG.info("Message handler began - {}", message);
 
     if (!isMessageCorrect(message)) {
       return;
     }
 
-    UUID datasetId = message.getDatasetUuid();
     Set<String> steps = message.getPipelineSteps();
     Runnable runnable = createRunnable(message);
+
 
     // Message callback handler, updates zookeeper info, runs process logic and sends next MQ message
     PipelineCallback.create()
         .incomingMessage(message)
-        .outgoingMessage(new PipelinesIndexedMessage(datasetId, message.getAttempt(), steps, null))
+        .outgoingMessage(new PipelinesIndexedMessage(datasetId, attempt, steps))
         .curator(curator)
         .zkRootElementPath(INTERPRETED_TO_INDEX)
         .pipelinesStepName(Steps.INTERPRETED_TO_INDEX.name())
@@ -107,7 +111,7 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
 
         long recordsNumber = getRecordNumber(message);
 
-        String indexName = computeIndexName(datasetId, attempt, recordsNumber);
+        String indexName = computeIndexName(datasetId, attempt, message.isRepeatAttempt(), recordsNumber);
         String indexAlias = indexName.startsWith(datasetId) ? datasetId + "," + config.indexAlias : config.indexAlias;
         int numberOfShards = computeNumberOfShards(indexName, recordsNumber);
         int sparkParallelism = computeSparkParallelism(datasetId, attempt);
@@ -149,7 +153,7 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
     String basic = RecordType.BASIC.name().toLowerCase();
     String directoryName = Interpretation.DIRECTORY_NAME;
     String basicPath = String.join("/", config.repositoryPath, datasetId, attempt, directoryName, basic);
-    int count = HdfsUtils.getfileCount(basicPath, config.hdfsSiteConfig);
+    int count = HdfsUtils.getFileCount(basicPath, config.hdfsSiteConfig);
     count *= 2; // 2 Times more threads than files
     return count > config.sparkParallelismMax ? config.sparkParallelismMax : count;
   }
@@ -186,15 +190,14 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
    * config.indexDefStaticDateDurationDd
    * Case 3 - Default dynamic index name for all other datasets
    */
-  private String computeIndexName(String datasetId, String attempt, long recordsNumber) {
+  private String computeIndexName(String datasetId, String attempt, boolean isRepeatAttempt, long recordsNumber) {
 
     // Independent index for datasets where number of records more than config.indexIndepRecord
     String idxName;
 
     if (recordsNumber >= config.indexIndepRecord) {
-      idxName = datasetId + "_" + attempt;
-      LOG.info("ES Index name - {}, recordsNumber - {}, config.indexIndepRecord - {}", idxName, recordsNumber,
-          config.indexIndepRecord);
+      idxName = isRepeatAttempt ? datasetId + "_" + attempt + "_" + Instant.now().toEpochMilli() : datasetId + "_" + attempt;
+      LOG.info("ES Index name - {}, recordsNumber - {}, config.indexIndepRecord - {}", idxName, recordsNumber, config.indexIndepRecord);
       return idxName;
     }
 

@@ -6,9 +6,13 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.StringJoiner;
+import java.util.stream.Collectors;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.LocatedFileStatus;
 import org.apache.hadoop.fs.Path;
@@ -35,7 +39,7 @@ public class HdfsUtils {
    * @param filePath path to some file
    * @param hdfsSiteConfig path to hdfs-site.xml config file
    */
-  public static long getfileSizeByte(String filePath, String hdfsSiteConfig) throws IOException {
+  public static long getFileSizeByte(String filePath, String hdfsSiteConfig) throws IOException {
     URI fileUri = URI.create(filePath);
     FileSystem fs = getFileSystem(fileUri, hdfsSiteConfig);
     Path path = new Path(fileUri);
@@ -49,7 +53,7 @@ public class HdfsUtils {
    * @param directoryPath path to some directory
    * @param hdfsSiteConfig path to hdfs-site.xml config file
    */
-  public static int getfileCount(String directoryPath, String hdfsSiteConfig) throws IOException {
+  public static int getFileCount(String directoryPath, String hdfsSiteConfig) throws IOException {
     URI fileUri = URI.create(directoryPath);
     FileSystem fs = getFileSystem(fileUri, hdfsSiteConfig);
 
@@ -62,6 +66,39 @@ public class HdfsUtils {
       }
     }
     return count;
+  }
+
+  /**
+   * Checks directory
+   *
+   * @param hdfsSiteConfig path to hdfs-site.xml config file
+   * @param filePath to directory
+   */
+  public static boolean exists(String hdfsSiteConfig, String filePath) throws IOException {
+    FileSystem fs = getFileSystem(URI.create(filePath), hdfsSiteConfig);
+    Path fsPath = new Path(filePath);
+    return fs.exists(fsPath);
+  }
+
+  /**
+   * Returns sub directory list
+   *
+   * @param hdfsSiteConfig path to hdfs-site.xml config file
+   * @param filePath to directory
+   */
+  public static List<String> getSubDirList(String hdfsSiteConfig, String filePath) throws IOException {
+    FileSystem fs = getFileSystem(URI.create(filePath), hdfsSiteConfig);
+    Path fsPath = new Path(filePath);
+    if (fs.exists(fsPath)) {
+      FileStatus[] statuses = fs.listStatus(fsPath);
+      if (statuses != null && statuses.length > 0) {
+        return Arrays.stream(statuses)
+            .filter(FileStatus::isDirectory)
+            .map(y -> y.getPath().getName())
+            .collect(Collectors.toList());
+      }
+    }
+    return Collections.emptyList();
   }
 
   /**

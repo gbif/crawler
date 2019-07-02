@@ -42,6 +42,11 @@ public class VerbatimMessageHandler {
     // Populate message fields
     ObjectMapper mapper = new ObjectMapper();
     PipelinesVerbatimMessage m = mapper.readValue(message.getPayload(), PipelinesVerbatimMessage.class);
+
+    if (m.getAttempt() == null) {
+      m.setAttempt(getLatestAttempt(config, m));
+    }
+
     long recordsNumber = getRecordNumber(config, m);
     String runner = computeRunner(config, m, recordsNumber).name();
 
@@ -83,7 +88,7 @@ public class VerbatimMessageHandler {
     // Strategy 2: Chooses a runner type by calculating verbatim.avro file size
     String verbatim = Conversion.FILE_NAME + Pipeline.AVRO_EXTENSION;
     String verbatimPath = String.join("/", config.repositoryPath, datasetId, attempt, verbatim);
-    long fileSizeByte = HdfsUtils.getfileSizeByte(verbatimPath, config.hdfsSiteConfig);
+    long fileSizeByte = HdfsUtils.getFileSizeByte(verbatimPath, config.hdfsSiteConfig);
     if (fileSizeByte > 0) {
       long switchFileSizeByte = config.switchFileSizeMb * 1024L * 1024L;
       runner = fileSizeByte > switchFileSizeByte ? Runner.DISTRIBUTED : Runner.STANDALONE;
@@ -115,6 +120,24 @@ public class VerbatimMessageHandler {
       }
     }
     return Long.parseLong(recordsNumber);
+  }
+
+  /**
+   * Finds the latest attempt number in HDFS
+   */
+  private static Integer getLatestAttempt(BalancerConfiguration config, PipelinesVerbatimMessage message) {
+    String datasetId = message.getDatasetUuid().toString();
+    String path = String.join("/", config.repositoryPath, datasetId);
+    try {
+      return HdfsUtils.getSubDirList(config.hdfsSiteConfig, path)
+          .stream()
+          .filter(x -> x.chars().allMatch(Character::isDigit))
+          .mapToInt(Integer::valueOf)
+          .max()
+          .orElseThrow(() -> new RuntimeException("Can't find the maximum attempt"));
+    } catch (IOException ex) {
+      throw new RuntimeException(ex);
+    }
   }
 
 }

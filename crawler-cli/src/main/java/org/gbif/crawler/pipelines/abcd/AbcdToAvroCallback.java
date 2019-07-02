@@ -8,7 +8,6 @@ import org.gbif.common.messaging.AbstractMessageCallback;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.PipelinesAbcdMessage;
 import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage;
-import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage.ValidationResult;
 import org.gbif.common.messaging.api.messages.PipelinesXmlMessage;
 import org.gbif.crawler.pipelines.PipelineCallback;
 import org.gbif.crawler.pipelines.PipelineCallback.Steps;
@@ -51,8 +50,11 @@ public class AbcdToAvroCallback extends AbstractMessageCallback<PipelinesAbcdMes
   @Override
   public void handleMessage(PipelinesAbcdMessage message) {
 
-    MDC.put("datasetId", message.getDatasetUuid().toString());
-    MDC.put("attempt", String.valueOf(message.getAttempt()));
+    UUID datasetId = message.getDatasetUuid();
+    Integer attempt = message.getAttempt();
+
+    MDC.put("datasetId", datasetId.toString());
+    MDC.put("attempt", attempt.toString());
     LOG.info("Message handler began - {}", message);
 
     if (message.getPipelineSteps().isEmpty()) {
@@ -64,18 +66,14 @@ public class AbcdToAvroCallback extends AbstractMessageCallback<PipelinesAbcdMes
     }
 
     // Common variables
-    UUID datasetId = message.getDatasetUuid();
-    int attempt = message.getAttempt();
     Set<String> steps = message.getPipelineSteps();
-    Runnable runnable = XmlToAvroCallback.createRunnable(config, datasetId, String.valueOf(attempt));
+    Runnable runnable = XmlToAvroCallback.createRunnable(config, datasetId, attempt.toString());
     EndpointType endpointType = message.getEndpointType();
-    ValidationResult validationResult = new ValidationResult(true, true, null, null);
 
     // Message callback handler, updates zookeeper info, runs process logic and sends next MQ message
     PipelineCallback.create()
         .incomingMessage(message)
-        .outgoingMessage(new PipelinesVerbatimMessage(datasetId, attempt, config.interpretTypes, steps, null,
-            endpointType, null, validationResult))
+        .outgoingMessage(new PipelinesVerbatimMessage(datasetId, attempt, config.interpretTypes, steps, endpointType))
         .curator(curator)
         .zkRootElementPath(ABCD_TO_VERBATIM)
         .pipelinesStepName(Steps.ABCD_TO_VERBATIM.name())

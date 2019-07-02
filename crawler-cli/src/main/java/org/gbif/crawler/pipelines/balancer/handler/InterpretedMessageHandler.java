@@ -48,7 +48,7 @@ public class InterpretedMessageHandler {
 
     PipelinesInterpretedMessage outputMessage =
         new PipelinesInterpretedMessage(m.getDatasetUuid(), m.getAttempt(), m.getPipelineSteps(),
-            recordsNumber, runner);
+            recordsNumber, runner, m.isRepeatAttempt());
 
     publisher.send(outputMessage);
 
@@ -64,7 +64,7 @@ public class InterpretedMessageHandler {
       throws IOException {
 
     String datasetId = message.getDatasetUuid().toString();
-    String attempt = String.valueOf(message.getAttempt());
+    String attempt = message.getAttempt().toString();
 
     Runner runner;
 
@@ -78,7 +78,7 @@ public class InterpretedMessageHandler {
     // Strategy 2: Chooses a runner type by calculating verbatim.avro file size
     String verbatim = Conversion.FILE_NAME + Pipeline.AVRO_EXTENSION;
     String verbatimPath = String.join("/", config.repositoryPath, datasetId, attempt, verbatim);
-    long fileSizeByte = HdfsUtils.getfileSizeByte(verbatimPath, config.hdfsSiteConfig);
+    long fileSizeByte = HdfsUtils.getFileSizeByte(verbatimPath, config.hdfsSiteConfig);
     if (fileSizeByte > 0) {
       long switchFileSizeByte = config.switchFileSizeMb * 1024L * 1024L;
       runner = fileSizeByte > switchFileSizeByte ? Runner.DISTRIBUTED : Runner.STANDALONE;

@@ -321,10 +321,10 @@ public class PipelineCallbackTest {
     deleteMonitoringById(crawlId);
   }
 
-  private PipelineBasedMessage createMessage(UUID uuid, int attempt, Set<String> pipelineSteps) {
+  private PipelineBasedMessage createMessage(UUID uuid, Integer attempt, Set<String> pipelineSteps) {
     return new PipelineBasedMessage() {
       @Override
-      public int getAttempt() {
+      public Integer getAttempt() {
         return attempt;
       }
 

@@ -1,6 +1,7 @@
 package org.gbif.crawler.pipelines.interpret;
 
 import java.io.IOException;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -51,8 +52,11 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
   @Override
   public void handleMessage(PipelinesVerbatimMessage message) {
 
-    MDC.put("datasetId", message.getDatasetUuid().toString());
-    MDC.put("attempt", String.valueOf(message.getAttempt()));
+    UUID datasetId = message.getDatasetUuid();
+    Integer attempt = Optional.ofNullable(message.getAttempt()).orElseGet(() -> getLatestAttempt(message));
+
+    MDC.put("datasetId", datasetId.toString());
+    MDC.put("attempt", attempt.toString());
     LOG.info("Message handler began - {}", message);
 
     if (!isMessageCorrect(message)) {
@@ -60,7 +64,6 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
     }
 
     // Common variables
-    UUID datasetId = message.getDatasetUuid();
     Set<String> steps = message.getPipelineSteps();
     Runnable runnable = createRunnable(message);
 
@@ -69,10 +72,12 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
       recordsNumber = message.getValidationResult().getNumberOfRecords();
     }
 
+    boolean repeatAttempt = pathExists(message);
+
     // Message callback handler, updates zookeeper info, runs process logic and sends next MQ message
     PipelineCallback.create()
         .incomingMessage(message)
-        .outgoingMessage(new PipelinesInterpretedMessage(datasetId, message.getAttempt(), steps, recordsNumber, null))
+        .outgoingMessage(new PipelinesInterpretedMessage(datasetId, attempt, steps, recordsNumber, repeatAttempt))
         .curator(curator)
         .zkRootElementPath(VERBATIM_TO_INTERPRETED)
         .pipelinesStepName(Steps.VERBATIM_TO_INTERPRETED.name())
@@ -154,7 +159,7 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
     }
 
     // Strategy 2: Chooses a runner type by calculating verbatim.avro file size
-    long fileSizeByte = HdfsUtils.getfileSizeByte(verbatimPath, config.hdfsSiteConfig);
+    long fileSizeByte = HdfsUtils.getFileSizeByte(verbatimPath, config.hdfsSiteConfig);
     int numberOfThreads = (int) Math.ceil(fileSizeByte / (config.threadPerMb * 1024d * 1024d));
     return (numberOfThreads > 1 && numberOfThreads > config.sparkParallelismMin) ? numberOfThreads :
         config.sparkParallelismMin;
@@ -205,5 +210,37 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
       }
     }
     return Long.parseLong(recordsNumber);
+  }
+
+  /**
+   * Checks if the directory exists
+   */
+  private boolean pathExists(PipelinesVerbatimMessage message) {
+    String datasetId = message.getDatasetUuid().toString();
+    String attempt = Integer.toString(message.getAttempt());
+    String path = String.join("/", config.repositoryPath, datasetId, attempt);
+    try {
+      return HdfsUtils.exists(config.hdfsSiteConfig, path);
+    } catch (IOException ex) {
+      throw new RuntimeException(ex);
+    }
+  }
+
+  /**
+   * Finds the latest attempt number in HDFS
+   */
+  private Integer getLatestAttempt(PipelinesVerbatimMessage message) {
+    String datasetId = message.getDatasetUuid().toString();
+    String path = String.join("/", config.repositoryPath, datasetId);
+    try {
+      return HdfsUtils.getSubDirList(config.hdfsSiteConfig, path)
+          .stream()
+          .filter(x -> x.chars().allMatch(Character::isDigit))
+          .mapToInt(Integer::valueOf)
+          .max()
+          .orElseThrow(() -> new RuntimeException("Can't find the maximum attempt"));
+    } catch (IOException ex) {
+      throw new RuntimeException(ex);
+    }
   }
 }

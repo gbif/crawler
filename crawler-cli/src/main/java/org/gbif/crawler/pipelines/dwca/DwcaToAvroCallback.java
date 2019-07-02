@@ -56,8 +56,11 @@ public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMes
   @Override
   public void handleMessage(PipelinesDwcaMessage message) {
 
-    MDC.put("datasetId", message.getDatasetUuid().toString());
-    MDC.put("attempt", String.valueOf(message.getAttempt()));
+    UUID datasetId = message.getDatasetUuid();
+    Integer attempt = message.getAttempt();
+
+    MDC.put("datasetId", datasetId.toString());
+    MDC.put("attempt", attempt.toString());
     LOG.info("Message handler began - {}", message);
 
     if (!isMessageCorrect(message)) {
@@ -73,23 +76,17 @@ public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMes
     }
 
     // Common variables
-    UUID datasetId = message.getDatasetUuid();
-    int attempt = message.getAttempt();
     Set<String> steps = message.getPipelineSteps();
     Runnable runnable = createRunnable(message);
     EndpointType endpointType = message.getEndpointType();
     OccurrenceValidationReport occReport = message.getValidationReport().getOccurrenceReport();
     Long numberOfRecords = occReport == null ? null : (long) occReport.getCheckedRecords();
-    ValidationResult validationResult =
-        new ValidationResult(tripletsValid(occReport), occurrenceIdsValid(occReport), null, numberOfRecords);
+    ValidationResult validationResult = new ValidationResult(tripletsValid(occReport), occurrenceIdsValid(occReport), null, numberOfRecords);
 
     // Message callback handler, updates zookeeper info, runs process logic and sends next MQ message
     PipelineCallback.create()
         .incomingMessage(message)
-        .outgoingMessage(
-            new PipelinesVerbatimMessage(datasetId, attempt, config.interpretTypes, steps, null, endpointType, null,
-                validationResult)
-        )
+        .outgoingMessage(new PipelinesVerbatimMessage(datasetId, attempt, config.interpretTypes, steps, endpointType, validationResult))
         .curator(curator)
         .zkRootElementPath(DWCA_TO_VERBATIM)
         .pipelinesStepName(Steps.DWCA_TO_VERBATIM.name())
