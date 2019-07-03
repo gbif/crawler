@@ -16,6 +16,7 @@ import org.gbif.crawler.pipelines.dwca.DwcaToAvroConfiguration;
 import org.gbif.pipelines.common.PipelinesVariables.Metrics;
 import org.gbif.pipelines.common.PipelinesVariables.Pipeline;
 import org.gbif.pipelines.common.PipelinesVariables.Pipeline.Conversion;
+import org.gbif.pipelines.common.PipelinesVariables.Pipeline.Interpretation;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
@@ -218,7 +219,7 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
   private boolean pathExists(PipelinesVerbatimMessage message) {
     String datasetId = message.getDatasetUuid().toString();
     String attempt = Integer.toString(message.getAttempt());
-    String path = String.join("/", config.repositoryPath, datasetId, attempt);
+    String path = String.join("/", config.repositoryPath, datasetId, attempt, Interpretation.DIRECTORY_NAME);
     try {
       return HdfsUtils.exists(config.hdfsSiteConfig, path);
     } catch (IOException ex) {
