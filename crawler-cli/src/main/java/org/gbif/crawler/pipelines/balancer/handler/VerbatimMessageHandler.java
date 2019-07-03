@@ -44,7 +44,9 @@ public class VerbatimMessageHandler {
     PipelinesVerbatimMessage m = mapper.readValue(message.getPayload(), PipelinesVerbatimMessage.class);
 
     if (m.getAttempt() == null) {
-      m.setAttempt(getLatestAttempt(config, m));
+      Integer attempt = getLatestAttempt(config, m);
+      LOG.info("Message attempt is null, HDFS parsed attempt - {}", attempt);
+      m.setAttempt(attempt);
     }
 
     long recordsNumber = getRecordNumber(config, m);
@@ -109,6 +111,7 @@ public class VerbatimMessageHandler {
     String attempt = Integer.toString(message.getAttempt());
     String metaFileName = new DwcaToAvroConfiguration().metaFileName;
     String metaPath = String.join("/", config.repositoryPath, datasetId, attempt, metaFileName);
+    LOG.info("Getting records number from the file - {}", metaPath);
 
     String recordsNumber = HdfsUtils.getValueByKey(config.hdfsSiteConfig, metaPath, Metrics.ARCHIVE_TO_ER_COUNT);
     if (recordsNumber == null || recordsNumber.isEmpty()) {
@@ -128,6 +131,7 @@ public class VerbatimMessageHandler {
   private static Integer getLatestAttempt(BalancerConfiguration config, PipelinesVerbatimMessage message) {
     String datasetId = message.getDatasetUuid().toString();
     String path = String.join("/", config.repositoryPath, datasetId);
+    LOG.info("Parsing HDFS directory - {}", path);
     try {
       return HdfsUtils.getSubDirList(config.hdfsSiteConfig, path)
           .stream()
