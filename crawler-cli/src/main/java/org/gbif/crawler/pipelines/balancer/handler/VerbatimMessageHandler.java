@@ -19,6 +19,8 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import static org.gbif.pipelines.common.PipelinesVariables.Pipeline.Interpretation.RecordType.METADATA;
+
 /**
  * Populates and sends the {@link PipelinesVerbatimMessage} message, the main method
  * is {@link VerbatimMessageHandler#handle}
@@ -79,6 +81,12 @@ public class VerbatimMessageHandler {
     String attempt = String.valueOf(message.getAttempt());
 
     Runner runner;
+
+    if (message.getInterpretTypes().size() == 1 && message.getInterpretTypes().contains(METADATA.name())) {
+      runner = Runner.STANDALONE;
+      LOG.info("Interpret type is METADATA only, Spark Runner type - {}", runner);
+      return runner;
+    }
 
     // Strategy 1: Chooses a runner type by number of records in a dataset
     if (recordsNumber > 0) {
