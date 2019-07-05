@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import org.gbif.api.vocabulary.EndpointType;
@@ -56,6 +57,13 @@ public class XmlToAvroCallback extends AbstractMessageCallback<PipelinesXmlMessa
    */
   @Override
   public void handleMessage(PipelinesXmlMessage message) {
+
+    // Workaround to wait fs
+    try {
+      TimeUnit.SECONDS.sleep(30);
+    } catch (InterruptedException ex) {
+      throw new RuntimeException(ex.getCause());
+    }
 
     UUID datasetId = message.getDatasetUuid();
     Integer attempt = message.getAttempt();

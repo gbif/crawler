@@ -2,6 +2,7 @@ package org.gbif.crawler.pipelines.abcd;
 
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import org.gbif.api.vocabulary.EndpointType;
 import org.gbif.common.messaging.AbstractMessageCallback;
@@ -49,6 +50,13 @@ public class AbcdToAvroCallback extends AbstractMessageCallback<PipelinesAbcdMes
    */
   @Override
   public void handleMessage(PipelinesAbcdMessage message) {
+
+    // Workaround to wait fs
+    try {
+      TimeUnit.SECONDS.sleep(30);
+    } catch (InterruptedException ex) {
+      throw new RuntimeException(ex.getCause());
+    }
 
     UUID datasetId = message.getDatasetUuid();
     Integer attempt = message.getAttempt();
