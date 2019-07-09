@@ -116,8 +116,8 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
         String verbatim = Conversion.FILE_NAME + Pipeline.AVRO_EXTENSION;
         String path = message.getExtraPath() != null ? message.getExtraPath() :
             String.join("/", config.repositoryPath, datasetId, attempt, verbatim);
-        int sparkParallelism = computeSparkParallelism(path, recordsNumber);
         int sparkExecutorNumbers = computeSparkExecutorNumbers(recordsNumber);
+        int sparkParallelism = computeSparkParallelism(sparkExecutorNumbers);
         String sparkExecutorMemory = computeSparkExecutorMemory(recordsNumber, sparkExecutorNumbers);
 
         LOG.info("Start the process. Message - {}", message);
@@ -151,19 +151,16 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
    * Compute the number of thread for spark.default.parallelism, top limit is config.sparkParallelismMax
    * Remember YARN will create the same number of files
    */
-  private int computeSparkParallelism(String verbatimPath, long recordsNumber) throws IOException {
+  private int computeSparkParallelism(int executorNumbers) {
+    int count = executorNumbers * config.sparkExecutorCores * 2;
 
-    // Strategy 1: Chooses a runner type by number of records in a dataset
-    if (recordsNumber > 0) {
-      int count = (int) Math.ceil((double) recordsNumber / (double) config.sparkRecordsPerThread);
-      return count > config.sparkParallelismMax ? config.sparkParallelismMax : count;
+    if(count < config.sparkParallelismMin) {
+      return config.sparkParallelismMin;
     }
-
-    // Strategy 2: Chooses a runner type by calculating verbatim.avro file size
-    long fileSizeByte = HdfsUtils.getFileSizeByte(verbatimPath, config.hdfsSiteConfig);
-    int numberOfThreads = (int) Math.ceil(fileSizeByte / (config.threadPerMb * 1024d * 1024d));
-    return (numberOfThreads > 1 && numberOfThreads > config.sparkParallelismMin) ? numberOfThreads :
-        config.sparkParallelismMin;
+    if(count > config.sparkParallelismMax){
+      return config.sparkParallelismMax;
+    }
+    return count;
   }
 
 
@@ -175,21 +172,29 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
    */
   private String computeSparkExecutorMemory(long recordsNumber, int sparkExecutorNumbers) {
     int memoryGb = (int) Math.ceil(recordsNumber / (double) sparkExecutorNumbers / 231_168d);
-    memoryGb = memoryGb < config.sparkExecutorMemoryGbMin ? config.sparkExecutorMemoryGbMin :
-        memoryGb > config.sparkExecutorMemoryGbMax ? config.sparkExecutorMemoryGbMax : memoryGb;
+
+    if(memoryGb < config.sparkExecutorMemoryGbMin) {
+      return config.sparkExecutorMemoryGbMin + "G";
+    }
+    if(memoryGb > config.sparkExecutorMemoryGbMax){
+      return config.sparkExecutorMemoryGbMax + "G";
+    }
     return memoryGb + "G";
   }
 
   /**
    * Computes the numbers of executors, where min is config.sparkExecutorNumbersMin and
    * max is config.sparkExecutorNumbersMax
-   * <p>
-   * 500_000d is records per executor
    */
   private int computeSparkExecutorNumbers(long recordsNumber) {
-    int sparkExecutorNumbers = (int) Math.ceil(recordsNumber / 500_000d);
-    return sparkExecutorNumbers < config.sparkExecutorNumbersMin ? config.sparkExecutorNumbersMin :
-        sparkExecutorNumbers > config.sparkExecutorNumbersMax ? config.sparkExecutorNumbersMax : sparkExecutorNumbers;
+    int sparkExecutorNumbers = (int) Math.ceil(recordsNumber / (config.sparkExecutorCores * config.sparkRecordsPerThread));
+    if(sparkExecutorNumbers < config.sparkExecutorNumbersMin) {
+      return config.sparkExecutorNumbersMin;
+    }
+    if(sparkExecutorNumbers > config.sparkExecutorNumbersMax){
+      return config.sparkExecutorNumbersMax;
+    }
+    return sparkExecutorNumbers;
   }
 
   /**

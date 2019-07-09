@@ -92,7 +92,6 @@ public class ProcessRunnerBuilderTest {
     config.sparkExecutorCores = 1;
     config.sparkExecutorNumbersMin = 1;
     config.sparkExecutorNumbersMax = 2;
-    config.sparkParallelism = 1;
     config.sparkMemoryOverhead = 1;
     config.avroConfig.compressionType = "SNAPPY";
     config.avroConfig.syncInterval = 1;
@@ -150,7 +149,6 @@ public class ProcessRunnerBuilderTest {
     config.sparkExecutorCores = 1;
     config.sparkExecutorNumbersMin = 1;
     config.sparkExecutorNumbersMax = 2;
-    config.sparkParallelism = 1;
     config.sparkMemoryOverhead = 1;
     config.avroConfig.compressionType = "SNAPPY";
     config.avroConfig.syncInterval = 1;

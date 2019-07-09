@@ -60,9 +60,6 @@ public class InterpreterConfiguration {
   @Parameter(names = "--other-user")
   public String otherUser;
 
-  @Parameter(names = "--spark-parallelism")
-  public int sparkParallelism;
-
   @Parameter(names = "--spark-parallelism-min")
   public int sparkParallelismMin;
 
@@ -135,6 +132,7 @@ public class InterpreterConfiguration {
 
   @Parameter(names = "--process-output-directory")
   public String processOutputDirectory;
+
   @Parameter(names = "--driver-java-options")
   public String driverJavaOptions;
 
@@ -169,7 +167,6 @@ public class InterpreterConfiguration {
         .add("otherUser", otherUser)
         .add("standaloneStackSize", standaloneStackSize)
         .add("standaloneHeapSize", standaloneHeapSize)
-        .add("sparkParallelism", sparkParallelism)
         .add("sparkMemoryOverhead", sparkMemoryOverhead)
         .add("sparkExecutorMemoryGbMin", sparkExecutorMemoryGbMin)
         .add("sparkExecutorMemoryGbMax", sparkExecutorMemoryGbMax)

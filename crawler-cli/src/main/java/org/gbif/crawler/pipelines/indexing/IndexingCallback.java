@@ -155,7 +155,13 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
     String basicPath = String.join("/", config.repositoryPath, datasetId, attempt, directoryName, basic);
     int count = HdfsUtils.getFileCount(basicPath, config.hdfsSiteConfig);
     count *= 2; // 2 Times more threads than files
-    return count > config.sparkParallelismMax ? config.sparkParallelismMax : count;
+    if (count < config.sparkParallelismMin) {
+      return config.sparkParallelismMin;
+    }
+    if (count > config.sparkParallelismMax) {
+      return config.sparkParallelismMax;
+    }
+    return count;
   }
 
   /**
@@ -165,9 +171,14 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
    * 65_536d is found empirically salt
    */
   private String computeSparkExecutorMemory(long recordsNumber, int sparkExecutorNumbers) {
-    int memoryGb = (int) Math.ceil(recordsNumber / (double) sparkExecutorNumbers / 65_536d);
-    memoryGb = memoryGb < config.sparkExecutorMemoryGbMin ? config.sparkExecutorMemoryGbMin :
-        memoryGb > config.sparkExecutorMemoryGbMax ? config.sparkExecutorMemoryGbMax : memoryGb;
+    int memoryGb = (int) Math.ceil(recordsNumber / (double) sparkExecutorNumbers / 231_168d);
+
+    if(memoryGb < config.sparkExecutorMemoryGbMin) {
+      return config.sparkExecutorMemoryGbMin + "G";
+    }
+    if(memoryGb > config.sparkExecutorMemoryGbMax){
+      return config.sparkExecutorMemoryGbMax + "G";
+    }
     return memoryGb + "G";
   }
 
@@ -178,9 +189,14 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
    * 500_000d is records per executor
    */
   private int computeSparkExecutorNumbers(long recordsNumber) {
-    int sparkExecutorNumbers = (int) Math.ceil(recordsNumber / 500_000d);
-    return sparkExecutorNumbers < config.sparkExecutorNumbersMin ? config.sparkExecutorNumbersMin :
-        sparkExecutorNumbers > config.sparkExecutorNumbersMax ? config.sparkExecutorNumbersMax : sparkExecutorNumbers;
+    int sparkExecutorNumbers = (int) Math.ceil(recordsNumber / (config.sparkExecutorCores * config.sparkRecordsPerThread));
+    if(sparkExecutorNumbers < config.sparkExecutorNumbersMin) {
+      return config.sparkExecutorNumbersMin;
+    }
+    if(sparkExecutorNumbers > config.sparkExecutorNumbersMax){
+      return config.sparkExecutorNumbersMax;
+    }
+    return sparkExecutorNumbers;
   }
 
   /**

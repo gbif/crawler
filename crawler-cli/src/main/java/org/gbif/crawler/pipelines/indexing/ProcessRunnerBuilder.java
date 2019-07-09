@@ -44,7 +44,7 @@ final class ProcessRunnerBuilder {
   }
 
   ProcessRunnerBuilder sparkParallelism(int sparkParallelism) {
-    this.sparkParallelism = sparkParallelism > 0 ? sparkParallelism : config.sparkParallelism;
+    this.sparkParallelism = sparkParallelism;
     return this;
   }
 

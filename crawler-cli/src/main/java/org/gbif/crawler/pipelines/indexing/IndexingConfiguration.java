@@ -55,8 +55,11 @@ public class IndexingConfiguration {
   @Parameter(names = "--other-user")
   public String otherUser;
 
-  @Parameter(names = "--spark-parallelism")
-  public int sparkParallelism;
+  @Parameter(names = "--spark-records-per-thread")
+  public int sparkRecordsPerThread;
+
+  @Parameter(names = "--spark-parallelism-min")
+  public int sparkParallelismMin;
 
   @Parameter(names = "--spark-parallelism-max")
   public int sparkParallelismMax;
@@ -213,7 +216,6 @@ public class IndexingConfiguration {
         .add("otherUser", otherUser)
         .add("standaloneStackSize", standaloneStackSize)
         .add("standaloneHeapSize", standaloneHeapSize)
-        .add("sparkParallelism", sparkParallelism)
         .add("sparkMemoryOverhead", sparkMemoryOverhead)
         .add("sparkExecutorMemoryGbMin", sparkExecutorMemoryGbMin)
         .add("sparkExecutorMemoryGbMax", sparkExecutorMemoryGbMax)
