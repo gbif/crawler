@@ -47,13 +47,13 @@ public class PipelinesNodePaths {
 
     public static final UnaryOperator<String> RUNNER = s -> join(DELIMITER, s, RUNNER_TYPE);
 
-    public static final UnaryOperator<String> ERROR = s -> s + join(DELIMITER, s, ERR);
-    public static final UnaryOperator<String> ERROR_AVAILABILITY = s -> s + join(DELIMITER, s, ERR, DONE);
-    public static final UnaryOperator<String> ERROR_MESSAGE = s -> s + join(DELIMITER, s, ERR, MESSAGE);
+    public static final UnaryOperator<String> ERROR = s -> join(DELIMITER, s, ERR);
+    public static final UnaryOperator<String> ERROR_AVAILABILITY = s -> join(DELIMITER, s, ERR, DONE);
+    public static final UnaryOperator<String> ERROR_MESSAGE = s -> join(DELIMITER, s, ERR, MESSAGE);
 
-    public static final UnaryOperator<String> SUCCESSFUL = s -> s + join(DELIMITER, s, OK);
-    public static final UnaryOperator<String> SUCCESSFUL_AVAILABILITY = s -> s + join(DELIMITER, s, OK, DONE);
-    public static final UnaryOperator<String> SUCCESSFUL_MESSAGE = s -> s + join(DELIMITER, s, OK, MESSAGE);
+    public static final UnaryOperator<String> SUCCESSFUL = s -> join(DELIMITER, s, OK);
+    public static final UnaryOperator<String> SUCCESSFUL_AVAILABILITY = s -> join(DELIMITER, s, OK, DONE);
+    public static final UnaryOperator<String> SUCCESSFUL_MESSAGE = s -> join(DELIMITER, s, OK, MESSAGE);
   }
 
   private PipelinesNodePaths() {
