@@ -108,6 +108,7 @@ public class XmlToAvroCallback extends AbstractMessageCallback<PipelinesXmlMessa
 
       // Calculates and checks existence of DwC Archive
       Path inputPath = buildInputPath(config, datasetId, attempt);
+      LOG.info("XML path - {}", inputPath);
 
       // Calculates export path of avro as extended record
       org.apache.hadoop.fs.Path outputPath =
@@ -118,7 +119,7 @@ public class XmlToAvroCallback extends AbstractMessageCallback<PipelinesXmlMessa
           buildOutputPath(config.repositoryPath, datasetId.toString(), attempt, config.metaFileName);
 
       // Run main conversion process
-      XmlToAvroConverter.create()
+      boolean isConverted = XmlToAvroConverter.create()
           .xmlReaderParallelism(config.xmlReaderParallelism)
           .codecFactory(config.avroConfig.getCodec())
           .syncInterval(config.avroConfig.syncInterval)
@@ -127,6 +128,11 @@ public class XmlToAvroCallback extends AbstractMessageCallback<PipelinesXmlMessa
           .outputPath(outputPath)
           .metaPath(metaPath)
           .convert();
+
+      if (!isConverted) {
+        throw new IllegalArgumentException("Dataset - " + datasetId + " attempt - " + attempt
+            + "avro was deleted, cause it is empty! Please check XML files in the directory -> " + inputPath);
+      }
     };
   }
 
