@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -81,9 +82,9 @@ public class XmlToAvroCallback extends AbstractMessageCallback<PipelinesXmlMessa
     }
 
     // Common variables
-    Set<String> steps = message.getPipelineSteps();
-    Runnable runnable = createRunnable(config, datasetId, attempt.toString());
     EndpointType endpointType = message.getEndpointType();
+    Set<String> steps = message.getPipelineSteps();
+    Runnable runnable = createRunnable(config, datasetId, attempt.toString(), endpointType);
 
     // Message callback handler, updates zookeeper info, runs process logic and sends next MQ message
     PipelineCallback.create()
@@ -103,8 +104,11 @@ public class XmlToAvroCallback extends AbstractMessageCallback<PipelinesXmlMessa
   /**
    * Main message processing logic, converts an ABCD archive to an avro file.
    */
-  public static Runnable createRunnable(XmlToAvroConfiguration config, UUID datasetId, String attempt) {
+  public static Runnable createRunnable(XmlToAvroConfiguration config, UUID datasetId, String attempt, EndpointType endpointType) {
     return () -> {
+
+      Optional.ofNullable(endpointType)
+          .orElseThrow(() -> new IllegalArgumentException("endpointType can't bew NULL!"));
 
       // Calculates and checks existence of DwC Archive
       Path inputPath = buildInputPath(config, datasetId, attempt);

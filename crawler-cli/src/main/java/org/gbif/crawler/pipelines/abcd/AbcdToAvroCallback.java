@@ -75,8 +75,8 @@ public class AbcdToAvroCallback extends AbstractMessageCallback<PipelinesAbcdMes
 
     // Common variables
     Set<String> steps = message.getPipelineSteps();
-    Runnable runnable = XmlToAvroCallback.createRunnable(config, datasetId, attempt.toString());
     EndpointType endpointType = message.getEndpointType();
+    Runnable runnable = XmlToAvroCallback.createRunnable(config, datasetId, attempt.toString(), endpointType);
 
     // Message callback handler, updates zookeeper info, runs process logic and sends next MQ message
     PipelineCallback.create()

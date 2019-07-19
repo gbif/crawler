@@ -2,6 +2,7 @@ package org.gbif.crawler.pipelines.dwca;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -81,12 +82,14 @@ public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMes
     EndpointType endpointType = message.getEndpointType();
     OccurrenceValidationReport occReport = message.getValidationReport().getOccurrenceReport();
     Long numberOfRecords = occReport == null ? null : (long) occReport.getCheckedRecords();
-    ValidationResult validationResult = new ValidationResult(tripletsValid(occReport), occurrenceIdsValid(occReport), null, numberOfRecords);
+    ValidationResult validationResult =
+        new ValidationResult(tripletsValid(occReport), occurrenceIdsValid(occReport), null, numberOfRecords);
 
     // Message callback handler, updates zookeeper info, runs process logic and sends next MQ message
     PipelineCallback.create()
         .incomingMessage(message)
-        .outgoingMessage(new PipelinesVerbatimMessage(datasetId, attempt, config.interpretTypes, steps, endpointType, validationResult))
+        .outgoingMessage(new PipelinesVerbatimMessage(datasetId, attempt, config.interpretTypes, steps, endpointType,
+            validationResult))
         .curator(curator)
         .zkRootElementPath(DWCA_TO_VERBATIM)
         .pipelinesStepName(Steps.DWCA_TO_VERBATIM.name())
@@ -110,6 +113,9 @@ public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMes
    */
   private Runnable createRunnable(PipelinesDwcaMessage message) {
     return () -> {
+
+      Optional.ofNullable(message.getEndpointType())
+          .orElseThrow(() -> new IllegalArgumentException("endpointType can't bew NULL!"));
 
       UUID datasetId = message.getDatasetUuid();
       String attempt = String.valueOf(message.getAttempt());
