@@ -105,7 +105,8 @@ public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMes
    * Only correct messages can be handled, by now is only OCCURRENCE type messages
    */
   private boolean isMessageCorrect(PipelinesDwcaMessage message) {
-    return OCCURRENCE == message.getDatasetType() || SAMPLING_EVENT == message.getDatasetType();
+    return (OCCURRENCE == message.getDatasetType() || SAMPLING_EVENT == message.getDatasetType())
+        && message.getValidationReport().isValid();
   }
 
   /**
