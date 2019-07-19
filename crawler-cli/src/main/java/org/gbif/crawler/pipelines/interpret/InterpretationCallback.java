@@ -135,7 +135,7 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
             .waitFor();
 
         if (exitValue != 0) {
-          LOG.error("Process has been finished with exit value - {}", exitValue);
+          throw new RuntimeException("Process has been finished with exit value - " + exitValue);
         } else {
           LOG.info("Process has been finished with exit value - {}", exitValue);
         }
