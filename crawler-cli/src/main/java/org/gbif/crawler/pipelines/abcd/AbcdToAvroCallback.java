@@ -51,6 +51,10 @@ public class AbcdToAvroCallback extends AbstractMessageCallback<PipelinesAbcdMes
   @Override
   public void handleMessage(PipelinesAbcdMessage message) {
 
+    if (!message.isModified()) {
+      return;
+    }
+
     // Workaround to wait fs
     try {
       TimeUnit.SECONDS.sleep(10);

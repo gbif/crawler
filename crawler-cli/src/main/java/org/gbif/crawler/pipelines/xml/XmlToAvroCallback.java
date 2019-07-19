@@ -11,6 +11,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import org.gbif.api.model.crawler.FinishReason;
 import org.gbif.api.vocabulary.EndpointType;
 import org.gbif.common.messaging.AbstractMessageCallback;
 import org.gbif.common.messaging.api.MessagePublisher;
@@ -58,6 +59,10 @@ public class XmlToAvroCallback extends AbstractMessageCallback<PipelinesXmlMessa
    */
   @Override
   public void handleMessage(PipelinesXmlMessage message) {
+
+    if (message.getReason() != FinishReason.NORMAL) {
+      return;
+    }
 
     // Workaround to wait fs
     try {

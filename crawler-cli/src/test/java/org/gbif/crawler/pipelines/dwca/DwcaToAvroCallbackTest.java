@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.UUID;
 
 import org.gbif.api.model.crawler.DwcaValidationReport;
+import org.gbif.api.model.crawler.OccurrenceValidationReport;
 import org.gbif.api.vocabulary.DatasetType;
 import org.gbif.api.vocabulary.EndpointType;
 import org.gbif.common.messaging.api.messages.PipelinesDwcaMessage;
@@ -55,10 +56,10 @@ public class DwcaToAvroCallbackTest {
 
     server = new TestingServer();
     curator = CuratorFrameworkFactory.builder()
-      .connectString(server.getConnectString())
-      .namespace("crawler")
-      .retryPolicy(new RetryOneTime(1))
-      .build();
+        .connectString(server.getConnectString())
+        .namespace("crawler")
+        .retryPolicy(new RetryOneTime(1))
+        .build();
     curator.start();
   }
 
@@ -78,9 +79,11 @@ public class DwcaToAvroCallbackTest {
     config.repositoryPath = hdfsUri;
     DwcaToAvroCallback callback = new DwcaToAvroCallback(config, null, curator);
     UUID uuid = UUID.fromString(DATASET_UUID_POS);
-    DwcaValidationReport reason = new DwcaValidationReport(uuid, "no reason");
+    OccurrenceValidationReport report = new OccurrenceValidationReport(1, 1, 0, 1, 0, true);
+    DwcaValidationReport reason = new DwcaValidationReport(uuid, report);
     PipelinesDwcaMessage message =
-      new PipelinesDwcaMessage(uuid, DatasetType.OCCURRENCE, URI.create(DUMMY_URL), 2, reason, Collections.singleton(ALL.name()), EndpointType.DWC_ARCHIVE);
+        new PipelinesDwcaMessage(uuid, DatasetType.OCCURRENCE, URI.create(DUMMY_URL), 2, reason,
+            Collections.singleton(ALL.name()), EndpointType.DWC_ARCHIVE);
 
     // Expected
     callback.handleMessage(message);
