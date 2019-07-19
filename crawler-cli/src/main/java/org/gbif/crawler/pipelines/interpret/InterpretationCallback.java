@@ -118,7 +118,7 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
             String.join("/", config.repositoryPath, datasetId, attempt, verbatim);
         int sparkExecutorNumbers = computeSparkExecutorNumbers(recordsNumber);
         int sparkParallelism = computeSparkParallelism(sparkExecutorNumbers);
-        String sparkExecutorMemory = computeSparkExecutorMemory(recordsNumber, sparkExecutorNumbers);
+        String sparkExecutorMemory = computeSparkExecutorMemory(sparkExecutorNumbers);
 
         LOG.info("Start the process. Message - {}", message);
 
@@ -167,19 +167,16 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
   /**
    * Computes the memory for executor in Gb, where min is config.sparkExecutorMemoryGbMin and
    * max is config.sparkExecutorMemoryGbMax
-   * <p>
-   * 231_168d is found empirically salt 192d
    */
-  private String computeSparkExecutorMemory(long recordsNumber, int sparkExecutorNumbers) {
-    int memoryGb = (int) Math.ceil(recordsNumber / (double) sparkExecutorNumbers / 231_168d);
+  private String computeSparkExecutorMemory(int sparkExecutorNumbers) {
 
-    if(memoryGb < config.sparkExecutorMemoryGbMin) {
+    if(sparkExecutorNumbers < config.sparkExecutorMemoryGbMin) {
       return config.sparkExecutorMemoryGbMin + "G";
     }
-    if(memoryGb > config.sparkExecutorMemoryGbMax){
+    if(sparkExecutorNumbers > config.sparkExecutorMemoryGbMax){
       return config.sparkExecutorMemoryGbMax + "G";
     }
-    return memoryGb + "G";
+    return sparkExecutorNumbers + "G";
   }
 
   /**

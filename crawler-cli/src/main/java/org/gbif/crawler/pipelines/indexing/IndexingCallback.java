@@ -116,7 +116,7 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
         int numberOfShards = computeNumberOfShards(indexName, recordsNumber);
         int sparkParallelism = computeSparkParallelism(datasetId, attempt);
         int sparkExecutorNumbers = computeSparkExecutorNumbers(recordsNumber);
-        String sparkExecutorMemory = computeSparkExecutorMemory(recordsNumber, sparkExecutorNumbers);
+        String sparkExecutorMemory = computeSparkExecutorMemory(sparkExecutorNumbers);
 
         // Assembles a terminal java process and runs it
         int exitValue = ProcessRunnerBuilder.create()
@@ -170,16 +170,15 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
    * <p>
    * 65_536d is found empirically salt
    */
-  private String computeSparkExecutorMemory(long recordsNumber, int sparkExecutorNumbers) {
-    int memoryGb = (int) Math.ceil(recordsNumber / (double) sparkExecutorNumbers / 231_168d);
+  private String computeSparkExecutorMemory(int sparkExecutorNumbers) {
 
-    if(memoryGb < config.sparkExecutorMemoryGbMin) {
+    if(sparkExecutorNumbers < config.sparkExecutorMemoryGbMin) {
       return config.sparkExecutorMemoryGbMin + "G";
     }
-    if(memoryGb > config.sparkExecutorMemoryGbMax){
+    if(sparkExecutorNumbers > config.sparkExecutorMemoryGbMax){
       return config.sparkExecutorMemoryGbMax + "G";
     }
-    return memoryGb + "G";
+    return sparkExecutorNumbers + "G";
   }
 
   /**
