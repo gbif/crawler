@@ -66,7 +66,7 @@ public class XmlToAvroCallback extends AbstractMessageCallback<PipelinesXmlMessa
 
     // Workaround to wait fs
     try {
-      TimeUnit.SECONDS.sleep(10);
+      TimeUnit.SECONDS.sleep(20);
     } catch (InterruptedException ex) {
       throw new RuntimeException(ex.getCause());
     }
