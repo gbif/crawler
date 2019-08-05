@@ -48,7 +48,7 @@ public class InterpretedMessageHandler {
 
     PipelinesInterpretedMessage outputMessage =
         new PipelinesInterpretedMessage(m.getDatasetUuid(), m.getAttempt(), m.getPipelineSteps(),
-            recordsNumber, runner, m.isRepeatAttempt());
+            recordsNumber, runner, m.isRepeatAttempt(), m.getResetPrefix());
 
     publisher.send(outputMessage);
 

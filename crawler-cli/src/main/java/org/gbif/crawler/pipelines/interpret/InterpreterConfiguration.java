@@ -52,10 +52,10 @@ public class InterpreterConfiguration {
   @NotNull
   public String coreSiteConfig;
 
-  @Parameter(names = "--ws-config")
+  @Parameter(names = "--pipelines-config")
   @Valid
   @NotNull
-  public String wsConfig;
+  public String pipelinesConfig;
 
   @Parameter(names = "--other-user")
   public String otherUser;
@@ -145,9 +145,6 @@ public class InterpreterConfiguration {
   @Parameter(names = "--deploy-mode")
   public String deployMode;
 
-  @Parameter(names = "--thread-per-mb")
-  public double threadPerMb = 20d; // 1 thread per each 20mb of a file
-
   @Parameter(names = "--process-runner")
   @NotNull
   public String processRunner;
@@ -163,7 +160,7 @@ public class InterpreterConfiguration {
         .add("poolSize", poolSize)
         .add("avroConfig", avroConfig)
         .add("hdfsSiteConfig", hdfsSiteConfig)
-        .add("wsConfig", wsConfig)
+        .add("pipelinesConfig", pipelinesConfig)
         .add("otherUser", otherUser)
         .add("standaloneStackSize", standaloneStackSize)
         .add("standaloneHeapSize", standaloneHeapSize)

@@ -25,6 +25,7 @@ import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+import org.slf4j.MDC.MDCCloseable;
 
 import com.google.common.collect.Sets;
 
@@ -60,50 +61,54 @@ public class XmlToAvroCallback extends AbstractMessageCallback<PipelinesXmlMessa
   @Override
   public void handleMessage(PipelinesXmlMessage message) {
 
-    if (message.getReason() != FinishReason.NORMAL) {
-      return;
-    }
-
-    // Workaround to wait fs
-    try {
-      TimeUnit.SECONDS.sleep(20);
-    } catch (InterruptedException ex) {
-      throw new RuntimeException(ex.getCause());
-    }
-
     UUID datasetId = message.getDatasetUuid();
     Integer attempt = message.getAttempt();
 
-    MDC.put("datasetId", datasetId.toString());
-    MDC.put("attempt", attempt.toString());
-    LOG.info("Message handler began - {}", message);
+    try (MDCCloseable mdc1 = MDC.putCloseable("datasetId", message.getDatasetUuid().toString());
+        MDCCloseable mdc2 = MDC.putCloseable("attempt", message.getAttempt().toString())) {
+      LOG.info("Message handler began - {}", message);
 
-    if (message.getPipelineSteps().isEmpty()) {
-      message.setPipelineSteps(Sets.newHashSet(
-          Steps.XML_TO_VERBATIM.name(),
-          Steps.VERBATIM_TO_INTERPRETED.name(),
-          Steps.INTERPRETED_TO_INDEX.name()
-      ));
+      if (message.getReason() != FinishReason.NORMAL) {
+        LOG.info("The message wasn't modified, exit from handler");
+        return;
+      }
+
+      // Workaround to wait fs
+      try {
+        LOG.info("Waiting 20 seconds...");
+        TimeUnit.SECONDS.sleep(20);
+      } catch (InterruptedException ex) {
+        throw new RuntimeException(ex.getCause());
+      }
+
+      if (message.getPipelineSteps().isEmpty()) {
+        message.setPipelineSteps(Sets.newHashSet(
+            Steps.XML_TO_VERBATIM.name(),
+            Steps.VERBATIM_TO_INTERPRETED.name(),
+            Steps.INTERPRETED_TO_INDEX.name()
+        ));
+      }
+
+      // Common variables
+      EndpointType endpointType = message.getEndpointType();
+      Set<String> steps = message.getPipelineSteps();
+      Runnable runnable = createRunnable(config, datasetId, attempt.toString(), endpointType);
+
+      // Message callback handler, updates zookeeper info, runs process logic and sends next MQ message
+      PipelineCallback.create()
+          .incomingMessage(message)
+          .outgoingMessage(new PipelinesVerbatimMessage(datasetId, attempt, config.interpretTypes, steps, endpointType))
+          .curator(curator)
+          .zkRootElementPath(XML_TO_VERBATIM)
+          .pipelinesStepName(Steps.XML_TO_VERBATIM.name())
+          .publisher(publisher)
+          .runnable(runnable)
+          .build()
+          .handleMessage();
+
+      LOG.info("Message handler ended - {}", message);
+
     }
-
-    // Common variables
-    EndpointType endpointType = message.getEndpointType();
-    Set<String> steps = message.getPipelineSteps();
-    Runnable runnable = createRunnable(config, datasetId, attempt.toString(), endpointType);
-
-    // Message callback handler, updates zookeeper info, runs process logic and sends next MQ message
-    PipelineCallback.create()
-        .incomingMessage(message)
-        .outgoingMessage(new PipelinesVerbatimMessage(datasetId, attempt, config.interpretTypes, steps, endpointType))
-        .curator(curator)
-        .zkRootElementPath(XML_TO_VERBATIM)
-        .pipelinesStepName(Steps.XML_TO_VERBATIM.name())
-        .publisher(publisher)
-        .runnable(runnable)
-        .build()
-        .handleMessage();
-
-    LOG.info("Message handler ended - {}", message);
   }
 
   /**

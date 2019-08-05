@@ -22,6 +22,7 @@ import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+import org.slf4j.MDC.MDCCloseable;
 
 import com.google.common.base.Strings;
 
@@ -37,6 +38,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class InterpretationCallback extends AbstractMessageCallback<PipelinesVerbatimMessage> {
 
   private static final Logger LOG = LoggerFactory.getLogger(InterpretationCallback.class);
+
   private final InterpreterConfiguration config;
   private final MessagePublisher publisher;
   private final CuratorFramework curator;
@@ -56,39 +58,42 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
     UUID datasetId = message.getDatasetUuid();
     Integer attempt = Optional.ofNullable(message.getAttempt()).orElseGet(() -> getLatestAttempt(message));
 
-    MDC.put("datasetId", datasetId.toString());
-    MDC.put("attempt", attempt.toString());
-    LOG.info("Message handler began - {}", message);
+    try (MDCCloseable mdc1 = MDC.putCloseable("datasetId", datasetId.toString());
+        MDCCloseable mdc2 = MDC.putCloseable("attempt", attempt.toString())) {
 
-    if (!isMessageCorrect(message)) {
-      return;
+      LOG.info("Message handler began - {}", message);
+
+      if (!isMessageCorrect(message)) {
+        LOG.info("The message wasn't modified, exit from handler");
+        return;
+      }
+
+      // Common variables
+      Set<String> steps = message.getPipelineSteps();
+      Runnable runnable = createRunnable(message);
+
+      Long recordsNumber = null;
+      if (message.getValidationResult() != null && message.getValidationResult().getNumberOfRecords() != null) {
+        recordsNumber = message.getValidationResult().getNumberOfRecords();
+      }
+
+      boolean repeatAttempt = pathExists(message);
+
+      // Message callback handler, updates zookeeper info, runs process logic and sends next MQ message
+      PipelineCallback.create()
+          .incomingMessage(message)
+          .outgoingMessage(new PipelinesInterpretedMessage(datasetId, attempt, steps, recordsNumber, repeatAttempt, message.getResetPrefix()))
+          .curator(curator)
+          .zkRootElementPath(VERBATIM_TO_INTERPRETED)
+          .pipelinesStepName(Steps.VERBATIM_TO_INTERPRETED.name())
+          .publisher(publisher)
+          .runnable(runnable)
+          .build()
+          .handleMessage();
+
+      LOG.info("Message handler ended - {}", message);
+
     }
-
-    // Common variables
-    Set<String> steps = message.getPipelineSteps();
-    Runnable runnable = createRunnable(message);
-
-    Long recordsNumber = null;
-    if (message.getValidationResult() != null && message.getValidationResult().getNumberOfRecords() != null) {
-      recordsNumber = message.getValidationResult().getNumberOfRecords();
-    }
-
-    boolean repeatAttempt = pathExists(message);
-
-    // Message callback handler, updates zookeeper info, runs process logic and sends next MQ message
-    PipelineCallback.create()
-        .incomingMessage(message)
-        .outgoingMessage(new PipelinesInterpretedMessage(datasetId, attempt, steps, recordsNumber, repeatAttempt))
-        .curator(curator)
-        .zkRootElementPath(VERBATIM_TO_INTERPRETED)
-        .pipelinesStepName(Steps.VERBATIM_TO_INTERPRETED.name())
-        .publisher(publisher)
-        .runnable(runnable)
-        .build()
-        .handleMessage();
-
-    LOG.info("Message handler ended - {}", message);
-
   }
 
   /**

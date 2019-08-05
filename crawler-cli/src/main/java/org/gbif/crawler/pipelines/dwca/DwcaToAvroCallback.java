@@ -21,6 +21,7 @@ import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+import org.slf4j.MDC.MDCCloseable;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
@@ -60,45 +61,48 @@ public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMes
     UUID datasetId = message.getDatasetUuid();
     Integer attempt = message.getAttempt();
 
-    MDC.put("datasetId", datasetId.toString());
-    MDC.put("attempt", attempt.toString());
-    LOG.info("Message handler began - {}", message);
+    try (MDCCloseable mdc1 = MDC.putCloseable("datasetId", datasetId.toString());
+        MDCCloseable mdc2 = MDC.putCloseable("attempt", attempt.toString())) {
 
-    if (!isMessageCorrect(message)) {
-      return;
+      LOG.info("Message handler began - {}", message);
+
+      if (!isMessageCorrect(message)) {
+        LOG.info("The message wasn't modified, exit from handler");
+        return;
+      }
+
+      if (message.getPipelineSteps().isEmpty()) {
+        message.setPipelineSteps(Sets.newHashSet(
+            Steps.DWCA_TO_VERBATIM.name(),
+            Steps.VERBATIM_TO_INTERPRETED.name(),
+            Steps.INTERPRETED_TO_INDEX.name()
+        ));
+      }
+
+      // Common variables
+      Set<String> steps = message.getPipelineSteps();
+      Runnable runnable = createRunnable(message);
+      EndpointType endpointType = message.getEndpointType();
+      OccurrenceValidationReport occReport = message.getValidationReport().getOccurrenceReport();
+      Long numberOfRecords = occReport == null ? null : (long) occReport.getCheckedRecords();
+      ValidationResult validationResult =
+          new ValidationResult(tripletsValid(occReport), occurrenceIdsValid(occReport), null, numberOfRecords);
+
+      // Message callback handler, updates zookeeper info, runs process logic and sends next MQ message
+      PipelineCallback.create()
+          .incomingMessage(message)
+          .outgoingMessage(new PipelinesVerbatimMessage(datasetId, attempt, config.interpretTypes, steps, endpointType, validationResult))
+          .curator(curator)
+          .zkRootElementPath(DWCA_TO_VERBATIM)
+          .pipelinesStepName(Steps.DWCA_TO_VERBATIM.name())
+          .publisher(publisher)
+          .runnable(runnable)
+          .build()
+          .handleMessage();
+
+      LOG.info("Message handler ended - {}", message);
+
     }
-
-    if (message.getPipelineSteps().isEmpty()) {
-      message.setPipelineSteps(Sets.newHashSet(
-          Steps.DWCA_TO_VERBATIM.name(),
-          Steps.VERBATIM_TO_INTERPRETED.name(),
-          Steps.INTERPRETED_TO_INDEX.name()
-      ));
-    }
-
-    // Common variables
-    Set<String> steps = message.getPipelineSteps();
-    Runnable runnable = createRunnable(message);
-    EndpointType endpointType = message.getEndpointType();
-    OccurrenceValidationReport occReport = message.getValidationReport().getOccurrenceReport();
-    Long numberOfRecords = occReport == null ? null : (long) occReport.getCheckedRecords();
-    ValidationResult validationResult =
-        new ValidationResult(tripletsValid(occReport), occurrenceIdsValid(occReport), null, numberOfRecords);
-
-    // Message callback handler, updates zookeeper info, runs process logic and sends next MQ message
-    PipelineCallback.create()
-        .incomingMessage(message)
-        .outgoingMessage(new PipelinesVerbatimMessage(datasetId, attempt, config.interpretTypes, steps, endpointType,
-            validationResult))
-        .curator(curator)
-        .zkRootElementPath(DWCA_TO_VERBATIM)
-        .pipelinesStepName(Steps.DWCA_TO_VERBATIM.name())
-        .publisher(publisher)
-        .runnable(runnable)
-        .build()
-        .handleMessage();
-
-    LOG.info("Message handler ended - {}", message);
   }
 
   /**

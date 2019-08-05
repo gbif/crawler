@@ -3,6 +3,7 @@ package org.gbif.crawler.pipelines.indexing;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.Date;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -22,9 +23,11 @@ import org.gbif.pipelines.common.PipelinesVariables.Pipeline.Interpretation;
 import org.gbif.pipelines.common.PipelinesVariables.Pipeline.Interpretation.RecordType;
 
 import org.apache.curator.framework.CuratorFramework;
+import org.elasticsearch.client.RestHighLevelClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+import org.slf4j.MDC.MDCCloseable;
 
 import com.google.common.base.Strings;
 
@@ -40,17 +43,20 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpretedMessage> {
 
   private static final Logger LOG = LoggerFactory.getLogger(IndexingCallback.class);
+
   private final IndexingConfiguration config;
   private final MessagePublisher publisher;
   private final DatasetService datasetService;
   private final CuratorFramework curator;
+  private final RestHighLevelClient client;
 
   IndexingCallback(IndexingConfiguration config, MessagePublisher publisher, DatasetService datasetService,
-      CuratorFramework curator) {
+      CuratorFramework curator, RestHighLevelClient client) {
     this.curator = checkNotNull(curator, "curator cannot be null");
     this.config = checkNotNull(config, "config cannot be null");
     this.datasetService = checkNotNull(datasetService, "config cannot be null");
     this.publisher = publisher;
+    this.client = client;
   }
 
   /**
@@ -62,31 +68,34 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
     UUID datasetId = message.getDatasetUuid();
     Integer attempt = message.getAttempt();
 
-    MDC.put("datasetId", datasetId.toString());
-    MDC.put("attempt", attempt.toString());
-    LOG.info("Message handler began - {}", message);
+    try (MDCCloseable mdc1 = MDC.putCloseable("datasetId", datasetId.toString());
+        MDCCloseable mdc2 = MDC.putCloseable("attempt", attempt.toString())) {
 
-    if (!isMessageCorrect(message)) {
-      return;
+      LOG.info("Message handler began - {}", message);
+
+      if (!isMessageCorrect(message)) {
+        LOG.info("The message wasn't modified, exit from handler");
+        return;
+      }
+
+      Set<String> steps = message.getPipelineSteps();
+      Runnable runnable = createRunnable(message);
+
+      // Message callback handler, updates zookeeper info, runs process logic and sends next MQ message
+      PipelineCallback.create()
+          .incomingMessage(message)
+          .outgoingMessage(new PipelinesIndexedMessage(datasetId, attempt, steps))
+          .curator(curator)
+          .zkRootElementPath(INTERPRETED_TO_INDEX)
+          .pipelinesStepName(Steps.INTERPRETED_TO_INDEX.name())
+          .publisher(publisher)
+          .runnable(runnable)
+          .build()
+          .handleMessage();
+
+      LOG.info("Message handler ended - {}", message);
+
     }
-
-    Set<String> steps = message.getPipelineSteps();
-    Runnable runnable = createRunnable(message);
-
-
-    // Message callback handler, updates zookeeper info, runs process logic and sends next MQ message
-    PipelineCallback.create()
-        .incomingMessage(message)
-        .outgoingMessage(new PipelinesIndexedMessage(datasetId, attempt, steps))
-        .curator(curator)
-        .zkRootElementPath(INTERPRETED_TO_INDEX)
-        .pipelinesStepName(Steps.INTERPRETED_TO_INDEX.name())
-        .publisher(publisher)
-        .runnable(runnable)
-        .build()
-        .handleMessage();
-
-    LOG.info("Message handler ended - {}", message);
   }
 
   /**
@@ -111,7 +120,7 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
 
         long recordsNumber = getRecordNumber(message);
 
-        String indexName = computeIndexName(datasetId, attempt, message.isRepeatAttempt(), recordsNumber);
+        String indexName = computeIndexName(message, recordsNumber);
         String indexAlias = indexName.startsWith(datasetId) ? datasetId + "," + config.indexAlias : config.indexAlias;
         int numberOfShards = computeNumberOfShards(indexName, recordsNumber);
         int sparkParallelism = computeSparkParallelism(datasetId, attempt);
@@ -171,11 +180,10 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
    * 65_536d is found empirically salt
    */
   private String computeSparkExecutorMemory(int sparkExecutorNumbers) {
-
-    if(sparkExecutorNumbers < config.sparkExecutorMemoryGbMin) {
+    if (sparkExecutorNumbers < config.sparkExecutorMemoryGbMin) {
       return config.sparkExecutorMemoryGbMin + "G";
     }
-    if(sparkExecutorNumbers > config.sparkExecutorMemoryGbMax){
+    if (sparkExecutorNumbers > config.sparkExecutorMemoryGbMax) {
       return config.sparkExecutorMemoryGbMax + "G";
     }
     return sparkExecutorNumbers + "G";
@@ -189,10 +197,10 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
    */
   private int computeSparkExecutorNumbers(long recordsNumber) {
     int sparkExecutorNumbers = (int) Math.ceil(recordsNumber / (config.sparkExecutorCores * config.sparkRecordsPerThread));
-    if(sparkExecutorNumbers < config.sparkExecutorNumbersMin) {
+    if (sparkExecutorNumbers < config.sparkExecutorNumbersMin) {
       return config.sparkExecutorNumbersMin;
     }
-    if(sparkExecutorNumbers > config.sparkExecutorNumbersMax){
+    if (sparkExecutorNumbers > config.sparkExecutorNumbersMax) {
       return config.sparkExecutorNumbersMax;
     }
     return sparkExecutorNumbers;
@@ -205,14 +213,18 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
    * config.indexDefStaticDateDurationDd
    * Case 3 - Default dynamic index name for all other datasets
    */
-  private String computeIndexName(String datasetId, String attempt, boolean isRepeatAttempt, long recordsNumber) {
+  private String computeIndexName(PipelinesInterpretedMessage message, long recordsNumber) {
+
+    String datasetId = message.getDatasetUuid().toString();
+    String prefix = message.getResetPrefix();
 
     // Independent index for datasets where number of records more than config.indexIndepRecord
     String idxName;
 
     if (recordsNumber >= config.indexIndepRecord) {
-      idxName = isRepeatAttempt ? datasetId + "_" + attempt + "_" + Instant.now().toEpochMilli() : datasetId + "_" + attempt;
-      LOG.info("ES Index name - {}, recordsNumber - {}, config.indexIndepRecord - {}", idxName, recordsNumber, config.indexIndepRecord);
+      idxName = datasetId + "_" + message.getAttempt();
+      idxName = message.isRepeatAttempt() ? idxName + "_" + Instant.now().toEpochMilli() : idxName;
+      LOG.info("ES Index name - {}, recordsNumber - {}", idxName, recordsNumber);
       return idxName;
     }
 
@@ -221,24 +233,29 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
 
     long diffInMillies = Math.abs(new Date().getTime() - lastChangedDate.getTime());
     long diff = TimeUnit.DAYS.convert(diffInMillies, TimeUnit.MILLISECONDS);
+
     if (diff >= config.indexDefStaticDateDurationDd) {
-      idxName = config.indexDefStaticName;
+      String esPr = prefix == null ? config.indexDefStaticPrefixName : config.indexDefStaticPrefixName + "_" + prefix;
+      idxName = Optional.ofNullable(getIndexName(esPr)).orElse(esPr + "_" + Instant.now().toEpochMilli());
       LOG.info("ES Index name - {}, lastChangedDate - {}, diff days - {}", idxName, lastChangedDate, diff);
       return idxName;
     }
 
     // Default dynamic index name for all other datasets
-    idxName = config.indexDefDynamicName;
+    String esPr = prefix == null ? config.indexDefDynamicPrefixName : config.indexDefDynamicPrefixName + "_" + prefix;
+    idxName = Optional.ofNullable(getIndexName(esPr)).orElse(esPr + "_" + Instant.now().toEpochMilli());
     LOG.info("ES Index name - {}, lastChangedDate - {}, diff days - {}", idxName, lastChangedDate, diff);
     return idxName;
   }
 
+  /**
+   * Computes number of index shards:
+   * 1) in case of default index -> config.indexDefSize / config.indexRecordsPerShard
+   * 2) in case of independent index -> recordsNumber / config.indexRecordsPerShard
+   */
   private int computeNumberOfShards(String indexName, long recordsNumber) {
-    if (indexName.equals(config.indexDefDynamicName)) {
-      return config.indexDefDynamicShardNumber;
-    }
-    if (indexName.equals(config.indexDefStaticName)) {
-      return config.indexDefStaticNameShardNumber;
+    if (indexName.startsWith(config.indexDefDynamicPrefixName) || indexName.equals(config.indexDefStaticPrefixName)) {
+      return (int) Math.ceil((double) config.indexDefSize / (double) config.indexRecordsPerShard);
     }
     return (int) Math.ceil((double) recordsNumber / (double) config.indexRecordsPerShard);
   }
@@ -271,5 +288,12 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
       }
     }
     return Long.parseLong(recordsNumber);
+  }
+
+  /**
+   * Returns index name by index prefix where number of records is less than configured
+   */
+  private String getIndexName(String prefix) {
+    throw new UnsupportedOperationException("Oops!");
   }
 }

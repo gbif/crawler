@@ -154,9 +154,6 @@ public class IndexingConfiguration {
   @Parameter(names = "--index-refresh-interval")
   public String indexRefreshInterval;
 
-  @Parameter(names = "--index-number-shards")
-  public Integer indexNumberShards;
-
   @Parameter(names = "--index-number-replicas")
   public Integer indexNumberReplicas;
 
@@ -170,25 +167,25 @@ public class IndexingConfiguration {
   @NotNull
   public Integer indexIndepRecord;
 
-  @Parameter(names = "--index-def-static-name")
+  @Parameter(names = "--index-def-static-prefix-name")
   @NotNull
-  public String indexDefStaticName;
-
-  @Parameter(names = "--index-def-static-shard-number")
-  @NotNull
-  public Integer indexDefStaticNameShardNumber;
+  public String indexDefStaticPrefixName;
 
   @Parameter(names = "--index-def-static-date-duration-dd")
   @NotNull
   public Integer indexDefStaticDateDurationDd;
 
-  @Parameter(names = "--index-def-dynamic-name")
+  @Parameter(names = "--index-def-dynamic-prefix-name")
   @NotNull
-  public String indexDefDynamicName;
+  public String indexDefDynamicPrefixName;
 
-  @Parameter(names = "--index-def-dynamic-shard-number")
+  @Parameter(names = "--index-def-size")
   @NotNull
-  public Integer indexDefDynamicShardNumber;
+  public Integer indexDefSize;
+
+  @Parameter(names = "--es-url")
+  @NotNull
+  public String esUrl;
 
   @Parameter(names = "--index-records-per-shard")
   @NotNull
@@ -201,10 +198,10 @@ public class IndexingConfiguration {
   @Parameter(names = "--yarn-queue")
   public String yarnQueue;
 
-  @Parameter(names = "--ws-config")
+  @Parameter(names = "--pipelines-config")
   @Valid
   @NotNull
-  public String wsConfig;
+  public String pipelinesConfig;
 
   @Override
   public String toString() {
@@ -233,16 +230,16 @@ public class IndexingConfiguration {
         .add("extraClassPath", extraClassPath)
         .add("driverJavaOptions", driverJavaOptions)
         .add("indexIndepRecord", indexIndepRecord)
-        .add("indexDefStaticName", indexDefStaticName)
+        .add("indexDefStaticPrefixName", indexDefStaticPrefixName)
         .add("indexIndepRecord", indexIndepRecord)
-        .add("indexDefDynamicName", indexDefDynamicName)
+        .add("indexDefDynamicPrefixName", indexDefDynamicPrefixName)
         .add("indexDefStaticDate", indexDefStaticDateDurationDd)
         .add("indexRecordsPerShard", indexRecordsPerShard)
         .add("metaFileName", metaFileName)
         .add("processRunner", processRunner)
         .add("sparkParallelismMax", sparkParallelismMax)
         .add("yarnQueue", yarnQueue)
-        .add("wsConfig", wsConfig)
+        .add("pipelinesConfig", pipelinesConfig)
         .toString();
   }
 

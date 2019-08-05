@@ -45,7 +45,7 @@ public class ProcessRunnerBuilderTest {
     config.repositoryPath = "tmp";
     config.avroConfig.compressionType = "SNAPPY";
     config.avroConfig.syncInterval = 1;
-    config.wsConfig = "/path/ws.config";
+    config.pipelinesConfig = "/path/ws.config";
     config.standaloneHeapSize = "1G";
     config.standaloneStackSize = "1G";
     config.coreSiteConfig = "core.xml";
@@ -59,7 +59,7 @@ public class ProcessRunnerBuilderTest {
     Set<String> steps = Collections.singleton(ALL.name());
     PipelinesVerbatimMessage message =
         new PipelinesVerbatimMessage(datasetId, attempt, types, steps, null, EndpointType.DWC_ARCHIVE, null,
-            new ValidationResult(true, true, null, 100L));
+            new ValidationResult(true, true, null, 100L), null);
 
     // When
     ProcessBuilder builder =
@@ -95,7 +95,7 @@ public class ProcessRunnerBuilderTest {
     config.sparkMemoryOverhead = 1;
     config.avroConfig.compressionType = "SNAPPY";
     config.avroConfig.syncInterval = 1;
-    config.wsConfig = "/path/ws.config";
+    config.pipelinesConfig = "/path/ws.config";
     config.sparkDriverMemory = "4G";
     config.coreSiteConfig = "core.xml";
     config.hdfsSiteConfig = "hdfs.xml";
@@ -108,7 +108,7 @@ public class ProcessRunnerBuilderTest {
     Set<String> steps = Collections.singleton(ALL.name());
     PipelinesVerbatimMessage message =
         new PipelinesVerbatimMessage(datasetId, attempt, types, steps, null, EndpointType.DWC_ARCHIVE, "something",
-            new ValidationResult(true, true, true, null));
+            new ValidationResult(true, true, true, null), null);
 
     // Expected
     ProcessBuilder builder =
@@ -152,7 +152,7 @@ public class ProcessRunnerBuilderTest {
     config.sparkMemoryOverhead = 1;
     config.avroConfig.compressionType = "SNAPPY";
     config.avroConfig.syncInterval = 1;
-    config.wsConfig = "/path/ws.config";
+    config.pipelinesConfig = "/path/ws.config";
     config.sparkDriverMemory = "4G";
     config.coreSiteConfig = "core.xml";
     config.hdfsSiteConfig = "hdfs.xml";
@@ -168,7 +168,7 @@ public class ProcessRunnerBuilderTest {
     Set<String> types = Collections.singleton(ALL.name());
     Set<String> steps = Collections.singleton(ALL.name());
     PipelinesVerbatimMessage message =
-        new PipelinesVerbatimMessage(datasetId, attempt, types, steps, null, EndpointType.DWC_ARCHIVE, null, null);
+        new PipelinesVerbatimMessage(datasetId, attempt, types, steps, null, EndpointType.DWC_ARCHIVE, null, null, null);
 
     // Expected
     ProcessBuilder builder =

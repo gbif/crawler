@@ -13,6 +13,7 @@ import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+import org.slf4j.MDC.MDCCloseable;
 
 import static org.gbif.crawler.constants.PipelinesNodePaths.HIVE_VIEW;
 
@@ -40,24 +41,27 @@ public class HiveViewCallback extends AbstractMessageCallback<PipelinesInterpret
   @Override
   public void handleMessage(PipelinesInterpretedMessage message) {
 
-    MDC.put("datasetId", message.getDatasetUuid().toString());
-    MDC.put("attempt", message.getAttempt().toString());
-    LOG.info("Message handler began - {}", message);
+    try (MDCCloseable mdc1 = MDC.putCloseable("datasetId", message.getDatasetUuid().toString());
+        MDCCloseable mdc2 = MDC.putCloseable("attempt", message.getAttempt().toString())) {
 
-    Runnable runnable = createRunnable(message);
+      LOG.info("Message handler began - {}", message);
 
-    // Message callback handler, updates zookeeper info, runs process logic and sends next MQ message
-    PipelineCallback.create()
-        .incomingMessage(message)
-        .curator(curator)
-        .zkRootElementPath(HIVE_VIEW)
-        .pipelinesStepName(Steps.HIVE_VIEW.name())
-        .publisher(publisher)
-        .runnable(runnable)
-        .build()
-        .handleMessage();
+      Runnable runnable = createRunnable(message);
 
-    LOG.info("Message handler ended - {}", message);
+      // Message callback handler, updates zookeeper info, runs process logic and sends next MQ message
+      PipelineCallback.create()
+          .incomingMessage(message)
+          .curator(curator)
+          .zkRootElementPath(HIVE_VIEW)
+          .pipelinesStepName(Steps.HIVE_VIEW.name())
+          .publisher(publisher)
+          .runnable(runnable)
+          .build()
+          .handleMessage();
+
+      LOG.info("Message handler ended - {}", message);
+
+    }
   }
 
   /**

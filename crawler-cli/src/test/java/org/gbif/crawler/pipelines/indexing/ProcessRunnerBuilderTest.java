@@ -48,12 +48,12 @@ public class ProcessRunnerBuilderTest {
     config.driverJavaOptions = "-Dlog4j.configuration=file:/home/crap/config/log4j-indexing-pipeline.properties";
     config.processRunner = Runner.STANDALONE.name();
     config.esHosts = new String[]{"http://host.com:9300"};
-    config.wsConfig = "/path/ws.config";
+    config.pipelinesConfig = "/path/ws.config";
 
     UUID datasetId = UUID.fromString("de7ffb5e-c07b-42dc-8a88-f67a4465fe3d");
     int attempt = 1;
     Set<String> steps = Collections.singleton(ALL.name());
-    PipelinesInterpretedMessage message = new PipelinesInterpretedMessage(datasetId, attempt, steps, 100L, false);
+    PipelinesInterpretedMessage message = new PipelinesInterpretedMessage(datasetId, attempt, steps, 100L, false, null);
 
     String indexName = "occurrence";
 
@@ -98,12 +98,12 @@ public class ProcessRunnerBuilderTest {
     config.deployMode = "cluster";
     config.processRunner = Runner.DISTRIBUTED.name();
     config.esHosts = new String[]{"http://host.com:9300"};
-    config.wsConfig = "/path/ws.config";
+    config.pipelinesConfig = "/path/ws.config";
 
     UUID datasetId = UUID.fromString("de7ffb5e-c07b-42dc-8a88-f67a4465fe3d");
     int attempt = 1;
     Set<String> steps = Collections.singleton(ALL.name());
-    PipelinesInterpretedMessage message = new PipelinesInterpretedMessage(datasetId, attempt, steps, null, false);
+    PipelinesInterpretedMessage message = new PipelinesInterpretedMessage(datasetId, attempt, steps, null, false, null);
 
     String indexName = "occurrence";
 
@@ -157,12 +157,12 @@ public class ProcessRunnerBuilderTest {
     config.processRunner = Runner.DISTRIBUTED.name();
     config.esHosts = new String[]{"http://host.com:9300"};
     config.yarnQueue = "pipelines";
-    config.wsConfig = "/path/ws.config";
+    config.pipelinesConfig = "/path/ws.config";
 
     UUID datasetId = UUID.fromString("de7ffb5e-c07b-42dc-8a88-f67a4465fe3d");
     int attempt = 1;
     Set<String> steps = Collections.singleton(ALL.name());
-    PipelinesInterpretedMessage message = new PipelinesInterpretedMessage(datasetId, attempt, steps, 100L, false);
+    PipelinesInterpretedMessage message = new PipelinesInterpretedMessage(datasetId, attempt, steps, 100L, false, null);
 
     String indexName = "occurrence";
 
