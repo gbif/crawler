@@ -89,7 +89,7 @@
     <commons-lang.version>2.6</commons-lang.version>
     <commons-io.version>2.5</commons-io.version>
     <avro.version>1.8.2</avro.version>
-    <elasticsearch.client.version>5.6.15</elasticsearch.client.version>
+    <elasticsearch.client.version>6.0.1</elasticsearch.client.version>
     <log4j-api.version>2.3</log4j-api.version>
   </properties>
 

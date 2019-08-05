@@ -39,7 +39,7 @@ public class IndexingService extends AbstractIdleService {
     curator = config.zooKeeper.getCuratorFramework();
 
     final DatasetService datasetService = config.registry.newRegistryInjector().getInstance(DatasetService.class);
-    final RestHighLevelClient client = new RestHighLevelClient(RestClient.builder(HttpHost.create(config.esUrl)).build());
+    final RestHighLevelClient client = new RestHighLevelClient(RestClient.builder(HttpHost.create(config.esUrl)));
 
     listener.listen(config.queueName, config.poolSize, new IndexingCallback(config, publisher, datasetService, curator, client));
   }
