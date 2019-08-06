@@ -302,7 +302,7 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
    * Returns index name by index prefix where number of records is less than configured
    */
   private Optional<String> getIndexName(String prefix) throws IOException {
-    String url = config.esIndexCatUrl + prefix + "*" + config.esIndexCatUrlParams;
+    String url = String.format(config.esIndexCatUrl, prefix);
     HttpUriRequest httpGet = new HttpGet(url);
     HttpResponse response = httpClient.execute(httpGet);
     if (response.getStatusLine().getStatusCode() != 200) {

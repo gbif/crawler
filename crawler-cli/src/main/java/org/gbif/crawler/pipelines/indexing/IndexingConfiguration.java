@@ -191,10 +191,6 @@ public class IndexingConfiguration {
   @NotNull
   public String esIndexCatUrl;
 
-  @Parameter(names = "--es-index-cat-url-params")
-  @NotNull
-  public String esIndexCatUrlParams;
-
   @Parameter(names = "--index-records-per-shard")
   @NotNull
   public Integer indexRecordsPerShard;
@@ -249,7 +245,6 @@ public class IndexingConfiguration {
         .add("yarnQueue", yarnQueue)
         .add("pipelinesConfig", pipelinesConfig)
         .add("esIndexCatUrl", esIndexCatUrl)
-        .add("esIndexCatUrlParams", esIndexCatUrlParams)
         .add("indexDefNewIfSize", indexDefNewIfSize)
         .toString();
   }
