@@ -183,9 +183,17 @@ public class IndexingConfiguration {
   @NotNull
   public Integer indexDefSize;
 
-  @Parameter(names = "--es-url")
+  @Parameter(names = "--index-def-new-if-size")
   @NotNull
-  public String esUrl;
+  public Integer indexDefNewIfSize;
+
+  @Parameter(names = "--es-index-cat-url")
+  @NotNull
+  public String esIndexCatUrl;
+
+  @Parameter(names = "--es-index-cat-url-params")
+  @NotNull
+  public String esIndexCatUrlParams;
 
   @Parameter(names = "--index-records-per-shard")
   @NotNull
@@ -240,6 +248,9 @@ public class IndexingConfiguration {
         .add("sparkParallelismMax", sparkParallelismMax)
         .add("yarnQueue", yarnQueue)
         .add("pipelinesConfig", pipelinesConfig)
+        .add("esIndexCatUrl", esIndexCatUrl)
+        .add("esIndexCatUrlParams", esIndexCatUrlParams)
+        .add("indexDefNewIfSize", indexDefNewIfSize)
         .toString();
   }
 

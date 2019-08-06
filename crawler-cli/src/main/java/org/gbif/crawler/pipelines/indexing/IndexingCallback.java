@@ -3,6 +3,7 @@ package org.gbif.crawler.pipelines.indexing;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -23,12 +24,17 @@ import org.gbif.pipelines.common.PipelinesVariables.Pipeline.Interpretation;
 import org.gbif.pipelines.common.PipelinesVariables.Pipeline.Interpretation.RecordType;
 
 import org.apache.curator.framework.CuratorFramework;
-import org.elasticsearch.client.RestHighLevelClient;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpUriRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.slf4j.MDC.MDCCloseable;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
 
 import static org.gbif.crawler.constants.PipelinesNodePaths.INTERPRETED_TO_INDEX;
@@ -44,19 +50,21 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
 
   private static final Logger LOG = LoggerFactory.getLogger(IndexingCallback.class);
 
+  private static  final ObjectMapper MAPPER = new ObjectMapper();
+
   private final IndexingConfiguration config;
   private final MessagePublisher publisher;
   private final DatasetService datasetService;
   private final CuratorFramework curator;
-  private final RestHighLevelClient client;
+  private final HttpClient httpClient;
 
   IndexingCallback(IndexingConfiguration config, MessagePublisher publisher, DatasetService datasetService,
-      CuratorFramework curator, RestHighLevelClient client) {
+      CuratorFramework curator, HttpClient httpClient) {
     this.curator = checkNotNull(curator, "curator cannot be null");
     this.config = checkNotNull(config, "config cannot be null");
     this.datasetService = checkNotNull(datasetService, "config cannot be null");
     this.publisher = publisher;
-    this.client = client;
+    this.httpClient = httpClient;
   }
 
   /**
@@ -213,7 +221,7 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
    * config.indexDefStaticDateDurationDd
    * Case 3 - Default dynamic index name for all other datasets
    */
-  private String computeIndexName(PipelinesInterpretedMessage message, long recordsNumber) {
+  private String computeIndexName(PipelinesInterpretedMessage message, long recordsNumber) throws IOException {
 
     String datasetId = message.getDatasetUuid().toString();
     String prefix = message.getResetPrefix();
@@ -236,14 +244,14 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
 
     if (diff >= config.indexDefStaticDateDurationDd) {
       String esPr = prefix == null ? config.indexDefStaticPrefixName : config.indexDefStaticPrefixName + "_" + prefix;
-      idxName = Optional.ofNullable(getIndexName(esPr)).orElse(esPr + "_" + Instant.now().toEpochMilli());
+      idxName = getIndexName(esPr).orElse(esPr + "_" + Instant.now().toEpochMilli());
       LOG.info("ES Index name - {}, lastChangedDate - {}, diff days - {}", idxName, lastChangedDate, diff);
       return idxName;
     }
 
     // Default dynamic index name for all other datasets
     String esPr = prefix == null ? config.indexDefDynamicPrefixName : config.indexDefDynamicPrefixName + "_" + prefix;
-    idxName = Optional.ofNullable(getIndexName(esPr)).orElse(esPr + "_" + Instant.now().toEpochMilli());
+    idxName = getIndexName(esPr).orElse(esPr + "_" + Instant.now().toEpochMilli());
     LOG.info("ES Index name - {}, lastChangedDate - {}, diff days - {}", idxName, lastChangedDate, diff);
     return idxName;
   }
@@ -293,7 +301,17 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
   /**
    * Returns index name by index prefix where number of records is less than configured
    */
-  private String getIndexName(String prefix) {
-    throw new UnsupportedOperationException("Oops!");
+  private Optional<String> getIndexName(String prefix) throws IOException {
+    String url = config.esIndexCatUrl + prefix + "*" + config.esIndexCatUrlParams;
+    HttpUriRequest httpGet = new HttpGet(url);
+    HttpResponse response = httpClient.execute(httpGet);
+    if (response.getStatusLine().getStatusCode() != 200) {
+      throw new IOException("ES _cat API exception " + response.getStatusLine().getReasonPhrase());
+    }
+    List<EsCatIndex> indices = MAPPER.readValue(response.getEntity().getContent(), new TypeReference<List<EsCatIndex>>() {});
+    if (indices.size() != 0 && indices.get(0).getCount() <= config.indexDefNewIfSize) {
+      return Optional.of(indices.get(0).getName());
+    }
+    return Optional.empty();
   }
 }
