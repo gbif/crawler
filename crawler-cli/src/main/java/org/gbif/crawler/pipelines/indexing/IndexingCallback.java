@@ -262,7 +262,7 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
    * 2) in case of independent index -> recordsNumber / config.indexRecordsPerShard
    */
   private int computeNumberOfShards(String indexName, long recordsNumber) {
-    if (indexName.startsWith(config.indexDefDynamicPrefixName) || indexName.equals(config.indexDefStaticPrefixName)) {
+    if (indexName.startsWith(config.indexDefDynamicPrefixName) || indexName.startsWith(config.indexDefStaticPrefixName)) {
       return (int) Math.ceil((double) config.indexDefSize / (double) config.indexRecordsPerShard);
     }
     return (int) Math.ceil((double) recordsNumber / (double) config.indexRecordsPerShard);
