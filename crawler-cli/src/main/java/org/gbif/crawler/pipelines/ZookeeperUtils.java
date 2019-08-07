@@ -33,7 +33,7 @@ public class ZookeeperUtils {
    *
    * @param crawlId root node path
    */
-  static boolean checkExists(CuratorFramework curator, String crawlId) {
+  public static boolean checkExists(CuratorFramework curator, String crawlId) {
     try {
       return curator.checkExists().forPath(crawlId) != null;
     } catch (Exception ex) {

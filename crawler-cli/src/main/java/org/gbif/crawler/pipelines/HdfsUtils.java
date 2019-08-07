@@ -134,6 +134,23 @@ public class HdfsUtils {
   }
 
   /**
+   * Delete HDFS directory
+   */
+  public static boolean deleteDirectory(String hdfsSiteConfig, String filePath) {
+    FileSystem fs = getFileSystem(URI.create(filePath), hdfsSiteConfig);
+    Path fsPath = new Path(filePath);
+    try {
+      if (fs.exists(fsPath)) {
+        return fs.delete(fsPath, true);
+      }
+    } catch (IOException ex) {
+      throw new IllegalStateException("Exception during deletion " + filePath, ex);
+    }
+
+    return true;
+  }
+
+  /**
    * Gets HDFS file system using config file or without if it doesn't exist
    *
    * @param filePath path to some file
