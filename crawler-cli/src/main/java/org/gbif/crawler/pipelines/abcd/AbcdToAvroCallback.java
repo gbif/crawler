@@ -55,9 +55,6 @@ public class AbcdToAvroCallback extends AbstractMessageCallback<PipelinesAbcdMes
     UUID datasetId = message.getDatasetUuid();
     Integer attempt = message.getAttempt();
 
-    MDC.put("datasetId", datasetId.toString());
-    MDC.put("attempt", attempt.toString());
-
     try (MDCCloseable mdc1 = MDC.putCloseable("datasetId", datasetId.toString());
         MDCCloseable mdc2 = MDC.putCloseable("attempt", attempt.toString())) {
 
