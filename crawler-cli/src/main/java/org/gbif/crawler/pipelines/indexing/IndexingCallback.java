@@ -17,6 +17,7 @@ import org.gbif.common.messaging.api.messages.PipelinesIndexedMessage;
 import org.gbif.common.messaging.api.messages.PipelinesInterpretedMessage;
 import org.gbif.crawler.pipelines.HdfsUtils;
 import org.gbif.crawler.pipelines.PipelineCallback;
+import org.gbif.crawler.pipelines.PipelineCallback.Runner;
 import org.gbif.crawler.pipelines.PipelineCallback.Steps;
 import org.gbif.crawler.pipelines.dwca.DwcaToAvroConfiguration;
 import org.gbif.pipelines.common.PipelinesVariables.Metrics;
@@ -151,6 +152,10 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
 
         if (exitValue != 0) {
           LOG.error("Process has been finished with exit value - {}, dataset - {}_{}", exitValue, datasetId, attempt);
+          // Cause we have workaround for stuck YARN jobs, we can throw an exception only for STANDALONE runner
+          if (config.processRunner.equals(Runner.STANDALONE.name())) {
+            throw new RuntimeException("Process has been finished with exit value - " + exitValue);
+          }
         } else {
           LOG.info("Process has been finished with exit value - {}, dataset - {}_{}", exitValue, datasetId, attempt);
         }
