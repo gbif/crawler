@@ -8,6 +8,10 @@ import java.util.UUID;
 import org.gbif.api.model.crawler.FinishReason;
 import org.gbif.api.vocabulary.EndpointType;
 import org.gbif.common.messaging.api.messages.PipelinesXmlMessage;
+import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
+import org.gbif.crawler.pipelines.HdfsUtils;
+import org.gbif.crawler.pipelines.MessagePublisherStab;
+import org.gbif.crawler.pipelines.ZookeeperUtils;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
@@ -19,11 +23,13 @@ import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import static org.gbif.crawler.constants.PipelinesNodePaths.XML_TO_VERBATIM;
+import static org.gbif.crawler.constants.PipelinesNodePaths.getPipelinesInfoPath;
 import static org.gbif.crawler.pipelines.PipelineCallback.Steps.ALL;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class XmlToAvroCallbackTest {
@@ -39,6 +45,7 @@ public class XmlToAvroCallbackTest {
   private static FileSystem clusterFs;
   private static CuratorFramework curator;
   private static TestingServer server;
+  private static MessagePublisherStab publisher;
 
   @BeforeClass
   public static void setUp() throws Exception {
@@ -58,6 +65,8 @@ public class XmlToAvroCallbackTest {
         .retryPolicy(new RetryOneTime(1))
         .build();
     curator.start();
+
+    publisher = MessagePublisherStab.create();
   }
 
   @AfterClass
@@ -66,74 +75,131 @@ public class XmlToAvroCallbackTest {
     cluster.shutdown();
     curator.close();
     server.stop();
+    publisher.close();
   }
 
   @Test
-  public void testXmlDirectory() throws IOException {
-    // When
+  public void testNormalCaseWhenFilesInDirectory() throws Exception {
+    // State
     int attempt = 61;
     XmlToAvroConfiguration config = new XmlToAvroConfiguration();
     config.archiveRepository = INPUT_DATASET_FOLDER;
     config.repositoryPath = hdfsUri;
     config.xmlReaderParallelism = 4;
     config.archiveRepositorySubdir = Collections.singleton("xml");
-    XmlToAvroCallback callback = new XmlToAvroCallback(config, null, curator);
+    XmlToAvroCallback callback = new XmlToAvroCallback(config, publisher, curator);
     PipelinesXmlMessage message =
-        new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL, Collections.singleton(ALL.name()), EndpointType.DWC_ARCHIVE);
+        new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL, Collections.singleton(ALL.name()), EndpointType.BIOCASE_XML_ARCHIVE);
+    String crawlId = DATASET_UUID + "_" + attempt;
 
-    // Expected
+    // When
     callback.handleMessage(message);
 
     // Should
     Path path = new Path(hdfsUri + STRING_UUID + "/" + attempt + AVRO);
     assertTrue(cluster.getFileSystem().exists(path));
     assertTrue(clusterFs.getFileStatus(path).getLen() > 0);
+    Assert.assertTrue(ZookeeperUtils.checkExists(curator, getPipelinesInfoPath(crawlId, XML_TO_VERBATIM)));
+    Assert.assertTrue(ZookeeperUtils.checkExists(curator, getPipelinesInfoPath(crawlId, Fn.SUCCESSFUL_MESSAGE.apply(XML_TO_VERBATIM))));
+    Assert.assertEquals(1, publisher.getMessages().size());
+
+    // Clean
+    HdfsUtils.deleteDirectory(null, path.toString());
+    curator.delete().deletingChildrenIfNeeded().forPath(getPipelinesInfoPath(crawlId, XML_TO_VERBATIM));
+    publisher.close();
   }
 
   @Test
-  public void testXmlTarArchive() throws IOException {
-    // When
+  public void testNormalCaseWhenFilesInTarArchive() throws Exception {
+    // State
     int attempt = 60;
     XmlToAvroConfiguration config = new XmlToAvroConfiguration();
     config.archiveRepository = INPUT_DATASET_FOLDER;
     config.repositoryPath = hdfsUri;
     config.xmlReaderParallelism = 4;
     config.archiveRepositorySubdir = Collections.singleton("xml");
-    XmlToAvroCallback callback = new XmlToAvroCallback(config, null, curator);
+    XmlToAvroCallback callback = new XmlToAvroCallback(config, publisher, curator);
     PipelinesXmlMessage message =
-        new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL, Collections.singleton(ALL.name()), EndpointType.DWC_ARCHIVE);
+        new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL, Collections.singleton(ALL.name()), EndpointType.BIOCASE_XML_ARCHIVE);
+    String crawlId = DATASET_UUID + "_" + attempt;
 
-    // Expected
+    // When
     callback.handleMessage(message);
 
     // Should
     Path path = new Path(hdfsUri + STRING_UUID + "/" + attempt + AVRO);
-    assertTrue(cluster.getFileSystem().exists(path));
-    assertTrue(clusterFs.getFileStatus(path).getLen() > 0);
+    Assert.assertTrue(cluster.getFileSystem().exists(path));
+    Assert.assertTrue(clusterFs.getFileStatus(path).getLen() > 0);
+    Assert.assertTrue(ZookeeperUtils.checkExists(curator, getPipelinesInfoPath(crawlId, XML_TO_VERBATIM)));
+    Assert.assertTrue(ZookeeperUtils.checkExists(curator, getPipelinesInfoPath(crawlId, Fn.SUCCESSFUL_MESSAGE.apply(XML_TO_VERBATIM))));
+    Assert.assertEquals(1, publisher.getMessages().size());
+
+    // Clean
+    HdfsUtils.deleteDirectory(null, path.toString());
+    curator.delete().deletingChildrenIfNeeded().forPath(getPipelinesInfoPath(crawlId, XML_TO_VERBATIM));
+    publisher.close();
   }
 
   @Test
-  public void testXmlEmptyAvro() throws IOException {
-    // When
+  public void testFailedCaseWhenXmlAvroEmpty() throws Exception {
+    // State
     int attempt = 62;
     XmlToAvroConfiguration config = new XmlToAvroConfiguration();
     config.archiveRepository = INPUT_DATASET_FOLDER;
     config.repositoryPath = hdfsUri;
     config.xmlReaderParallelism = 4;
     config.archiveRepositorySubdir = Collections.singleton("xml");
-    XmlToAvroCallback callback = new XmlToAvroCallback(config, null, curator);
+    XmlToAvroCallback callback = new XmlToAvroCallback(config, publisher, curator);
     PipelinesXmlMessage message =
-        new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL, Collections.singleton(ALL.name()), EndpointType.DWC_ARCHIVE);
+        new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL, Collections.singleton(ALL.name()), EndpointType.BIOCASE_XML_ARCHIVE);
+    String crawlId = DATASET_UUID + "_" + attempt;
 
-    // Expected
+    // When
     callback.handleMessage(message);
 
     // Should
     Path path = new Path(hdfsUri + STRING_UUID + "/" + attempt + AVRO);
-    assertFalse(cluster.getFileSystem().exists(path));
-    assertFalse(cluster.getFileSystem().exists(path.getParent()));
+    Assert.assertFalse(cluster.getFileSystem().exists(path));
+    Assert.assertFalse(cluster.getFileSystem().exists(path.getParent()));
     // NOTE: If you run this method independently, it will fail, it is normal
-    assertTrue(cluster.getFileSystem().exists(path.getParent().getParent()));
+    Assert.assertTrue(cluster.getFileSystem().exists(path.getParent().getParent()));
+    Assert.assertTrue(ZookeeperUtils.checkExists(curator, getPipelinesInfoPath(crawlId, XML_TO_VERBATIM)));
+    Assert.assertTrue(ZookeeperUtils.checkExists(curator, getPipelinesInfoPath(crawlId, Fn.ERROR_MESSAGE.apply(XML_TO_VERBATIM))));
+    Assert.assertTrue(publisher.getMessages().isEmpty());
+
+    // Clean
+    HdfsUtils.deleteDirectory(null, path.toString());
+    curator.delete().deletingChildrenIfNeeded().forPath(getPipelinesInfoPath(crawlId, XML_TO_VERBATIM));
+    publisher.close();
+  }
+
+  @Test
+  public void testReasonNotNormalCase() throws Exception {
+    // State
+    int attempt = 60;
+    XmlToAvroConfiguration config = new XmlToAvroConfiguration();
+    config.archiveRepository = INPUT_DATASET_FOLDER;
+    config.repositoryPath = hdfsUri;
+    config.xmlReaderParallelism = 4;
+    config.archiveRepositorySubdir = Collections.singleton("xml");
+    XmlToAvroCallback callback = new XmlToAvroCallback(config, publisher, curator);
+    PipelinesXmlMessage message =
+        new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NOT_MODIFIED, Collections.singleton(ALL.name()), EndpointType.BIOCASE_XML_ARCHIVE);
+    String crawlId = DATASET_UUID + "_" + attempt;
+
+    // When
+    callback.handleMessage(message);
+
+    // Should
+    Path path = new Path(hdfsUri + STRING_UUID + "/" + attempt + AVRO);
+    Assert.assertFalse(cluster.getFileSystem().exists(path));
+    Assert.assertFalse(ZookeeperUtils.checkExists(curator, getPipelinesInfoPath(crawlId, XML_TO_VERBATIM)));
+    Assert.assertFalse(ZookeeperUtils.checkExists(curator, getPipelinesInfoPath(crawlId, Fn.SUCCESSFUL_MESSAGE.apply(XML_TO_VERBATIM))));
+    Assert.assertTrue(publisher.getMessages().isEmpty());
+
+    // Clean
+    HdfsUtils.deleteDirectory(null, path.toString());
+    publisher.close();
   }
 
 }
