@@ -18,6 +18,7 @@ import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+import org.slf4j.MDC.MDCCloseable;
 
 import static org.gbif.crawler.constants.PipelinesNodePaths.getPipelinesInfoPath;
 import static org.gbif.crawler.pipelines.PipelineCallback.Steps.ALL;
@@ -157,11 +158,10 @@ public class PipelineCallback {
 
     // Start main process
     String crawlId = inMessage.getDatasetUuid().toString() + "_" + inMessage.getAttempt();
-    MDC.put("crawlId", crawlId);
 
-    LOG.info("Message has been received {}", inMessage);
-    try {
+    try (MDCCloseable mdc = MDC.putCloseable("crawlId", crawlId)) {
 
+      LOG.info("Message has been received {}", inMessage);
       if (ZookeeperUtils.checkExists(b.curator, getPipelinesInfoPath(crawlId, b.zkRootElementPath))) {
         LOG.warn("Dataset is already in pipelines queue, please check the pipeline-ingestion monitoring tool - {}", crawlId);
         return;
