@@ -8,8 +8,6 @@ import javax.annotation.Nullable;
 
 import static java.lang.String.join;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 public class PipelinesNodePaths {
 
   private static final String DELIMITER = "/";
@@ -66,7 +64,7 @@ public class PipelinesNodePaths {
    *
    * @return crawl info path for dataset
    */
-  public static String getPipelinesInfoPath(String id) {
+  public static String getPipelinesInfoPath(@Nullable String id) {
     return getPipelinesInfoPath(id, null);
   }
 
@@ -78,9 +76,11 @@ public class PipelinesNodePaths {
    *
    * @return ZK path to crawl info
    */
-  public static String getPipelinesInfoPath(String id, @Nullable String path) {
-    checkNotNull(id, "uuid can't be null");
-    String resultPath = DELIMITER + PIPELINES_ROOT + DELIMITER + id;
+  public static String getPipelinesInfoPath(@Nullable String id, @Nullable String path) {
+    String resultPath = DELIMITER + PIPELINES_ROOT;
+    if (path != null) {
+      resultPath += DELIMITER + id;
+    }
     if (path != null) {
       resultPath += DELIMITER + path;
     }

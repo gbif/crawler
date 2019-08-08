@@ -13,6 +13,8 @@ public interface PipelinesProcessService {
 
   void deleteRunningPipelinesProcess(String crawlId);
 
+  void deleteAllRunningPipelinesProcess();
+
   Set<PipelinesProcessStatus> getPipelinesProcessesByDatasetKey(String datasetKey);
 
 }

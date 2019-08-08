@@ -1,18 +1,18 @@
 package org.gbif.crawler.ws;
 
+import java.util.Set;
+
 import org.gbif.crawler.pipelines.PipelinesProcessService;
 import org.gbif.crawler.pipelines.PipelinesProcessStatus;
 import org.gbif.ws.util.ExtraMediaTypes;
 
-import java.util.Set;
+import com.google.inject.Inject;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-
-import com.google.inject.Inject;
 
 /**
  * Pipelines monitoring resource HTTP endpoint
@@ -48,6 +48,14 @@ public class PipelinesProcessResource {
   @Path("crawlId/{crawlId}")
   public void deleteRunningPipelinesProcess(@PathParam("crawlId") String crawlId) {
     service.deleteRunningPipelinesProcess(crawlId);
+  }
+
+  /**
+   * Removes pipelines ZK path
+   */
+  @DELETE
+  public void deleteRunningPipelinesProcess() {
+    service.deleteAllRunningPipelinesProcess();
   }
 
   /**

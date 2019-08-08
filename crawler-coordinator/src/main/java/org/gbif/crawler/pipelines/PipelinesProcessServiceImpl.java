@@ -15,6 +15,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.gbif.api.exception.ServiceUnavailableException;
@@ -40,6 +41,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Charsets;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
@@ -65,6 +69,15 @@ public class PipelinesProcessServiceImpl implements PipelinesProcessService {
   private final RestHighLevelClient client;
   private final String envPrefix;
   private final DatasetService datasetService;
+  private LoadingCache<String, PipelinesProcessStatus> statusCache = CacheBuilder.newBuilder()
+      .expireAfterAccess(2, TimeUnit.MINUTES)
+      .build(
+          new CacheLoader<String, PipelinesProcessStatus>() {
+            @Override
+            public PipelinesProcessStatus load(String key) {
+              return loadRunningPipelinesProcess(key);
+            }
+          });
 
   /**
    * Creates a CrawlerMetricsService. Responsible for interacting with a ZooKeeper instance in a read-only fashion.
@@ -105,7 +118,10 @@ public class PipelinesProcessServiceImpl implements PipelinesProcessService {
       CompletableFuture[] futures = curator.getChildren()
           .forPath(path)
           .stream()
-          .map(id -> CompletableFuture.runAsync(() -> set.add(getRunningPipelinesProcess(id)), executor))
+          .map(id -> CompletableFuture.runAsync(() -> {
+            PipelinesProcessStatus process = getRunningPipelinesProcess(id);
+            Optional.ofNullable(process).ifPresent(set::add);
+          }, executor))
           .toArray(CompletableFuture[]::new);
 
       // Waits all threads
@@ -129,6 +145,80 @@ public class PipelinesProcessServiceImpl implements PipelinesProcessService {
    */
   @Override
   public PipelinesProcessStatus getRunningPipelinesProcess(String crawlId) {
+    try {
+      return statusCache.get(crawlId);
+    } catch (ExecutionException e) {
+      return null;
+    }
+  }
+
+  /**
+   * Removes a Zookeeper monitoring root node by crawlId
+   *
+   * @param crawlId root node path
+   */
+  @Override
+  public void deleteRunningPipelinesProcess(String crawlId) {
+    try {
+      String path = getPipelinesInfoPath(crawlId);
+      if (checkExists(path)) {
+        curator.delete().deletingChildrenIfNeeded().forPath(path);
+      }
+    } catch (Exception ex) {
+      throw new ServiceUnavailableException("Error communicating with ZooKeeper", ex);
+    }
+  }
+
+  /**
+   * Removes pipelines root Zookeeper path
+   */
+  @Override
+  public void deleteAllRunningPipelinesProcess() {
+    deleteRunningPipelinesProcess(null);
+  }
+
+  @Override
+  public Set<PipelinesProcessStatus> getPipelinesProcessesByDatasetKey(String datasetKey) {
+    Set<PipelinesProcessStatus> set = new TreeSet<>(Comparator.comparing(PipelinesProcessStatus::getCrawlId));
+    try {
+
+      String path = buildPath(PIPELINES_ROOT);
+
+      if (!checkExists(path)) {
+        return Collections.emptySet();
+      }
+
+      // Reads all nodes in async mode
+      CompletableFuture[] futures = curator.getChildren()
+          .forPath(path)
+          .stream()
+          .filter(node -> node.startsWith(datasetKey))
+          .map(id -> CompletableFuture.runAsync(() -> {
+            PipelinesProcessStatus process = getRunningPipelinesProcess(id);
+            Optional.ofNullable(process).ifPresent(set::add);
+          }, executor))
+          .toArray(CompletableFuture[]::new);
+
+      // Waits all threads
+      CompletableFuture.allOf(futures).get();
+
+    } catch (InterruptedException ignored) {
+      Thread.currentThread().interrupt();
+    } catch (ExecutionException ex) {
+      LOG.warn("Caught exception trying to retrieve dataset", ex.getCause());
+    } catch (Exception ex) {
+      throw new ServiceUnavailableException("Error communicating with ZooKeeper", ex);
+    }
+
+    return set;
+  }
+
+  /**
+   * Reads monitoring information from Zookeeper by crawlId node path
+   *
+   * @param crawlId path to dataset info
+   */
+  private PipelinesProcessStatus loadRunningPipelinesProcess(String crawlId) {
     checkNotNull(crawlId, "crawlId can't be null");
 
     try {
@@ -154,56 +244,6 @@ public class PipelinesProcessServiceImpl implements PipelinesProcessService {
       LOG.error("crawlId {}", crawlId, ex.getCause());
       throw new ServiceUnavailableException("Error communicating with ZooKeeper", ex);
     }
-  }
-
-  /**
-   * Removes a Zookeeper monitoring root node by crawlId
-   *
-   * @param crawlId root node path
-   */
-  @Override
-  public void deleteRunningPipelinesProcess(String crawlId) {
-    try {
-      String path = getPipelinesInfoPath(crawlId);
-      if (checkExists(path)) {
-        curator.delete().deletingChildrenIfNeeded().forPath(path);
-      }
-    } catch (Exception ex) {
-      throw new ServiceUnavailableException("Error communicating with ZooKeeper", ex);
-    }
-  }
-
-  @Override
-  public Set<PipelinesProcessStatus> getPipelinesProcessesByDatasetKey(String datasetKey) {
-    Set<PipelinesProcessStatus> set = new TreeSet<>(Comparator.comparing(PipelinesProcessStatus::getCrawlId));
-    try {
-
-      String path = buildPath(PIPELINES_ROOT);
-
-      if (!checkExists(path)) {
-        return Collections.emptySet();
-      }
-
-      // Reads all nodes in async mode
-      CompletableFuture[] futures = curator.getChildren()
-          .forPath(path)
-          .stream()
-          .filter(node -> node.startsWith(datasetKey))
-          .map(id -> CompletableFuture.runAsync(() -> set.add(getRunningPipelinesProcess(id)), executor))
-          .toArray(CompletableFuture[]::new);
-
-      // Waits all threads
-      CompletableFuture.allOf(futures).get();
-
-    } catch (InterruptedException ignored) {
-      Thread.currentThread().interrupt();
-    } catch (ExecutionException ex) {
-      LOG.warn("Caught exception trying to retrieve dataset", ex.getCause());
-    } catch (Exception ex) {
-      throw new ServiceUnavailableException("Error communicating with ZooKeeper", ex);
-    }
-
-    return set;
   }
 
   /**
