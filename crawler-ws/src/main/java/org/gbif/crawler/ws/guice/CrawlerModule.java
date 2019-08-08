@@ -98,7 +98,7 @@ class CrawlerModule extends PrivateServiceModule {
   @Provides
   @Singleton
   public RestHighLevelClient provideEsRestClient(@Named("pipelines.esUrl") String esUrl) {
-    return new RestHighLevelClient(RestClient.builder(HttpHost.create(esUrl)));
+    return new RestHighLevelClient(RestClient.builder(HttpHost.create(esUrl)).build());
   }
 
   /**

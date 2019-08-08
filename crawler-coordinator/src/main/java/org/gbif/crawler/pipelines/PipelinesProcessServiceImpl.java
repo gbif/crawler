@@ -1,6 +1,5 @@
 package org.gbif.crawler.pipelines;
 
-import java.io.IOException;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -69,7 +68,7 @@ public class PipelinesProcessServiceImpl implements PipelinesProcessService {
   private final RestHighLevelClient client;
   private final String envPrefix;
   private final DatasetService datasetService;
-  private LoadingCache<String, PipelinesProcessStatus> statusCache = CacheBuilder.newBuilder()
+  private final LoadingCache<String, PipelinesProcessStatus> statusCache = CacheBuilder.newBuilder()
       .expireAfterAccess(2, TimeUnit.MINUTES)
       .build(
           new CacheLoader<String, PipelinesProcessStatus>() {
@@ -360,7 +359,7 @@ public class PipelinesProcessServiceImpl implements PipelinesProcessService {
           return new MetricInfo(keyFormatted, valueFormatted);
         }).collect(Collectors.toSet());
 
-      } catch (IOException ex) {
+      } catch (Exception ex) {
         LOG.error(ex.getMessage(), ex);
       }
     }
