@@ -2,6 +2,7 @@ package org.gbif.crawler.pipelines.hive;
 
 import org.gbif.cli.Command;
 import org.gbif.cli.service.ServiceCommand;
+import org.gbif.crawler.pipelines.interpret.InterpreterConfiguration;
 
 import org.kohsuke.MetaInfServices;
 
@@ -14,7 +15,7 @@ import com.google.common.util.concurrent.Service;
 @MetaInfServices(Command.class)
 public class HiveViewCommand extends ServiceCommand {
 
-  private final HiveViewConfiguration config = new HiveViewConfiguration();
+  private final InterpreterConfiguration config = new InterpreterConfiguration();
 
   public HiveViewCommand() {
     super("pipelines-hive-view");

@@ -3,6 +3,7 @@ package org.gbif.crawler.pipelines.hive;
 import org.gbif.common.messaging.DefaultMessagePublisher;
 import org.gbif.common.messaging.MessageListener;
 import org.gbif.common.messaging.api.MessagePublisher;
+import org.gbif.crawler.pipelines.interpret.InterpreterConfiguration;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
@@ -16,12 +17,12 @@ import com.google.common.util.concurrent.AbstractIdleService;
 public class HiveViewService extends AbstractIdleService {
 
   private static final Logger LOG = LoggerFactory.getLogger(HiveViewService.class);
-  private final HiveViewConfiguration config;
+  private final InterpreterConfiguration config;
   private MessageListener listener;
   private MessagePublisher publisher;
   private CuratorFramework curator;
 
-  public HiveViewService(HiveViewConfiguration config) {
+  public HiveViewService(InterpreterConfiguration config) {
     this.config = config;
   }
 
