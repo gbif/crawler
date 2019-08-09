@@ -110,6 +110,8 @@ public class DwcaToAvroCallbackTest {
     Assert.assertTrue(clusterFs.getFileStatus(path).getLen() > 0);
     Assert.assertTrue(ZookeeperUtils.checkExists(curator, getPipelinesInfoPath(crawlId, DWCA_TO_VERBATIM)));
     Assert.assertTrue(ZookeeperUtils.checkExists(curator, getPipelinesInfoPath(crawlId, Fn.SUCCESSFUL_MESSAGE.apply(DWCA_TO_VERBATIM))));
+    Assert.assertTrue(ZookeeperUtils.checkExists(curator, getPipelinesInfoPath(crawlId, Fn.MQ_CLASS_NAME.apply(DWCA_TO_VERBATIM))));
+    Assert.assertTrue(ZookeeperUtils.checkExists(curator, getPipelinesInfoPath(crawlId, Fn.MQ_MESSAGE.apply(DWCA_TO_VERBATIM))));
     Assert.assertEquals(1, publisher.getMessages().size());
 
     // Clean
@@ -146,6 +148,8 @@ public class DwcaToAvroCallbackTest {
     Assert.assertTrue(clusterFs.getFileStatus(path).getLen() > 0);
     Assert.assertFalse(ZookeeperUtils.checkExists(curator, getPipelinesInfoPath(crawlId, DWCA_TO_VERBATIM)));
     Assert.assertFalse(ZookeeperUtils.checkExists(curator, getPipelinesInfoPath(crawlId, Fn.SUCCESSFUL_MESSAGE.apply(DWCA_TO_VERBATIM))));
+    Assert.assertFalse(ZookeeperUtils.checkExists(curator, getPipelinesInfoPath(crawlId, Fn.MQ_CLASS_NAME.apply(DWCA_TO_VERBATIM))));
+    Assert.assertFalse(ZookeeperUtils.checkExists(curator, getPipelinesInfoPath(crawlId, Fn.MQ_MESSAGE.apply(DWCA_TO_VERBATIM))));
     Assert.assertEquals(1, publisher.getMessages().size());
 
     // Clean
@@ -180,6 +184,8 @@ public class DwcaToAvroCallbackTest {
     Assert.assertFalse(cluster.getFileSystem().exists(path));
     Assert.assertTrue(ZookeeperUtils.checkExists(curator, getPipelinesInfoPath(crawlId, DWCA_TO_VERBATIM)));
     Assert.assertTrue(ZookeeperUtils.checkExists(curator, getPipelinesInfoPath(crawlId, Fn.ERROR_MESSAGE.apply(DWCA_TO_VERBATIM))));
+    Assert.assertTrue(ZookeeperUtils.checkExists(curator, getPipelinesInfoPath(crawlId, Fn.MQ_CLASS_NAME.apply(DWCA_TO_VERBATIM))));
+    Assert.assertTrue(ZookeeperUtils.checkExists(curator, getPipelinesInfoPath(crawlId, Fn.MQ_MESSAGE.apply(DWCA_TO_VERBATIM))));
     Assert.assertTrue(publisher.getMessages().isEmpty());
 
     // Clean
@@ -215,6 +221,8 @@ public class DwcaToAvroCallbackTest {
     Assert.assertFalse(cluster.getFileSystem().exists(path));
     Assert.assertFalse(ZookeeperUtils.checkExists(curator, getPipelinesInfoPath(crawlId, DWCA_TO_VERBATIM)));
     Assert.assertFalse(ZookeeperUtils.checkExists(curator, getPipelinesInfoPath(crawlId, Fn.SUCCESSFUL_MESSAGE.apply(DWCA_TO_VERBATIM))));
+    Assert.assertFalse(ZookeeperUtils.checkExists(curator, getPipelinesInfoPath(crawlId, Fn.MQ_CLASS_NAME.apply(DWCA_TO_VERBATIM))));
+    Assert.assertFalse(ZookeeperUtils.checkExists(curator, getPipelinesInfoPath(crawlId, Fn.MQ_MESSAGE.apply(DWCA_TO_VERBATIM))));
     Assert.assertTrue(publisher.getMessages().isEmpty());
 
     publisher.close();
@@ -247,6 +255,8 @@ public class DwcaToAvroCallbackTest {
     Assert.assertFalse(cluster.getFileSystem().exists(path));
     Assert.assertFalse(ZookeeperUtils.checkExists(curator, getPipelinesInfoPath(crawlId, DWCA_TO_VERBATIM)));
     Assert.assertFalse(ZookeeperUtils.checkExists(curator, getPipelinesInfoPath(crawlId, Fn.SUCCESSFUL_MESSAGE.apply(DWCA_TO_VERBATIM))));
+    Assert.assertFalse(ZookeeperUtils.checkExists(curator, getPipelinesInfoPath(crawlId, Fn.MQ_CLASS_NAME.apply(DWCA_TO_VERBATIM))));
+    Assert.assertFalse(ZookeeperUtils.checkExists(curator, getPipelinesInfoPath(crawlId, Fn.MQ_MESSAGE.apply(DWCA_TO_VERBATIM))));
     Assert.assertTrue(publisher.getMessages().isEmpty());
 
     publisher.close();

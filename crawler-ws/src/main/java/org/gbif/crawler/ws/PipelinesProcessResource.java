@@ -9,6 +9,7 @@ import org.gbif.ws.util.ExtraMediaTypes;
 import com.google.inject.Inject;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -37,6 +38,16 @@ public class PipelinesProcessResource {
   @Path("crawlId/{crawlId}")
   public PipelinesProcessStatus getRunningPipelinesProcess(@PathParam("crawlId") String crawlId) {
     return service.getRunningPipelinesProcess(crawlId);
+  }
+
+
+  /**
+   * Restart last failed pipelines step
+   */
+  @POST
+  @Path("crawlId/{crawlId}/restart/{stepName}")
+  public void restartFailedStepByDatasetKey(@PathParam("crawlId") String crawlId, @PathParam("stepName") String stepName) {
+    service.restartFailedStepByDatasetKey(crawlId, stepName);
   }
 
   /**
@@ -76,6 +87,15 @@ public class PipelinesProcessResource {
   @Path("datasetKey/{datasetKey}")
   public Set<PipelinesProcessStatus> getPipelinesProcessesByDatasetKey(@PathParam("datasetKey") String datasetKey) {
     return service.getPipelinesProcessesByDatasetKey(datasetKey);
+  }
+
+  /**
+   * Returns list of pipelines steps names
+   */
+  @GET
+  @Path("steps")
+  public Set<String> getAllStepsNames() {
+    return service.getAllStepsNames();
   }
 
 }
