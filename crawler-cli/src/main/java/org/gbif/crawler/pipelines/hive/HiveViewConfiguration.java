@@ -46,6 +46,83 @@ public class HiveViewConfiguration {
   @NotNull
   public String repositoryPath;
 
+  @Parameter(names = "--distributed-main-class")
+  @NotNull
+  public String distributedMainClass;
+
+  @Parameter(names = "--spark-parallelism-min")
+  public int sparkParallelismMin;
+
+  @Parameter(names = "--spark-parallelism-max")
+  public int sparkParallelismMax;
+
+  @Parameter(names = "--spark-memory-overhead")
+  @NotNull
+  @Min(1)
+  public int sparkMemoryOverhead;
+
+  @Parameter(names = "--spark-executor-memory-gb-min")
+  @NotNull
+  @Min(1)
+  public int sparkExecutorMemoryGbMin;
+
+  @Parameter(names = "--spark-executor-memory-gb-max")
+  @NotNull
+  public int sparkExecutorMemoryGbMax;
+
+  @Parameter(names = "--spark-executor-cores")
+  @NotNull
+  public int sparkExecutorCores;
+
+  @Parameter(names = "--spark-executor-numbers-min")
+  @NotNull
+  @Min(1)
+  public int sparkExecutorNumbersMin;
+
+  @Parameter(names = "--spark-executor-numbers-max")
+  @NotNull
+  public int sparkExecutorNumbersMax;
+
+  @Parameter(names = "--spark-driver-memory")
+  @NotNull
+  public String sparkDriverMemory;
+
+  @Parameter(names = "--spark-records-per-thread")
+  public int sparkRecordsPerThread;
+
+  @Parameter(names = "--deploy-mode")
+  public String deployMode;
+
+  @Parameter(names = "--yarn-queue")
+  public String yarnQueue;
+
+  @Parameter(names = "--pipelines-config")
+  @Valid
+  @NotNull
+  public String pipelinesConfig;
+
+  @Parameter(names = "--metrics-properties-path")
+  public String metricsPropertiesPath;
+
+  @Parameter(names = "--extra-class-path")
+  public String extraClassPath;
+
+  @Parameter(names = "--driver-java-options")
+  public String driverJavaOptions;
+
+  @Parameter(names = "--distributed-jar-path")
+  @NotNull
+  public String distributedJarPath;
+
+  @Parameter(names = "--other-user")
+  public String otherUser;
+
+  @Parameter(names = "--process-error-directory")
+  public String processErrorDirectory;
+
+  @Parameter(names = "--process-output-directory")
+  public String processOutputDirectory;
+
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
