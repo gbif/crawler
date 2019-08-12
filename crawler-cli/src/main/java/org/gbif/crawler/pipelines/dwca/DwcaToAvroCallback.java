@@ -75,7 +75,8 @@ public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMes
         message.setPipelineSteps(Sets.newHashSet(
             Steps.DWCA_TO_VERBATIM.name(),
             Steps.VERBATIM_TO_INTERPRETED.name(),
-            Steps.INTERPRETED_TO_INDEX.name()
+            Steps.INTERPRETED_TO_INDEX.name(),
+            Steps.HIVE_VIEW.name()
         ));
       }
 
