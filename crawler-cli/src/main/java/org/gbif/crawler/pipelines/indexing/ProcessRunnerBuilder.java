@@ -122,7 +122,6 @@ final class ProcessRunnerBuilder {
 
     joiner.add("--conf spark.default.parallelism=" + sparkParallelism)
         .add("--conf spark.executor.memoryOverhead=" + config.sparkMemoryOverhead)
-        .add("--conf spark.yarn.maxAppAttempts=1")
         .add("--conf spark.dynamicAllocation.enabled=false")
         .add("--conf \"spark.executor.extraJavaOptions=-XX:+UseG1GC\"")
         .add("--class " + Objects.requireNonNull(config.distributedMainClass))
