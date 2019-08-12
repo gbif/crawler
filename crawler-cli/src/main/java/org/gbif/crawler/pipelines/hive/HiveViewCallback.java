@@ -1,19 +1,14 @@
 package org.gbif.crawler.pipelines.hive;
 
 import java.io.IOException;
-import java.util.Set;
-import java.util.UUID;
 
 import org.gbif.common.messaging.AbstractMessageCallback;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.PipelinesInterpretedMessage;
-import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage;
 import org.gbif.crawler.pipelines.HdfsUtils;
 import org.gbif.crawler.pipelines.PipelineCallback;
 import org.gbif.crawler.pipelines.PipelineCallback.Steps;
 import org.gbif.crawler.pipelines.dwca.DwcaToAvroConfiguration;
-import org.gbif.crawler.pipelines.interpret.InterpreterConfiguration;
-import org.gbif.crawler.pipelines.interpret.ProcessRunnerBuilder;
 import org.gbif.pipelines.common.PipelinesVariables;
 
 import org.apache.curator.framework.CuratorFramework;
@@ -34,11 +29,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class HiveViewCallback extends AbstractMessageCallback<PipelinesInterpretedMessage> {
 
   private static final Logger LOG = LoggerFactory.getLogger(HiveViewCallback.class);
-  private final InterpreterConfiguration config;
+  private final HiveViewConfiguration config;
   private final MessagePublisher publisher;
   private final CuratorFramework curator;
 
-  HiveViewCallback(InterpreterConfiguration config, MessagePublisher publisher, CuratorFramework curator) {
+  HiveViewCallback(HiveViewConfiguration config, MessagePublisher publisher, CuratorFramework curator) {
     this.curator = checkNotNull(curator, "curator cannot be null");
     this.config = checkNotNull(config, "config cannot be null");
     this.publisher = publisher;
@@ -97,15 +92,7 @@ public class HiveViewCallback extends AbstractMessageCallback<PipelinesInterpret
           .start()
           .waitFor();
 
-        if (exitValue != 0) {
-          LOG.error("Process has been finished with exit value - {}, dataset - {}_{}", exitValue, datasetId, attempt);
-          // Cause we have workaround for stuck YARN jobs, we can throw an exception only for STANDALONE runner
-          if (config.processRunner.equals(PipelineCallback.Runner.STANDALONE.name())) {
-            throw new RuntimeException("Process has been finished with exit value - " + exitValue);
-          }
-        } else {
-          LOG.info("Process has been finished with exit value - {}, dataset - {}_{}", exitValue, datasetId, attempt);
-        }
+        LOG.info("Process has been finished with exit value - {}, dataset - {}_{}", exitValue, datasetId, attempt);
 
       } catch (InterruptedException | IOException ex) {
         LOG.error(ex.getMessage(), ex);
