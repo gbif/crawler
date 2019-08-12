@@ -77,7 +77,8 @@ public class AbcdToAvroCallback extends AbstractMessageCallback<PipelinesAbcdMes
         message.setPipelineSteps(Sets.newHashSet(
             Steps.ABCD_TO_VERBATIM.name(),
             Steps.VERBATIM_TO_INTERPRETED.name(),
-            Steps.INTERPRETED_TO_INDEX.name()
+            Steps.INTERPRETED_TO_INDEX.name(),
+            Steps.HIVE_VIEW.name()
         ));
       }
 
