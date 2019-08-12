@@ -166,6 +166,11 @@ public class PipelineCallback {
         LOG.warn("Dataset is already in pipelines queue, please check the pipeline-ingestion monitoring tool - {}", crawlId);
         return;
       }
+      String mqMessagePath = Fn.MQ_MESSAGE.apply(b.zkRootElementPath);
+      ZookeeperUtils.updateMonitoring(b.curator, crawlId, mqMessagePath, inMessage.toString());
+
+      String mqClassNamePath = Fn.MQ_CLASS_NAME.apply(b.zkRootElementPath);
+      ZookeeperUtils.updateMonitoring(b.curator, crawlId, mqClassNamePath, inMessage.getClass().getCanonicalName());
 
       String startDatePath = Fn.START_DATE.apply(b.zkRootElementPath);
       ZookeeperUtils.updateMonitoringDate(b.curator, crawlId, startDatePath);
@@ -201,7 +206,7 @@ public class PipelineCallback {
       ZookeeperUtils.checkMonitoringById(b.curator, size, crawlId);
 
     } catch (Exception ex) {
-      String error = "Error for crawlId - " + crawlId + " : " + ex.getMessage();
+      String error = "Error for crawlId - " + crawlId + " : " + ex.getCause();
       LOG.error(error, ex);
 
       String errorPath = Fn.ERROR_AVAILABILITY.apply(b.zkRootElementPath);

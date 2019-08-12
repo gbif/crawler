@@ -98,7 +98,7 @@ public class PipelinesProcessServiceImplTest {
         .build();
     curator.start();
     service =
-        new PipelinesProcessServiceImpl(curator, Executors.newSingleThreadExecutor(), null, null, "test");
+        new PipelinesProcessServiceImpl(curator, Executors.newSingleThreadExecutor(), null, null, null, "test");
   }
 
   @After

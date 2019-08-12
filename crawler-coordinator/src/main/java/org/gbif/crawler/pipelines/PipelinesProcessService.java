@@ -17,4 +17,8 @@ public interface PipelinesProcessService {
 
   Set<PipelinesProcessStatus> getPipelinesProcessesByDatasetKey(String datasetKey);
 
+  void restartFailedStepByDatasetKey(String crawlId, String stepName);
+
+  Set<String> getAllStepsNames();
+
 }

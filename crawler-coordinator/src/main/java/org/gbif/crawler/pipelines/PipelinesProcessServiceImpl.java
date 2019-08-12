@@ -19,6 +19,9 @@ import java.util.stream.Collectors;
 
 import org.gbif.api.exception.ServiceUnavailableException;
 import org.gbif.api.service.registry.DatasetService;
+import org.gbif.common.messaging.api.Message;
+import org.gbif.common.messaging.api.MessagePublisher;
+import org.gbif.common.messaging.api.messages.PipelineBasedMessage;
 import org.gbif.crawler.DatasetProcessServiceImpl;
 import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
 import org.gbif.crawler.pipelines.PipelinesProcessStatus.MetricInfo;
@@ -26,6 +29,7 @@ import org.gbif.crawler.pipelines.PipelinesProcessStatus.PipelinesStep;
 import org.gbif.crawler.pipelines.PipelinesProcessStatus.PipelinesStep.Status;
 
 import org.apache.curator.framework.CuratorFramework;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RestHighLevelClient;
@@ -62,14 +66,16 @@ public class PipelinesProcessServiceImpl implements PipelinesProcessService {
 
   private static final String FILTER_NAME = "org.gbif.pipelines.transforms.";
   private static final DecimalFormat DF = new DecimalFormat("0");
+  private static final ObjectMapper MAPPER = new ObjectMapper();
 
   private final CuratorFramework curator;
   private final Executor executor;
   private final RestHighLevelClient client;
   private final String envPrefix;
   private final DatasetService datasetService;
+  private final MessagePublisher publisher;
   private final LoadingCache<String, PipelinesProcessStatus> statusCache = CacheBuilder.newBuilder()
-      .expireAfterAccess(2, TimeUnit.MINUTES)
+      .expireAfterWrite(2, TimeUnit.MINUTES)
       .build(
           new CacheLoader<String, PipelinesProcessStatus>() {
             @Override
@@ -90,6 +96,7 @@ public class PipelinesProcessServiceImpl implements PipelinesProcessService {
       Executor executor,
       RestHighLevelClient client,
       DatasetService datasetService,
+      MessagePublisher publisher,
       @Named("pipelines.envPrefix") String envPrefix
   ) {
     this.curator = checkNotNull(curator, "curator can't be null");
@@ -97,6 +104,7 @@ public class PipelinesProcessServiceImpl implements PipelinesProcessService {
     this.datasetService = datasetService;
     this.client = client;
     this.envPrefix = envPrefix;
+    this.publisher = publisher;
   }
 
   /**
@@ -174,6 +182,33 @@ public class PipelinesProcessServiceImpl implements PipelinesProcessService {
   @Override
   public void deleteAllRunningPipelinesProcess() {
     deleteRunningPipelinesProcess(null);
+  }
+
+  /**
+   * Restart last failed pipelines step
+   */
+  @Override
+  public void restartFailedStepByDatasetKey(String crawlId, String stepName) {
+    checkNotNull(crawlId, "crawlId can't be null");
+    checkNotNull(stepName, "stepName can't be null");
+
+    try {
+      Optional<String> mqMessage = getAsString(crawlId, Fn.MQ_MESSAGE.apply(stepName));
+      Optional<String> mqClassName = getAsString(crawlId, Fn.MQ_CLASS_NAME.apply(stepName));
+      if (publisher != null && mqClassName.isPresent() && mqMessage.isPresent()) {
+        deleteRunningPipelinesProcess(crawlId + "/" + stepName);
+        Message m = (PipelineBasedMessage) MAPPER.readValue(mqMessage.get(), Class.forName(mqClassName.get()));
+        publisher.send(m);
+      }
+    } catch (Exception ex) {
+      LOG.error("crawlId {}", crawlId, ex.getCause());
+      throw new ServiceUnavailableException("Error communicating with ZooKeeper", ex);
+    }
+  }
+
+  @Override
+  public Set<String> getAllStepsNames() {
+    return ALL_STEPS;
   }
 
   @Override
@@ -284,10 +319,10 @@ public class PipelinesProcessServiceImpl implements PipelinesProcessService {
   /**
    * Check exists a Zookeeper monitoring root node by crawlId
    *
-   * @param crawlId root node path
+   * @param path root node path
    */
-  private boolean checkExists(String crawlId) throws Exception {
-    return curator.checkExists().forPath(crawlId) != null;
+  private boolean checkExists(String path) throws Exception {
+    return curator.checkExists().forPath(path) != null;
   }
 
   /**

@@ -138,7 +138,12 @@ public class PipelinesProcessStatus implements Serializable {
     }
 
     public Optional<PipelinesStep> getStep() {
-      return started != null || finished != null ? Optional.of(this) : Optional.empty();
+      if (started != null || finished != null) {
+        started = started == null ? finished : started;
+        return Optional.of(this);
+      } else {
+        return Optional.empty();
+      }
     }
 
     public enum Status {

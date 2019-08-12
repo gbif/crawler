@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.gbif.crawler</groupId>
     <artifactId>crawler-motherpom</artifactId>
-    <version>0.75-SNAPSHOT</version>
+    <version>0.76-SNAPSHOT</version>
   </parent>
 
   <artifactId>crawler-ws</artifactId>
@@ -132,6 +132,16 @@
       <artifactId>jersey-server</artifactId>
     </dependency>
     <!--  Required to get JSON -->
+    <dependency>
+      <groupId>com.fasterxml.jackson</groupId>
+      <artifactId>jackson-datatype-guava</artifactId>
+    </dependency>
+    <dependency>
+      <!-- This dependency is needed for the JsonIgnore annotations on the configuration objects. gbif-cli uses
+           Jackson 2 because only that supports YAML so we have to use the annotations from Jackson 2 -->
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-annotations</artifactId>
+    </dependency>
     <dependency>
       <groupId>com.sun.jersey</groupId>
       <artifactId>jersey-bundle</artifactId>

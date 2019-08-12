@@ -14,10 +14,12 @@ public class PipelinesNodePaths {
 
   private static final String OK = "successful";
   private static final String ERR = "error";
+  private static final String MQ = "mq";
   private static final String START = "startDate";
   private static final String END = "endDate";
   private static final String RUNNER_TYPE = "runner";
   private static final String MESSAGE = "message";
+  private static final String CLASS_NAME = "className";
   private static final String DONE = "availability";
 
   public static final String PIPELINES_ROOT = "pipelines";
@@ -52,6 +54,9 @@ public class PipelinesNodePaths {
     public static final UnaryOperator<String> SUCCESSFUL = s -> join(DELIMITER, s, OK);
     public static final UnaryOperator<String> SUCCESSFUL_AVAILABILITY = s -> join(DELIMITER, s, OK, DONE);
     public static final UnaryOperator<String> SUCCESSFUL_MESSAGE = s -> join(DELIMITER, s, OK, MESSAGE);
+
+    public static final UnaryOperator<String> MQ_MESSAGE= s -> join(DELIMITER, s, MQ, MESSAGE);
+    public static final UnaryOperator<String> MQ_CLASS_NAME = s -> join(DELIMITER, s, MQ, CLASS_NAME);
   }
 
   private PipelinesNodePaths() {
@@ -78,7 +83,7 @@ public class PipelinesNodePaths {
    */
   public static String getPipelinesInfoPath(@Nullable String id, @Nullable String path) {
     String resultPath = DELIMITER + PIPELINES_ROOT;
-    if (path != null) {
+    if (id != null) {
       resultPath += DELIMITER + id;
     }
     if (path != null) {

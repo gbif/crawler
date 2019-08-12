@@ -1,11 +1,15 @@
 package org.gbif.crawler.ws.guice;
 
+import java.io.IOException;
 import java.util.Properties;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 import org.gbif.api.service.crawler.DatasetProcessService;
 import org.gbif.api.service.registry.DatasetService;
+import org.gbif.common.messaging.DefaultMessagePublisher;
+import org.gbif.common.messaging.api.MessagePublisher;
+import org.gbif.common.messaging.config.MessagingConfiguration;
 import org.gbif.crawler.DatasetProcessServiceImpl;
 import org.gbif.crawler.pipelines.PipelinesProcessService;
 import org.gbif.crawler.pipelines.PipelinesProcessServiceImpl;
@@ -51,6 +55,7 @@ class CrawlerModule extends PrivateServiceModule {
     expose(CuratorFramework.class);
     expose(RestHighLevelClient.class);
     expose(DatasetService.class);
+    expose(MessagePublisher.class);
 
     expose(String.class).annotatedWith(Names.named("overcrawledReportFilePath"));
     expose(String.class).annotatedWith(Names.named("pipelines.envPrefix"));
@@ -112,6 +117,28 @@ class CrawlerModule extends PrivateServiceModule {
     Properties p = new Properties();
     p.setProperty("registry.ws.url", url);
     return Guice.createInjector(new RegistryWsClientModule(p), new AnonymousAuthModule()).getInstance(DatasetService.class);
+  }
+
+  /**
+   * Provides an RabbitMQ publisher
+   */
+  @Provides
+  @Singleton
+  public MessagePublisher provideMessagePublisher(
+      @Named("mq.host") String host,
+      @Named("mq.virtualHost") String virtualHost,
+      @Named("mq.username") String username,
+      @Named("mq.password") String password) {
+    MessagingConfiguration configuration = new MessagingConfiguration();
+    configuration.host = host;
+    configuration.virtualHost = virtualHost;
+    configuration.username = username;
+    configuration.password = password;
+    try {
+      return new DefaultMessagePublisher(configuration.getConnectionParameters());
+    } catch (IOException e) {
+      return null;
+    }
   }
 
 }
