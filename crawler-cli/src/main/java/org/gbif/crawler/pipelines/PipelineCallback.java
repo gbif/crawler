@@ -206,7 +206,7 @@ public class PipelineCallback {
       ZookeeperUtils.checkMonitoringById(b.curator, size, crawlId);
 
     } catch (Exception ex) {
-      String error = "Error for crawlId - " + crawlId + " : " + ex.getCause();
+      String error = "Error for crawlId - " + crawlId + " : " + ex.getMessage();
       LOG.error(error, ex);
 
       String errorPath = Fn.ERROR_AVAILABILITY.apply(b.zkRootElementPath);
