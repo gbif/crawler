@@ -82,7 +82,7 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
       LOG.info("Message handler began - {}", message);
 
       if (!isMessageCorrect(message)) {
-        LOG.info("The message wasn't modified, exit from handler");
+        LOG.info("Skip the message, cause the runner is different or it wasn't modified, exit from handler");
         return;
       }
 

@@ -61,7 +61,7 @@ public class AbcdToAvroCallback extends AbstractMessageCallback<PipelinesAbcdMes
       LOG.info("Message handler began - {}", message);
 
       if (!message.isModified()) {
-        LOG.info("The message wasn't modified, exit from handler");
+        LOG.info("Skip the message, cause it wasn't modified, exit from handler");
         return;
       }
 

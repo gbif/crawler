@@ -67,7 +67,7 @@ public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMes
       LOG.info("Message handler began - {}", message);
 
       if (!isMessageCorrect(message)) {
-        LOG.info("The message wasn't modified, exit from handler");
+        LOG.info("Skip the message, cause it is not correct or it wasn't modified, exit from handler");
         return;
       }
 
