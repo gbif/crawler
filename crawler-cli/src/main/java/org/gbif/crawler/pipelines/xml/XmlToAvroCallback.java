@@ -146,7 +146,7 @@ public class XmlToAvroCallback extends AbstractMessageCallback<PipelinesXmlMessa
 
       if (!isConverted) {
         throw new IllegalArgumentException("Dataset - " + datasetId + " attempt - " + attempt
-            + "avro was deleted, cause it is empty! Please check XML files in the directory -> " + inputPath);
+            + " avro was deleted, cause it is empty! Please check XML files in the directory -> " + inputPath);
       }
     };
   }
