@@ -128,7 +128,8 @@ public class ProcessRunnerBuilderTest {
   public void testSparkRunnerCommandFull() {
     // When
     String expected =
-        "spark2-submit --conf spark.metrics.conf=metrics.properties --conf \"spark.driver.extraClassPath=logstash-gelf.jar\" "
+        "spark2-submit --conf spark.metrics.conf=metrics.properties --conf spark.kryoserializer.buffer.max=128m"
+            + " --conf \"spark.driver.extraClassPath=logstash-gelf.jar\" "
             + "--driver-java-options \"-Dlog4j.configuration=file:log4j.properties\" --queue pipelines --conf spark.default.parallelism=1 "
             + "--conf spark.executor.memoryOverhead=1 --conf spark.dynamicAllocation.enabled=false "
             + "--conf \"spark.executor.extraJavaOptions=-XX:+UseG1GC\" --class org.gbif.Test --master yarn "
@@ -158,6 +159,7 @@ public class ProcessRunnerBuilderTest {
     config.esHosts = new String[]{"http://host.com:9300"};
     config.yarnQueue = "pipelines";
     config.pipelinesConfig = "/path/ws.config";
+    config.sparkKryoserializerBufferMax = "128m";
 
     UUID datasetId = UUID.fromString("de7ffb5e-c07b-42dc-8a88-f67a4465fe3d");
     int attempt = 1;
