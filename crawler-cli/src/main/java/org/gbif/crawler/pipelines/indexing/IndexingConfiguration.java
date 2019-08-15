@@ -95,9 +95,6 @@ public class IndexingConfiguration {
   @NotNull
   public String sparkDriverMemory;
 
-  @Parameter(names = "--spark-kryoserializer-buffer-max")
-  public String sparkKryoserializerBufferMax;
-
   @Parameter(names = "--standalone-stack-size")
   @NotNull
   public String standaloneStackSize;
@@ -226,7 +223,6 @@ public class IndexingConfiguration {
         .add("sparkExecutorCores", sparkExecutorCores)
         .add("sparkExecutorNumbersMin", sparkExecutorNumbersMin)
         .add("sparkExecutorNumbersMax", sparkExecutorNumbersMax)
-        .add("sparkKryoserializerBufferMax", sparkKryoserializerBufferMax)
         .add("standaloneJarPath", standaloneJarPath)
         .add("distributedJarPath", distributedJarPath)
         .add("repositoryPath", repositoryPath)

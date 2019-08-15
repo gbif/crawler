@@ -100,8 +100,6 @@ final class ProcessRunnerBuilder {
 
     Optional.ofNullable(config.metricsPropertiesPath)
         .ifPresent(x -> joiner.add("--conf spark.metrics.conf=" + x));
-    Optional.ofNullable(config.sparkKryoserializerBufferMax)
-        .ifPresent(x -> joiner.add("--conf spark.kryoserializer.buffer.max=" + x));
     Optional.ofNullable(config.extraClassPath)
         .ifPresent(x -> joiner.add("--conf \"spark.driver.extraClassPath=" + x + "\""));
     Optional.ofNullable(config.driverJavaOptions).ifPresent(x -> joiner.add("--driver-java-options \"" + x + "\""));
@@ -115,6 +113,7 @@ final class ProcessRunnerBuilder {
         .add("--conf spark.executor.memoryOverhead=" + config.sparkMemoryOverhead)
         .add("--conf spark.dynamicAllocation.enabled=false")
         .add("--conf \"spark.executor.extraJavaOptions=-XX:+UseG1GC\"")
+        .add("--conf spark.serializer=org.apache.spark.serializer.JavaSerializer")
         .add("--class " + Objects.requireNonNull(config.distributedMainClass))
         .add("--master yarn")
         .add("--deploy-mode " + Objects.requireNonNull(config.deployMode))
