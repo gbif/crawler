@@ -1,7 +1,5 @@
 package org.gbif.crawler.pipelines.hive;
 
-import org.gbif.common.messaging.api.messages.PipelinesInterpretedMessage;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -10,6 +8,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.function.BiFunction;
+
+import org.gbif.common.messaging.api.messages.PipelinesInterpretedMessage;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -81,7 +81,6 @@ final class ProcessRunnerBuilder {
 
     joiner.add("--conf spark.default.parallelism=" + sparkParallelism)
         .add("--conf spark.executor.memoryOverhead=" + config.sparkMemoryOverhead)
-        .add("--conf spark.yarn.maxAppAttempts=1")
         .add("--conf spark.dynamicAllocation.enabled=false")
         .add("--conf \"spark.executor.extraJavaOptions=-XX:+UseG1GC\"")
         .add("--class " + Objects.requireNonNull(config.distributedMainClass))
