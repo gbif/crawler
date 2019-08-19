@@ -104,9 +104,10 @@ public class DwcaMetasyncService extends DwcaService {
     }
 
     private void handleMessageInternal(DwcaValidationFinishedMessage message, UUID datasetKey) throws IOException {
+      // https://github.com/gbif/portal-feedback/issues/2138
+      // The DwcaValidation doesn't check the metadata anyway, so it's OK to continue.
       if (!message.getValidationReport().isValid()) {
-        LOG.info("Ignoring message for invalid DwC-A for dataset [{}]", datasetKey);
-        return;
+        LOG.warn("Invalid DwC-A for dataset [{}], attempting to process metadata anyway", datasetKey);
       }
 
       Dataset dataset = datasetService.get(datasetKey);
