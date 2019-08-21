@@ -59,3 +59,6 @@ mvn clean install
 ### metasync
 * Listen to `StartMetasyncMessage` messages.
 * Supported protocols are: DiGIR, TAPIR and BioCASe.
+
+### pipelines
+![pipelines crawler](docs/pipelines-crawler.png)
