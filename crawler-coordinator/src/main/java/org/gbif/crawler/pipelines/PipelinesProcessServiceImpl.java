@@ -1,4 +1,4 @@
-package org.gbif.crawler.status.service.pipelines;
+package org.gbif.crawler.pipelines;
 
 import java.text.DecimalFormat;
 import java.time.LocalDate;
@@ -22,7 +22,6 @@ import org.gbif.api.service.registry.DatasetService;
 import org.gbif.common.messaging.api.Message;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.PipelineBasedMessage;
-import org.gbif.crawler.DatasetProcessServiceImpl;
 import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
 import org.gbif.crawler.status.service.pipelines.PipelinesProcessStatus.MetricInfo;
 import org.gbif.crawler.status.service.pipelines.PipelinesProcessStatus.PipelinesStep;
@@ -50,9 +49,6 @@ import com.google.common.cache.LoadingCache;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
-import static org.gbif.crawler.constants.CrawlerNodePaths.buildPath;
-import static org.gbif.crawler.constants.PipelinesNodePaths.ALL_STEPS;
-import static org.gbif.crawler.constants.PipelinesNodePaths.PIPELINES_ROOT;
 import static org.gbif.crawler.constants.PipelinesNodePaths.getPipelinesInfoPath;
 
 import static com.google.common.base.Preconditions.checkNotNull;

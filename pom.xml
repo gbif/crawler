@@ -155,6 +155,11 @@
         <artifactId>crawler-cleanup</artifactId>
         <version>${project.version}</version>
       </dependency>
+      <dependency>
+        <groupId>org.gbif.crawler</groupId>
+        <artifactId>crawler-status-service</artifactId>
+        <version>${project.version}</version>
+      </dependency>
 
       <!-- GBIF -->
       <dependency>

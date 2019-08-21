@@ -1,6 +1,8 @@
-package org.gbif.crawler.status.service.pipelines;
+package org.gbif.crawler.pipelines;
 
 import java.util.Set;
+
+import org.gbif.crawler.status.service.pipelines.PipelinesProcessStatus;
 
 /**
  * The public interface of the Pipelines monitoring service
