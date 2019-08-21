@@ -121,7 +121,7 @@ public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMes
     return () -> {
 
       Optional.ofNullable(message.getEndpointType())
-          .orElseThrow(() -> new IllegalArgumentException("endpointType can't bew NULL!"));
+          .orElseThrow(() -> new IllegalArgumentException("endpointType can't be NULL!"));
 
       UUID datasetId = message.getDatasetUuid();
       String attempt = String.valueOf(message.getAttempt());
