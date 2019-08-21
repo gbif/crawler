@@ -65,7 +65,7 @@ public class PipelinesProcessStatus implements Serializable {
     private String finished;
     private Status state;
     private String message;
-    private Map<String, String> metrics = new HashMap();
+    private Map<String, String> metrics = new HashMap<>();
 
     public PipelinesStep(String name) {
       this.name = name;
