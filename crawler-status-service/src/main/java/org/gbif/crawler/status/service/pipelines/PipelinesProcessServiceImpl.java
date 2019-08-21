@@ -1,4 +1,4 @@
-package org.gbif.crawler.pipelines;
+package org.gbif.crawler.status.service.pipelines;
 
 import java.text.DecimalFormat;
 import java.time.LocalDate;
@@ -24,9 +24,9 @@ import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.PipelineBasedMessage;
 import org.gbif.crawler.DatasetProcessServiceImpl;
 import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
-import org.gbif.crawler.pipelines.PipelinesProcessStatus.MetricInfo;
-import org.gbif.crawler.pipelines.PipelinesProcessStatus.PipelinesStep;
-import org.gbif.crawler.pipelines.PipelinesProcessStatus.PipelinesStep.Status;
+import org.gbif.crawler.status.service.pipelines.PipelinesProcessStatus.MetricInfo;
+import org.gbif.crawler.status.service.pipelines.PipelinesProcessStatus.PipelinesStep;
+import org.gbif.crawler.status.service.pipelines.PipelinesProcessStatus.PipelinesStep.Status;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -62,7 +62,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public class PipelinesProcessServiceImpl implements PipelinesProcessService {
 
-  private static final Logger LOG = LoggerFactory.getLogger(DatasetProcessServiceImpl.class);
+  private static final Logger LOG = LoggerFactory.getLogger(PipelinesProcessServiceImpl.class);
 
   private static final String FILTER_NAME = "org.gbif.pipelines.transforms.";
   private static final DecimalFormat DF = new DecimalFormat("0");
@@ -115,7 +115,7 @@ public class PipelinesProcessServiceImpl implements PipelinesProcessService {
     Set<PipelinesProcessStatus> set = new TreeSet<>(Comparator.comparing(PipelinesProcessStatus::getCrawlId));
     try {
 
-      String path = buildPath(PIPELINES_ROOT);
+      String path = CrawlerNodePaths.buildPath(PipelinesNodePaths.PIPELINES_ROOT);
 
       if (!checkExists(path)) {
         return Collections.emptySet();
@@ -167,7 +167,7 @@ public class PipelinesProcessServiceImpl implements PipelinesProcessService {
   @Override
   public void deleteRunningPipelinesProcess(String crawlId) {
     try {
-      String path = getPipelinesInfoPath(crawlId);
+      String path = PipelinesNodePaths.getPipelinesInfoPath(crawlId);
       if (checkExists(path)) {
         curator.delete().deletingChildrenIfNeeded().forPath(path);
       }
@@ -208,7 +208,7 @@ public class PipelinesProcessServiceImpl implements PipelinesProcessService {
 
   @Override
   public Set<String> getAllStepsNames() {
-    return ALL_STEPS;
+    return PipelinesNodePaths.ALL_STEPS;
   }
 
   @Override
@@ -216,7 +216,7 @@ public class PipelinesProcessServiceImpl implements PipelinesProcessService {
     Set<PipelinesProcessStatus> set = new TreeSet<>(Comparator.comparing(PipelinesProcessStatus::getCrawlId));
     try {
 
-      String path = buildPath(PIPELINES_ROOT);
+      String path = CrawlerNodePaths.buildPath(PipelinesNodePaths.PIPELINES_ROOT);
 
       if (!checkExists(path)) {
         return Collections.emptySet();
@@ -257,7 +257,7 @@ public class PipelinesProcessServiceImpl implements PipelinesProcessService {
 
     try {
       // Check if dataset is actually being processed right now
-      if (!checkExists(getPipelinesInfoPath(crawlId))) {
+      if (!checkExists(PipelinesNodePaths.getPipelinesInfoPath(crawlId))) {
         return new PipelinesProcessStatus(crawlId);
       }
       // Here we're trying to load all information from Zookeeper into the DatasetProcessStatus object
@@ -284,7 +284,7 @@ public class PipelinesProcessServiceImpl implements PipelinesProcessService {
    * Gets step info from ZK
    */
   private Set<PipelinesStep> getStepInfo(String crawlId) {
-    return ALL_STEPS.stream().map(path -> {
+    return PipelinesNodePaths.ALL_STEPS.stream().map(path -> {
       PipelinesStep step = new PipelinesStep(path);
 
       try {
@@ -329,7 +329,7 @@ public class PipelinesProcessServiceImpl implements PipelinesProcessService {
    * Read value from Zookeeper as a {@link String}
    */
   private Optional<String> getAsString(String crawlId, String path) throws Exception {
-    String infoPath = getPipelinesInfoPath(crawlId, path);
+    String infoPath = PipelinesNodePaths.getPipelinesInfoPath(crawlId, path);
     if (checkExists(infoPath)) {
       byte[] responseData = curator.getData().forPath(infoPath);
       if (responseData != null) {

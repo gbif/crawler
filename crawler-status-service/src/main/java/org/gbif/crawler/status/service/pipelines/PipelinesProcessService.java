@@ -1,4 +1,4 @@
-package org.gbif.crawler.pipelines;
+package org.gbif.crawler.status.service.pipelines;
 
 import java.util.Set;
 

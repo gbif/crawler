@@ -91,6 +91,12 @@
     <avro.version>1.8.2</avro.version>
     <elasticsearch.client.version>5.6.15</elasticsearch.client.version>
     <log4j-api.version>2.3</log4j-api.version>
+
+    <!-- DB -->
+    <mybatis-guice.version>3.7.1</mybatis-guice.version>
+    <mybatis.version>3.2.8</mybatis.version>
+    <gbif-common-mybatis.version>0.30</gbif-common-mybatis.version>
+    <postgresql.version>9.4.1208.jre7</postgresql.version>
   </properties>
 
   <repositories>
@@ -118,6 +124,7 @@
     <module>crawler-cli</module>
     <module>crawler-ws</module>
     <module>crawler-ws-client</module>
+    <module>crawler-status-service</module>
   </modules>
 
   <!--
@@ -550,6 +557,35 @@
         <groupId>org.slf4j</groupId>
         <artifactId>jul-to-slf4j</artifactId>
         <version>${slf4j.version}</version>
+        <scope>runtime</scope>
+      </dependency>
+
+      <!-- DB -->
+      <dependency>
+        <groupId>org.gbif</groupId>
+        <artifactId>gbif-common-mybatis</artifactId>
+        <version>${gbif-common-mybatis.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.gbif</groupId>
+            <artifactId>gbif-parsers</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.mybatis</groupId>
+        <artifactId>mybatis</artifactId>
+        <version>${mybatis.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mybatis</groupId>
+        <artifactId>mybatis-guice</artifactId>
+        <version>${mybatis-guice.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.postgresql</groupId>
+        <artifactId>postgresql</artifactId>
+        <version>${postgresql.version}</version>
         <scope>runtime</scope>
       </dependency>
     </dependencies>

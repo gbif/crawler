@@ -1,9 +1,9 @@
-package org.gbif.crawler.pipelines;
+package org.gbif.crawler.status.service.pipelines;
 
 import java.io.Serializable;
 import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Objects;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
@@ -15,27 +15,13 @@ public class PipelinesProcessStatus implements Serializable {
 
   private static final long serialVersionUID = -3992826055732414678L;
 
-  private final String crawlId;
   private String datasetKey;
   private String attempt;
   private String datasetTitle;
   private Set<PipelinesStep> steps = new TreeSet<>(Comparator.comparing(PipelinesStep::getStarted));
-  private Set<MetricInfo> metrics = new HashSet<>();
-
-  public PipelinesProcessStatus(String crawlId) {
-    this.crawlId = crawlId;
-  }
-
-  public String getCrawlId() {
-    return crawlId;
-  }
 
   public Set<PipelinesStep> getSteps() {
     return steps;
-  }
-
-  public Set<MetricInfo> getMetrics() {
-    return metrics;
   }
 
   public String getDatasetKey() {
@@ -69,10 +55,6 @@ public class PipelinesProcessStatus implements Serializable {
     steps.add(step);
   }
 
-  public void addMericInfo(MetricInfo metricInfo) {
-    metrics.add(metricInfo);
-  }
-
   public static class PipelinesStep implements Serializable {
 
     private static final long serialVersionUID = 460047082156621661L;
@@ -83,6 +65,7 @@ public class PipelinesProcessStatus implements Serializable {
     private String finished;
     private Status state;
     private String message;
+    private Map<String, String> metrics = new HashMap();
 
     public PipelinesStep(String name) {
       this.name = name;
@@ -146,50 +129,19 @@ public class PipelinesProcessStatus implements Serializable {
       }
     }
 
+    public Map<String, String> getMetrics() {
+      return metrics;
+    }
+
+    public void setMetrics(Map<String, String> metrics) {
+      this.metrics = metrics;
+    }
+
     public enum Status {
       RUNNING,
       FAILED,
       COMPLETED
     }
   }
-
-  public static class MetricInfo implements Serializable {
-
-    private static final long serialVersionUID = 1872427841009786709L;
-
-    private String name;
-    private String value;
-
-    public MetricInfo(String name, String value) {
-      this.name = name;
-      this.value = value;
-    }
-
-    public String getName() {
-      return name;
-    }
-
-    public String getValue() {
-      return value;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-      MetricInfo that = (MetricInfo) o;
-      return name.equals(that.name) && value.equals(that.value);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(name, value);
-    }
-  }
-
 
 }
