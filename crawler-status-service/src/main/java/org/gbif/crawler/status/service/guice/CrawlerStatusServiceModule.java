@@ -4,17 +4,19 @@ import org.gbif.crawler.status.service.persistence.PipelinesProcessStatusMapper;
 import org.gbif.crawler.status.service.persistence.handlers.MetricInfoTypeHandler;
 import org.gbif.crawler.status.service.pipelines.PipelinesProcessStatus;
 import org.gbif.mybatis.guice.MyBatisModule;
+import org.gbif.mybatis.type.UuidTypeHandler;
 import org.gbif.service.guice.PrivateServiceModule;
 import org.gbif.utils.file.properties.PropertiesUtil;
 
 import java.util.Properties;
+import java.util.UUID;
 
 /**
  * Guice module to set up the injection of the crawler-status-service module.
  */
 public class CrawlerStatusServiceModule extends PrivateServiceModule {
 
-  private static final String PROPS_PREFIX = "status.";
+  public static final String PROPS_PREFIX = "status.";
 
   /**
    * Uses the given properties to configure the service.
@@ -51,10 +53,12 @@ public class CrawlerStatusServiceModule extends PrivateServiceModule {
       addAlias("PipelinesProcess").to(PipelinesProcessStatus.class);
       addAlias("Step").to(PipelinesProcessStatus.PipelinesStep.class);
       addAlias("MetricInfoTypeHandler").to(MetricInfoTypeHandler.class);
+      addAlias("UuidTypeHandler").to(UuidTypeHandler.class);
     }
 
     @Override
     protected void bindTypeHandlers() {
+      handleType(UUID.class).with(UuidTypeHandler.class);
       addTypeHandlerClass(MetricInfoTypeHandler.class);
     }
 

@@ -2,12 +2,7 @@ package org.gbif.crawler.status.service.pipelines;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 /**
  * Base POJO model for the Pipelines monitoring service
@@ -17,8 +12,8 @@ public class PipelinesProcessStatus implements Serializable {
   private static final long serialVersionUID = -3992826055732414678L;
 
   private long id;
-  private String datasetKey;
-  private String attempt;
+  private UUID datasetKey;
+  private int attempt;
   private String datasetTitle;
   private Set<PipelinesStep> steps = new TreeSet<>(Comparator.comparing(PipelinesStep::getStarted));
 
@@ -30,19 +25,19 @@ public class PipelinesProcessStatus implements Serializable {
     this.id = id;
   }
 
-  public String getDatasetKey() {
+  public UUID getDatasetKey() {
     return datasetKey;
   }
 
-  public void setDatasetKey(String datasetKey) {
+  public void setDatasetKey(UUID datasetKey) {
     this.datasetKey = datasetKey;
   }
 
-  public String getAttempt() {
+  public int getAttempt() {
     return attempt;
   }
 
-  public void setAttempt(String attempt) {
+  public void setAttempt(int attempt) {
     this.attempt = attempt;
   }
 

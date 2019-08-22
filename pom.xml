@@ -96,7 +96,9 @@
     <mybatis-guice.version>3.7.1</mybatis-guice.version>
     <mybatis.version>3.2.8</mybatis.version>
     <gbif-common-mybatis.version>0.30</gbif-common-mybatis.version>
-    <postgresql.version>9.4.1208.jre7</postgresql.version>
+    <postgresql.version>42.2.6</postgresql.version>
+    <testcontainers.postgres.version>1.11.3</testcontainers.postgres.version>
+    <liquibase.version>3.8.0</liquibase.version>
   </properties>
 
   <repositories>
@@ -591,6 +593,18 @@
         <groupId>org.postgresql</groupId>
         <artifactId>postgresql</artifactId>
         <version>${postgresql.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.testcontainers</groupId>
+        <artifactId>postgresql</artifactId>
+        <version>${testcontainers.postgres.version}</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.liquibase</groupId>
+        <artifactId>liquibase-core</artifactId>
+        <version>${liquibase.version}</version>
+        <scope>test</scope>
       </dependency>
     </dependencies>
   </dependencyManagement>
