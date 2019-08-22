@@ -591,7 +591,6 @@
         <groupId>org.postgresql</groupId>
         <artifactId>postgresql</artifactId>
         <version>${postgresql.version}</version>
-        <scope>runtime</scope>
       </dependency>
     </dependencies>
   </dependencyManagement>

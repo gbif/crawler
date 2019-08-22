@@ -13,6 +13,7 @@ import org.gbif.common.messaging.config.MessagingConfiguration;
 import org.gbif.crawler.DatasetProcessServiceImpl;
 import org.gbif.crawler.pipelines.PipelinesProcessService;
 import org.gbif.crawler.pipelines.PipelinesProcessServiceImpl;
+import org.gbif.crawler.status.service.guice.CrawlerStatusServiceModule;
 import org.gbif.registry.ws.client.guice.RegistryWsClientModule;
 import org.gbif.service.guice.PrivateServiceModule;
 import org.gbif.ws.client.guice.AnonymousAuthModule;
@@ -48,7 +49,6 @@ class CrawlerModule extends PrivateServiceModule {
   @Override
   protected void configureService() {
     bind(DatasetProcessService.class).to(DatasetProcessServiceImpl.class).in(Scopes.SINGLETON);
-    bind(PipelinesProcessService.class).to(PipelinesProcessServiceImpl.class).in(Scopes.SINGLETON);
     expose(DatasetProcessService.class);
     expose(PipelinesProcessService.class);
     expose(Executor.class);
@@ -139,6 +139,12 @@ class CrawlerModule extends PrivateServiceModule {
     } catch (IOException e) {
       return null;
     }
+  }
+
+  @Provides
+  @Singleton
+  public PipelinesProcessService providePipelinesProcessService() {
+    return Guice.createInjector(new CrawlerStatusServiceModule(getProperties())).getInstance(PipelinesProcessService.class);
   }
 
 }

@@ -1,9 +1,9 @@
 package org.gbif.crawler.status.service.persistence;
 
-import java.util.UUID;
-
 import org.gbif.crawler.status.service.pipelines.PipelinesProcessStatus;
 import org.gbif.crawler.status.service.pipelines.PipelinesProcessStatus.PipelinesStep;
+
+import java.util.UUID;
 
 import org.apache.ibatis.annotations.Param;
 
@@ -16,7 +16,8 @@ public interface PipelinesProcessStatusMapper {
 
   PipelinesProcessStatus get(@Param("datasetKey") UUID datasetKey, @Param("attempt") int attempt);
 
-  void addPipelineStep(@Param("datasetKey") UUID datasetKey, @Param("attempt") int attempt,
-      @Param("step") PipelinesStep step);
+  void addPipelineStep(@Param("pipelinesProcessId") int pipelinesProcessId, @Param("step") PipelinesStep step);
+
+  // TODO: list all
 
 }

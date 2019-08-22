@@ -16,40 +16,50 @@ public class PipelinesProcessStatus implements Serializable {
 
   private static final long serialVersionUID = -3992826055732414678L;
 
+  private long id;
   private String datasetKey;
   private String attempt;
   private String datasetTitle;
   private Set<PipelinesStep> steps = new TreeSet<>(Comparator.comparing(PipelinesStep::getStarted));
 
-  public Set<PipelinesStep> getSteps() {
-    return steps;
+  public long getId() {
+    return id;
+  }
+
+  public void setId(long id) {
+    this.id = id;
   }
 
   public String getDatasetKey() {
     return datasetKey;
   }
 
-  public PipelinesProcessStatus setDatasetKey(String datasetKey) {
+  public void setDatasetKey(String datasetKey) {
     this.datasetKey = datasetKey;
-    return this;
   }
 
   public String getAttempt() {
     return attempt;
   }
 
-  public PipelinesProcessStatus setAttempt(String attempt) {
+  public void setAttempt(String attempt) {
     this.attempt = attempt;
-    return this;
   }
 
   public String getDatasetTitle() {
     return datasetTitle;
   }
 
-  public PipelinesProcessStatus setDatasetTitle(String datasetTitle) {
+  public void setDatasetTitle(String datasetTitle) {
     this.datasetTitle = datasetTitle;
-    return this;
+  }
+
+  public Set<PipelinesStep> getSteps() {
+    return steps;
+  }
+
+  public void setSteps(Set<PipelinesStep> steps) {
+    this.steps = steps;
   }
 
   public void addStep(PipelinesStep step) {
@@ -60,6 +70,7 @@ public class PipelinesProcessStatus implements Serializable {
 
     private static final long serialVersionUID = 460047082156621661L;
 
+    private long id;
     private final String name;
     private String runner;
     private LocalDateTime started;
@@ -70,6 +81,14 @@ public class PipelinesProcessStatus implements Serializable {
 
     public PipelinesStep(String name) {
       this.name = name;
+    }
+
+    public long getId() {
+      return id;
+    }
+
+    public void setId(long id) {
+      this.id = id;
     }
 
     public String getRunner() {

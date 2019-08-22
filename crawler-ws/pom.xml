@@ -229,5 +229,9 @@
         </exclusion>
       </exclusions>
     </dependency>
+    <dependency>
+      <groupId>org.gbif.crawler</groupId>
+      <artifactId>crawler-status-service</artifactId>
+    </dependency>
   </dependencies>
 </project>

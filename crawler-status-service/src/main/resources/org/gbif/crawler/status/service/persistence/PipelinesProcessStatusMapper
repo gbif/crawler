@@ -6,11 +6,51 @@
   <resultMap id="PIPELINES_PROCESS_MAP" type="PipelinesProcess" autoMapping="true">
     <id property="datasetKey" column="dataset_key"/>
     <id property="attempt" column="attempt"/>
-    <collection property="steps" column="id" select="listSteps" />
+    <collection property="steps" column="id" select="listSteps"/>
   </resultMap>
 
   <resultMap id="STEP_MAP" type="Step" autoMapping="true">
-    <id property="key" />
+    <id property="id" column="id"/>
+    <result property="metrics" column="metrics" typeHandler="MetricInfoTypeHandler"/>
   </resultMap>
+
+  <sql id="PIPELINES_PROCESS_PARAMS_CREATE">
+    #{datasetKey,jdbcType=VARCHAR},
+    #{attempt,jdbcType=VARCHAR},
+    #{datasetTitle,jdbcType=VARCHAR}
+  </sql>
+
+  <sql id="STEP_PARAMS_CREATE">
+    #{step.name,jdbcType=VARCHAR},
+    #{step.runner,jdbcType=VARCHAR},
+    #{step.started,jdbcType=TIMESTAMP},
+    #{step.finished,jdbcType=TIMESTAMP},
+    #{step.state,jdbcType=OTHER},
+    #{step.message,jdbcType=VARCHAR},
+    #{step.metrics,jdbcType=OTHER,typeHandler=MetricInfoTypeHandler}::hstore,
+    #{pipelinesProcessId,jdbcType=INTEGER}
+  </sql>
+
+  <insert id="create" parameterType="PipelinesProcess">
+    INSERT INTO pipelines_process(dataset_key, attempt, dataset_title)
+    VALUES (<include refid="PIPELINES_PROCESS_PARAMS_CREATE"/>)
+  </insert>
+
+  <insert id="addPipelineStep">
+    INSERT INTO pipelines_step(name, runner, started_date, finished_date, message, metrics, pipelines_process_id)
+    VALUES (<include refid="STEP_PARAMS_CREATE"/>)
+  </insert>
+
+  <select id="listSteps" resultType="Step">
+    SELECT key, name, runner, started_date, finished_date, state, message, metrics
+    FROM pipelines_step
+    WHERE pipelines_process_id = #{id,jdbcType=INTEGER}
+  </select>
+
+  <select id="get" resultType="PipelinesProcess">
+    SELECT id, dataset_key, attempt, dataset_title
+    FROM pipelines_process
+    WHERE dataset_key = {#datasetKey, jdbcType=VARCHAR} AND attempt = {#attempt, jdbcType=VARCHAR}
+  </select>
 
 </mapper>

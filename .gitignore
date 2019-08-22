@@ -15,3 +15,7 @@ minicluster
 tmp
 
 crawler-coordinator/logs/registry-metasync\.log
+
+*.tmp
+
+crawler-coordinator/logs/

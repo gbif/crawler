@@ -1,32 +1,36 @@
 package org.gbif.crawler.pipelines;
 
+import org.gbif.api.exception.ServiceUnavailableException;
+import org.gbif.api.service.registry.DatasetService;
+import org.gbif.common.messaging.api.Message;
+import org.gbif.common.messaging.api.MessagePublisher;
+import org.gbif.common.messaging.api.messages.PipelineBasedMessage;
+import org.gbif.crawler.constants.CrawlerNodePaths;
+import org.gbif.crawler.constants.PipelinesNodePaths;
+import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
+import org.gbif.crawler.status.service.pipelines.PipelinesProcessStatus;
+import org.gbif.crawler.status.service.pipelines.PipelinesProcessStatus.MetricInfo;
+import org.gbif.crawler.status.service.pipelines.PipelinesProcessStatus.PipelinesStep;
+import org.gbif.crawler.status.service.pipelines.PipelinesProcessStatus.PipelinesStep.Status;
+
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Optional;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import org.gbif.api.exception.ServiceUnavailableException;
-import org.gbif.api.service.registry.DatasetService;
-import org.gbif.common.messaging.api.Message;
-import org.gbif.common.messaging.api.MessagePublisher;
-import org.gbif.common.messaging.api.messages.PipelineBasedMessage;
-import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
-import org.gbif.crawler.status.service.pipelines.PipelinesProcessStatus.MetricInfo;
-import org.gbif.crawler.status.service.pipelines.PipelinesProcessStatus.PipelinesStep;
-import org.gbif.crawler.status.service.pipelines.PipelinesProcessStatus.PipelinesStep.Status;
-
+import com.google.common.base.Charsets;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.apache.curator.framework.CuratorFramework;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.elasticsearch.action.search.SearchRequest;
@@ -41,15 +45,6 @@ import org.elasticsearch.search.aggregations.metrics.max.ParsedMax;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.base.Charsets;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
-
-import static org.gbif.crawler.constants.PipelinesNodePaths.getPipelinesInfoPath;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -108,7 +103,8 @@ public class PipelinesProcessServiceImpl implements PipelinesProcessService {
    */
   @Override
   public Set<PipelinesProcessStatus> getRunningPipelinesProcesses() {
-    Set<PipelinesProcessStatus> set = new TreeSet<>(Comparator.comparing(PipelinesProcessStatus::getCrawlId));
+//    Set<PipelinesProcessStatus> set = new TreeSet<>(Comparator.comparing(PipelinesProcessStatus::getCrawlId));
+    Set<PipelinesProcessStatus> set = new HashSet<>();
     try {
 
       String path = CrawlerNodePaths.buildPath(PipelinesNodePaths.PIPELINES_ROOT);
@@ -209,7 +205,8 @@ public class PipelinesProcessServiceImpl implements PipelinesProcessService {
 
   @Override
   public Set<PipelinesProcessStatus> getPipelinesProcessesByDatasetKey(String datasetKey) {
-    Set<PipelinesProcessStatus> set = new TreeSet<>(Comparator.comparing(PipelinesProcessStatus::getCrawlId));
+//    Set<PipelinesProcessStatus> set = new TreeSet<>(Comparator.comparing(PipelinesProcessStatus::getCrawlId));
+    Set<PipelinesProcessStatus> set = new HashSet<>();
     try {
 
       String path = CrawlerNodePaths.buildPath(PipelinesNodePaths.PIPELINES_ROOT);
@@ -254,10 +251,10 @@ public class PipelinesProcessServiceImpl implements PipelinesProcessService {
     try {
       // Check if dataset is actually being processed right now
       if (!checkExists(PipelinesNodePaths.getPipelinesInfoPath(crawlId))) {
-        return new PipelinesProcessStatus(crawlId);
+        return new PipelinesProcessStatus();
       }
       // Here we're trying to load all information from Zookeeper into the DatasetProcessStatus object
-      PipelinesProcessStatus status = new PipelinesProcessStatus(crawlId);
+      PipelinesProcessStatus status = new PipelinesProcessStatus();
       String[] ids = crawlId.split("_");
       status.setDatasetKey(ids[0]);
       status.setAttempt(ids[1]);
@@ -267,7 +264,7 @@ public class PipelinesProcessServiceImpl implements PipelinesProcessService {
       getStepInfo(crawlId).forEach(step -> step.getStep().ifPresent(status::addStep));
 
       // Gets metrics info fro ELK
-      getMetricInfo(crawlId).forEach(status::addMericInfo);
+//      getMetricInfo(crawlId).forEach(status::addMericInfo);
 
       return status;
     } catch (Exception ex) {
@@ -292,8 +289,8 @@ public class PipelinesProcessServiceImpl implements PipelinesProcessService {
         Optional<String> successfulMessageOpt = getAsString(crawlId, Fn.SUCCESSFUL_MESSAGE.apply(path));
 
         getAsString(crawlId, Fn.RUNNER.apply(path)).ifPresent(step::setRunner);
-        startDateOpt.ifPresent(x -> step.setStarted(x.toString()));
-        endDateOpt.ifPresent(x -> step.setFinished(x.toString()));
+//        startDateOpt.ifPresent(x -> step.setStarted(x.toString()));
+//        endDateOpt.ifPresent(x -> step.setFinished(x.toString()));
 
         if (isErrorOpt.isPresent()) {
           step.setState(Status.FAILED);

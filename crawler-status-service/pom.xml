@@ -9,7 +9,6 @@
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>org.gbif.crawler</groupId>
   <artifactId>crawler-status-service</artifactId>
   <version>0.76-SNAPSHOT</version>
 
@@ -23,7 +22,14 @@
       <artifactId>gbif-common-service</artifactId>
     </dependency>
 
-    <!-- persisntence -->
+    <!-- utils -->
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>${guava.version}</version>
+    </dependency>
+
+    <!-- persistence -->
     <dependency>
       <groupId>org.gbif</groupId>
       <artifactId>gbif-common-mybatis</artifactId>
@@ -45,7 +51,13 @@
     <dependency>
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
-      <scope>runtime</scope>
+    </dependency>
+
+    <!-- test -->
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 
