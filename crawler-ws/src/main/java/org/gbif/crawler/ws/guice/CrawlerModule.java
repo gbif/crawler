@@ -49,6 +49,7 @@ class CrawlerModule extends PrivateServiceModule {
   @Override
   protected void configureService() {
     bind(DatasetProcessService.class).to(DatasetProcessServiceImpl.class).in(Scopes.SINGLETON);
+    bind(PipelinesProcessService.class).to(PipelinesProcessServiceImpl.class).in(Scopes.SINGLETON);
     expose(DatasetProcessService.class);
     expose(PipelinesProcessService.class);
     expose(Executor.class);
@@ -141,10 +142,10 @@ class CrawlerModule extends PrivateServiceModule {
     }
   }
 
-  @Provides
-  @Singleton
-  public PipelinesProcessService providePipelinesProcessService() {
-    return Guice.createInjector(new CrawlerStatusServiceModule(getProperties())).getInstance(PipelinesProcessService.class);
-  }
+//  @Provides
+//  @Singleton
+//  public PipelinesProcessService providePipelinesProcessService() {
+//    return Guice.createInjector(new CrawlerStatusServiceModule(getProperties())).getInstance(PipelinesProcessService.class);
+//  }
 
 }

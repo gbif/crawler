@@ -8,6 +8,7 @@ import org.gbif.common.messaging.api.messages.PipelineBasedMessage;
 import org.gbif.crawler.constants.CrawlerNodePaths;
 import org.gbif.crawler.constants.PipelinesNodePaths;
 import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
+import org.gbif.crawler.status.service.persistence.PipelinesProcessStatusMapper;
 import org.gbif.crawler.status.service.pipelines.PipelinesProcessStatus;
 import org.gbif.crawler.status.service.pipelines.PipelinesProcessStatus.MetricInfo;
 import org.gbif.crawler.status.service.pipelines.PipelinesProcessStatus.PipelinesStep;
@@ -75,6 +76,8 @@ public class PipelinesProcessServiceImpl implements PipelinesProcessService {
             }
           });
 
+  private final PipelinesProcessStatusMapper pipelinesProcessStatusMapper;
+
   /**
    * Creates a CrawlerMetricsService. Responsible for interacting with a ZooKeeper instance in a read-only fashion.
    *
@@ -88,7 +91,8 @@ public class PipelinesProcessServiceImpl implements PipelinesProcessService {
       RestHighLevelClient client,
       DatasetService datasetService,
       MessagePublisher publisher,
-      @Named("pipelines.envPrefix") String envPrefix
+      @Named("pipelines.envPrefix") String envPrefix,
+      PipelinesProcessStatusMapper pipelinesProcessStatusMapper
   ) {
     this.curator = checkNotNull(curator, "curator can't be null");
     this.executor = checkNotNull(executor, "executor can't be null");
@@ -96,6 +100,7 @@ public class PipelinesProcessServiceImpl implements PipelinesProcessService {
     this.client = client;
     this.envPrefix = envPrefix;
     this.publisher = publisher;
+    this.pipelinesProcessStatusMapper = pipelinesProcessStatusMapper;
   }
 
   /**

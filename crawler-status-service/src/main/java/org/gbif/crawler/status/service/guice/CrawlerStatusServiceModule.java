@@ -5,6 +5,7 @@ import org.gbif.crawler.status.service.persistence.handlers.MetricInfoTypeHandle
 import org.gbif.crawler.status.service.pipelines.PipelinesProcessStatus;
 import org.gbif.mybatis.guice.MyBatisModule;
 import org.gbif.service.guice.PrivateServiceModule;
+import org.gbif.utils.file.properties.PropertiesUtil;
 
 import java.util.Properties;
 
@@ -13,7 +14,7 @@ import java.util.Properties;
  */
 public class CrawlerStatusServiceModule extends PrivateServiceModule {
 
-  private static final String PROPS_PREFIX = "status.";
+  private static final String PROPS_PREFIX = "crawler.status.";
 
   /**
    * Uses the given properties to configure the service.
@@ -27,6 +28,7 @@ public class CrawlerStatusServiceModule extends PrivateServiceModule {
   @Override
   protected void configureService() {
     install(new CrawlerStatusMyBatisModule(getProperties()));
+    expose(PipelinesProcessStatusMapper.class);
   }
 
   /**
@@ -37,7 +39,7 @@ public class CrawlerStatusServiceModule extends PrivateServiceModule {
     private static final String DB_PROPS_PREFIX = "db.";
 
     public CrawlerStatusMyBatisModule(Properties properties) {
-      super(DB_PROPS_PREFIX, properties);
+      super(PropertiesUtil.filterProperties(properties, DB_PROPS_PREFIX));
     }
 
     @Override

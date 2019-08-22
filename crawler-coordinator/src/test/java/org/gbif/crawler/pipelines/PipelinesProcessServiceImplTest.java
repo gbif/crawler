@@ -85,8 +85,8 @@ public class PipelinesProcessServiceImplTest {
         .retryPolicy(new RetryOneTime(1))
         .build();
     curator.start();
-    service =
-        new PipelinesProcessServiceImpl(curator, Executors.newSingleThreadExecutor(), null, null, null, "test");
+//    service =
+//        new PipelinesProcessServiceImpl(curator, Executors.newSingleThreadExecutor(), null, null, null, "test");
   }
 
   @After
