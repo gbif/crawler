@@ -1,6 +1,5 @@
 package org.gbif.crawler.ws.guice;
 
-import org.gbif.crawler.status.service.guice.CrawlerStatusServiceModule;
 import org.gbif.ws.app.ConfUtils;
 import org.gbif.ws.server.guice.GbifServletListener;
 
@@ -30,7 +29,6 @@ public class CrawlWsServletListener extends GbifServletListener {
   protected List<Module> getModules(Properties properties) {
     List<Module> modules = Lists.newArrayList();
     modules.add(new CrawlerModule(properties));
-    modules.add(new CrawlerStatusServiceModule(properties));
     return modules;
   }
 

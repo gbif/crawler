@@ -14,7 +14,7 @@ import java.util.Properties;
  */
 public class CrawlerStatusServiceModule extends PrivateServiceModule {
 
-  private static final String PROPS_PREFIX = "crawler.status.";
+  private static final String PROPS_PREFIX = "status.";
 
   /**
    * Uses the given properties to configure the service.

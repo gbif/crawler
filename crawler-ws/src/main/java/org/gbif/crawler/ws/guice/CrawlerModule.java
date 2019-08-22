@@ -1,10 +1,5 @@
 package org.gbif.crawler.ws.guice;
 
-import java.io.IOException;
-import java.util.Properties;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
-
 import org.gbif.api.service.crawler.DatasetProcessService;
 import org.gbif.api.service.registry.DatasetService;
 import org.gbif.common.messaging.DefaultMessagePublisher;
@@ -18,20 +13,20 @@ import org.gbif.registry.ws.client.guice.RegistryWsClientModule;
 import org.gbif.service.guice.PrivateServiceModule;
 import org.gbif.ws.client.guice.AnonymousAuthModule;
 
+import java.io.IOException;
+import java.util.Properties;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+
+import com.google.inject.*;
+import com.google.inject.name.Named;
+import com.google.inject.name.Names;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.apache.http.HttpHost;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
-
-import com.google.inject.Guice;
-import com.google.inject.Inject;
-import com.google.inject.Provides;
-import com.google.inject.Scopes;
-import com.google.inject.Singleton;
-import com.google.inject.name.Named;
-import com.google.inject.name.Names;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -48,6 +43,8 @@ class CrawlerModule extends PrivateServiceModule {
 
   @Override
   protected void configureService() {
+    install(new CrawlerStatusServiceModule(getProperties()));
+
     bind(DatasetProcessService.class).to(DatasetProcessServiceImpl.class).in(Scopes.SINGLETON);
     bind(PipelinesProcessService.class).to(PipelinesProcessServiceImpl.class).in(Scopes.SINGLETON);
     expose(DatasetProcessService.class);
