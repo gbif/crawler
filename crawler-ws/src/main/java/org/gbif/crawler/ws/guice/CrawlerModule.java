@@ -4,15 +4,21 @@ import java.io.IOException;
 import java.util.Properties;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
+import org.gbif.api.model.registry.Installation;
 import org.gbif.api.service.crawler.DatasetProcessService;
 import org.gbif.api.service.registry.DatasetService;
+import org.gbif.api.service.registry.InstallationService;
 import org.gbif.common.messaging.DefaultMessagePublisher;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.config.MessagingConfiguration;
 import org.gbif.crawler.DatasetProcessServiceImpl;
 import org.gbif.crawler.pipelines.PipelinesProcessService;
 import org.gbif.crawler.pipelines.PipelinesProcessServiceImpl;
+import org.gbif.registry.metasync.MetadataSynchroniserImpl;
+import org.gbif.registry.metasync.api.MetadataSynchroniser;
+import org.gbif.registry.metasync.util.HttpClientFactory;
 import org.gbif.registry.ws.client.guice.RegistryWsClientModule;
 import org.gbif.service.guice.PrivateServiceModule;
 import org.gbif.ws.client.guice.AnonymousAuthModule;
@@ -55,6 +61,7 @@ class CrawlerModule extends PrivateServiceModule {
     expose(CuratorFramework.class);
     expose(RestHighLevelClient.class);
     expose(DatasetService.class);
+    expose(MetadataSynchroniser.class);
     expose(MessagePublisher.class);
 
     expose(String.class).annotatedWith(Names.named("overcrawledReportFilePath"));
@@ -117,6 +124,20 @@ class CrawlerModule extends PrivateServiceModule {
     Properties p = new Properties();
     p.setProperty("registry.ws.url", url);
     return Guice.createInjector(new RegistryWsClientModule(p), new AnonymousAuthModule()).getInstance(DatasetService.class);
+  }
+
+  /**
+   * Provides an MetadataSynchroniser. This is shared between all requests.
+   *
+   * @param url to registry
+   */
+  @Provides
+  @Singleton
+  public MetadataSynchroniser provideMetadataSynchroniser(@Named("registry.ws.url") String url) {
+    Properties p = new Properties();
+    p.setProperty("registry.ws.url", url);
+    InstallationService installationService = Guice.createInjector(new RegistryWsClientModule(p), new AnonymousAuthModule()).getInstance(InstallationService.class);
+    return new MetadataSynchroniserImpl(installationService);
   }
 
   /**
