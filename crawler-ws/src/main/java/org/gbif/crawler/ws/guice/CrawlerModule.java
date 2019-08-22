@@ -142,10 +142,4 @@ class CrawlerModule extends PrivateServiceModule {
     }
   }
 
-//  @Provides
-//  @Singleton
-//  public PipelinesProcessService providePipelinesProcessService() {
-//    return Guice.createInjector(new CrawlerStatusServiceModule(getProperties())).getInstance(PipelinesProcessService.class);
-//  }
-
 }
