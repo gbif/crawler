@@ -1,6 +1,6 @@
 package org.gbif.crawler.status.service.guice;
 
-import org.gbif.crawler.status.service.persistence.PipelinesProcessStatusMapper;
+import org.gbif.crawler.status.service.persistence.PipelinesProcessMapper;
 import org.gbif.crawler.status.service.persistence.handlers.MetricInfoTypeHandler;
 import org.gbif.crawler.status.service.pipelines.PipelinesProcessStatus;
 import org.gbif.mybatis.guice.MyBatisModule;
@@ -30,7 +30,7 @@ public class CrawlerStatusServiceModule extends PrivateServiceModule {
   @Override
   protected void configureService() {
     install(new CrawlerStatusMyBatisModule(getProperties()));
-    expose(PipelinesProcessStatusMapper.class);
+    expose(PipelinesProcessMapper.class);
   }
 
   /**
@@ -47,7 +47,7 @@ public class CrawlerStatusServiceModule extends PrivateServiceModule {
     @Override
     protected void bindMappers() {
       // mappers
-      addMapperClass(PipelinesProcessStatusMapper.class);
+      addMapperClass(PipelinesProcessMapper.class);
 
       // alias
       addAlias("PipelinesProcess").to(PipelinesProcessStatus.class);

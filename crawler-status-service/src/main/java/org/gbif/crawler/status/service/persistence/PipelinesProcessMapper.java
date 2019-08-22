@@ -10,7 +10,7 @@ import org.apache.ibatis.annotations.Param;
 /**
  * Mapper for {@link PipelinesProcessStatus} entities.
  */
-public interface PipelinesProcessStatusMapper {
+public interface PipelinesProcessMapper {
 
   void create(PipelinesProcessStatus proccess);
 

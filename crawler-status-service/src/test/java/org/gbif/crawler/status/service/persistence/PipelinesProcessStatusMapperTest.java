@@ -21,7 +21,7 @@ import static org.gbif.crawler.status.service.guice.CrawlerStatusServiceModule.P
 
 public class PipelinesProcessStatusMapperTest {
 
-  private static PipelinesProcessStatusMapper pipelinesProcessStatusMapper;
+  private static PipelinesProcessMapper pipelinesProcessMapper;
 
   @ClassRule
   public static PostgreSQLContainer postgresDb = new PostgreSQLContainer();
@@ -30,8 +30,8 @@ public class PipelinesProcessStatusMapperTest {
   public static void setup() {
     postgresDb.start();
     runLiquibase();
-    pipelinesProcessStatusMapper = Guice.createInjector(new CrawlerStatusServiceModule(createDbProperties()))
-      .getInstance(PipelinesProcessStatusMapper.class);
+    pipelinesProcessMapper = Guice.createInjector(new CrawlerStatusServiceModule(createDbProperties()))
+      .getInstance(PipelinesProcessMapper.class);
   }
 
   @AfterClass
@@ -46,7 +46,7 @@ public class PipelinesProcessStatusMapperTest {
     process.setAttempt(1);
     process.setDatasetTitle("title");
 
-    pipelinesProcessStatusMapper.create(process);
+    pipelinesProcessMapper.create(process);
 
     Assert.assertNotNull(process.getId());
   }
