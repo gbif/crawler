@@ -1,9 +1,10 @@
 package org.gbif.crawler.status.service.pipelines;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.HashSet;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
@@ -61,11 +62,11 @@ public class PipelinesProcessStatus implements Serializable {
 
     private final String name;
     private String runner;
-    private String started;
-    private String finished;
+    private LocalDateTime started;
+    private LocalDateTime finished;
     private Status state;
     private String message;
-    private Map<String, String> metrics = new HashMap<>();
+    private Set<MetricInfo> metrics = new HashSet<>();
 
     public PipelinesStep(String name) {
       this.name = name;
@@ -80,20 +81,20 @@ public class PipelinesProcessStatus implements Serializable {
       return this;
     }
 
-    public String getStarted() {
+    public LocalDateTime getStarted() {
       return started;
     }
 
-    public PipelinesStep setStarted(String started) {
+    public PipelinesStep setStarted(LocalDateTime started) {
       this.started = started;
       return this;
     }
 
-    public String getFinished() {
+    public LocalDateTime getFinished() {
       return finished;
     }
 
-    public PipelinesStep setFinished(String finished) {
+    public PipelinesStep setFinished(LocalDateTime finished) {
       this.finished = finished;
       return this;
     }
@@ -129,11 +130,11 @@ public class PipelinesProcessStatus implements Serializable {
       }
     }
 
-    public Map<String, String> getMetrics() {
+    public Set<MetricInfo> getMetrics() {
       return metrics;
     }
 
-    public void setMetrics(Map<String, String> metrics) {
+    public void setMetrics(Set<MetricInfo> metrics) {
       this.metrics = metrics;
     }
 
@@ -141,6 +142,44 @@ public class PipelinesProcessStatus implements Serializable {
       RUNNING,
       FAILED,
       COMPLETED
+    }
+  }
+
+  public static class MetricInfo implements Serializable {
+
+    private static final long serialVersionUID = 1872427841009786709L;
+
+    private String name;
+    private String value;
+
+    public MetricInfo(String name, String value) {
+      this.name = name;
+      this.value = value;
+    }
+
+    public String getName() {
+      return name;
+    }
+
+    public String getValue() {
+      return value;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      MetricInfo that = (MetricInfo) o;
+      return name.equals(that.name) && value.equals(that.value);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(name, value);
     }
   }
 

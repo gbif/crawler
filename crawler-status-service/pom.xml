@@ -22,6 +22,31 @@
       <groupId>org.gbif</groupId>
       <artifactId>gbif-common-service</artifactId>
     </dependency>
+
+    <!-- persisntence -->
+    <dependency>
+      <groupId>org.gbif</groupId>
+      <artifactId>gbif-common-mybatis</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>org.gbif</groupId>
+          <artifactId>gbif-parsers</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.mybatis</groupId>
+      <artifactId>mybatis</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.mybatis</groupId>
+      <artifactId>mybatis-guice</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <scope>runtime</scope>
+    </dependency>
   </dependencies>
 
 </project>

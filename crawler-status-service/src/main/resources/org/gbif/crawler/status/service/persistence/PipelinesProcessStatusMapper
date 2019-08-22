@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.gbif.crawler.status.service.persistence.PipelinesProcessStatusMapper">
+
+  <!-- Auto-mapping and eager loading of sub resources  -->
+  <resultMap id="PIPELINES_PROCESS_MAP" type="PipelinesProcess" autoMapping="true">
+    <id property="datasetKey" column="dataset_key"/>
+    <id property="attempt" column="attempt"/>
+    <collection property="steps" column="id" select="listSteps" />
+  </resultMap>
+
+  <resultMap id="STEP_MAP" type="Step" autoMapping="true">
+    <id property="key" />
+  </resultMap>
+
+</mapper>
