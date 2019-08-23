@@ -9,8 +9,6 @@
 
   <resultMap id="STEP_MAP" type="Step" autoMapping="true">
     <id property="key" column="key"/>
-    <result property="started" column="started" typeHandler="LocalDateTimeTypeHandler"/>
-    <result property="finished" column="finished" typeHandler="LocalDateTimeTypeHandler"/>
     <result property="metrics" column="metrics" typeHandler="MetricInfoTypeHandler"/>
   </resultMap>
 
@@ -29,10 +27,10 @@
   </sql>
 
   <sql id="STEP_VALUES_CREATE">
-    #{step.name,jdbcType=VARCHAR},
+    #{step.name,jdbcType=OTHER},
     #{step.runner,jdbcType=VARCHAR},
-    #{step.started,jdbcType=OTHER,typeHandler=LocalDateTimeTypeHandler},
-    #{step.finished,jdbcType=OTHER,typeHandler=LocalDateTimeTypeHandler},
+    #{step.started,jdbcType=OTHER},
+    #{step.finished,jdbcType=OTHER},
     #{step.state,jdbcType=OTHER},
     #{step.message,jdbcType=VARCHAR},
     #{step.metrics,jdbcType=OTHER,typeHandler=MetricInfoTypeHandler}::hstore,

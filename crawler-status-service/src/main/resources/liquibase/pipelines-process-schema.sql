@@ -10,9 +10,11 @@ CREATE TABLE pipelines_process (
 
 CREATE TYPE pipelines_step_status AS ENUM ('RUNNING', 'FAILED', 'COMPLETED');
 
+CREATE TYPE pipelines_step_name AS ENUM ('DWCA_TO_VERBATIM', 'XML_TO_VERBATIM', 'ABCD_TO_VERBATIM', 'VERBATIM_TO_INTERPRETED', 'INTERPRETED_TO_INDEX', 'HIVE_VIEW');
+
 CREATE TABLE pipelines_step(
  key serial NOT NULL PRIMARY KEY,
- name text,
+ name pipelines_step_name,
  runner text,
  started timestamp with time zone,
  finished timestamp with time zone,

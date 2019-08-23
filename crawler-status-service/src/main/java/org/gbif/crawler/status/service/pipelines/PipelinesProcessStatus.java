@@ -4,9 +4,7 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.*;
 
-/**
- * Base POJO model for the Pipelines monitoring service
- */
+/** Base POJO model for the Pipelines monitoring service */
 public class PipelinesProcessStatus implements Serializable {
 
   private static final long serialVersionUID = -3992826055732414678L;
@@ -65,7 +63,7 @@ public class PipelinesProcessStatus implements Serializable {
     private static final long serialVersionUID = 460047082156621661L;
 
     private long key;
-    private String name;
+    private StepName name;
     private String runner;
     private LocalDateTime started;
     private LocalDateTime finished;
@@ -75,6 +73,15 @@ public class PipelinesProcessStatus implements Serializable {
 
     public long getKey() {
       return key;
+    }
+
+    public StepName getName() {
+      return name;
+    }
+
+    public PipelinesStep setName(StepName name) {
+      this.name = name;
+      return this;
     }
 
     public String getRunner() {
@@ -122,15 +129,6 @@ public class PipelinesProcessStatus implements Serializable {
       return this;
     }
 
-    public String getName() {
-      return name;
-    }
-
-    public PipelinesStep setName(String name) {
-      this.name = name;
-      return this;
-    }
-
     public Optional<PipelinesStep> getStep() {
       if (started != null || finished != null) {
         started = started == null ? finished : started;
@@ -155,13 +153,13 @@ public class PipelinesProcessStatus implements Serializable {
       if (o == null || getClass() != o.getClass()) return false;
       PipelinesStep that = (PipelinesStep) o;
       return key == that.key
-             && Objects.equals(name, that.name)
-             && Objects.equals(runner, that.runner)
-             && Objects.equals(started, that.started)
-             && Objects.equals(finished, that.finished)
-             && state == that.state
-             && Objects.equals(message, that.message)
-             && Objects.equals(metrics, that.metrics);
+          && Objects.equals(name, that.name)
+          && Objects.equals(runner, that.runner)
+          && Objects.equals(started, that.started)
+          && Objects.equals(finished, that.finished)
+          && state == that.state
+          && Objects.equals(message, that.message)
+          && Objects.equals(metrics, that.metrics);
     }
 
     @Override
@@ -171,27 +169,36 @@ public class PipelinesProcessStatus implements Serializable {
 
     @Override
     public String toString() {
-      return new StringJoiner(", ", PipelinesStep.class.getSimpleName() + "[", "]").add("key=" + key)
-        .add("name='" + name + "'")
-        .add("runner='" + runner + "'")
-        .add("started=" + started)
-        .add("finished=" + finished)
-        .add("state=" + state)
-        .add("message='" + message + "'")
-        .add("metrics=" + metrics)
-        .toString();
+      return new StringJoiner(", ", PipelinesStep.class.getSimpleName() + "[", "]")
+          .add("key=" + key)
+          .add("name='" + name + "'")
+          .add("runner='" + runner + "'")
+          .add("started=" + started)
+          .add("finished=" + finished)
+          .add("state=" + state)
+          .add("message='" + message + "'")
+          .add("metrics=" + metrics)
+          .toString();
     }
 
-    /**
-     * Enum to represent the status of a step.
-     */
+    /** Enum to represent the status of a step. */
     public enum Status {
-      RUNNING, FAILED, COMPLETED
+      RUNNING,
+      FAILED,
+      COMPLETED
     }
 
-    /**
-     * Inner class to store metrics.
-     */
+    /** Enum to represent the step names. */
+    public enum StepName {
+      DWCA_TO_VERBATIM,
+      XML_TO_VERBATIM,
+      ABCD_TO_VERBATIM,
+      VERBATIM_TO_INTERPRETED,
+      INTERPRETED_TO_INDEX,
+      HIVE_VIEW
+    }
+
+    /** Inner class to store metrics. */
     public static class MetricInfo implements Serializable {
 
       private static final long serialVersionUID = 1872427841009786709L;
@@ -231,11 +238,11 @@ public class PipelinesProcessStatus implements Serializable {
 
       @Override
       public String toString() {
-        return new StringJoiner(", ", MetricInfo.class.getSimpleName() + "[", "]").add("name='" + name + "'")
-          .add("value='" + value + "'")
-          .toString();
+        return new StringJoiner(", ", MetricInfo.class.getSimpleName() + "[", "]")
+            .add("name='" + name + "'")
+            .add("value='" + value + "'")
+            .toString();
       }
     }
   }
-
 }
