@@ -1,88 +1,97 @@
 package org.gbif.crawler.status.service.persistence;
 
-import org.gbif.crawler.status.service.guice.CrawlerStatusServiceModule;
 import org.gbif.crawler.status.service.pipelines.PipelinesProcessStatus;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.util.Properties;
+import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.UUID;
 
-import com.google.inject.Guice;
-import liquibase.Liquibase;
-import liquibase.database.jvm.JdbcConnection;
-import liquibase.exception.LiquibaseException;
-import liquibase.resource.ClassLoaderResourceAccessor;
-import org.junit.*;
-import org.testcontainers.containers.PostgreSQLContainer;
+import org.apache.ibatis.exceptions.PersistenceException;
+import org.junit.BeforeClass;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
+import org.postgresql.util.PSQLException;
 
-import static org.gbif.crawler.status.service.guice.CrawlerStatusServiceModule.PROPS_PREFIX;
+import static org.gbif.crawler.status.service.pipelines.PipelinesProcessStatus.PipelinesStep;
+import static org.gbif.crawler.status.service.pipelines.PipelinesProcessStatus.PipelinesStep.MetricInfo;
+import static org.gbif.crawler.status.service.pipelines.PipelinesProcessStatus.PipelinesStep.Status;
 
-public class PipelinesProcessStatusMapperTest {
+import static org.hamcrest.CoreMatchers.isA;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+/**
+ * Tests the {@link PipelinesProcessMapper}.
+ */
+public class PipelinesProcessStatusMapperTest extends BaseMapperTest {
 
   private static PipelinesProcessMapper pipelinesProcessMapper;
 
-  @ClassRule
-  public static PostgreSQLContainer postgresDb = new PostgreSQLContainer();
+  @Rule
+  public ExpectedException expectedException = ExpectedException.none();
 
   @BeforeClass
-  public static void setup() {
-    postgresDb.start();
-    runLiquibase();
-    pipelinesProcessMapper = Guice.createInjector(new CrawlerStatusServiceModule(createDbProperties()))
-      .getInstance(PipelinesProcessMapper.class);
-  }
-
-  @AfterClass
-  public static void tearDown() {
-    postgresDb.stop();
+  public static void injectDependencies() {
+    pipelinesProcessMapper = injector.getInstance(PipelinesProcessMapper.class);
   }
 
   @Test
   public void createPipelinesProcessTest() {
-    PipelinesProcessStatus process = new PipelinesProcessStatus();
-    process.setDatasetKey(UUID.randomUUID());
-    process.setAttempt(1);
-    process.setDatasetTitle("title");
+    // create process
+    PipelinesProcessStatus process =
+      new PipelinesProcessStatus().setDatasetKey(UUID.randomUUID()).setAttempt(1).setDatasetTitle("title");
 
+    // insert in the DB
+    pipelinesProcessMapper.create(process);
+    assertTrue(process.getKey() > 0);
+
+    // get process inserted
+    PipelinesProcessStatus processRetrieved = pipelinesProcessMapper.get(process.getDatasetKey(), process.getAttempt());
+    assertEquals(process.getDatasetKey(), processRetrieved.getDatasetKey());
+    assertEquals(process.getAttempt(), processRetrieved.getAttempt());
+    assertEquals(process.getDatasetTitle(), processRetrieved.getDatasetTitle());
+    assertTrue(process.getSteps().isEmpty());
+  }
+
+  @Test
+  public void duplicatePipelinesProcessTest() {
+    expectedException.expect(PersistenceException.class);
+    expectedException.expectCause(isA(PSQLException.class));
+
+    // insert one process
+    PipelinesProcessStatus process = new PipelinesProcessStatus().setDatasetKey(UUID.randomUUID()).setAttempt(1);
     pipelinesProcessMapper.create(process);
 
-    Assert.assertNotNull(process.getId());
+    // insert another process with the same datasetKey and attempt
+    PipelinesProcessStatus duplicate =
+      new PipelinesProcessStatus().setDatasetKey(process.getDatasetKey()).setAttempt(process.getAttempt());
+    pipelinesProcessMapper.create(process);
   }
 
-  private static Properties createDbProperties() {
-    Properties dbProperties = new Properties();
-    dbProperties.setProperty(PROPS_PREFIX + "db.dataSourceClassName", "org.postgresql.ds.PGSimpleDataSource");
-    dbProperties.setProperty(PROPS_PREFIX + "db.dataSource.serverName", "localhost:" + postgresDb.getFirstMappedPort());
-    dbProperties.setProperty(PROPS_PREFIX + "db.dataSource.databaseName", "test");
-    dbProperties.setProperty(PROPS_PREFIX + "db.dataSource.user", postgresDb.getUsername());
-    dbProperties.setProperty(PROPS_PREFIX + "db.dataSource.password", postgresDb.getPassword());
-    dbProperties.setProperty(PROPS_PREFIX + "db.maximumPoolSize", "4");
-    dbProperties.setProperty(PROPS_PREFIX + "db.connectionTimeout", "3000");
-    dbProperties.setProperty(PROPS_PREFIX + "db.minimumIdle", "1");
-    dbProperties.setProperty(PROPS_PREFIX + "db.idleTimeout", "6000");
+  @Test
+  public void addStepTest() {
+    // insert one process
+    PipelinesProcessStatus process = new PipelinesProcessStatus().setDatasetKey(UUID.randomUUID()).setAttempt(1);
+    pipelinesProcessMapper.create(process);
 
-    return dbProperties;
-  }
+    // add a step
+    PipelinesStep step = new PipelinesStep().setName("test name")
+      .setRunner("runner test")
+      .setState(Status.COMPLETED)
+      .setStarted(LocalDateTime.now().minusMinutes(1))
+      .setFinished(LocalDateTime.now())
+      .setMessage("message")
+      .setMetrics(Collections.singleton(new MetricInfo("n", "v")));
 
-  /**
-   * Executes the liquibase master.xml change logs in the context ddl.
-   */
-  private static void runLiquibase() {
-    try {
-      Class.forName("org.postgresql.Driver");
-      try (Connection connection = DriverManager.getConnection(postgresDb.getJdbcUrl(),
-                                                               postgresDb.getUsername(),
-                                                               postgresDb.getPassword())) {
-        Liquibase liquibase =
-          new Liquibase("liquibase/master.xml", new ClassLoaderResourceAccessor(), new JdbcConnection(connection));
-        liquibase.dropAll();
-        liquibase.update("ddl");
-      }
-    } catch (ClassNotFoundException | SQLException | LiquibaseException ex) {
-      throw new IllegalStateException(ex);
-    }
+    pipelinesProcessMapper.addPipelineStep(process.getKey(), step);
+
+    // assert results
+    PipelinesProcessStatus processRetrieved = pipelinesProcessMapper.get(process.getDatasetKey(), process.getAttempt());
+    assertEquals(process.getDatasetKey(), processRetrieved.getDatasetKey());
+    assertEquals(process.getAttempt(), processRetrieved.getAttempt());
+    assertEquals(1, processRetrieved.getSteps().size());
+    assertEquals(step, processRetrieved.getSteps().iterator().next());
   }
 
 }

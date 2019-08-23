@@ -43,7 +43,7 @@ class CrawlerModule extends PrivateServiceModule {
 
   @Override
   protected void configureService() {
-    install(new CrawlerStatusServiceModule(getProperties()));
+    install(new CrawlerStatusServiceModule(getVerbatimProperties()));
 
     bind(DatasetProcessService.class).to(DatasetProcessServiceImpl.class).in(Scopes.SINGLETON);
     bind(PipelinesProcessService.class).to(PipelinesProcessServiceImpl.class).in(Scopes.SINGLETON);

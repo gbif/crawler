@@ -11,42 +11,41 @@ public class PipelinesProcessStatus implements Serializable {
 
   private static final long serialVersionUID = -3992826055732414678L;
 
-  private long id;
+  private long key;
   private UUID datasetKey;
   private int attempt;
   private String datasetTitle;
   private Set<PipelinesStep> steps = new TreeSet<>(Comparator.comparing(PipelinesStep::getStarted));
 
-  public long getId() {
-    return id;
-  }
-
-  public void setId(long id) {
-    this.id = id;
+  public long getKey() {
+    return key;
   }
 
   public UUID getDatasetKey() {
     return datasetKey;
   }
 
-  public void setDatasetKey(UUID datasetKey) {
+  public PipelinesProcessStatus setDatasetKey(UUID datasetKey) {
     this.datasetKey = datasetKey;
+    return this;
   }
 
   public int getAttempt() {
     return attempt;
   }
 
-  public void setAttempt(int attempt) {
+  public PipelinesProcessStatus setAttempt(int attempt) {
     this.attempt = attempt;
+    return this;
   }
 
   public String getDatasetTitle() {
     return datasetTitle;
   }
 
-  public void setDatasetTitle(String datasetTitle) {
+  public PipelinesProcessStatus setDatasetTitle(String datasetTitle) {
     this.datasetTitle = datasetTitle;
+    return this;
   }
 
   public Set<PipelinesStep> getSteps() {
@@ -65,8 +64,8 @@ public class PipelinesProcessStatus implements Serializable {
 
     private static final long serialVersionUID = 460047082156621661L;
 
-    private long id;
-    private final String name;
+    private long key;
+    private String name;
     private String runner;
     private LocalDateTime started;
     private LocalDateTime finished;
@@ -74,16 +73,8 @@ public class PipelinesProcessStatus implements Serializable {
     private String message;
     private Set<MetricInfo> metrics = new HashSet<>();
 
-    public PipelinesStep(String name) {
-      this.name = name;
-    }
-
-    public long getId() {
-      return id;
-    }
-
-    public void setId(long id) {
-      this.id = id;
+    public long getKey() {
+      return key;
     }
 
     public String getRunner() {
@@ -135,6 +126,11 @@ public class PipelinesProcessStatus implements Serializable {
       return name;
     }
 
+    public PipelinesStep setName(String name) {
+      this.name = name;
+      return this;
+    }
+
     public Optional<PipelinesStep> getStep() {
       if (started != null || finished != null) {
         started = started == null ? finished : started;
@@ -148,52 +144,97 @@ public class PipelinesProcessStatus implements Serializable {
       return metrics;
     }
 
-    public void setMetrics(Set<MetricInfo> metrics) {
+    public PipelinesStep setMetrics(Set<MetricInfo> metrics) {
       this.metrics = metrics;
-    }
-
-    public enum Status {
-      RUNNING,
-      FAILED,
-      COMPLETED
-    }
-  }
-
-  public static class MetricInfo implements Serializable {
-
-    private static final long serialVersionUID = 1872427841009786709L;
-
-    private String name;
-    private String value;
-
-    public MetricInfo(String name, String value) {
-      this.name = name;
-      this.value = value;
-    }
-
-    public String getName() {
-      return name;
-    }
-
-    public String getValue() {
-      return value;
+      return this;
     }
 
     @Override
     public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-      MetricInfo that = (MetricInfo) o;
-      return name.equals(that.name) && value.equals(that.value);
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      PipelinesStep that = (PipelinesStep) o;
+      return key == that.key
+             && Objects.equals(name, that.name)
+             && Objects.equals(runner, that.runner)
+             && Objects.equals(started, that.started)
+             && Objects.equals(finished, that.finished)
+             && state == that.state
+             && Objects.equals(message, that.message)
+             && Objects.equals(metrics, that.metrics);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(name, value);
+      return Objects.hash(key, name, runner, started, finished, state, message, metrics);
+    }
+
+    @Override
+    public String toString() {
+      return new StringJoiner(", ", PipelinesStep.class.getSimpleName() + "[", "]").add("key=" + key)
+        .add("name='" + name + "'")
+        .add("runner='" + runner + "'")
+        .add("started=" + started)
+        .add("finished=" + finished)
+        .add("state=" + state)
+        .add("message='" + message + "'")
+        .add("metrics=" + metrics)
+        .toString();
+    }
+
+    /**
+     * Enum to represent the status of a step.
+     */
+    public enum Status {
+      RUNNING, FAILED, COMPLETED
+    }
+
+    /**
+     * Inner class to store metrics.
+     */
+    public static class MetricInfo implements Serializable {
+
+      private static final long serialVersionUID = 1872427841009786709L;
+
+      private String name;
+      private String value;
+
+      public MetricInfo(String name, String value) {
+        this.name = name;
+        this.value = value;
+      }
+
+      public String getName() {
+        return name;
+      }
+
+      public String getValue() {
+        return value;
+      }
+
+      @Override
+      public boolean equals(Object o) {
+        if (this == o) {
+          return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+          return false;
+        }
+        MetricInfo that = (MetricInfo) o;
+        return name.equals(that.name) && value.equals(that.value);
+      }
+
+      @Override
+      public int hashCode() {
+        return Objects.hash(name, value);
+      }
+
+      @Override
+      public String toString() {
+        return new StringJoiner(", ", MetricInfo.class.getSimpleName() + "[", "]").add("name='" + name + "'")
+          .add("value='" + value + "'")
+          .toString();
+      }
     }
   }
 

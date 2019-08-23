@@ -2,55 +2,63 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
 <mapper namespace="org.gbif.crawler.status.service.persistence.PipelinesProcessMapper">
 
-  <!-- Auto-mapping and eager loading of sub resources  -->
   <resultMap id="PIPELINES_PROCESS_MAP" type="PipelinesProcess" autoMapping="true">
-    <id property="datasetKey" column="dataset_key"/>
-    <id property="attempt" column="attempt"/>
-    <collection property="steps" column="id" select="listSteps"/>
+    <id property="key" column="key"/>
+    <collection property="steps" column="key" select="listSteps"/>
   </resultMap>
 
   <resultMap id="STEP_MAP" type="Step" autoMapping="true">
-    <id property="id" column="id"/>
+    <id property="key" column="key"/>
+    <result property="started" column="started" typeHandler="LocalDateTimeTypeHandler"/>
+    <result property="finished" column="finished" typeHandler="LocalDateTimeTypeHandler"/>
     <result property="metrics" column="metrics" typeHandler="MetricInfoTypeHandler"/>
   </resultMap>
 
-  <sql id="PIPELINES_PROCESS_PARAMS_CREATE">
-    #{datasetKey,jdbcType=VARCHAR},
-    #{attempt,jdbcType=VARCHAR},
+  <sql id="PIPELINES_PROCESS_FIELDS_CREATE">
+    dataset_key, attempt, dataset_title
+  </sql>
+
+  <sql id="PIPELINES_PROCESS_VALUES_CREATE">
+    #{datasetKey,jdbcType=OTHER},
+    #{attempt,jdbcType=INTEGER},
     #{datasetTitle,jdbcType=VARCHAR}
   </sql>
 
-  <sql id="STEP_PARAMS_CREATE">
+  <sql id="STEPS_FIELDS_CREATE">
+    name, runner, started, finished, state, message, metrics, pipelines_process_key
+  </sql>
+
+  <sql id="STEP_VALUES_CREATE">
     #{step.name,jdbcType=VARCHAR},
     #{step.runner,jdbcType=VARCHAR},
-    #{step.started,jdbcType=TIMESTAMP},
-    #{step.finished,jdbcType=TIMESTAMP},
+    #{step.started,jdbcType=OTHER,typeHandler=LocalDateTimeTypeHandler},
+    #{step.finished,jdbcType=OTHER,typeHandler=LocalDateTimeTypeHandler},
     #{step.state,jdbcType=OTHER},
     #{step.message,jdbcType=VARCHAR},
     #{step.metrics,jdbcType=OTHER,typeHandler=MetricInfoTypeHandler}::hstore,
-    #{pipelinesProcessId,jdbcType=INTEGER}
+    #{pipelinesProcessKey,jdbcType=INTEGER}
   </sql>
 
-  <insert id="create" parameterType="PipelinesProcess">
-    INSERT INTO pipelines_process(dataset_key, attempt, dataset_title)
-    VALUES (<include refid="PIPELINES_PROCESS_PARAMS_CREATE"/>)
+  <insert id="create" parameterType="PipelinesProcess" useGeneratedKeys="true" keyProperty="key">
+    INSERT INTO pipelines_process(<include refid="PIPELINES_PROCESS_FIELDS_CREATE"/>)
+    VALUES (<include refid="PIPELINES_PROCESS_VALUES_CREATE"/>)
   </insert>
 
-  <insert id="addPipelineStep">
-    INSERT INTO pipelines_step(name, runner, started_date, finished_date, message, metrics, pipelines_process_id)
-    VALUES (<include refid="STEP_PARAMS_CREATE"/>)
+  <insert id="addPipelineStep" useGeneratedKeys="true" keyProperty="step.key">
+    INSERT INTO pipelines_step(<include refid="STEPS_FIELDS_CREATE"/>)
+    VALUES (<include refid="STEP_VALUES_CREATE"/>)
   </insert>
 
-  <select id="listSteps" resultType="Step">
-    SELECT key, name, runner, started_date, finished_date, state, message, metrics
+  <select id="listSteps" resultMap="STEP_MAP">
+    SELECT *
     FROM pipelines_step
-    WHERE pipelines_process_id = #{id,jdbcType=INTEGER}
+    WHERE pipelines_process_key = #{key,jdbcType=INTEGER}
   </select>
 
-  <select id="get" resultType="PipelinesProcess">
-    SELECT id, dataset_key, attempt, dataset_title
+  <select id="get" resultMap="PIPELINES_PROCESS_MAP">
+    SELECT *
     FROM pipelines_process
-    WHERE dataset_key = {#datasetKey, jdbcType=VARCHAR} AND attempt = {#attempt, jdbcType=VARCHAR}
+    WHERE dataset_key = #{datasetKey, jdbcType=OTHER} AND attempt = #{attempt, jdbcType=INTEGER}
   </select>
 
 </mapper>

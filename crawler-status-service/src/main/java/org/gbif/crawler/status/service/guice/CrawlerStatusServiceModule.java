@@ -8,15 +8,19 @@ import org.gbif.mybatis.type.UuidTypeHandler;
 import org.gbif.service.guice.PrivateServiceModule;
 import org.gbif.utils.file.properties.PropertiesUtil;
 
+import java.time.LocalDateTime;
 import java.util.Properties;
 import java.util.UUID;
+
+import org.apache.ibatis.type.LocalDateTimeTypeHandler;
 
 /**
  * Guice module to set up the injection of the crawler-status-service module.
  */
 public class CrawlerStatusServiceModule extends PrivateServiceModule {
 
-  public static final String PROPS_PREFIX = "status.";
+  public static final String PROPS_PREFIX = "crawler.status.";
+  public static final String DB_PROPS_PREFIX = "db.";
 
   /**
    * Uses the given properties to configure the service.
@@ -29,7 +33,7 @@ public class CrawlerStatusServiceModule extends PrivateServiceModule {
 
   @Override
   protected void configureService() {
-    install(new CrawlerStatusMyBatisModule(getProperties()));
+    install(new CrawlerStatusMyBatisModule(PropertiesUtil.filterProperties(getProperties(), DB_PROPS_PREFIX)));
     expose(PipelinesProcessMapper.class);
   }
 
@@ -38,10 +42,8 @@ public class CrawlerStatusServiceModule extends PrivateServiceModule {
    */
   private static class CrawlerStatusMyBatisModule extends MyBatisModule {
 
-    private static final String DB_PROPS_PREFIX = "db.";
-
     public CrawlerStatusMyBatisModule(Properties properties) {
-      super(PropertiesUtil.filterProperties(properties, DB_PROPS_PREFIX));
+      super(properties);
     }
 
     @Override
@@ -54,11 +56,13 @@ public class CrawlerStatusServiceModule extends PrivateServiceModule {
       addAlias("Step").to(PipelinesProcessStatus.PipelinesStep.class);
       addAlias("MetricInfoTypeHandler").to(MetricInfoTypeHandler.class);
       addAlias("UuidTypeHandler").to(UuidTypeHandler.class);
+      addAlias("LocalDateTimeTypeHandler").to(LocalDateTimeTypeHandler.class);
     }
 
     @Override
     protected void bindTypeHandlers() {
       handleType(UUID.class).with(UuidTypeHandler.class);
+      handleType(LocalDateTime.class).with(LocalDateTimeTypeHandler.class);
       addTypeHandlerClass(MetricInfoTypeHandler.class);
     }
 

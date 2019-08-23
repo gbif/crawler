@@ -16,7 +16,7 @@ public interface PipelinesProcessMapper {
 
   PipelinesProcessStatus get(@Param("datasetKey") UUID datasetKey, @Param("attempt") int attempt);
 
-  void addPipelineStep(@Param("pipelinesProcessId") int pipelinesProcessId, @Param("step") PipelinesStep step);
+  void addPipelineStep(@Param("pipelinesProcessKey") long pipelinesProcessKey, @Param("step") PipelinesStep step);
 
   // TODO: list all
 

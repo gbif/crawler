@@ -94,7 +94,7 @@
 
     <!-- DB -->
     <mybatis-guice.version>3.7.1</mybatis-guice.version>
-    <mybatis.version>3.2.8</mybatis.version>
+    <mybatis.version>3.5.0</mybatis.version>
     <gbif-common-mybatis.version>0.30</gbif-common-mybatis.version>
     <postgresql.version>42.2.6</postgresql.version>
     <testcontainers.postgres.version>1.11.3</testcontainers.postgres.version>
