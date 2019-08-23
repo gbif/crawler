@@ -136,7 +136,7 @@ public class PipelinesCoordinatorService {
 
   }
 
-  public void reRunPipelineAttempt(UUID datasetKey, Integer attempt, Steps...steps) {
+  public void reRunPipelineAttempt(UUID datasetKey, Integer attempt, Set<Steps> steps) {
     Preconditions.checkNotNull(datasetKey, "Dataset can't be null");
     Preconditions.checkNotNull(attempt, "Attempt can't be null");
     Preconditions.checkNotNull(steps, "Steps can't be null");
@@ -147,11 +147,17 @@ public class PipelinesCoordinatorService {
     if (endpoint.isPresent()) {
       try {
         Long recordCount  = updateOrRetrieveDeclaredRecordCount(dataset, endpoint.get());
-        Set<String> pipelinesSteps = Arrays.stream(steps).map(Steps::name).collect(Collectors.toSet());
-        if (pipelinesSteps.contains(Steps.HIVE_VIEW.name()) || pipelinesSteps.contains(Steps.INTERPRETED_TO_INDEX.name())) {
+        Set<String> pipelinesSteps = steps.stream().map(Steps::name).collect(Collectors.toSet());
+        if (steps.contains(Steps.HIVE_VIEW) || steps.contains(Steps.INTERPRETED_TO_INDEX)) {
           publisher.send(buildPipelinesInterpretedMessage(dataset, attempt, recordCount, pipelinesSteps));
-        } else if (pipelinesSteps.contains(Steps.VERBATIM_TO_INTERPRETED.name())) {
+        } else if (steps.contains(Steps.VERBATIM_TO_INTERPRETED)) {
           publisher.send(buildPipelinesVerbatimMessage(dataset, attempt, recordCount, pipelinesSteps));
+        } else if (steps.contains(Steps.DWCA_TO_VERBATIM)) {
+          publisher.send(buildPipelinesDwcaMessage(dataset, endpoint.get(), attempt, recordCount, pipelinesSteps));
+        } else if (steps.contains(Steps.ABCD_TO_VERBATIM)) {
+          publisher.send(buildPipelinesAbcdMessage(dataset, endpoint.get(), attempt, pipelinesSteps));
+        } else if (steps.contains(Steps.XML_TO_VERBATIM)) {
+          publisher.send(buildPipelinesXmlMessage(dataset, endpoint.get(), attempt, recordCount, pipelinesSteps));
         } else {
           throw new IllegalArgumentException("Step [" + String.join(",", pipelinesSteps) + "] not supported by this service");
         }
