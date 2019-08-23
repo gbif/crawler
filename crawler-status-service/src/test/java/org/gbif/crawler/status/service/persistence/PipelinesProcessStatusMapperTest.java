@@ -101,4 +101,23 @@ public class PipelinesProcessStatusMapperTest extends BaseMapperTest {
     assertEquals(1, processRetrieved.getSteps().size());
     assertEquals(step, processRetrieved.getSteps().iterator().next());
   }
+
+  @Test
+  public void listTest() {
+    // insert some processes
+    final UUID uuid1 = UUID.randomUUID();
+    final UUID uuid2 = UUID.randomUUID();
+    pipelinesProcessMapper.create(new PipelinesProcessStatus().setDatasetKey(uuid1).setAttempt(1));
+    pipelinesProcessMapper.create(new PipelinesProcessStatus().setDatasetKey(uuid1).setAttempt(2));
+    pipelinesProcessMapper.create(new PipelinesProcessStatus().setDatasetKey(uuid2).setAttempt(1));
+
+    // list processes
+    assertEquals(3, pipelinesProcessMapper.list(null, null, DEFAULT_PAGE).size());
+    assertEquals(2, pipelinesProcessMapper.list(uuid1, null, DEFAULT_PAGE).size());
+    assertEquals(1, pipelinesProcessMapper.list(uuid2, null, DEFAULT_PAGE).size());
+    assertEquals(1, pipelinesProcessMapper.list(uuid2, 1, DEFAULT_PAGE).size());
+    assertEquals(0, pipelinesProcessMapper.list(uuid2, 10, DEFAULT_PAGE).size());
+    assertEquals(2, pipelinesProcessMapper.list(null, 1, DEFAULT_PAGE).size());
+    assertEquals(0, pipelinesProcessMapper.list(null, 10, DEFAULT_PAGE).size());
+  }
 }

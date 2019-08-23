@@ -59,4 +59,20 @@
     WHERE dataset_key = #{datasetKey, jdbcType=OTHER} AND attempt = #{attempt, jdbcType=INTEGER}
   </select>
 
+  <select id="list" resultMap="PIPELINES_PROCESS_MAP">
+    SELECT *
+    FROM pipelines_process
+    <where>
+      <if test="datasetKey != null">
+        dataset_key = #{datasetKey, jdbcType=OTHER}
+      </if>
+      <if test="attempt != null">
+        AND attempt = #{attempt, jdbcType=INTEGER}
+      </if>
+    </where>
+    <if test="page != null">
+      LIMIT #{page.limit} OFFSET #{page.offset}
+    </if>
+  </select>
+
 </mapper>

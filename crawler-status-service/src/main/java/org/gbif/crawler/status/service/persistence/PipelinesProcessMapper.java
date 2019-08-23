@@ -21,5 +21,7 @@ public interface PipelinesProcessMapper {
       @Param("pipelinesProcessKey") long pipelinesProcessKey, @Param("step") PipelinesStep step);
 
   List<PipelinesProcessStatus> list(
-      @Nullable @Param("datasetKey") UUID datasetKey, @Nullable @Param("page") Pageable page);
+      @Nullable @Param("datasetKey") UUID datasetKey,
+      @Nullable @Param("attempt") Integer attempt,
+      @Nullable @Param("page") Pageable page);
 }
