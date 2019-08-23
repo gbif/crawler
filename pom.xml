@@ -73,6 +73,7 @@
     <joda-time.version>2.9.6</joda-time.version>
     <jsr305.version>3.0.1</jsr305.version>
     <junit.version>4.12</junit.version>
+    <hamcrest.version>1.3</hamcrest.version>
     <logback.version>1.1.7</logback.version>
     <logstash-encoder.version>4.11</logstash-encoder.version>
     <metainf-services.version>1.7</metainf-services.version>
@@ -414,6 +415,12 @@
         <groupId>junit</groupId>
         <artifactId>junit</artifactId>
         <version>${junit.version}</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.hamcrest</groupId>
+        <artifactId>hamcrest-library</artifactId>
+        <version>${hamcrest.version}</version>
         <scope>test</scope>
       </dependency>
       <dependency>
