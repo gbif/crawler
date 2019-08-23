@@ -83,7 +83,7 @@ public class PipelinesProcessStatusMapperTest extends BaseMapperTest {
     // add a step
     PipelinesStep step =
         new PipelinesStep()
-            .setName("test name")
+            .setName(PipelinesStep.StepName.ABCD_TO_VERBATIM)
             .setRunner("runner test")
             .setState(Status.COMPLETED)
             .setStarted(LocalDateTime.now().minusMinutes(1))
