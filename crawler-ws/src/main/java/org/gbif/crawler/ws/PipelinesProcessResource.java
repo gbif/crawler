@@ -5,13 +5,11 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import org.gbif.crawler.PipelinesCoordinatorService;
+import org.gbif.crawler.status.service.PipelinesCoordinatorService;
 import org.gbif.crawler.pipelines.PipelinesProcessService;
 import org.gbif.crawler.status.service.pipelines.PipelinesProcessStatus;
 import org.gbif.ws.util.ExtraMediaTypes;
 
-import java.util.Set;
-import javax.ws.rs.*;
 import com.google.inject.Inject;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -21,8 +19,6 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
-
-import com.google.inject.Inject;
 
 /**
  * Pipelines monitoring resource HTTP endpoint

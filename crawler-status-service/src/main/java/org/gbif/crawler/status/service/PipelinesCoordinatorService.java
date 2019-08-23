@@ -1,8 +1,5 @@
-package org.gbif.crawler;
+package org.gbif.crawler.status.service;
 
-import org.gbif.api.model.crawler.DwcaValidationReport;
-import org.gbif.api.model.crawler.FinishReason;
-import org.gbif.api.model.crawler.OccurrenceValidationReport;
 import org.gbif.api.model.registry.Dataset;
 import org.gbif.api.model.registry.Endpoint;
 import org.gbif.api.model.registry.MachineTag;
@@ -21,10 +18,8 @@ import org.gbif.common.messaging.api.messages.PipelinesXmlMessage;
 import org.gbif.registry.metasync.api.MetadataSynchroniser;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;

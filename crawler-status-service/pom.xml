@@ -12,6 +12,10 @@
   <artifactId>crawler-status-service</artifactId>
   <version>0.77-SNAPSHOT</version>
 
+  <packaging>jar</packaging>
+
+  <name>Crawler :: Status and Process Service</name>
+
   <dependencies>
     <dependency>
       <groupId>com.google.inject</groupId>
@@ -39,6 +43,14 @@
           <artifactId>gbif-parsers</artifactId>
         </exclusion>
       </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.gbif.common</groupId>
+      <artifactId>gbif-postal-service</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.gbif.registry</groupId>
+      <artifactId>registry-metasync</artifactId>
     </dependency>
     <dependency>
       <groupId>org.mybatis</groupId>
