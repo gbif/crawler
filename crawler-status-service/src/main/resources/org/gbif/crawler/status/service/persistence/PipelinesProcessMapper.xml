@@ -75,4 +75,18 @@
     </if>
   </select>
 
+  <select id="count" resultType="Long">
+    SELECT COUNT(*)
+    FROM pipelines_process
+    <where>
+      <if test="datasetKey != null">
+        dataset_key = #{datasetKey, jdbcType=OTHER}
+      </if>
+      <if test="attempt != null">
+        AND attempt = #{attempt, jdbcType=INTEGER}
+      </if>
+    </where>
+  </select>
+
+
 </mapper>
