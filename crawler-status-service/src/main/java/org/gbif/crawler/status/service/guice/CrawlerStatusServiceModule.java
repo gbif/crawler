@@ -1,5 +1,7 @@
 package org.gbif.crawler.status.service.guice;
 
+import org.gbif.crawler.status.service.PipelinesCoordinatorService;
+import org.gbif.crawler.status.service.impl.PipelinesCoordinatorServiceImpl;
 import org.gbif.crawler.status.service.persistence.PipelinesProcessMapper;
 import org.gbif.crawler.status.service.persistence.handlers.MetricInfoTypeHandler;
 import org.gbif.crawler.status.service.pipelines.PipelinesProcessStatus;
@@ -12,6 +14,7 @@ import java.time.LocalDateTime;
 import java.util.Properties;
 import java.util.UUID;
 
+import com.google.inject.Scopes;
 import org.apache.ibatis.type.LocalDateTimeTypeHandler;
 
 /**
@@ -34,7 +37,9 @@ public class CrawlerStatusServiceModule extends PrivateServiceModule {
   @Override
   protected void configureService() {
     install(new CrawlerStatusMyBatisModule(PropertiesUtil.filterProperties(getProperties(), DB_PROPS_PREFIX)));
+    bind(PipelinesCoordinatorService.class).to(PipelinesCoordinatorServiceImpl.class).in(Scopes.SINGLETON);
     expose(PipelinesProcessMapper.class);
+    expose(PipelinesCoordinatorService.class);
   }
 
   /**

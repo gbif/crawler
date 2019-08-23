@@ -6,6 +6,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.gbif.crawler.status.service.PipelinesCoordinatorService;
+import org.gbif.crawler.status.service.impl.PipelinesCoordinatorServiceImpl;
 import org.gbif.crawler.pipelines.PipelinesProcessService;
 import org.gbif.crawler.status.service.pipelines.PipelinesProcessStatus;
 import org.gbif.ws.util.ExtraMediaTypes;
@@ -104,9 +105,9 @@ public class PipelinesProcessResource {
   @POST
   @Path("datasetKey/{datasetKey}/{crawlId}")
   public void reRunPipeline(@PathParam("datasetKey") String datasetKey, @PathParam("crawlId") String crawlId, @QueryParam("steps") String steps) {
-    coordinatorService.reRunPipelineAttempt(UUID.fromString(datasetKey), Integer.parseInt(crawlId),
-                                            Arrays.stream(steps.split(","))
-                                             .map(PipelinesCoordinatorService.Steps::valueOf)
+    coordinatorService.runPipelineAttempt(UUID.fromString(datasetKey), Integer.parseInt(crawlId),
+                                          Arrays.stream(steps.split(","))
+                                             .map(PipelinesProcessStatus.PipelinesStep.StepName::valueOf)
                                              .collect(Collectors.toSet()));
   }
 
