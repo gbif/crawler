@@ -1,11 +1,25 @@
 package org.gbif.crawler.ws;
 
+import java.util.Arrays;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import org.gbif.crawler.PipelinesCoordinatorService;
 import org.gbif.crawler.pipelines.PipelinesProcessService;
 import org.gbif.crawler.status.service.pipelines.PipelinesProcessStatus;
 import org.gbif.ws.util.ExtraMediaTypes;
 
 import java.util.Set;
 import javax.ws.rs.*;
+import com.google.inject.Inject;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
 import com.google.inject.Inject;
@@ -19,9 +33,12 @@ public class PipelinesProcessResource {
 
   private final PipelinesProcessService service;
 
+  private final PipelinesCoordinatorService coordinatorService;
+
   @Inject
-  public PipelinesProcessResource(PipelinesProcessService service) {
+  public PipelinesProcessResource(PipelinesProcessService service, PipelinesCoordinatorService coordinatorService) {
     this.service = service;
+    this.coordinatorService = coordinatorService;
   }
 
   /**
@@ -82,6 +99,19 @@ public class PipelinesProcessResource {
   @Path("datasetKey/{datasetKey}")
   public Set<PipelinesProcessStatus> getPipelinesProcessesByDatasetKey(@PathParam("datasetKey") String datasetKey) {
     return service.getPipelinesProcessesByDatasetKey(datasetKey);
+  }
+
+
+  /**
+   * Restart last failed pipelines step
+   */
+  @POST
+  @Path("datasetKey/{datasetKey}/{crawlId}")
+  public void reRunPipeline(@PathParam("datasetKey") String datasetKey, @PathParam("crawlId") String crawlId, @QueryParam("steps") String steps) {
+    coordinatorService.reRunPipelineAttempt(UUID.fromString(datasetKey), Integer.parseInt(crawlId),
+                                            Arrays.stream(steps.split(","))
+                                             .map(PipelinesCoordinatorService.Steps::valueOf)
+                                             .collect(Collectors.toSet()));
   }
 
   /**
