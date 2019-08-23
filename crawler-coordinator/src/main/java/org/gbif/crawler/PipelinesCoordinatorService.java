@@ -1,5 +1,8 @@
 package org.gbif.crawler;
 
+import org.gbif.api.model.crawler.DwcaValidationReport;
+import org.gbif.api.model.crawler.FinishReason;
+import org.gbif.api.model.crawler.OccurrenceValidationReport;
 import org.gbif.api.model.registry.Dataset;
 import org.gbif.api.model.registry.Endpoint;
 import org.gbif.api.model.registry.MachineTag;
@@ -7,9 +10,14 @@ import org.gbif.api.service.registry.DatasetService;
 import org.gbif.api.util.MachineTagUtils;
 import org.gbif.api.util.comparators.EndpointCreatedComparator;
 import org.gbif.api.util.comparators.EndpointPriorityComparator;
+import org.gbif.common.messaging.api.Message;
 import org.gbif.common.messaging.api.MessagePublisher;
+import org.gbif.common.messaging.api.messages.PipelinesAbcdMessage;
+import org.gbif.common.messaging.api.messages.PipelinesBalancerMessage;
+import org.gbif.common.messaging.api.messages.PipelinesDwcaMessage;
 import org.gbif.common.messaging.api.messages.PipelinesInterpretedMessage;
 import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage;
+import org.gbif.common.messaging.api.messages.PipelinesXmlMessage;
 import org.gbif.registry.metasync.api.MetadataSynchroniser;
 
 import java.io.IOException;
@@ -34,6 +42,9 @@ import org.slf4j.LoggerFactory;
 
 import static org.gbif.api.vocabulary.TagName.DECLARED_COUNT;
 
+/**
+ * Service that allows to re-run pipeline steps on an specific attempt.
+ */
 public class PipelinesCoordinatorService {
 
   // General steps, each step is a microservice
@@ -90,6 +101,7 @@ public class PipelinesCoordinatorService {
    * Query the source for an expected count of records.
    */
   private Long updateOrRetrieveDeclaredRecordCount(Dataset dataset, Endpoint endpoint) {
+
     Long declaredCount = null;
 
     List<MachineTag> filteredTags = MachineTagUtils.list(dataset, DECLARED_COUNT);
@@ -114,29 +126,34 @@ public class PipelinesCoordinatorService {
         LOG.debug("No new declared count");
       }
     } catch (Exception e) {
-      LOG.error("Error updating declared count "+e.getMessage(), e);
+      LOG.error("Error updating declared count " + e.getMessage(), e);
     }
 
     return declaredCount;
   }
 
+  public void reRunLastAttempt(UUID datasetKey, Steps...steps) {
 
-  public void reRunPipeline(UUID datasetKey, Integer attempt, Steps...steps) {
+  }
+
+  public void reRunPipelineAttempt(UUID datasetKey, Integer attempt, Steps...steps) {
     Preconditions.checkNotNull(datasetKey, "Dataset can't be null");
     Preconditions.checkNotNull(attempt, "Attempt can't be null");
     Preconditions.checkNotNull(steps, "Steps can't be null");
 
-    Set<Steps> pipelinesSteps = new HashSet<>(Arrays.asList(steps));
     Dataset dataset  = datasetService.get(datasetKey);
     Optional<Endpoint> endpoint = getEndpointToCrawl(dataset);
 
     if (endpoint.isPresent()) {
-      Long recordCount  = updateOrRetrieveDeclaredRecordCount(dataset, endpoint.get());
       try {
-        if (pipelinesSteps.contains(Steps.HIVE_VIEW) || pipelinesSteps.contains(Steps.INTERPRETED_TO_INDEX)) {
-          publisher.send(buildPipelinesInterpretedMessage(dataset, attempt, recordCount, steps));
-        } else if (pipelinesSteps.contains(Steps.VERBATIM_TO_INTERPRETED)) {
-          publisher.send(buildPipelinesVerbatimMessage(dataset, attempt, recordCount, steps));
+        Long recordCount  = updateOrRetrieveDeclaredRecordCount(dataset, endpoint.get());
+        Set<String> pipelinesSteps = Arrays.stream(steps).map(Steps::name).collect(Collectors.toSet());
+        if (pipelinesSteps.contains(Steps.HIVE_VIEW.name()) || pipelinesSteps.contains(Steps.INTERPRETED_TO_INDEX.name())) {
+          publisher.send(buildPipelinesInterpretedMessage(dataset, attempt, recordCount, pipelinesSteps));
+        } else if (pipelinesSteps.contains(Steps.VERBATIM_TO_INTERPRETED.name())) {
+          publisher.send(buildPipelinesVerbatimMessage(dataset, attempt, recordCount, pipelinesSteps));
+        } else {
+          throw new IllegalArgumentException("Step [" + String.join(",", pipelinesSteps) + "] not supported by this service");
         }
       } catch (IOException ex) {
         LOG.error("Error sending message", ex);
@@ -147,23 +164,75 @@ public class PipelinesCoordinatorService {
     }
   }
 
-  private PipelinesInterpretedMessage buildPipelinesInterpretedMessage(Dataset dataset,
-                                                                       Integer attempt, Long recordCount,
-                                                                       Steps...steps) {
-    return new PipelinesInterpretedMessage()
-            .setDatasetUuid(dataset.getKey())
-            .setAttempt(attempt)
-            .setNumberOfRecords(recordCount)
-            .setPipelineSteps(Arrays.stream(steps).map(Steps::name).collect(Collectors.toSet()));
+  /**
+   *
+   * Creates a {@link PipelinesBalancerMessage} that wraps a {@link PipelinesInterpretedMessage}.
+   */
+  private PipelinesBalancerMessage buildPipelinesInterpretedMessage(Dataset dataset, Integer attempt, Long recordCount,
+                                                                    Set<String> steps) {
+    return buildPipelinesBalancerMessage(new PipelinesInterpretedMessage()
+                                           .setDatasetUuid(dataset.getKey())
+                                           .setAttempt(attempt)
+                                           .setNumberOfRecords(recordCount)
+                                           .setPipelineSteps(steps),
+                                         PipelinesInterpretedMessage.class );
   }
 
-  private PipelinesVerbatimMessage buildPipelinesVerbatimMessage(Dataset dataset,
-                                                                 Integer attempt, Long recordCount,
-                                                                 Steps...steps) {
-    return new PipelinesVerbatimMessage()
-            .setDatasetUuid(dataset.getKey())
-            .setAttempt(attempt)
-            .setValidationResult(new PipelinesVerbatimMessage.ValidationResult().setNumberOfRecords(recordCount))
-            .setPipelineSteps(Arrays.stream(steps).map(Steps::name).collect(Collectors.toSet()));
+
+  /**
+   *
+   * Creates a {@link PipelinesBalancerMessage} that wraps a {@link PipelinesVerbatimMessage}.
+   */
+  private PipelinesBalancerMessage buildPipelinesVerbatimMessage(Dataset dataset, Integer attempt, Long recordCount,
+                                                                 Set<String> steps) {
+    return buildPipelinesBalancerMessage(new PipelinesVerbatimMessage()
+                                           .setDatasetUuid(dataset.getKey())
+                                           .setAttempt(attempt)
+                                           .setValidationResult(new PipelinesVerbatimMessage.ValidationResult().setNumberOfRecords(recordCount))
+                                           .setPipelineSteps(steps),
+                                         PipelinesVerbatimMessage.class);
   }
+
+  /**
+   * Creates a {@link PipelinesBalancerMessage} that wraps another message derived from a message class.
+   */
+  private PipelinesBalancerMessage buildPipelinesBalancerMessage(Message message, Class<?> classs) {
+    return new PipelinesBalancerMessage()
+            .setMessageClass(classs.getSimpleName())
+            .setPayload(message.toString());
+  }
+
+
+  public PipelinesDwcaMessage buildPipelinesDwcaMessage(Dataset dataset, Endpoint endpoint, Integer attempt,
+                                                        Long recordCount, Set<String> steps) {
+    return new PipelinesDwcaMessage()
+            .setAttempt(attempt)
+            .setDatasetType(dataset.getType())
+            .setDatasetUuid(dataset.getKey())
+            .setEndpointType(endpoint.getType())
+            .setSource(endpoint.getUrl())
+            //.setValidationReport()
+            .setPipelineSteps(steps);
+  }
+
+  public PipelinesXmlMessage buildPipelinesXmlMessage(Dataset dataset, Endpoint endpoint, Integer attempt,
+                                                      Long recordCount, Set<String> steps) {
+
+    PipelinesXmlMessage message = new PipelinesXmlMessage()
+                                    .setAttempt(attempt)
+                                    .setDatasetUuid(dataset.getKey())
+                                    .setEndpointType(endpoint.getType())
+                                    //.setReason(FinishReason.UNKNOWN)
+                                    .setPipelineSteps(steps);
+    Optional.ofNullable(recordCount).ifPresent( val -> message.setTotalRecordCount(val.intValue()));
+    return message;
+  }
+
+  public PipelinesAbcdMessage buildPipelinesAbcdMessage(Dataset dataset, Endpoint endpoint, Integer attempt,
+                                                        Set<String> steps) {
+
+    return new PipelinesAbcdMessage(dataset.getKey(), endpoint.getUrl(), attempt, dataset.getModified(), false,
+                                    steps, endpoint.getType());
+  }
+
 }

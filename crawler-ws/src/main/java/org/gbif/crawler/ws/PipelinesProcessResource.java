@@ -3,7 +3,6 @@ package org.gbif.crawler.ws;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import org.gbif.crawler.PipelinesCoordinatorService;
 import org.gbif.crawler.pipelines.PipelinesProcessService;
@@ -104,8 +103,8 @@ public class PipelinesProcessResource {
   @POST
   @Path("datasetKey/{datasetKey}/{crawlId}")
   public void reRunPipeline(@PathParam("datasetKey") String datasetKey, @PathParam("crawlId") String crawlId, @QueryParam("steps") String steps) {
-    coordinatorService.reRunPipeline(UUID.fromString(datasetKey), Integer.parseInt(crawlId),
-                                     Arrays.stream(steps.split(","))
+    coordinatorService.reRunPipelineAttempt(UUID.fromString(datasetKey), Integer.parseInt(crawlId),
+                                            Arrays.stream(steps.split(","))
                                        .map(PipelinesCoordinatorService.Steps::valueOf)
                                        .toArray(PipelinesCoordinatorService.Steps[]::new));
   }
