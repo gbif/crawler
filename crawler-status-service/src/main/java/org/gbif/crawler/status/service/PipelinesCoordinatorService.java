@@ -7,7 +7,7 @@ import java.util.UUID;
 
 public interface PipelinesCoordinatorService {
 
-  void runLastAttempt(UUID datasetKey, Set<PipelinesProcessStatus.PipelinesStep.StepName> steps);
+  ReRunPipelineResponse runLastAttempt(UUID datasetKey, Set<PipelinesProcessStatus.PipelinesStep.StepName> steps);
 
-  void runPipelineAttempt(UUID datasetKey, Integer attempt, Set<PipelinesProcessStatus.PipelinesStep.StepName> steps);
+  ReRunPipelineResponse runPipelineAttempt(UUID datasetKey, Integer attempt, Set<PipelinesProcessStatus.PipelinesStep.StepName> steps);
 }
