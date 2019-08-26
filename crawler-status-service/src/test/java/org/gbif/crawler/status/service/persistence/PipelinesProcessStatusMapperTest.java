@@ -99,6 +99,7 @@ public class PipelinesProcessStatusMapperTest extends BaseMapperTest {
             .setMetrics(Collections.singleton(new PipelinesStep.MetricInfo("n", "v")))
             .setCreatedBy(TEST_USER);
     pipelinesProcessMapper.addPipelineStep(process.getKey(), step);
+    assertTrue(step.getKey() > 0);
 
     // assert results
     PipelinesProcessStatus processRetrieved =
@@ -135,5 +136,54 @@ public class PipelinesProcessStatusMapperTest extends BaseMapperTest {
     assertEquals(expectedResult, pipelinesProcessMapper.count(datasetKey, attempt));
     assertEquals(
         expectedResult, pipelinesProcessMapper.list(datasetKey, attempt, DEFAULT_PAGE).size());
+  }
+
+  @Test
+  public void getPipelineStepTest() {
+    // insert one process
+    PipelinesProcessStatus process =
+        new PipelinesProcessStatus()
+            .setDatasetKey(UUID.randomUUID())
+            .setAttempt(1)
+            .setCreatedBy(TEST_USER);
+    pipelinesProcessMapper.create(process);
+
+    // add a step
+    PipelinesStep step =
+        new PipelinesStep()
+            .setName(PipelinesStep.StepName.ABCD_TO_VERBATIM)
+            .setState(Status.SUBMITTED)
+            .setCreatedBy(TEST_USER);
+    pipelinesProcessMapper.addPipelineStep(process.getKey(), step);
+
+    // get step
+    PipelinesStep stepRetrieved = pipelinesProcessMapper.getPipelineStep(step.getKey());
+    assertTrue(stepRetrieved.lenientEquals(step));
+  }
+
+  @Test
+  public void updatePipelineStepStateTest() {
+    // insert one process
+    PipelinesProcessStatus process =
+        new PipelinesProcessStatus()
+            .setDatasetKey(UUID.randomUUID())
+            .setAttempt(1)
+            .setCreatedBy(TEST_USER);
+    pipelinesProcessMapper.create(process);
+
+    // add a step
+    PipelinesStep step =
+        new PipelinesStep()
+            .setName(PipelinesStep.StepName.ABCD_TO_VERBATIM)
+            .setState(Status.SUBMITTED)
+            .setCreatedBy(TEST_USER);
+    pipelinesProcessMapper.addPipelineStep(process.getKey(), step);
+    assertEquals(
+        Status.SUBMITTED, pipelinesProcessMapper.getPipelineStep(step.getKey()).getState());
+
+    // change step state
+    pipelinesProcessMapper.updatePipelineStepState(step.getKey(), Status.COMPLETED);
+    assertEquals(
+        Status.COMPLETED, pipelinesProcessMapper.getPipelineStep(step.getKey()).getState());
   }
 }

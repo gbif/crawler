@@ -11,6 +11,7 @@ import java.util.StringJoiner;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
+import com.google.common.base.Strings;
 import org.apache.ibatis.type.BaseTypeHandler;
 import org.apache.ibatis.type.JdbcType;
 
@@ -55,7 +56,7 @@ public class MetricInfoTypeHandler extends BaseTypeHandler<Set<MetricInfo>> {
   }
 
   private Set<MetricInfo> metricInfoFromString(String hstoreString) {
-    if (hstoreString == null) {
+    if (Strings.isNullOrEmpty(hstoreString)) {
       return new HashSet<>();
     }
 

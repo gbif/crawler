@@ -59,5 +59,8 @@ public interface PipelinesProcessMapper {
   long count(
       @Nullable @Param("datasetKey") UUID datasetKey, @Nullable @Param("attempt") Integer attempt);
 
-  // TODO: update status
+  PipelinesStep getPipelineStep(@Param("key") long key);
+
+  void updatePipelineStepState(
+      @Param("stepId") long stepId, @Param("state") PipelinesStep.Status state);
 }

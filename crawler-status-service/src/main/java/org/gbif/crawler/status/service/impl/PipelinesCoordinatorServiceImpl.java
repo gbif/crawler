@@ -66,8 +66,7 @@ public class PipelinesCoordinatorServiceImpl implements PipelinesCoordinatorServ
   }
 
   @Override
-  public void runPipelineAttempt(UUID datasetKey, Integer attempt,
-                                 Set<PipelinesStep.StepName> steps) {
+  public void runPipelineAttempt(UUID datasetKey, Integer attempt, Set<PipelinesStep.StepName> steps) {
     Preconditions.checkNotNull(datasetKey, "Dataset can't be null");
     Preconditions.checkNotNull(attempt, "Attempt can't be null");
     Preconditions.checkNotNull(steps, "Steps can't be null");

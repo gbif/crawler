@@ -108,15 +108,6 @@ public class PipelinesStep implements LenientEquals<PipelinesStep>, Serializable
     return this;
   }
 
-  public Optional<PipelinesStep> getStep() {
-    if (started != null || finished != null) {
-      started = started == null ? finished : started;
-      return Optional.of(this);
-    } else {
-      return Optional.empty();
-    }
-  }
-
   public Set<MetricInfo> getMetrics() {
     return metrics;
   }
