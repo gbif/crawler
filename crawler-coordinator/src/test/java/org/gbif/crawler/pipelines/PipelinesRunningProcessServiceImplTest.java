@@ -2,14 +2,14 @@ package org.gbif.crawler.pipelines;
 
 import org.gbif.crawler.constants.PipelinesNodePaths;
 import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
-import org.gbif.crawler.status.service.pipelines.PipelinesProcessStatus;
+import org.gbif.crawler.status.service.model.PipelinesProcessStatus;
+import org.gbif.crawler.status.service.model.PipelinesStep;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.Set;
-import java.util.concurrent.Executors;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -27,16 +27,16 @@ import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
 @Ignore
 @RunWith(MockitoJUnitRunner.class)
-public class PipelinesProcessServiceImplTest {
+public class PipelinesRunningProcessServiceImplTest {
 
   private static final String MESSAGE = "info";
 
   private static final BiConsumer<Set<PipelinesProcessStatus>, Set<String>> ASSERT_FN = (s, ids) -> {
-    Consumer<PipelinesProcessStatus.PipelinesStep> checkFn = step -> {
+    Consumer<PipelinesStep> checkFn = step -> {
       Assert.assertTrue(PipelinesNodePaths.ALL_STEPS.contains(step.getName()));
       Assert.assertNotNull(step.getStarted());
       Assert.assertNotNull(step.getFinished());
-      Assert.assertEquals(PipelinesProcessStatus.PipelinesStep.Status.COMPLETED, step.getState());
+      Assert.assertEquals(PipelinesStep.Status.COMPLETED, step.getState());
       Assert.assertEquals(MESSAGE, step.getMessage());
     };
 
@@ -56,14 +56,14 @@ public class PipelinesProcessServiceImplTest {
           Assert.assertTrue(PipelinesNodePaths.ALL_STEPS.contains(step.getName()));
           Assert.assertNotNull(step.getStarted());
           Assert.assertNull(step.getFinished());
-          Assert.assertEquals(PipelinesProcessStatus.PipelinesStep.Status.FAILED, step.getState());
+          Assert.assertEquals(PipelinesStep.Status.FAILED, step.getState());
           Assert.assertEquals(MESSAGE, step.getMessage());
         }
         if (step.getName().equals(PipelinesNodePaths.INTERPRETED_TO_INDEX)) {
           Assert.assertTrue(PipelinesNodePaths.ALL_STEPS.contains(step.getName()));
           Assert.assertNotNull(step.getStarted());
           Assert.assertNull(step.getFinished());
-          Assert.assertEquals(PipelinesProcessStatus.PipelinesStep.Status.RUNNING, step.getState());
+          Assert.assertEquals(PipelinesStep.Status.RUNNING, step.getState());
           Assert.assertNull(MESSAGE, step.getMessage());
         }
       });
@@ -73,7 +73,7 @@ public class PipelinesProcessServiceImplTest {
 
   private CuratorFramework curator;
   private TestingServer server;
-  private PipelinesProcessServiceImpl service;
+  private PipelinesRunningProcessServiceImpl service;
 
 
   @Before
@@ -98,7 +98,7 @@ public class PipelinesProcessServiceImplTest {
   @Test
   public void testEmptyGetRunningPipelinesProcesses() {
     // When
-    Set<PipelinesProcessStatus> set = service.getRunningPipelinesProcesses();
+    Set<PipelinesProcessStatus> set = service.getPipelinesProcesses();
 
     // Should
     Assert.assertEquals(0, set.size());
@@ -110,7 +110,7 @@ public class PipelinesProcessServiceImplTest {
     String crawlId = "a731e3b1-bc81-4c1f-aad7-aba75ce3cf3b_1";
 
     // When
-    PipelinesProcessStatus status = service.getRunningPipelinesProcess(crawlId);
+    PipelinesProcessStatus status = service.getPipelinesProcess(crawlId);
 
     // Should
     Assert.assertNotNull(status);
@@ -123,7 +123,7 @@ public class PipelinesProcessServiceImplTest {
     String datasetKey = "a731e3b1-bc81-4c1f-aad7-aba75ce3cf3b";
 
     // When
-    Set<PipelinesProcessStatus> set = service.getPipelinesProcessesByDatasetKey(datasetKey);
+    Set<PipelinesProcessStatus> set = service.getProcessesByDatasetKey(datasetKey);
 
     // Should
     Assert.assertEquals(0, set.size());
@@ -139,7 +139,7 @@ public class PipelinesProcessServiceImplTest {
     }
 
     // When
-    Set<PipelinesProcessStatus> set = service.getRunningPipelinesProcesses();
+    Set<PipelinesProcessStatus> set = service.getPipelinesProcesses();
 
     // Should
     Assert.assertEquals(2, set.size());
@@ -158,7 +158,7 @@ public class PipelinesProcessServiceImplTest {
     addStatusToZookeeper(crawlId);
 
     // When
-    PipelinesProcessStatus status = service.getRunningPipelinesProcess(crawlId);
+    PipelinesProcessStatus status = service.getPipelinesProcess(crawlId);
 
     // Should
     Assert.assertNotNull(status);
@@ -176,7 +176,7 @@ public class PipelinesProcessServiceImplTest {
     addStatusToZookeeper(crawlId);
 
     // When
-    Set<PipelinesProcessStatus> set = service.getPipelinesProcessesByDatasetKey(datasetId);
+    Set<PipelinesProcessStatus> set = service.getProcessesByDatasetKey(datasetId);
 
     // Should
     ASSERT_FN.accept(set, Collections.singleton(crawlId));

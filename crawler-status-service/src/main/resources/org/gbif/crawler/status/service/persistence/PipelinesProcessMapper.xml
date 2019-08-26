@@ -13,17 +13,19 @@
   </resultMap>
 
   <sql id="PIPELINES_PROCESS_FIELDS_CREATE">
-    dataset_key, attempt, dataset_title
+    dataset_key, attempt, dataset_title, created, created_by
   </sql>
 
   <sql id="PIPELINES_PROCESS_VALUES_CREATE">
     #{datasetKey,jdbcType=OTHER},
     #{attempt,jdbcType=INTEGER},
-    #{datasetTitle,jdbcType=VARCHAR}
+    #{datasetTitle,jdbcType=VARCHAR},
+    now(), <!-- created -->
+    #{createdBy,jdbcType=VARCHAR}
   </sql>
 
   <sql id="STEPS_FIELDS_CREATE">
-    name, runner, started, finished, state, message, metrics, pipelines_process_key
+    name, runner, started, finished, state, message, metrics, rerun_reason, created, created_by, pipelines_process_key
   </sql>
 
   <sql id="STEP_VALUES_CREATE">
@@ -34,7 +36,10 @@
     #{step.state,jdbcType=OTHER},
     #{step.message,jdbcType=VARCHAR},
     #{step.metrics,jdbcType=OTHER,typeHandler=MetricInfoTypeHandler}::hstore,
-    #{pipelinesProcessKey,jdbcType=INTEGER}
+    #{step.rerunReason,jdbcType=VARCHAR},
+    now(), <!-- created -->
+    #{step.createdBy,jdbcType=VARCHAR},
+    #{pipelinesProcessKey,jdbcType=BIGINT}
   </sql>
 
   <insert id="create" parameterType="PipelinesProcess" useGeneratedKeys="true" keyProperty="key">
@@ -50,7 +55,7 @@
   <select id="listSteps" resultMap="STEP_MAP">
     SELECT *
     FROM pipelines_step
-    WHERE pipelines_process_key = #{key,jdbcType=INTEGER}
+    WHERE pipelines_process_key = #{key,jdbcType=BIGINT}
   </select>
 
   <select id="get" resultMap="PIPELINES_PROCESS_MAP">
@@ -88,5 +93,16 @@
     </where>
   </select>
 
+  <select id="getPipelineStep" resultMap="STEP_MAP">
+    SELECT *
+    FROM pipelines_step
+    WHERE key = #{key,jdbcType=BIGINT}
+  </select>
+
+  <update id="updatePipelineStepState">
+    UPDATE pipelines_step
+    SET state = #{state,jdbcType=OTHER}
+    WHERE key = #{stepId,jdbcType=BIGINT}
+  </update>
 
 </mapper>

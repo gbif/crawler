@@ -1,8 +1,8 @@
 package org.gbif.crawler.status.service.persistence;
 
 import org.gbif.api.model.common.paging.Pageable;
-import org.gbif.crawler.status.service.pipelines.PipelinesProcessStatus;
-import org.gbif.crawler.status.service.pipelines.PipelinesProcessStatus.PipelinesStep;
+import org.gbif.crawler.status.service.model.PipelinesProcessStatus;
+import org.gbif.crawler.status.service.model.PipelinesStep;
 
 import java.util.List;
 import java.util.UUID;
@@ -58,4 +58,9 @@ public interface PipelinesProcessMapper {
   /** Counts the number of {@link PipelinesProcessStatus} based in the search parameters. */
   long count(
       @Nullable @Param("datasetKey") UUID datasetKey, @Nullable @Param("attempt") Integer attempt);
+
+  PipelinesStep getPipelineStep(@Param("key") long key);
+
+  void updatePipelineStepState(
+      @Param("stepId") long stepId, @Param("state") PipelinesStep.Status state);
 }

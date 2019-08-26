@@ -1,6 +1,7 @@
 package org.gbif.crawler.status.service;
 
-import org.gbif.crawler.status.service.pipelines.PipelinesProcessStatus;
+
+import org.gbif.crawler.status.service.model.StepName;
 
 import java.util.Set;
 
@@ -16,9 +17,9 @@ public class ReRunPipelineResponse {
 
   private final ResponseStatus responseStatus;
 
-  private final Set<PipelinesProcessStatus.PipelinesStep.StepName> steps;
+  private final Set<StepName> steps;
 
-  public ReRunPipelineResponse(ResponseStatus responseStatus, Set<PipelinesProcessStatus.PipelinesStep.StepName> steps) {
+  public ReRunPipelineResponse(ResponseStatus responseStatus, Set<StepName> steps) {
     this.responseStatus = responseStatus;
     this.steps = steps;
   }
@@ -27,21 +28,21 @@ public class ReRunPipelineResponse {
     return responseStatus;
   }
 
-  public Set<PipelinesProcessStatus.PipelinesStep.StepName> getSteps() {
+  public Set<StepName> getSteps() {
     return steps;
   }
 
   public static class Builder {
 
     private ResponseStatus responseStatus;
-    private Set<PipelinesProcessStatus.PipelinesStep.StepName> steps;
+    private Set<StepName> steps;
 
     public Builder setResponseStatus(ResponseStatus responseStatus) {
       this.responseStatus = responseStatus;
       return this;
     }
 
-    public Builder setSteps(Set<PipelinesProcessStatus.PipelinesStep.StepName> steps) {
+    public Builder setSteps(Set<StepName> steps) {
       this.steps = steps;
       return this;
     }

@@ -1,25 +1,19 @@
 package org.gbif.crawler.ws;
 
+import org.gbif.crawler.pipelines.PipelinesRunningProcessService;
+import org.gbif.crawler.status.service.PipelinesCoordinatorService;
+import org.gbif.crawler.status.service.model.PipelinesProcessStatus;
+import org.gbif.crawler.status.service.model.StepName;
+import org.gbif.ws.util.ExtraMediaTypes;
+
 import java.util.Arrays;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-
-import org.gbif.crawler.status.service.PipelinesCoordinatorService;
-import org.gbif.crawler.status.service.impl.PipelinesCoordinatorServiceImpl;
-import org.gbif.crawler.pipelines.PipelinesProcessService;
-import org.gbif.crawler.status.service.pipelines.PipelinesProcessStatus;
-import org.gbif.ws.util.ExtraMediaTypes;
+import javax.ws.rs.*;
+import javax.ws.rs.core.MediaType;
 
 import com.google.inject.Inject;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.MediaType;
 
 /**
  * Pipelines monitoring resource HTTP endpoint
@@ -28,12 +22,12 @@ import javax.ws.rs.core.MediaType;
 @Path("pipelines/process")
 public class PipelinesProcessResource {
 
-  private final PipelinesProcessService service;
+  private final PipelinesRunningProcessService service;
 
   private final PipelinesCoordinatorService coordinatorService;
 
   @Inject
-  public PipelinesProcessResource(PipelinesProcessService service, PipelinesCoordinatorService coordinatorService) {
+  public PipelinesProcessResource(PipelinesRunningProcessService service, PipelinesCoordinatorService coordinatorService) {
     this.service = service;
     this.coordinatorService = coordinatorService;
   }
@@ -46,7 +40,7 @@ public class PipelinesProcessResource {
   @GET
   @Path("crawlId/{crawlId}")
   public PipelinesProcessStatus getRunningPipelinesProcess(@PathParam("crawlId") String crawlId) {
-    return service.getRunningPipelinesProcess(crawlId);
+    return service.getPipelinesProcess(crawlId);
   }
 
 
@@ -66,16 +60,16 @@ public class PipelinesProcessResource {
    */
   @DELETE
   @Path("crawlId/{crawlId}")
-  public void deleteRunningPipelinesProcess(@PathParam("crawlId") String crawlId) {
-    service.deleteRunningPipelinesProcess(crawlId);
+  public void deletePipelinesProcess(@PathParam("crawlId") String crawlId) {
+    service.deletePipelinesProcess(crawlId);
   }
 
   /**
    * Removes pipelines ZK path
    */
   @DELETE
-  public void deleteRunningPipelinesProcess() {
-    service.deleteAllRunningPipelinesProcess();
+  public void deletePipelinesProcess() {
+    service.deleteAllPipelinesProcess();
   }
 
   /**
@@ -83,8 +77,8 @@ public class PipelinesProcessResource {
    */
   @GET
   @Path("running")
-  public Set<PipelinesProcessStatus> getRunningPipelinesProcesses() {
-    return service.getRunningPipelinesProcesses();
+  public Set<PipelinesProcessStatus> getPipelinesProcesses() {
+    return service.getPipelinesProcesses();
   }
 
   /**
@@ -95,7 +89,7 @@ public class PipelinesProcessResource {
   @GET
   @Path("datasetKey/{datasetKey}")
   public Set<PipelinesProcessStatus> getPipelinesProcessesByDatasetKey(@PathParam("datasetKey") String datasetKey) {
-    return service.getPipelinesProcessesByDatasetKey(datasetKey);
+    return service.getProcessesByDatasetKey(datasetKey);
   }
 
 
@@ -107,7 +101,7 @@ public class PipelinesProcessResource {
   public void reRunPipeline(@PathParam("datasetKey") String datasetKey, @PathParam("crawlId") String crawlId, @QueryParam("steps") String steps) {
     coordinatorService.runPipelineAttempt(UUID.fromString(datasetKey), Integer.parseInt(crawlId),
                                           Arrays.stream(steps.split(","))
-                                             .map(PipelinesProcessStatus.PipelinesStep.StepName::valueOf)
+                                             .map(StepName::valueOf)
                                              .collect(Collectors.toSet()));
   }
 
