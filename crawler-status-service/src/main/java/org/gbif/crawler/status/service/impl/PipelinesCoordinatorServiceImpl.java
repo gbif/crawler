@@ -1,5 +1,7 @@
 package org.gbif.crawler.status.service.impl;
 
+import org.gbif.api.model.common.paging.PagingRequest;
+import org.gbif.api.model.common.paging.PagingResponse;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.PipelinesAbcdMessage;
 import org.gbif.common.messaging.api.messages.PipelinesDwcaMessage;
@@ -99,6 +101,13 @@ public class PipelinesCoordinatorServiceImpl implements PipelinesCoordinatorServ
         return PipelinesStep.Status.COMPLETED;
       }
     }
+  }
+
+  @Override
+  public PagingResponse<PipelinesProcessStatus> list(UUID datasetKey, Integer attempt, PagingRequest request) {
+    long count = mapper.count(datasetKey, attempt);
+    List<PipelinesProcessStatus> statuses = mapper.list(datasetKey, attempt, request);
+    return new PagingResponse<>(request, count, statuses);
   }
 
   @Override
