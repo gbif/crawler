@@ -1,21 +1,17 @@
 package org.gbif.crawler.status.service.impl;
 
 import org.gbif.common.messaging.api.MessagePublisher;
-import org.gbif.common.messaging.api.messages.PipelinesAbcdMessage;
-import org.gbif.common.messaging.api.messages.PipelinesDwcaMessage;
-import org.gbif.common.messaging.api.messages.PipelinesInterpretedMessage;
-import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage;
-import org.gbif.common.messaging.api.messages.PipelinesXmlMessage;
+import org.gbif.common.messaging.api.messages.*;
 import org.gbif.crawler.status.service.PipelinesCoordinatorService;
+import org.gbif.crawler.status.service.model.PipelinesProcessStatus;
+import org.gbif.crawler.status.service.model.PipelinesStep;
 import org.gbif.crawler.status.service.persistence.PipelinesProcessMapper;
-import org.gbif.crawler.status.service.pipelines.PipelinesProcessStatus;
 
 import java.io.IOException;
 import java.util.Comparator;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-
 import javax.inject.Inject;
 
 import com.google.common.base.Preconditions;
@@ -58,20 +54,20 @@ public class PipelinesCoordinatorServiceImpl implements PipelinesCoordinatorServ
   }
 
   @Override
-  public void runLastAttempt(UUID datasetKey, Set<PipelinesProcessStatus.PipelinesStep.StepName> steps) {
+  public void runLastAttempt(UUID datasetKey, Set<PipelinesStep.StepName> steps) {
     Integer lastAttempt = 0; //Get the last successful attempt of each step
     runPipelineAttempt(datasetKey, lastAttempt, steps);
   }
 
-  private Optional<PipelinesProcessStatus.PipelinesStep> getLatestSuccessfulStep(PipelinesProcessStatus pipelinesProcessStatus, PipelinesProcessStatus.PipelinesStep.StepName step) {
+  private Optional<PipelinesStep> getLatestSuccessfulStep(PipelinesProcessStatus pipelinesProcessStatus, PipelinesStep.StepName step) {
     return  pipelinesProcessStatus.getSteps().stream()
               .filter(s -> step.equals(s.getName()))
-              .max(Comparator.comparing(PipelinesProcessStatus.PipelinesStep::getStarted));
+              .max(Comparator.comparing(PipelinesStep::getStarted));
   }
 
   @Override
   public void runPipelineAttempt(UUID datasetKey, Integer attempt,
-                                 Set<PipelinesProcessStatus.PipelinesStep.StepName> steps) {
+                                 Set<PipelinesStep.StepName> steps) {
     Preconditions.checkNotNull(datasetKey, "Dataset can't be null");
     Preconditions.checkNotNull(attempt, "Attempt can't be null");
     Preconditions.checkNotNull(steps, "Steps can't be null");
@@ -80,15 +76,15 @@ public class PipelinesCoordinatorServiceImpl implements PipelinesCoordinatorServ
     steps.forEach(stepName ->
         getLatestSuccessfulStep(status, stepName).ifPresent(step -> {
           try {
-            if (stepName == PipelinesProcessStatus.PipelinesStep.StepName.HIVE_VIEW || stepName == PipelinesProcessStatus.PipelinesStep.StepName.INTERPRETED_TO_INDEX) {
+            if (stepName == PipelinesStep.StepName.HIVE_VIEW || stepName == PipelinesStep.StepName.INTERPRETED_TO_INDEX) {
               publisher.send(MAPPER.readValue(step.getMessage(), PipelinesInterpretedMessage.class));
-            } else if (steps.contains(PipelinesProcessStatus.PipelinesStep.StepName.VERBATIM_TO_INTERPRETED)) {
+            } else if (steps.contains(PipelinesStep.StepName.VERBATIM_TO_INTERPRETED)) {
               publisher.send(MAPPER.readValue(step.getMessage(), PipelinesVerbatimMessage.class));
-            } else if (steps.contains(PipelinesProcessStatus.PipelinesStep.StepName.DWCA_TO_VERBATIM)) {
+            } else if (steps.contains(PipelinesStep.StepName.DWCA_TO_VERBATIM)) {
               publisher.send(MAPPER.readValue(step.getMessage(), PipelinesDwcaMessage.class));
-            } else if (steps.contains(PipelinesProcessStatus.PipelinesStep.StepName.ABCD_TO_VERBATIM)) {
+            } else if (steps.contains(PipelinesStep.StepName.ABCD_TO_VERBATIM)) {
               publisher.send(MAPPER.readValue(step.getMessage(), PipelinesAbcdMessage.class));
-            } else if (steps.contains(PipelinesProcessStatus.PipelinesStep.StepName.XML_TO_VERBATIM)) {
+            } else if (steps.contains(PipelinesStep.StepName.XML_TO_VERBATIM)) {
               publisher.send(MAPPER.readValue(step.getMessage(), PipelinesXmlMessage.class));
             } else {
               throw new IllegalArgumentException("Step [" + stepName.name() + "] not supported by this service");

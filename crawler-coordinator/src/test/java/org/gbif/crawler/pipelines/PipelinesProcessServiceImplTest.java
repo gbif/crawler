@@ -2,14 +2,13 @@ package org.gbif.crawler.pipelines;
 
 import org.gbif.crawler.constants.PipelinesNodePaths;
 import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
-import org.gbif.crawler.status.service.pipelines.PipelinesProcessStatus;
+import org.gbif.crawler.status.service.model.PipelinesProcessStatus;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.Set;
-import java.util.concurrent.Executors;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 

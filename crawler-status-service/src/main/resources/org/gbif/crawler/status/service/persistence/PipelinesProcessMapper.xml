@@ -13,17 +13,19 @@
   </resultMap>
 
   <sql id="PIPELINES_PROCESS_FIELDS_CREATE">
-    dataset_key, attempt, dataset_title
+    dataset_key, attempt, dataset_title, created, created_by
   </sql>
 
   <sql id="PIPELINES_PROCESS_VALUES_CREATE">
     #{datasetKey,jdbcType=OTHER},
     #{attempt,jdbcType=INTEGER},
-    #{datasetTitle,jdbcType=VARCHAR}
+    #{datasetTitle,jdbcType=VARCHAR},
+    now(), <!-- created -->
+    #{createdBy,jdbcType=VARCHAR}
   </sql>
 
   <sql id="STEPS_FIELDS_CREATE">
-    name, runner, started, finished, state, message, metrics, pipelines_process_key
+    name, runner, started, finished, state, message, metrics, rerun_reason, created, created_by, pipelines_process_key
   </sql>
 
   <sql id="STEP_VALUES_CREATE">
@@ -34,6 +36,9 @@
     #{step.state,jdbcType=OTHER},
     #{step.message,jdbcType=VARCHAR},
     #{step.metrics,jdbcType=OTHER,typeHandler=MetricInfoTypeHandler}::hstore,
+    #{step.rerunReason,jdbcType=VARCHAR},
+    now(), <!-- created -->
+    #{step.createdBy,jdbcType=VARCHAR},
     #{pipelinesProcessKey,jdbcType=INTEGER}
   </sql>
 
@@ -87,6 +92,5 @@
       </if>
     </where>
   </select>
-
 
 </mapper>

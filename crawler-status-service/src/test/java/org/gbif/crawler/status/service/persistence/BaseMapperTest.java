@@ -1,7 +1,7 @@
 package org.gbif.crawler.status.service.persistence;
 
 import org.gbif.api.model.common.paging.Pageable;
-import org.gbif.crawler.status.service.guice.CrawlerStatusServiceModule;
+import org.gbif.crawler.status.service.guice.CrawlerStatusServiceModule.CrawlerStatusMyBatisModule;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -20,9 +20,6 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.testcontainers.containers.PostgreSQLContainer;
-
-import static org.gbif.crawler.status.service.guice.CrawlerStatusServiceModule.DB_PROPS_PREFIX;
-import static org.gbif.crawler.status.service.guice.CrawlerStatusServiceModule.PROPS_PREFIX;
 
 /** Base class to tests the myBatis mappers using an embedded postgres database. */
 public class BaseMapperTest {
@@ -51,7 +48,7 @@ public class BaseMapperTest {
   public static void setup() {
     postgresDb.start();
     runLiquibase();
-    injector = Guice.createInjector(new CrawlerStatusServiceModule(createDbProperties()));
+    injector = Guice.createInjector(new CrawlerStatusMyBatisModule(createDbProperties()));
   }
 
   @AfterClass
@@ -61,17 +58,12 @@ public class BaseMapperTest {
 
   private static Properties createDbProperties() {
     Properties dbProperties = new Properties();
+    dbProperties.setProperty("dataSourceClassName", "org.postgresql.ds.PGSimpleDataSource");
     dbProperties.setProperty(
-        PROPS_PREFIX + DB_PROPS_PREFIX + "dataSourceClassName",
-        "org.postgresql.ds.PGSimpleDataSource");
-    dbProperties.setProperty(
-        PROPS_PREFIX + DB_PROPS_PREFIX + "dataSource.serverName",
-        "localhost:" + postgresDb.getFirstMappedPort());
-    dbProperties.setProperty(PROPS_PREFIX + DB_PROPS_PREFIX + "dataSource.databaseName", "test");
-    dbProperties.setProperty(
-        PROPS_PREFIX + DB_PROPS_PREFIX + "dataSource.user", postgresDb.getUsername());
-    dbProperties.setProperty(
-        PROPS_PREFIX + DB_PROPS_PREFIX + "dataSource.password", postgresDb.getPassword());
+        "dataSource.serverName", "localhost:" + postgresDb.getFirstMappedPort());
+    dbProperties.setProperty("dataSource.databaseName", "test");
+    dbProperties.setProperty("dataSource.user", postgresDb.getUsername());
+    dbProperties.setProperty("dataSource.password", postgresDb.getPassword());
 
     return dbProperties;
   }

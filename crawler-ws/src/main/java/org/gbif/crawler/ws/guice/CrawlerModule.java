@@ -1,12 +1,5 @@
 package org.gbif.crawler.ws.guice;
 
-import java.io.IOException;
-import java.util.Properties;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-
-import org.gbif.api.model.registry.Installation;
 import org.gbif.api.service.crawler.DatasetProcessService;
 import org.gbif.api.service.registry.DatasetService;
 import org.gbif.api.service.registry.InstallationService;
@@ -16,10 +9,9 @@ import org.gbif.common.messaging.config.MessagingConfiguration;
 import org.gbif.crawler.DatasetProcessServiceImpl;
 import org.gbif.crawler.pipelines.PipelinesProcessService;
 import org.gbif.crawler.pipelines.PipelinesProcessServiceImpl;
+import org.gbif.crawler.status.service.guice.CrawlerStatusServiceModule;
 import org.gbif.registry.metasync.MetadataSynchroniserImpl;
 import org.gbif.registry.metasync.api.MetadataSynchroniser;
-import org.gbif.registry.metasync.util.HttpClientFactory;
-import org.gbif.crawler.status.service.guice.CrawlerStatusServiceModule;
 import org.gbif.registry.ws.client.guice.RegistryWsClientModule;
 import org.gbif.service.guice.PrivateServiceModule;
 import org.gbif.ws.client.guice.AnonymousAuthModule;

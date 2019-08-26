@@ -9,9 +9,9 @@ import org.gbif.crawler.constants.CrawlerNodePaths;
 import org.gbif.crawler.constants.PipelinesNodePaths;
 import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
 import org.gbif.crawler.status.service.persistence.PipelinesProcessMapper;
-import org.gbif.crawler.status.service.pipelines.PipelinesProcessStatus;
-import org.gbif.crawler.status.service.pipelines.PipelinesProcessStatus.PipelinesStep;
-import org.gbif.crawler.status.service.pipelines.PipelinesProcessStatus.PipelinesStep.Status;
+import org.gbif.crawler.status.service.model.PipelinesProcessStatus;
+import org.gbif.crawler.status.service.model.PipelinesProcessStatus.PipelinesStep;
+import org.gbif.crawler.status.service.model.PipelinesProcessStatus.PipelinesStep.Status;
 
 import java.text.DecimalFormat;
 import java.time.LocalDate;
