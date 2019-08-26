@@ -98,7 +98,10 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
   /** Reads all monitoring information from Zookeeper pipelines root path */
   @Override
   public Set<PipelinesProcessStatus> getPipelinesProcesses() {
-     Set<PipelinesProcessStatus> set = new TreeSet<>(Comparator.comparing(PipelinesProcessStatus::getAttempt));
+    Set<PipelinesProcessStatus> set =
+        new TreeSet<>(
+            Comparator.comparing(PipelinesProcessStatus::getDatasetKey)
+                .thenComparing(PipelinesProcessStatus::getAttempt));
     try {
       String path = CrawlerNodePaths.buildPath(PIPELINES_ROOT);
 
@@ -199,7 +202,10 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
 
   @Override
   public Set<PipelinesProcessStatus> getProcessesByDatasetKey(String datasetKey) {
-    Set<PipelinesProcessStatus> set = new TreeSet<>(Comparator.comparing(PipelinesProcessStatus::getAttempt));
+    Set<PipelinesProcessStatus> set =
+        new TreeSet<>(
+            Comparator.comparing(PipelinesProcessStatus::getDatasetKey)
+                .thenComparing(PipelinesProcessStatus::getAttempt));
     try {
       String path = CrawlerNodePaths.buildPath(PIPELINES_ROOT);
 
