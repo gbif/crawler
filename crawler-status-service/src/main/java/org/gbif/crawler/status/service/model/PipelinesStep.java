@@ -120,18 +120,9 @@ public class PipelinesStep implements LenientEquals<PipelinesStep>, Serializable
   /** Enum to represent the status of a step. */
   public enum Status {
     SUBMITTED,
+    RUNNING,
     FAILED,
     COMPLETED
-  }
-
-  /** Enum to represent the step names. */
-  public enum StepName {
-    DWCA_TO_VERBATIM,
-    XML_TO_VERBATIM,
-    ABCD_TO_VERBATIM,
-    VERBATIM_TO_INTERPRETED,
-    INTERPRETED_TO_INDEX,
-    HIVE_VIEW
   }
 
   /** Inner class to store metrics. */

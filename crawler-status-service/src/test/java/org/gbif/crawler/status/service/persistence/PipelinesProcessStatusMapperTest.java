@@ -3,6 +3,7 @@ package org.gbif.crawler.status.service.persistence;
 import org.gbif.crawler.status.service.model.PipelinesProcessStatus;
 import org.gbif.crawler.status.service.model.PipelinesStep;
 import org.gbif.crawler.status.service.model.PipelinesStep.Status;
+import org.gbif.crawler.status.service.model.StepName;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -90,7 +91,7 @@ public class PipelinesProcessStatusMapperTest extends BaseMapperTest {
     // add a step
     PipelinesStep step =
         new PipelinesStep()
-            .setName(PipelinesStep.StepName.ABCD_TO_VERBATIM)
+            .setName(StepName.ABCD_TO_VERBATIM)
             .setRunner("runner test")
             .setState(Status.COMPLETED)
             .setStarted(LocalDateTime.now().minusMinutes(1))
@@ -151,7 +152,7 @@ public class PipelinesProcessStatusMapperTest extends BaseMapperTest {
     // add a step
     PipelinesStep step =
         new PipelinesStep()
-            .setName(PipelinesStep.StepName.ABCD_TO_VERBATIM)
+            .setName(StepName.ABCD_TO_VERBATIM)
             .setState(Status.SUBMITTED)
             .setCreatedBy(TEST_USER);
     pipelinesProcessMapper.addPipelineStep(process.getKey(), step);
@@ -174,7 +175,7 @@ public class PipelinesProcessStatusMapperTest extends BaseMapperTest {
     // add a step
     PipelinesStep step =
         new PipelinesStep()
-            .setName(PipelinesStep.StepName.ABCD_TO_VERBATIM)
+            .setName(StepName.ABCD_TO_VERBATIM)
             .setState(Status.SUBMITTED)
             .setCreatedBy(TEST_USER);
     pipelinesProcessMapper.addPipelineStep(process.getKey(), step);

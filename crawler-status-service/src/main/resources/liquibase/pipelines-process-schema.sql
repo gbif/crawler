@@ -10,7 +10,7 @@ CREATE TABLE pipelines_process (
  UNIQUE(dataset_key, attempt)
 );
 
-CREATE TYPE pipelines_step_status AS ENUM ('SUBMITTED', 'FAILED', 'COMPLETED');
+CREATE TYPE pipelines_step_status AS ENUM ('SUBMITTED', 'RUNNING', 'FAILED', 'COMPLETED');
 
 CREATE TYPE pipelines_step_name AS ENUM ('DWCA_TO_VERBATIM', 'XML_TO_VERBATIM', 'ABCD_TO_VERBATIM', 'VERBATIM_TO_INTERPRETED', 'INTERPRETED_TO_INDEX', 'HIVE_VIEW');
 
