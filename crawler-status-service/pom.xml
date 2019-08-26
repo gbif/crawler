@@ -5,13 +5,16 @@
   <parent>
     <artifactId>crawler-motherpom</artifactId>
     <groupId>org.gbif.crawler</groupId>
-    <version>0.76-SNAPSHOT</version>
+    <version>0.77-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>org.gbif.crawler</groupId>
   <artifactId>crawler-status-service</artifactId>
-  <version>0.76-SNAPSHOT</version>
+  <version>0.77-SNAPSHOT</version>
+
+  <packaging>jar</packaging>
+
+  <name>Crawler :: Status and Process Service</name>
 
   <dependencies>
     <dependency>
@@ -21,6 +24,73 @@
     <dependency>
       <groupId>org.gbif</groupId>
       <artifactId>gbif-common-service</artifactId>
+    </dependency>
+
+    <!-- utils -->
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>${guava.version}</version>
+    </dependency>
+
+    <!-- persistence -->
+    <dependency>
+      <groupId>org.gbif</groupId>
+      <artifactId>gbif-common-mybatis</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>org.gbif</groupId>
+          <artifactId>gbif-parsers</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.gbif.common</groupId>
+      <artifactId>gbif-postal-service</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.gbif.registry</groupId>
+      <artifactId>registry-metasync</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.mybatis</groupId>
+      <artifactId>mybatis</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.mybatis</groupId>
+      <artifactId>mybatis-guice</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+    </dependency>
+
+    <!-- test -->
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.hamcrest</groupId>
+      <artifactId>hamcrest-library</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>postgresql</artifactId>
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>javax.xml.bind</groupId>
+          <artifactId>jaxb-api</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.liquibase</groupId>
+      <artifactId>liquibase-core</artifactId>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 

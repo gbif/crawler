@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.gbif.crawler.status.service.persistence.PipelinesProcessMapper">
+
+  <resultMap id="PIPELINES_PROCESS_MAP" type="PipelinesProcess" autoMapping="true">
+    <id property="key" column="key"/>
+    <collection property="steps" column="key" select="listSteps"/>
+  </resultMap>
+
+  <resultMap id="STEP_MAP" type="Step" autoMapping="true">
+    <id property="key" column="key"/>
+    <result property="metrics" column="metrics" typeHandler="MetricInfoTypeHandler"/>
+  </resultMap>
+
+  <sql id="PIPELINES_PROCESS_FIELDS_CREATE">
+    dataset_key, attempt, dataset_title
+  </sql>
+
+  <sql id="PIPELINES_PROCESS_VALUES_CREATE">
+    #{datasetKey,jdbcType=OTHER},
+    #{attempt,jdbcType=INTEGER},
+    #{datasetTitle,jdbcType=VARCHAR}
+  </sql>
+
+  <sql id="STEPS_FIELDS_CREATE">
+    name, runner, started, finished, state, message, metrics, pipelines_process_key
+  </sql>
+
+  <sql id="STEP_VALUES_CREATE">
+    #{step.name,jdbcType=OTHER},
+    #{step.runner,jdbcType=VARCHAR},
+    #{step.started,jdbcType=OTHER},
+    #{step.finished,jdbcType=OTHER},
+    #{step.state,jdbcType=OTHER},
+    #{step.message,jdbcType=VARCHAR},
+    #{step.metrics,jdbcType=OTHER,typeHandler=MetricInfoTypeHandler}::hstore,
+    #{pipelinesProcessKey,jdbcType=INTEGER}
+  </sql>
+
+  <insert id="create" parameterType="PipelinesProcess" useGeneratedKeys="true" keyProperty="key">
+    INSERT INTO pipelines_process(<include refid="PIPELINES_PROCESS_FIELDS_CREATE"/>)
+    VALUES (<include refid="PIPELINES_PROCESS_VALUES_CREATE"/>)
+  </insert>
+
+  <insert id="addPipelineStep" useGeneratedKeys="true" keyProperty="step.key">
+    INSERT INTO pipelines_step(<include refid="STEPS_FIELDS_CREATE"/>)
+    VALUES (<include refid="STEP_VALUES_CREATE"/>)
+  </insert>
+
+  <select id="listSteps" resultMap="STEP_MAP">
+    SELECT *
+    FROM pipelines_step
+    WHERE pipelines_process_key = #{key,jdbcType=INTEGER}
+  </select>
+
+  <select id="get" resultMap="PIPELINES_PROCESS_MAP">
+    SELECT *
+    FROM pipelines_process
+    WHERE dataset_key = #{datasetKey, jdbcType=OTHER} AND attempt = #{attempt, jdbcType=INTEGER}
+  </select>
+
+  <select id="list" resultMap="PIPELINES_PROCESS_MAP">
+    SELECT *
+    FROM pipelines_process
+    <where>
+      <if test="datasetKey != null">
+        dataset_key = #{datasetKey, jdbcType=OTHER}
+      </if>
+      <if test="attempt != null">
+        AND attempt = #{attempt, jdbcType=INTEGER}
+      </if>
+    </where>
+    <if test="page != null">
+      LIMIT #{page.limit} OFFSET #{page.offset}
+    </if>
+  </select>
+
+  <select id="count" resultType="Long">
+    SELECT COUNT(*)
+    FROM pipelines_process
+    <where>
+      <if test="datasetKey != null">
+        dataset_key = #{datasetKey, jdbcType=OTHER}
+      </if>
+      <if test="attempt != null">
+        AND attempt = #{attempt, jdbcType=INTEGER}
+      </if>
+    </where>
+  </select>
+
+
+</mapper>

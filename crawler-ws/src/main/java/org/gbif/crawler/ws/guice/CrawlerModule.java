@@ -4,33 +4,40 @@ import java.io.IOException;
 import java.util.Properties;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
+import org.gbif.api.model.registry.Installation;
 import org.gbif.api.service.crawler.DatasetProcessService;
 import org.gbif.api.service.registry.DatasetService;
+import org.gbif.api.service.registry.InstallationService;
 import org.gbif.common.messaging.DefaultMessagePublisher;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.config.MessagingConfiguration;
 import org.gbif.crawler.DatasetProcessServiceImpl;
 import org.gbif.crawler.pipelines.PipelinesProcessService;
 import org.gbif.crawler.pipelines.PipelinesProcessServiceImpl;
+import org.gbif.registry.metasync.MetadataSynchroniserImpl;
+import org.gbif.registry.metasync.api.MetadataSynchroniser;
+import org.gbif.registry.metasync.util.HttpClientFactory;
+import org.gbif.crawler.status.service.guice.CrawlerStatusServiceModule;
 import org.gbif.registry.ws.client.guice.RegistryWsClientModule;
 import org.gbif.service.guice.PrivateServiceModule;
 import org.gbif.ws.client.guice.AnonymousAuthModule;
 
+import java.io.IOException;
+import java.util.Properties;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+
+import com.google.inject.*;
+import com.google.inject.name.Named;
+import com.google.inject.name.Names;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.apache.http.HttpHost;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
-
-import com.google.inject.Guice;
-import com.google.inject.Inject;
-import com.google.inject.Provides;
-import com.google.inject.Scopes;
-import com.google.inject.Singleton;
-import com.google.inject.name.Named;
-import com.google.inject.name.Names;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -47,6 +54,8 @@ class CrawlerModule extends PrivateServiceModule {
 
   @Override
   protected void configureService() {
+    install(new CrawlerStatusServiceModule(getVerbatimProperties()));
+
     bind(DatasetProcessService.class).to(DatasetProcessServiceImpl.class).in(Scopes.SINGLETON);
     bind(PipelinesProcessService.class).to(PipelinesProcessServiceImpl.class).in(Scopes.SINGLETON);
     expose(DatasetProcessService.class);
@@ -55,6 +64,7 @@ class CrawlerModule extends PrivateServiceModule {
     expose(CuratorFramework.class);
     expose(RestHighLevelClient.class);
     expose(DatasetService.class);
+    expose(MetadataSynchroniser.class);
     expose(MessagePublisher.class);
 
     expose(String.class).annotatedWith(Names.named("overcrawledReportFilePath"));
@@ -117,6 +127,20 @@ class CrawlerModule extends PrivateServiceModule {
     Properties p = new Properties();
     p.setProperty("registry.ws.url", url);
     return Guice.createInjector(new RegistryWsClientModule(p), new AnonymousAuthModule()).getInstance(DatasetService.class);
+  }
+
+  /**
+   * Provides an MetadataSynchroniser. This is shared between all requests.
+   *
+   * @param url to registry
+   */
+  @Provides
+  @Singleton
+  public MetadataSynchroniser provideMetadataSynchroniser(@Named("registry.ws.url") String url) {
+    Properties p = new Properties();
+    p.setProperty("registry.ws.url", url);
+    InstallationService installationService = Guice.createInjector(new RegistryWsClientModule(p), new AnonymousAuthModule()).getInstance(InstallationService.class);
+    return new MetadataSynchroniserImpl(installationService);
   }
 
   /**

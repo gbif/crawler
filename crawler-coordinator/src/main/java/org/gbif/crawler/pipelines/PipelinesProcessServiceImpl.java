@@ -1,46 +1,32 @@
 package org.gbif.crawler.pipelines;
 
+import org.gbif.api.exception.ServiceUnavailableException;
+import org.gbif.api.service.registry.DatasetService;
+import org.gbif.common.messaging.api.Message;
+import org.gbif.common.messaging.api.MessagePublisher;
+import org.gbif.common.messaging.api.messages.PipelineBasedMessage;
+import org.gbif.crawler.constants.CrawlerNodePaths;
+import org.gbif.crawler.constants.PipelinesNodePaths;
+import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
+import org.gbif.crawler.status.service.persistence.PipelinesProcessMapper;
+import org.gbif.crawler.status.service.pipelines.PipelinesProcessStatus;
+import org.gbif.crawler.status.service.pipelines.PipelinesProcessStatus.PipelinesStep;
+import org.gbif.crawler.status.service.pipelines.PipelinesProcessStatus.PipelinesStep.Status;
+
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Collections;
-import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
-import java.util.TreeSet;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-
-import org.gbif.api.exception.ServiceUnavailableException;
-import org.gbif.api.service.registry.DatasetService;
-import org.gbif.common.messaging.api.Message;
-import org.gbif.common.messaging.api.MessagePublisher;
-import org.gbif.common.messaging.api.messages.PipelineBasedMessage;
-import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
-import org.gbif.crawler.status.service.pipelines.PipelinesProcessStatus.MetricInfo;
-import org.gbif.crawler.status.service.pipelines.PipelinesProcessStatus.PipelinesStep;
-import org.gbif.crawler.status.service.pipelines.PipelinesProcessStatus.PipelinesStep.Status;
-
-import org.apache.curator.framework.CuratorFramework;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.aggregations.AggregationBuilders;
-import org.elasticsearch.search.aggregations.Aggregations;
-import org.elasticsearch.search.aggregations.bucket.terms.ParsedStringTerms;
-import org.elasticsearch.search.aggregations.metrics.max.ParsedMax;
-import org.elasticsearch.search.builder.SearchSourceBuilder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Charsets;
 import com.google.common.cache.CacheBuilder;
@@ -48,14 +34,20 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-
-import static org.gbif.crawler.constants.PipelinesNodePaths.getPipelinesInfoPath;
+import org.apache.curator.framework.CuratorFramework;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-/**
- * Pipelines monitoring service collects all necessary information from Zookeeper
- */
+/** Pipelines monitoring service collects all necessary information from Zookeeper */
 public class PipelinesProcessServiceImpl implements PipelinesProcessService {
 
   private static final Logger LOG = LoggerFactory.getLogger(PipelinesProcessServiceImpl.class);
@@ -70,18 +62,23 @@ public class PipelinesProcessServiceImpl implements PipelinesProcessService {
   private final String envPrefix;
   private final DatasetService datasetService;
   private final MessagePublisher publisher;
-  private final LoadingCache<String, PipelinesProcessStatus> statusCache = CacheBuilder.newBuilder()
-      .expireAfterWrite(2, TimeUnit.MINUTES)
-      .build(
-          new CacheLoader<String, PipelinesProcessStatus>() {
-            @Override
-            public PipelinesProcessStatus load(String key) {
-              return loadRunningPipelinesProcess(key);
-            }
-          });
+  private final LoadingCache<String, PipelinesProcessStatus> statusCache =
+      CacheBuilder.newBuilder()
+          .expireAfterWrite(2, TimeUnit.MINUTES)
+          .build(
+              new CacheLoader<String, PipelinesProcessStatus>() {
+                @Override
+                public PipelinesProcessStatus load(String key) {
+                  return null;
+                  //              return loadRunningPipelinesProcess(key);
+                }
+              });
+
+  private final PipelinesProcessMapper pipelinesProcessMapper;
 
   /**
-   * Creates a CrawlerMetricsService. Responsible for interacting with a ZooKeeper instance in a read-only fashion.
+   * Creates a CrawlerMetricsService. Responsible for interacting with a ZooKeeper instance in a
+   * read-only fashion.
    *
    * @param curator to access ZooKeeper
    * @param executor to run the thread pool
@@ -93,22 +90,23 @@ public class PipelinesProcessServiceImpl implements PipelinesProcessService {
       RestHighLevelClient client,
       DatasetService datasetService,
       MessagePublisher publisher,
-      @Named("pipelines.envPrefix") String envPrefix
-  ) {
+      @Named("pipelines.envPrefix") String envPrefix,
+      PipelinesProcessMapper pipelinesProcessMapper) {
     this.curator = checkNotNull(curator, "curator can't be null");
     this.executor = checkNotNull(executor, "executor can't be null");
     this.datasetService = datasetService;
     this.client = client;
     this.envPrefix = envPrefix;
     this.publisher = publisher;
+    this.pipelinesProcessMapper = pipelinesProcessMapper;
   }
 
-  /**
-   * Reads all monitoring information from Zookeeper pipelines root path
-   */
+  /** Reads all monitoring information from Zookeeper pipelines root path */
   @Override
   public Set<PipelinesProcessStatus> getRunningPipelinesProcesses() {
-    Set<PipelinesProcessStatus> set = new TreeSet<>(Comparator.comparing(PipelinesProcessStatus::getCrawlId));
+    //    Set<PipelinesProcessStatus> set = new
+    // TreeSet<>(Comparator.comparing(PipelinesProcessStatus::getCrawlId));
+    Set<PipelinesProcessStatus> set = new HashSet<>();
     try {
 
       String path = CrawlerNodePaths.buildPath(PipelinesNodePaths.PIPELINES_ROOT);
@@ -118,14 +116,17 @@ public class PipelinesProcessServiceImpl implements PipelinesProcessService {
       }
 
       // Reads all nodes in async mode
-      CompletableFuture[] futures = curator.getChildren()
-          .forPath(path)
-          .stream()
-          .map(id -> CompletableFuture.runAsync(() -> {
-            PipelinesProcessStatus process = getRunningPipelinesProcess(id);
-            Optional.ofNullable(process).ifPresent(set::add);
-          }, executor))
-          .toArray(CompletableFuture[]::new);
+      CompletableFuture[] futures =
+          curator.getChildren().forPath(path).stream()
+              .map(
+                  id ->
+                      CompletableFuture.runAsync(
+                          () -> {
+                            PipelinesProcessStatus process = getRunningPipelinesProcess(id);
+                            Optional.ofNullable(process).ifPresent(set::add);
+                          },
+                          executor))
+              .toArray(CompletableFuture[]::new);
 
       // Waits all threads
       CompletableFuture.allOf(futures).get();
@@ -172,17 +173,13 @@ public class PipelinesProcessServiceImpl implements PipelinesProcessService {
     }
   }
 
-  /**
-   * Removes pipelines root Zookeeper path
-   */
+  /** Removes pipelines root Zookeeper path */
   @Override
   public void deleteAllRunningPipelinesProcess() {
     deleteRunningPipelinesProcess(null);
   }
 
-  /**
-   * Restart last failed pipelines step
-   */
+  /** Restart last failed pipelines step */
   @Override
   public void restartFailedStepByDatasetKey(String crawlId, String stepName) {
     checkNotNull(crawlId, "crawlId can't be null");
@@ -193,7 +190,9 @@ public class PipelinesProcessServiceImpl implements PipelinesProcessService {
       Optional<String> mqClassName = getAsString(crawlId, Fn.MQ_CLASS_NAME.apply(stepName));
       if (publisher != null && mqClassName.isPresent() && mqMessage.isPresent()) {
         deleteRunningPipelinesProcess(crawlId + "/" + stepName);
-        Message m = (PipelineBasedMessage) MAPPER.readValue(mqMessage.get(), Class.forName(mqClassName.get()));
+        Message m =
+            (PipelineBasedMessage)
+                MAPPER.readValue(mqMessage.get(), Class.forName(mqClassName.get()));
         publisher.send(m);
       }
     } catch (Exception ex) {
@@ -209,7 +208,9 @@ public class PipelinesProcessServiceImpl implements PipelinesProcessService {
 
   @Override
   public Set<PipelinesProcessStatus> getPipelinesProcessesByDatasetKey(String datasetKey) {
-    Set<PipelinesProcessStatus> set = new TreeSet<>(Comparator.comparing(PipelinesProcessStatus::getCrawlId));
+    //    Set<PipelinesProcessStatus> set = new
+    // TreeSet<>(Comparator.comparing(PipelinesProcessStatus::getCrawlId));
+    Set<PipelinesProcessStatus> set = new HashSet<>();
     try {
 
       String path = CrawlerNodePaths.buildPath(PipelinesNodePaths.PIPELINES_ROOT);
@@ -219,15 +220,18 @@ public class PipelinesProcessServiceImpl implements PipelinesProcessService {
       }
 
       // Reads all nodes in async mode
-      CompletableFuture[] futures = curator.getChildren()
-          .forPath(path)
-          .stream()
-          .filter(node -> node.startsWith(datasetKey))
-          .map(id -> CompletableFuture.runAsync(() -> {
-            PipelinesProcessStatus process = getRunningPipelinesProcess(id);
-            Optional.ofNullable(process).ifPresent(set::add);
-          }, executor))
-          .toArray(CompletableFuture[]::new);
+      CompletableFuture[] futures =
+          curator.getChildren().forPath(path).stream()
+              .filter(node -> node.startsWith(datasetKey))
+              .map(
+                  id ->
+                      CompletableFuture.runAsync(
+                          () -> {
+                            PipelinesProcessStatus process = getRunningPipelinesProcess(id);
+                            Optional.ofNullable(process).ifPresent(set::add);
+                          },
+                          executor))
+              .toArray(CompletableFuture[]::new);
 
       // Waits all threads
       CompletableFuture.allOf(futures).get();
@@ -243,73 +247,47 @@ public class PipelinesProcessServiceImpl implements PipelinesProcessService {
     return set;
   }
 
-  /**
-   * Reads monitoring information from Zookeeper by crawlId node path
-   *
-   * @param crawlId path to dataset info
-   */
-  private PipelinesProcessStatus loadRunningPipelinesProcess(String crawlId) {
-    checkNotNull(crawlId, "crawlId can't be null");
-
-    try {
-      // Check if dataset is actually being processed right now
-      if (!checkExists(PipelinesNodePaths.getPipelinesInfoPath(crawlId))) {
-        return new PipelinesProcessStatus(crawlId);
-      }
-      // Here we're trying to load all information from Zookeeper into the DatasetProcessStatus object
-      PipelinesProcessStatus status = new PipelinesProcessStatus(crawlId);
-      String[] ids = crawlId.split("_");
-      status.setDatasetKey(ids[0]);
-      status.setAttempt(ids[1]);
-      Optional.ofNullable(datasetService).ifPresent(s -> status.setDatasetTitle(s.get(UUID.fromString(ids[0])).getTitle()));
-
-      // ALL_STEPS - static set of all pipelines steps: DWCA_TO_AVRO, VERBATIM_TO_INTERPRETED and etc.
-      getStepInfo(crawlId).forEach(step -> step.getStep().ifPresent(status::addStep));
-
-      // Gets metrics info fro ELK
-      getMetricInfo(crawlId).forEach(status::addMericInfo);
-
-      return status;
-    } catch (Exception ex) {
-      LOG.error("crawlId {}", crawlId, ex.getCause());
-      throw new ServiceUnavailableException("Error communicating with ZooKeeper", ex);
-    }
-  }
-
-  /**
-   * Gets step info from ZK
-   */
+  /** Gets step info from ZK */
   private Set<PipelinesStep> getStepInfo(String crawlId) {
-    return PipelinesNodePaths.ALL_STEPS.stream().map(path -> {
-      PipelinesStep step = new PipelinesStep(path);
+    return PipelinesNodePaths.ALL_STEPS.stream()
+        .map(
+            path -> {
+              //      PipelinesStep step = new PipelinesStep(path);
+              PipelinesStep step = new PipelinesStep();
 
-      try {
-        Optional<LocalDateTime> startDateOpt = getAsDate(crawlId, Fn.START_DATE.apply(path));
-        Optional<LocalDateTime> endDateOpt = getAsDate(crawlId, Fn.END_DATE.apply(path));
-        Optional<Boolean> isErrorOpt = getAsBoolean(crawlId, Fn.ERROR_AVAILABILITY.apply(path));
-        Optional<String> errorMessageOpt = getAsString(crawlId, Fn.ERROR_MESSAGE.apply(path));
-        Optional<Boolean> isSuccessful = getAsBoolean(crawlId, Fn.SUCCESSFUL_AVAILABILITY.apply(path));
-        Optional<String> successfulMessageOpt = getAsString(crawlId, Fn.SUCCESSFUL_MESSAGE.apply(path));
+              try {
+                Optional<LocalDateTime> startDateOpt =
+                    getAsDate(crawlId, Fn.START_DATE.apply(path));
+                Optional<LocalDateTime> endDateOpt = getAsDate(crawlId, Fn.END_DATE.apply(path));
+                Optional<Boolean> isErrorOpt =
+                    getAsBoolean(crawlId, Fn.ERROR_AVAILABILITY.apply(path));
+                Optional<String> errorMessageOpt =
+                    getAsString(crawlId, Fn.ERROR_MESSAGE.apply(path));
+                Optional<Boolean> isSuccessful =
+                    getAsBoolean(crawlId, Fn.SUCCESSFUL_AVAILABILITY.apply(path));
+                Optional<String> successfulMessageOpt =
+                    getAsString(crawlId, Fn.SUCCESSFUL_MESSAGE.apply(path));
 
-        getAsString(crawlId, Fn.RUNNER.apply(path)).ifPresent(step::setRunner);
-        startDateOpt.ifPresent(x -> step.setStarted(x.toString()));
-        endDateOpt.ifPresent(x -> step.setFinished(x.toString()));
+                getAsString(crawlId, Fn.RUNNER.apply(path)).ifPresent(step::setRunner);
+                //        startDateOpt.ifPresent(x -> step.setStarted(x.toString()));
+                //        endDateOpt.ifPresent(x -> step.setFinished(x.toString()));
 
-        if (isErrorOpt.isPresent()) {
-          step.setState(Status.FAILED);
-          errorMessageOpt.ifPresent(step::setMessage);
-        } else if (isSuccessful.isPresent()) {
-          step.setState(Status.COMPLETED);
-          successfulMessageOpt.ifPresent(step::setMessage);
-        } else if (startDateOpt.isPresent() && !endDateOpt.isPresent()) {
-          step.setState(Status.RUNNING);
-        }
+                if (isErrorOpt.isPresent()) {
+                  step.setState(Status.FAILED);
+                  errorMessageOpt.ifPresent(step::setMessage);
+                } else if (isSuccessful.isPresent()) {
+                  step.setState(Status.COMPLETED);
+                  successfulMessageOpt.ifPresent(step::setMessage);
+                } else if (startDateOpt.isPresent() && !endDateOpt.isPresent()) {
+                  step.setState(Status.RUNNING);
+                }
 
-      } catch (Exception ex) {
-        LOG.error(ex.getMessage(), ex);
-      }
-      return step;
-    }).collect(Collectors.toSet());
+              } catch (Exception ex) {
+                LOG.error(ex.getMessage(), ex);
+              }
+              return step;
+            })
+        .collect(Collectors.toSet());
   }
 
   /**
@@ -321,9 +299,7 @@ public class PipelinesProcessServiceImpl implements PipelinesProcessService {
     return curator.checkExists().forPath(path) != null;
   }
 
-  /**
-   * Read value from Zookeeper as a {@link String}
-   */
+  /** Read value from Zookeeper as a {@link String} */
   private Optional<String> getAsString(String crawlId, String path) throws Exception {
     String infoPath = PipelinesNodePaths.getPipelinesInfoPath(crawlId, path);
     if (checkExists(infoPath)) {
@@ -335,9 +311,7 @@ public class PipelinesProcessServiceImpl implements PipelinesProcessService {
     return Optional.empty();
   }
 
-  /**
-   * Read value from Zookeeper as a {@link LocalDateTime}
-   */
+  /** Read value from Zookeeper as a {@link LocalDateTime} */
   private Optional<LocalDateTime> getAsDate(String crawlId, String path) throws Exception {
     Optional<String> data = getAsString(crawlId, path);
     try {
@@ -348,9 +322,7 @@ public class PipelinesProcessServiceImpl implements PipelinesProcessService {
     }
   }
 
-  /**
-   * Read value from Zookeeper as a {@link Boolean}
-   */
+  /** Read value from Zookeeper as a {@link Boolean} */
   private Optional<Boolean> getAsBoolean(String crawlId, String path) throws Exception {
     Optional<String> data = getAsString(crawlId, path);
     try {
@@ -362,46 +334,9 @@ public class PipelinesProcessServiceImpl implements PipelinesProcessService {
   }
 
   /**
-   * Gets metrics info from ELK
-   */
-  private Set<MetricInfo> getMetricInfo(String crawlId) {
-    if (client != null) {
-      try {
-        SearchResponse search = client.search(getEsMetricQuery(crawlId));
-
-        Aggregations aggregations = search.getAggregations();
-        if (aggregations == null) {
-          return Collections.emptySet();
-        }
-
-        ParsedStringTerms uniqueName = aggregations.get("unique_name");
-        if (uniqueName == null) {
-          return Collections.emptySet();
-        }
-
-        return uniqueName.getBuckets().stream().map(x -> {
-          String keyAsString = x.getKeyAsString();
-          String keyFormatted = keyAsString.substring(keyAsString.indexOf(FILTER_NAME) + FILTER_NAME.length());
-
-          ParsedMax value = x.getAggregations().get("max_value");
-          double valueDouble = value.getValue();
-          String valueFormatted = DF.format(valueDouble);
-
-          return new MetricInfo(keyFormatted, valueFormatted);
-        }).collect(Collectors.toSet());
-
-      } catch (Exception ex) {
-        LOG.error(ex.getMessage(), ex);
-      }
-    }
-    return Collections.emptySet();
-  }
-
-  /**
    * ES query like:
    *
    * <pre>{@code
-   *
    * {
    *   "size": 0,
    *   "aggs": {
@@ -442,13 +377,15 @@ public class PipelinesProcessServiceImpl implements PipelinesProcessService {
     booleanQuery.must(QueryBuilders.matchQuery("datasetId", ids[0]));
     booleanQuery.must(QueryBuilders.matchQuery("attempt", ids[1]));
     booleanQuery.must(QueryBuilders.matchQuery("type", "GAUGE"));
-    booleanQuery.must(QueryBuilders.matchPhrasePrefixQuery("name", "driver.PipelinesOptionsFactory"));
+    booleanQuery.must(
+        QueryBuilders.matchPhrasePrefixQuery("name", "driver.PipelinesOptionsFactory"));
     searchSourceBuilder.query(booleanQuery);
 
     // Aggr
-    searchSourceBuilder.aggregation(AggregationBuilders.terms("unique_name")
-        .field("name.keyword")
-        .subAggregation(AggregationBuilders.max("max_value").field("value")));
+    searchSourceBuilder.aggregation(
+        AggregationBuilders.terms("unique_name")
+            .field("name.keyword")
+            .subAggregation(AggregationBuilders.max("max_value").field("value")));
 
     searchSourceBuilder.size(0);
     searchRequest.source(searchSourceBuilder);
