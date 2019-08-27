@@ -7,12 +7,12 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 /** Models a step in pipelines. */
-public class PipelinesStep implements LenientEquals<PipelinesStep>, Serializable {
+public class PipelineStep implements LenientEquals<PipelineStep>, Serializable {
 
   private static final long serialVersionUID = 460047082156621661L;
 
   private long key;
-  private StepName name;
+  private StepType name;
   private String runner;
   private LocalDateTime started;
   private LocalDateTime finished;
@@ -27,11 +27,11 @@ public class PipelinesStep implements LenientEquals<PipelinesStep>, Serializable
     return key;
   }
 
-  public StepName getName() {
+  public StepType getName() {
     return name;
   }
 
-  public PipelinesStep setName(StepName name) {
+  public PipelineStep setName(StepType name) {
     this.name = name;
     return this;
   }
@@ -40,7 +40,7 @@ public class PipelinesStep implements LenientEquals<PipelinesStep>, Serializable
     return runner;
   }
 
-  public PipelinesStep setRunner(String runner) {
+  public PipelineStep setRunner(String runner) {
     this.runner = runner;
     return this;
   }
@@ -49,7 +49,7 @@ public class PipelinesStep implements LenientEquals<PipelinesStep>, Serializable
     return started;
   }
 
-  public PipelinesStep setStarted(LocalDateTime started) {
+  public PipelineStep setStarted(LocalDateTime started) {
     this.started = started;
     return this;
   }
@@ -58,7 +58,7 @@ public class PipelinesStep implements LenientEquals<PipelinesStep>, Serializable
     return finished;
   }
 
-  public PipelinesStep setFinished(LocalDateTime finished) {
+  public PipelineStep setFinished(LocalDateTime finished) {
     this.finished = finished;
     return this;
   }
@@ -67,7 +67,7 @@ public class PipelinesStep implements LenientEquals<PipelinesStep>, Serializable
     return state;
   }
 
-  public PipelinesStep setState(Status state) {
+  public PipelineStep setState(Status state) {
     this.state = state;
     return this;
   }
@@ -76,7 +76,7 @@ public class PipelinesStep implements LenientEquals<PipelinesStep>, Serializable
     return message;
   }
 
-  public PipelinesStep setMessage(String message) {
+  public PipelineStep setMessage(String message) {
     this.message = message;
     return this;
   }
@@ -85,7 +85,7 @@ public class PipelinesStep implements LenientEquals<PipelinesStep>, Serializable
     return rerunReason;
   }
 
-  public PipelinesStep setRerunReason(String rerunReason) {
+  public PipelineStep setRerunReason(String rerunReason) {
     this.rerunReason = rerunReason;
     return this;
   }
@@ -94,7 +94,7 @@ public class PipelinesStep implements LenientEquals<PipelinesStep>, Serializable
     return created;
   }
 
-  public PipelinesStep setCreated(LocalDateTime created) {
+  public PipelineStep setCreated(LocalDateTime created) {
     this.created = created;
     return this;
   }
@@ -103,7 +103,7 @@ public class PipelinesStep implements LenientEquals<PipelinesStep>, Serializable
     return createdBy;
   }
 
-  public PipelinesStep setCreatedBy(String createdBy) {
+  public PipelineStep setCreatedBy(String createdBy) {
     this.createdBy = createdBy;
     return this;
   }
@@ -112,7 +112,7 @@ public class PipelinesStep implements LenientEquals<PipelinesStep>, Serializable
     return metrics;
   }
 
-  public PipelinesStep setMetrics(Set<MetricInfo> metrics) {
+  public PipelineStep setMetrics(Set<MetricInfo> metrics) {
     this.metrics = metrics;
     return this;
   }
@@ -176,7 +176,7 @@ public class PipelinesStep implements LenientEquals<PipelinesStep>, Serializable
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    PipelinesStep that = (PipelinesStep) o;
+    PipelineStep that = (PipelineStep) o;
     return key == that.key
         && Objects.equals(name, that.name)
         && Objects.equals(runner, that.runner)
@@ -208,7 +208,7 @@ public class PipelinesStep implements LenientEquals<PipelinesStep>, Serializable
 
   @Override
   public String toString() {
-    return new StringJoiner(", ", PipelinesStep.class.getSimpleName() + "[", "]")
+    return new StringJoiner(", ", PipelineStep.class.getSimpleName() + "[", "]")
         .add("key=" + key)
         .add("name='" + name + "'")
         .add("runner='" + runner + "'")
@@ -224,7 +224,7 @@ public class PipelinesStep implements LenientEquals<PipelinesStep>, Serializable
   }
 
   @Override
-  public boolean lenientEquals(PipelinesStep other) {
+  public boolean lenientEquals(PipelineStep other) {
     if (this == other) return true;
     return Objects.equals(name, other.name)
         && Objects.equals(runner, other.runner)

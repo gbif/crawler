@@ -7,11 +7,11 @@ import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.PipelineBasedMessage;
 import org.gbif.crawler.constants.CrawlerNodePaths;
 import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
-import org.gbif.crawler.status.service.model.PipelinesProcessStatus;
-import org.gbif.crawler.status.service.model.PipelinesStep;
-import org.gbif.crawler.status.service.model.PipelinesStep.MetricInfo;
-import org.gbif.crawler.status.service.model.PipelinesStep.Status;
-import org.gbif.crawler.status.service.model.StepName;
+import org.gbif.crawler.status.service.model.PipelineProcess;
+import org.gbif.crawler.status.service.model.PipelineStep;
+import org.gbif.crawler.status.service.model.PipelineStep.MetricInfo;
+import org.gbif.crawler.status.service.model.PipelineStep.Status;
+import org.gbif.crawler.status.service.model.StepType;
 
 import java.text.DecimalFormat;
 import java.time.LocalDate;
@@ -67,7 +67,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
   private final String envPrefix;
   private final DatasetService datasetService;
   private final MessagePublisher publisher;
-  private final LoadingCache<String, PipelinesProcessStatus> statusCache =
+  private final LoadingCache<String, PipelineProcess> statusCache =
       CacheBuilder.newBuilder()
           .expireAfterWrite(2, TimeUnit.MINUTES)
           .build(CacheLoader.from(this::loadRunningPipelinesProcess));
@@ -97,11 +97,11 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
 
   /** Reads all monitoring information from Zookeeper pipelines root path */
   @Override
-  public Set<PipelinesProcessStatus> getPipelinesProcesses() {
-    Set<PipelinesProcessStatus> set =
+  public Set<PipelineProcess> getPipelinesProcesses() {
+    Set<PipelineProcess> set =
         new TreeSet<>(
-            Comparator.comparing(PipelinesProcessStatus::getDatasetKey)
-                .thenComparing(PipelinesProcessStatus::getAttempt));
+            Comparator.comparing(PipelineProcess::getDatasetKey)
+                .thenComparing(PipelineProcess::getAttempt));
     try {
       String path = CrawlerNodePaths.buildPath(PIPELINES_ROOT);
 
@@ -116,7 +116,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
                   id ->
                       CompletableFuture.runAsync(
                           () -> {
-                            PipelinesProcessStatus process = getPipelinesProcess(id);
+                            PipelineProcess process = getPipelinesProcess(id);
                             Optional.ofNullable(process).ifPresent(set::add);
                           },
                           executor))
@@ -142,7 +142,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
    * @param crawlId path to dataset info
    */
   @Override
-  public PipelinesProcessStatus getPipelinesProcess(String crawlId) {
+  public PipelineProcess getPipelinesProcess(String crawlId) {
     try {
       return statusCache.get(crawlId);
     } catch (ExecutionException e) {
@@ -201,11 +201,11 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
   }
 
   @Override
-  public Set<PipelinesProcessStatus> getProcessesByDatasetKey(String datasetKey) {
-    Set<PipelinesProcessStatus> set =
+  public Set<PipelineProcess> getProcessesByDatasetKey(String datasetKey) {
+    Set<PipelineProcess> set =
         new TreeSet<>(
-            Comparator.comparing(PipelinesProcessStatus::getDatasetKey)
-                .thenComparing(PipelinesProcessStatus::getAttempt));
+            Comparator.comparing(PipelineProcess::getDatasetKey)
+                .thenComparing(PipelineProcess::getAttempt));
     try {
       String path = CrawlerNodePaths.buildPath(PIPELINES_ROOT);
 
@@ -221,7 +221,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
                   id ->
                       CompletableFuture.runAsync(
                           () -> {
-                            PipelinesProcessStatus process = getPipelinesProcess(id);
+                            PipelineProcess process = getPipelinesProcess(id);
                             Optional.ofNullable(process).ifPresent(set::add);
                           },
                           executor))
@@ -246,7 +246,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
    *
    * @param crawlId path to dataset info
    */
-  private PipelinesProcessStatus loadRunningPipelinesProcess(String crawlId) {
+  private PipelineProcess loadRunningPipelinesProcess(String crawlId) {
     checkNotNull(crawlId, "crawlId can't be null");
 
     try {
@@ -254,12 +254,12 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
 
       // Check if dataset is actually being processed right now
       if (!checkExists(getPipelinesInfoPath(crawlId))) {
-          return new PipelinesProcessStatus().setDatasetKey(UUID.fromString(ids[0])).setAttempt(Integer.parseInt(ids[1]));
+          return new PipelineProcess().setDatasetKey(UUID.fromString(ids[0])).setAttempt(Integer.parseInt(ids[1]));
       }
       // Here we're trying to load all information from Zookeeper into the DatasetProcessStatus
       // object
-      PipelinesProcessStatus status =
-          new PipelinesProcessStatus()
+      PipelineProcess status =
+          new PipelineProcess()
               .setDatasetKey(UUID.fromString(ids[0]))
               .setAttempt(Integer.parseInt(ids[1]));
       Optional.ofNullable(datasetService)
@@ -276,12 +276,12 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
   }
 
   /** Gets step info from ZK */
-  private Set<PipelinesStep> getStepInfo(String crawlId) {
+  private Set<PipelineStep> getStepInfo(String crawlId) {
     return ALL_STEPS.stream()
         .map(
             path -> {
               // TODO: use same enum
-              PipelinesStep step = new PipelinesStep().setName(StepName.valueOf(path));
+              PipelineStep step = new PipelineStep().setName(StepType.valueOf(path));
 
               try {
                 Optional<LocalDateTime> startDateOpt =

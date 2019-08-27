@@ -8,7 +8,7 @@ import java.util.TreeSet;
 import java.util.UUID;
 
 /** Base POJO model for the Pipelines status service */
-public class PipelinesProcessStatus implements Serializable {
+public class PipelineProcess implements Serializable {
 
   private static final long serialVersionUID = -3992826055732414678L;
 
@@ -18,7 +18,7 @@ public class PipelinesProcessStatus implements Serializable {
   private String datasetTitle;
   private LocalDateTime created;
   private String createdBy;
-  private Set<PipelinesStep> steps = new TreeSet<>(Comparator.comparing(PipelinesStep::getStarted));
+  private Set<PipelineStep> steps = new TreeSet<>(Comparator.comparing(PipelineStep::getStarted));
 
   public long getKey() {
     return key;
@@ -28,7 +28,7 @@ public class PipelinesProcessStatus implements Serializable {
     return datasetKey;
   }
 
-  public PipelinesProcessStatus setDatasetKey(UUID datasetKey) {
+  public PipelineProcess setDatasetKey(UUID datasetKey) {
     this.datasetKey = datasetKey;
     return this;
   }
@@ -37,7 +37,7 @@ public class PipelinesProcessStatus implements Serializable {
     return attempt;
   }
 
-  public PipelinesProcessStatus setAttempt(int attempt) {
+  public PipelineProcess setAttempt(int attempt) {
     this.attempt = attempt;
     return this;
   }
@@ -46,7 +46,7 @@ public class PipelinesProcessStatus implements Serializable {
     return datasetTitle;
   }
 
-  public PipelinesProcessStatus setDatasetTitle(String datasetTitle) {
+  public PipelineProcess setDatasetTitle(String datasetTitle) {
     this.datasetTitle = datasetTitle;
     return this;
   }
@@ -55,7 +55,7 @@ public class PipelinesProcessStatus implements Serializable {
     return created;
   }
 
-  public PipelinesProcessStatus setCreated(LocalDateTime created) {
+  public PipelineProcess setCreated(LocalDateTime created) {
     this.created = created;
     return this;
   }
@@ -64,20 +64,20 @@ public class PipelinesProcessStatus implements Serializable {
     return createdBy;
   }
 
-  public PipelinesProcessStatus setCreatedBy(String createdBy) {
+  public PipelineProcess setCreatedBy(String createdBy) {
     this.createdBy = createdBy;
     return this;
   }
 
-  public Set<PipelinesStep> getSteps() {
+  public Set<PipelineStep> getSteps() {
     return steps;
   }
 
-  public void setSteps(Set<PipelinesStep> steps) {
+  public void setSteps(Set<PipelineStep> steps) {
     this.steps = steps;
   }
 
-  public void addStep(PipelinesStep step) {
+  public void addStep(PipelineStep step) {
     steps.add(step);
   }
 }

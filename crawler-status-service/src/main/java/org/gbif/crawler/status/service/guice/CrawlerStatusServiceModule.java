@@ -1,10 +1,10 @@
 package org.gbif.crawler.status.service.guice;
 
-import org.gbif.crawler.status.service.PipelinesCoordinatorService;
-import org.gbif.crawler.status.service.impl.PipelinesCoordinatorServiceImpl;
-import org.gbif.crawler.status.service.model.PipelinesProcessStatus;
-import org.gbif.crawler.status.service.model.PipelinesStep;
-import org.gbif.crawler.status.service.persistence.PipelinesProcessMapper;
+import org.gbif.crawler.status.service.PipelinesHistoryTrackingService;
+import org.gbif.crawler.status.service.impl.PipelinesCoordinatorTrackingServiceImpl;
+import org.gbif.crawler.status.service.model.PipelineProcess;
+import org.gbif.crawler.status.service.model.PipelineStep;
+import org.gbif.crawler.status.service.persistence.PipelineProcessMapper;
 import org.gbif.crawler.status.service.persistence.handlers.MetricInfoTypeHandler;
 import org.gbif.mybatis.guice.MyBatisModule;
 import org.gbif.mybatis.type.UuidTypeHandler;
@@ -38,9 +38,9 @@ public class CrawlerStatusServiceModule extends PrivateServiceModule {
   @Override
   protected void configureService() {
     install(new CrawlerStatusMyBatisModule(PropertiesUtil.filterProperties(getProperties(), DB_PROPS_PREFIX)));
-    bind(PipelinesCoordinatorService.class).to(PipelinesCoordinatorServiceImpl.class).in(Scopes.SINGLETON);
-    expose(PipelinesProcessMapper.class);
-    expose(PipelinesCoordinatorService.class);
+    bind(PipelinesHistoryTrackingService.class).to(PipelinesCoordinatorTrackingServiceImpl.class).in(Scopes.SINGLETON);
+    expose(PipelineProcessMapper.class);
+    expose(PipelinesHistoryTrackingService.class);
   }
 
   /**
@@ -55,11 +55,11 @@ public class CrawlerStatusServiceModule extends PrivateServiceModule {
     @Override
     protected void bindMappers() {
       // mappers
-      addMapperClass(PipelinesProcessMapper.class);
+      addMapperClass(PipelineProcessMapper.class);
 
       // alias
-      addAlias("PipelinesProcess").to(PipelinesProcessStatus.class);
-      addAlias("Step").to(PipelinesStep.class);
+      addAlias("PipelinesProcess").to(PipelineProcess.class);
+      addAlias("Step").to(PipelineStep.class);
       addAlias("MetricInfoTypeHandler").to(MetricInfoTypeHandler.class);
       addAlias("UuidTypeHandler").to(UuidTypeHandler.class);
       addAlias("LocalDateTimeTypeHandler").to(LocalDateTimeTypeHandler.class);

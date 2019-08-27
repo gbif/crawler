@@ -1,9 +1,9 @@
 package org.gbif.crawler.ws;
 
 import org.gbif.crawler.pipelines.PipelinesRunningProcessService;
-import org.gbif.crawler.status.service.PipelinesCoordinatorService;
-import org.gbif.crawler.status.service.model.PipelinesProcessStatus;
-import org.gbif.crawler.status.service.model.StepName;
+import org.gbif.crawler.status.service.PipelinesHistoryTrackingService;
+import org.gbif.crawler.status.service.model.PipelineProcess;
+import org.gbif.crawler.status.service.model.StepType;
 import org.gbif.ws.util.ExtraMediaTypes;
 
 import java.util.Arrays;
@@ -24,10 +24,10 @@ public class PipelinesProcessResource {
 
   private final PipelinesRunningProcessService service;
 
-  private final PipelinesCoordinatorService coordinatorService;
+  private final PipelinesHistoryTrackingService coordinatorService;
 
   @Inject
-  public PipelinesProcessResource(PipelinesRunningProcessService service, PipelinesCoordinatorService coordinatorService) {
+  public PipelinesProcessResource(PipelinesRunningProcessService service, PipelinesHistoryTrackingService coordinatorService) {
     this.service = service;
     this.coordinatorService = coordinatorService;
   }
@@ -39,7 +39,7 @@ public class PipelinesProcessResource {
    */
   @GET
   @Path("crawlId/{crawlId}")
-  public PipelinesProcessStatus getRunningPipelinesProcess(@PathParam("crawlId") String crawlId) {
+  public PipelineProcess getRunningPipelinesProcess(@PathParam("crawlId") String crawlId) {
     return service.getPipelinesProcess(crawlId);
   }
 
@@ -77,7 +77,7 @@ public class PipelinesProcessResource {
    */
   @GET
   @Path("running")
-  public Set<PipelinesProcessStatus> getPipelinesProcesses() {
+  public Set<PipelineProcess> getPipelinesProcesses() {
     return service.getPipelinesProcesses();
   }
 
@@ -88,7 +88,7 @@ public class PipelinesProcessResource {
    */
   @GET
   @Path("datasetKey/{datasetKey}")
-  public Set<PipelinesProcessStatus> getPipelinesProcessesByDatasetKey(@PathParam("datasetKey") String datasetKey) {
+  public Set<PipelineProcess> getPipelinesProcessesByDatasetKey(@PathParam("datasetKey") String datasetKey) {
     return service.getProcessesByDatasetKey(datasetKey);
   }
 
@@ -101,7 +101,7 @@ public class PipelinesProcessResource {
   public void reRunPipeline(@PathParam("datasetKey") String datasetKey, @PathParam("crawlId") String crawlId, @QueryParam("steps") String steps) {
     coordinatorService.runPipelineAttempt(UUID.fromString(datasetKey), Integer.parseInt(crawlId),
                                           Arrays.stream(steps.split(","))
-                                             .map(StepName::valueOf)
+                                             .map(StepType::valueOf)
                                              .collect(Collectors.toSet()));
   }
 

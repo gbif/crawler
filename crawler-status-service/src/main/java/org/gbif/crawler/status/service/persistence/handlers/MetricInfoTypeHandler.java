@@ -15,7 +15,7 @@ import com.google.common.base.Strings;
 import org.apache.ibatis.type.BaseTypeHandler;
 import org.apache.ibatis.type.JdbcType;
 
-import static org.gbif.crawler.status.service.model.PipelinesStep.MetricInfo;
+import static org.gbif.crawler.status.service.model.PipelineStep.MetricInfo;
 
 /** Converts a {@link MetricInfo} to a hstore and viceversa. */
 public class MetricInfoTypeHandler extends BaseTypeHandler<Set<MetricInfo>> {

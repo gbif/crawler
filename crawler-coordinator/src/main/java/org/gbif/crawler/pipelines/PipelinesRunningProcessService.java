@@ -2,7 +2,7 @@ package org.gbif.crawler.pipelines;
 
 import java.util.Set;
 
-import org.gbif.crawler.status.service.model.PipelinesProcessStatus;
+import org.gbif.crawler.status.service.model.PipelineProcess;
 
 /**
  * The public interface of the Pipelines monitoring service that provides information about the
@@ -10,15 +10,15 @@ import org.gbif.crawler.status.service.model.PipelinesProcessStatus;
  */
 public interface PipelinesRunningProcessService {
 
-  Set<PipelinesProcessStatus> getPipelinesProcesses();
+  Set<PipelineProcess> getPipelinesProcesses();
 
-  PipelinesProcessStatus getPipelinesProcess(String crawlId);
+  PipelineProcess getPipelinesProcess(String crawlId);
 
   void deletePipelinesProcess(String crawlId);
 
   void deleteAllPipelinesProcess();
 
-  Set<PipelinesProcessStatus> getProcessesByDatasetKey(String datasetKey);
+  Set<PipelineProcess> getProcessesByDatasetKey(String datasetKey);
 
   // FIXME: should we use only the one in the PipelineCoordinator??
   void restartFailedStepByDatasetKey(String crawlId, String stepName);
