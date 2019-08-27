@@ -75,7 +75,8 @@ public class PipelineProcessMapperTest extends BaseMapperTest {
     PipelineProcess duplicate =
         new PipelineProcess()
             .setDatasetKey(process.getDatasetKey())
-            .setAttempt(process.getAttempt());
+            .setAttempt(process.getAttempt())
+            .setCreatedBy(TEST_USER);
     pipelineProcessMapper.create(process);
   }
 

@@ -19,9 +19,9 @@ public interface PipelineProcessMapper {
    *
    * <p>The id generated is set to the {@link PipelineProcess} received as parameter.
    *
-   * @param proccess to insert
+   * @param process to insert
    */
-  void create(PipelineProcess proccess);
+  void create(PipelineProcess process);
 
   /**
    * Retrieves a {@link PipelineProcess} by dataset key and attempt.
