@@ -232,7 +232,7 @@ public class PipelinesCoordinatorTrackingServiceImpl implements PipelinesHistory
         .collect(
           Collectors.groupingBy(
             s -> s.getName().getOrder(),
-            () -> new TreeMap<>(Comparator.reverseOrder()),
+            () -> new TreeMap<Integer, Map<StepType, List<PipelineStep>>>(Comparator.reverseOrder()),
             Collectors.groupingBy(PipelineStep::getName)));
 
     PipelineWorkflow workflow = new PipelineWorkflow();
