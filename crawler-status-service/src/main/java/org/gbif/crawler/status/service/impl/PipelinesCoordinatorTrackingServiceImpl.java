@@ -3,31 +3,16 @@ package org.gbif.crawler.status.service.impl;
 import org.gbif.api.model.common.paging.PagingRequest;
 import org.gbif.api.model.common.paging.PagingResponse;
 import org.gbif.common.messaging.api.MessagePublisher;
-import org.gbif.common.messaging.api.messages.PipelinesAbcdMessage;
-import org.gbif.common.messaging.api.messages.PipelinesDwcaMessage;
-import org.gbif.common.messaging.api.messages.PipelinesInterpretedMessage;
-import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage;
-import org.gbif.common.messaging.api.messages.PipelinesXmlMessage;
+import org.gbif.common.messaging.api.messages.*;
 import org.gbif.crawler.status.service.PipelinesHistoryTrackingService;
 import org.gbif.crawler.status.service.RunPipelineResponse;
-import org.gbif.crawler.status.service.model.PipelineProcess;
-import org.gbif.crawler.status.service.model.PipelineStep;
-import org.gbif.crawler.status.service.model.StepType;
+import org.gbif.crawler.status.service.model.*;
 import org.gbif.crawler.status.service.persistence.PipelineProcessMapper;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
-
 import javax.inject.Inject;
 
 import com.google.common.base.Throwables;
