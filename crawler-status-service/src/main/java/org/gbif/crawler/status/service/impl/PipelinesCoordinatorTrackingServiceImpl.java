@@ -235,4 +235,48 @@ public class PipelinesCoordinatorTrackingServiceImpl implements PipelinesHistory
     }
     mapper.updatePipelineStepState(pipelineStepKey, status);
   }
+
+  @Override
+  public PipelinesWorkflow getPipelinesWorkflow(UUID datasetKey, Integer attempt) {
+    PipelineProcess process = mapper.get(datasetKey, attempt);
+
+    Map<Integer, Map<StepType, List<PipelineStep>>> stepsByOrderAndName =
+      process.getSteps().stream()
+        .collect(
+          Collectors.groupingBy(
+            s -> s.getName().getOrder(),
+            () -> new TreeMap<>(Comparator.reverseOrder()),
+            Collectors.groupingBy(PipelineStep::getName)));
+
+    PipelinesWorkflow workflow = new PipelinesWorkflow();
+    workflow.setDatasetKey(process.getDatasetKey());
+    workflow.setAttempt(process.getAttempt());
+
+    // workflow steps
+    WorkflowStep workflowStep = null;
+    workflow.setInitialStep(workflowStep);
+
+    // iterate from last step to first
+    List<WorkflowStep> currentSteps = null;
+    for (Map.Entry<Integer, Map<StepType, List<PipelineStep>>> entry :
+      stepsByOrderAndName.entrySet()) {
+      workflowStep = new WorkflowStep();
+      workflowStep.setNextSteps(currentSteps);
+
+      currentSteps =
+        entry.getValue().entrySet().stream()
+          .map(
+            v -> {
+              WorkflowStep step = new WorkflowStep();
+              step.setStepType(v.getKey());
+              step.getAllSteps().addAll(v.getValue());
+              step.setLastStep(step.getAllSteps().first());
+
+              return step;
+            })
+          .collect(Collectors.toList());
+    }
+
+    return workflow;
+  }
 }
