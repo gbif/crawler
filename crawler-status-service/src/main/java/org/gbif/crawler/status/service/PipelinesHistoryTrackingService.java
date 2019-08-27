@@ -2,8 +2,8 @@ package org.gbif.crawler.status.service;
 
 import org.gbif.api.model.common.paging.PagingRequest;
 import org.gbif.api.model.common.paging.PagingResponse;
-import org.gbif.crawler.status.service.model.PipelineStep;
 import org.gbif.crawler.status.service.model.PipelineProcess;
+import org.gbif.crawler.status.service.model.PipelineStep;
 import org.gbif.crawler.status.service.model.PipelineWorkflow;
 import org.gbif.crawler.status.service.model.StepType;
 
@@ -83,6 +83,12 @@ public interface PipelinesHistoryTrackingService {
    */
   void updatePipelineStep(Long pipelineStepKey, PipelineStep.Status status);
 
-  PipelineWorkflow getPipelinesWorkflow(UUID datasetKey, Integer attempt);
-
+  /**
+   * Retrieves the workflow of a specific pipeline process.
+   *
+   * @param datasetKey dataset identifier
+   * @param attempt attempt identifier
+   * @return {@link PipelineWorkflow}
+   */
+  PipelineWorkflow getPipelineWorkflow(UUID datasetKey, Integer attempt);
 }

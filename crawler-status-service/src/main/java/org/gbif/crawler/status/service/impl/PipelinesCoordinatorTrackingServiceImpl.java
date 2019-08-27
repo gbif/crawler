@@ -224,7 +224,7 @@ public class PipelinesCoordinatorTrackingServiceImpl implements PipelinesHistory
   }
 
   @Override
-  public PipelineWorkflow getPipelinesWorkflow(UUID datasetKey, Integer attempt) {
+  public PipelineWorkflow getPipelineWorkflow(UUID datasetKey, Integer attempt) {
     PipelineProcess process = mapper.get(datasetKey, attempt);
 
     // group the steps by its execution order in the workflow and then by name. This will create something
@@ -260,7 +260,6 @@ public class PipelinesCoordinatorTrackingServiceImpl implements PipelinesHistory
         step.setStepType(stepsByType.getKey());
         step.getAllSteps().addAll(stepsByType.getValue());
         step.setLastStep(step.getAllSteps().iterator().next());
-
         // link this step to its next steps
         step.setNextSteps(stepsPreviousIteration);
 
@@ -268,7 +267,7 @@ public class PipelinesCoordinatorTrackingServiceImpl implements PipelinesHistory
         currentSteps.add(step);
       }
 
-      // update steps of previous iteration
+      // the steps of this iteration now become the steps of the previous iteration
       stepsPreviousIteration = currentSteps;
     }
 
