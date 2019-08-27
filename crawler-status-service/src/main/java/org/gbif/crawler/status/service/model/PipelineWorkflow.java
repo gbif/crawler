@@ -5,6 +5,10 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
+/**
+ * Models the workflow of a pipeline. It includes all the steps that were run and the execution
+ * order.
+ */
 public class PipelineWorkflow implements Serializable {
 
   private UUID datasetKey;

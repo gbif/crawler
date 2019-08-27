@@ -10,12 +10,12 @@ public enum StepType {
   HIVE_VIEW(3);
 
   StepType(int position) {
-    this.position = position;
+    this.executionOrder = executionOrder;
   }
 
-  private int position;
+  private int executionOrder;
 
-  public int getPosition() {
-    return position;
+  public int getExecutionOrder() {
+    return executionOrder;
   }
 }

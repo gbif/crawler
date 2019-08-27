@@ -3,14 +3,23 @@ package org.gbif.crawler.status.service.model;
 import java.io.Serializable;
 import java.util.*;
 
+/**
+ * Models a step in a {@link PipelineWorkflow}.
+ *
+ * <p>These steps are identified by the {@link StepType} and are linked to their next steps in the
+ * workflow.
+ */
 public class WorkflowStep implements Serializable {
 
   private StepType stepType;
 
   private PipelineStep lastStep;
 
-  private TreeSet<PipelineStep> allSteps =
-      new TreeSet<>(Comparator.comparing(PipelineStep::getStarted).reversed());
+  private Set<PipelineStep> allSteps =
+      new TreeSet<>(
+          Comparator.comparing(PipelineStep::getStarted)
+              .thenComparing(PipelineStep::getFinished)
+              .reversed());
 
   private List<WorkflowStep> nextSteps = new ArrayList<>();
 
@@ -30,11 +39,11 @@ public class WorkflowStep implements Serializable {
     this.lastStep = lastStep;
   }
 
-  public TreeSet<PipelineStep> getAllSteps() {
+  public Set<PipelineStep> getAllSteps() {
     return allSteps;
   }
 
-  public void setAllSteps(TreeSet<PipelineStep> allSteps) {
+  public void setAllSteps(Set<PipelineStep> allSteps) {
     this.allSteps = allSteps;
   }
 

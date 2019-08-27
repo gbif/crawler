@@ -227,19 +227,19 @@ public class PipelinesCoordinatorTrackingServiceImpl implements PipelinesHistory
   public PipelineWorkflow getPipelinesWorkflow(UUID datasetKey, Integer attempt) {
     PipelineProcess process = mapper.get(datasetKey, attempt);
 
-    // group the steps by its position in the workflow and then by name. This will create something
+    // group the steps by its execution order in the workflow and then by name. This will create something
     // like:
     // 1 -> DWCA_TO_AVRO -> List<PipelineStep>
     // 2 -> VERBATIM_TO_INTERPRETED -> List<PipelineStep>
     // 3 -> INTERPRETED_TO_INDEX -> List<PipelineStep>
     //   -> HIVE_VIEW -> List<PipelineStep>
     //
-    // The map is sorted by the step position in descending order
+    // The map is sorted by the step execution order in descending order
     Map<Integer, Map<StepType, List<PipelineStep>>> stepsByOrderAndName =
         process.getSteps().stream()
             .collect(
                 Collectors.groupingBy(
-                    s -> s.getName().getPosition(),
+                    s -> s.getName().getExecutionOrder(),
                     () ->
                         new TreeMap<Integer, Map<StepType, List<PipelineStep>>>(
                             Comparator.reverseOrder()),
@@ -253,13 +253,13 @@ public class PipelinesCoordinatorTrackingServiceImpl implements PipelinesHistory
 
       List<WorkflowStep> currentSteps = new ArrayList<>();
       for (Map.Entry<StepType, List<PipelineStep>> stepsByType :
-        stepsByOrder.getValue().entrySet()) {
+          stepsByOrder.getValue().entrySet()) {
 
         // create workflow step
         WorkflowStep step = new WorkflowStep();
         step.setStepType(stepsByType.getKey());
         step.getAllSteps().addAll(stepsByType.getValue());
-        step.setLastStep(step.getAllSteps().first());
+        step.setLastStep(step.getAllSteps().iterator().next());
 
         // link this step to its next steps
         step.setNextSteps(stepsPreviousIteration);
@@ -276,7 +276,6 @@ public class PipelinesCoordinatorTrackingServiceImpl implements PipelinesHistory
     PipelineWorkflow workflow = new PipelineWorkflow();
     workflow.setDatasetKey(process.getDatasetKey());
     workflow.setAttempt(process.getAttempt());
-
     // the last steps created will be the started steps of the workflow
     workflow.setSteps(stepsPreviousIteration);
 
