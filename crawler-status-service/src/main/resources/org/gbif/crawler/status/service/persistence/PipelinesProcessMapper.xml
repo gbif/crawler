@@ -64,6 +64,14 @@
     WHERE dataset_key = #{datasetKey, jdbcType=OTHER} AND attempt = #{attempt, jdbcType=INTEGER}
   </select>
 
+  <select id="getLastAttempt" resultType="Integer">
+    SELECT p.attempt
+    FROM pipelines_process p
+    WHERE p.dataset_key = #{datasetKey, jdbcType=OTHER}
+    ORDER BY p.attempt DESC
+    LIMIT 1
+  </select>
+
   <select id="list" resultMap="PIPELINES_PROCESS_MAP">
     SELECT *
     FROM pipelines_process

@@ -23,3 +23,5 @@ crawler-coordinator/logs/
 crawler-ws/logs/
 
 *.log
+
+crawler-status-service/logs/
