@@ -239,7 +239,7 @@ public class PipelinesCoordinatorTrackingServiceImpl implements PipelinesHistory
   }
 
   @Override
-  public PipelinesWorkflow getPipelinesWorkflow(UUID datasetKey, Integer attempt) {
+  public PipelineWorkflow getPipelinesWorkflow(UUID datasetKey, Integer attempt) {
     PipelineProcess process = mapper.get(datasetKey, attempt);
 
     Map<Integer, Map<StepType, List<PipelineStep>>> stepsByOrderAndName =
@@ -250,7 +250,7 @@ public class PipelinesCoordinatorTrackingServiceImpl implements PipelinesHistory
             () -> new TreeMap<>(Comparator.reverseOrder()),
             Collectors.groupingBy(PipelineStep::getName)));
 
-    PipelinesWorkflow workflow = new PipelinesWorkflow();
+    PipelineWorkflow workflow = new PipelineWorkflow();
     workflow.setDatasetKey(process.getDatasetKey());
     workflow.setAttempt(process.getAttempt());
 
