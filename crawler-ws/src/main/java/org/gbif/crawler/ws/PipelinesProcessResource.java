@@ -24,12 +24,11 @@ public class PipelinesProcessResource {
 
   private final PipelinesRunningProcessService service;
 
-  private final PipelinesHistoryTrackingService coordinatorService;
+
 
   @Inject
-  public PipelinesProcessResource(PipelinesRunningProcessService service, PipelinesHistoryTrackingService coordinatorService) {
+  public PipelinesProcessResource(PipelinesRunningProcessService service) {
     this.service = service;
-    this.coordinatorService = coordinatorService;
   }
 
   /**
@@ -92,20 +91,7 @@ public class PipelinesProcessResource {
     return service.getProcessesByDatasetKey(datasetKey);
   }
 
-
-  /**
-   * Restart last failed pipelines step
-   */
-  @POST
-  @Path("datasetKey/{datasetKey}/{crawlId}")
-  public void reRunPipeline(@PathParam("datasetKey") String datasetKey, @PathParam("crawlId") String crawlId, @QueryParam("steps") String steps) {
-    coordinatorService.runPipelineAttempt(UUID.fromString(datasetKey), Integer.parseInt(crawlId),
-                                          Arrays.stream(steps.split(","))
-                                             .map(StepType::valueOf)
-                                             .collect(Collectors.toSet()));
-  }
-
-  /**
+ /**
    * Returns list of pipelines steps names
    */
   @GET
