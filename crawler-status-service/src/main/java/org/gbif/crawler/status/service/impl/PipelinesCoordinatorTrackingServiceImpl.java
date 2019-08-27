@@ -3,28 +3,16 @@ package org.gbif.crawler.status.service.impl;
 import org.gbif.api.model.common.paging.PagingRequest;
 import org.gbif.api.model.common.paging.PagingResponse;
 import org.gbif.common.messaging.api.MessagePublisher;
-import org.gbif.common.messaging.api.messages.PipelinesAbcdMessage;
-import org.gbif.common.messaging.api.messages.PipelinesDwcaMessage;
-import org.gbif.common.messaging.api.messages.PipelinesInterpretedMessage;
-import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage;
-import org.gbif.common.messaging.api.messages.PipelinesXmlMessage;
+import org.gbif.common.messaging.api.messages.*;
 import org.gbif.crawler.status.service.PipelinesHistoryTrackingService;
 import org.gbif.crawler.status.service.ReRunPipelineResponse;
-import org.gbif.crawler.status.service.model.PipelineProcess;
-import org.gbif.crawler.status.service.model.PipelineStep;
-import org.gbif.crawler.status.service.model.StepType;
+import org.gbif.crawler.status.service.model.*;
 import org.gbif.crawler.status.service.persistence.PipelineProcessMapper;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
-
 import javax.inject.Inject;
 
 import com.google.common.base.Preconditions;
@@ -193,5 +181,49 @@ public class PipelinesCoordinatorTrackingServiceImpl implements PipelinesHistory
 
     }
     mapper.updatePipelineStepState(pipelineStepKey, status);
+  }
+
+  @Override
+  public PipelinesWorkflow getPipelinesWorkflow(UUID datasetKey, Integer attempt) {
+    PipelineProcess process = mapper.get(datasetKey, attempt);
+
+    Map<Integer, Map<StepType, List<PipelineStep>>> stepsByOrderAndName =
+      process.getSteps().stream()
+        .collect(
+          Collectors.groupingBy(
+            s -> s.getName().getOrder(),
+            () -> new TreeMap<>(Comparator.reverseOrder()),
+            Collectors.groupingBy(PipelineStep::getName)));
+
+    PipelinesWorkflow workflow = new PipelinesWorkflow();
+    workflow.setDatasetKey(process.getDatasetKey());
+    workflow.setAttempt(process.getAttempt());
+
+    // workflow steps
+    WorkflowStep workflowStep = null;
+    workflow.setInitialStep(workflowStep);
+
+    // iterate from last step to first
+    List<WorkflowStep> currentSteps = null;
+    for (Map.Entry<Integer, Map<StepType, List<PipelineStep>>> entry :
+      stepsByOrderAndName.entrySet()) {
+      workflowStep = new WorkflowStep();
+      workflowStep.setNextSteps(currentSteps);
+
+      currentSteps =
+        entry.getValue().entrySet().stream()
+          .map(
+            v -> {
+              WorkflowStep step = new WorkflowStep();
+              step.setStepType(v.getKey());
+              step.getAllSteps().addAll(v.getValue());
+              step.setLastStep(step.getAllSteps().first());
+
+              return step;
+            })
+          .collect(Collectors.toList());
+    }
+
+    return workflow;
   }
 }

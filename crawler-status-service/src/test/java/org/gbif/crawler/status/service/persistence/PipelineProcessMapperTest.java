@@ -137,7 +137,7 @@ public class PipelineProcessMapperTest extends BaseMapperTest {
   private void assertListResult(UUID datasetKey, Integer attempt, int expectedResult) {
     assertEquals(expectedResult, pipelineProcessMapper.count(datasetKey, attempt));
     assertEquals(
-      expectedResult, pipelineProcessMapper.list(datasetKey, attempt, DEFAULT_PAGE).size());
+        expectedResult, pipelineProcessMapper.list(datasetKey, attempt, DEFAULT_PAGE).size());
   }
 
   @Test
@@ -180,13 +180,11 @@ public class PipelineProcessMapperTest extends BaseMapperTest {
             .setState(Status.SUBMITTED)
             .setCreatedBy(TEST_USER);
     pipelineProcessMapper.addPipelineStep(process.getKey(), step);
-    assertEquals(
-      Status.SUBMITTED, pipelineProcessMapper.getPipelineStep(step.getKey()).getState());
+    assertEquals(Status.SUBMITTED, pipelineProcessMapper.getPipelineStep(step.getKey()).getState());
 
     // change step state
     pipelineProcessMapper.updatePipelineStepState(step.getKey(), Status.COMPLETED);
-    assertEquals(
-      Status.COMPLETED, pipelineProcessMapper.getPipelineStep(step.getKey()).getState());
+    assertEquals(Status.COMPLETED, pipelineProcessMapper.getPipelineStep(step.getKey()).getState());
   }
 
   @Test
@@ -194,20 +192,20 @@ public class PipelineProcessMapperTest extends BaseMapperTest {
     final UUID uuid1 = UUID.randomUUID();
 
     // shouldn't find any attempt
-    assertFalse(pipelinesProcessMapper.getLastAttempt(uuid1).isPresent());
+    assertFalse(pipelineProcessMapper.getLastAttempt(uuid1).isPresent());
 
     // insert some processes
-    pipelinesProcessMapper.create(
-        new PipelinesProcessStatus().setDatasetKey(uuid1).setAttempt(1).setCreatedBy(TEST_USER));
-    pipelinesProcessMapper.create(
-        new PipelinesProcessStatus().setDatasetKey(uuid1).setAttempt(2).setCreatedBy(TEST_USER));
+    pipelineProcessMapper.create(
+        new PipelineProcess().setDatasetKey(uuid1).setAttempt(1).setCreatedBy(TEST_USER));
+    pipelineProcessMapper.create(
+        new PipelineProcess().setDatasetKey(uuid1).setAttempt(2).setCreatedBy(TEST_USER));
 
     // get last attempt
-    assertEquals(2, pipelinesProcessMapper.getLastAttempt(uuid1).get().intValue());
+    assertEquals(2, pipelineProcessMapper.getLastAttempt(uuid1).get().intValue());
 
     // add new attempt
-    pipelinesProcessMapper.create(
-        new PipelinesProcessStatus().setDatasetKey(uuid1).setAttempt(3).setCreatedBy(TEST_USER));
-    assertEquals(3, pipelinesProcessMapper.getLastAttempt(uuid1).get().intValue());
+    pipelineProcessMapper.create(
+        new PipelineProcess().setDatasetKey(uuid1).setAttempt(3).setCreatedBy(TEST_USER));
+    assertEquals(3, pipelineProcessMapper.getLastAttempt(uuid1).get().intValue());
   }
 }

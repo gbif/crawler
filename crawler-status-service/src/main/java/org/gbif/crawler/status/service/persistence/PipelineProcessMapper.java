@@ -5,6 +5,7 @@ import org.gbif.crawler.status.service.model.PipelineProcess;
 import org.gbif.crawler.status.service.model.PipelineStep;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
 
@@ -30,6 +31,8 @@ public interface PipelineProcessMapper {
    * @return {@link PipelineProcess}
    */
   PipelineProcess get(@Param("datasetKey") UUID datasetKey, @Param("attempt") int attempt);
+
+  Optional<Integer> getLastAttempt(@Param("datasetKey") UUID datasetKey);
 
   /**
    * Adds a {@link PipelineStep} to an existing {@link PipelineProcess}.

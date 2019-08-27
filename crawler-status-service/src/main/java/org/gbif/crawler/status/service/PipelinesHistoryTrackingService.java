@@ -4,6 +4,7 @@ import org.gbif.api.model.common.paging.PagingRequest;
 import org.gbif.api.model.common.paging.PagingResponse;
 import org.gbif.crawler.status.service.model.PipelineStep;
 import org.gbif.crawler.status.service.model.PipelineProcess;
+import org.gbif.crawler.status.service.model.PipelinesWorkflow;
 import org.gbif.crawler.status.service.model.StepType;
 
 import java.util.Set;
@@ -26,5 +27,7 @@ public interface PipelinesHistoryTrackingService {
   PipelineStep addPipelineAction(long pipelineProcessKey, PipelineStep pipelineStep);
 
   void updatePipelineAction(long pipelineStepKey, PipelineStep.Status status);
+
+  PipelinesWorkflow getPipelinesWorkflow(UUID datasetKey, Integer attempt);
 
 }
