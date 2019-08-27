@@ -102,8 +102,8 @@ public class PipelinesHistoryResource {
   @POST
   @Path("process/{processKey}")
   @Consumes(MediaType.APPLICATION_JSON)
-  public void addPipelineStep(@PathParam("processKey") String processKey, @Context PipelineStep pipelineStep) {
-    historyTrackingService.addPipelineStep(Long.parseLong(processKey), pipelineStep);
+  public PipelineStep addPipelineStep(@PathParam("processKey") String processKey, @Context PipelineStep pipelineStep) {
+    return historyTrackingService.addPipelineStep(Long.parseLong(processKey), pipelineStep);
   }
 
 
