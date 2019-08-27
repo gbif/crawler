@@ -9,7 +9,7 @@ public enum StepType {
   INTERPRETED_TO_INDEX(3),
   HIVE_VIEW(3);
 
-  StepType(int position) {
+  StepType(int executionOrder) {
     this.executionOrder = executionOrder;
   }
 

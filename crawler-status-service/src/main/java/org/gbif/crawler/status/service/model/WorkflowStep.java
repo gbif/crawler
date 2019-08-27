@@ -16,10 +16,7 @@ public class WorkflowStep implements Serializable {
   private PipelineStep lastStep;
 
   private Set<PipelineStep> allSteps =
-      new TreeSet<>(
-          Comparator.comparing(PipelineStep::getStarted)
-              .thenComparing(PipelineStep::getFinished)
-              .reversed());
+      new TreeSet<>(Comparator.comparing(PipelineStep::getStarted).reversed());
 
   private List<WorkflowStep> nextSteps = new ArrayList<>();
 
