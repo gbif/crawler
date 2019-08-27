@@ -1,6 +1,7 @@
 package org.gbif.crawler.status.service.model;
 
 import java.io.Serializable;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -10,7 +11,7 @@ public class PipelineWorkflow implements Serializable {
   private int attempt;
 
   // there should be only one initial step
-  private WorkflowStep initialStep;
+  private List<WorkflowStep> steps;
 
   public UUID getDatasetKey() {
     return datasetKey;
@@ -28,12 +29,12 @@ public class PipelineWorkflow implements Serializable {
     this.attempt = attempt;
   }
 
-  public WorkflowStep getInitialStep() {
-    return initialStep;
+  public List<WorkflowStep> getSteps() {
+    return steps;
   }
 
-  public void setInitialStep(WorkflowStep initialStep) {
-    this.initialStep = initialStep;
+  public void setSteps(List<WorkflowStep> steps) {
+    this.steps = steps;
   }
 
   @Override

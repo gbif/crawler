@@ -227,42 +227,58 @@ public class PipelinesCoordinatorTrackingServiceImpl implements PipelinesHistory
   public PipelineWorkflow getPipelinesWorkflow(UUID datasetKey, Integer attempt) {
     PipelineProcess process = mapper.get(datasetKey, attempt);
 
+    // group the steps by its position in the workflow and then by name. This will create something
+    // like:
+    // 1 -> DWCA_TO_AVRO -> List<PipelineStep>
+    // 2 -> VERBATIM_TO_INTERPRETED -> List<PipelineStep>
+    // 3 -> INTERPRETED_TO_INDEX -> List<PipelineStep>
+    //   -> HIVE_VIEW -> List<PipelineStep>
+    //
+    // The map is sorted by the step position in descending order
     Map<Integer, Map<StepType, List<PipelineStep>>> stepsByOrderAndName =
-      process.getSteps().stream()
-        .collect(
-          Collectors.groupingBy(
-            s -> s.getName().getOrder(),
-            () -> new TreeMap<Integer, Map<StepType, List<PipelineStep>>>(Comparator.reverseOrder()),
-            Collectors.groupingBy(PipelineStep::getName)));
+        process.getSteps().stream()
+            .collect(
+                Collectors.groupingBy(
+                    s -> s.getName().getPosition(),
+                    () ->
+                        new TreeMap<Integer, Map<StepType, List<PipelineStep>>>(
+                            Comparator.reverseOrder()),
+                    Collectors.groupingBy(PipelineStep::getName)));
 
+    // iterate from steps in the last position to the ones in the first one so that we can create
+    // the worfklow hierarchy
+    List<WorkflowStep> stepsPreviousIteration = null;
+    for (Map.Entry<Integer, Map<StepType, List<PipelineStep>>> stepsByOrder :
+        stepsByOrderAndName.entrySet()) {
+
+      List<WorkflowStep> currentSteps = new ArrayList<>();
+      for (Map.Entry<StepType, List<PipelineStep>> stepsByType :
+        stepsByOrder.getValue().entrySet()) {
+
+        // create workflow step
+        WorkflowStep step = new WorkflowStep();
+        step.setStepType(stepsByType.getKey());
+        step.getAllSteps().addAll(stepsByType.getValue());
+        step.setLastStep(step.getAllSteps().first());
+
+        // link this step to its next steps
+        step.setNextSteps(stepsPreviousIteration);
+
+        // accumulate all the steps of this StepType
+        currentSteps.add(step);
+      }
+
+      // update steps of previous iteration
+      stepsPreviousIteration = currentSteps;
+    }
+
+    // create workflow
     PipelineWorkflow workflow = new PipelineWorkflow();
     workflow.setDatasetKey(process.getDatasetKey());
     workflow.setAttempt(process.getAttempt());
 
-    // workflow steps
-    WorkflowStep workflowStep = null;
-    workflow.setInitialStep(workflowStep);
-
-    // iterate from last step to first
-    List<WorkflowStep> currentSteps = null;
-    for (Map.Entry<Integer, Map<StepType, List<PipelineStep>>> entry :
-      stepsByOrderAndName.entrySet()) {
-      workflowStep = new WorkflowStep();
-      workflowStep.setNextSteps(currentSteps);
-
-      currentSteps =
-        entry.getValue().entrySet().stream()
-          .map(
-            v -> {
-              WorkflowStep step = new WorkflowStep();
-              step.setStepType(v.getKey());
-              step.getAllSteps().addAll(v.getValue());
-              step.setLastStep(step.getAllSteps().first());
-
-              return step;
-            })
-          .collect(Collectors.toList());
-    }
+    // the last steps created will be the started steps of the workflow
+    workflow.setSteps(stepsPreviousIteration);
 
     return workflow;
   }

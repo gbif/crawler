@@ -2,10 +2,7 @@ package org.gbif.crawler.status.service.model;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.Comparator;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.UUID;
+import java.util.*;
 
 /** Base POJO model for the Pipelines status service */
 public class PipelineProcess implements Serializable {
@@ -18,7 +15,7 @@ public class PipelineProcess implements Serializable {
   private String datasetTitle;
   private LocalDateTime created;
   private String createdBy;
-  private Set<PipelineStep> steps = new TreeSet<>(Comparator.comparing(PipelineStep::getStarted));
+  private Set<PipelineStep> steps = new HashSet<>();
 
   public long getKey() {
     return key;

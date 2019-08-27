@@ -9,13 +9,13 @@ public enum StepType {
   INTERPRETED_TO_INDEX(3),
   HIVE_VIEW(3);
 
-  StepType(int order) {
-    this.order = order;
+  StepType(int position) {
+    this.position = position;
   }
 
-  private int order;
+  private int position;
 
-  public int getOrder() {
-    return order;
+  public int getPosition() {
+    return position;
   }
 }
