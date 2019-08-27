@@ -8,6 +8,7 @@ import java.util.TreeSet;
 import java.util.UUID;
 
 /** Base POJO model for the Pipelines status service */
+// TODO: rename to just PipelinesProcess
 public class PipelinesProcessStatus implements Serializable {
 
   private static final long serialVersionUID = -3992826055732414678L;

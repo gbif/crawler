@@ -18,6 +18,7 @@ import org.postgresql.util.PSQLException;
 
 import static org.hamcrest.CoreMatchers.isA;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 /** Tests the {@link PipelinesProcessMapper}. */
@@ -186,5 +187,27 @@ public class PipelinesProcessStatusMapperTest extends BaseMapperTest {
     pipelinesProcessMapper.updatePipelineStepState(step.getKey(), Status.COMPLETED);
     assertEquals(
         Status.COMPLETED, pipelinesProcessMapper.getPipelineStep(step.getKey()).getState());
+  }
+
+  @Test
+  public void getLastAttemptTest() {
+    final UUID uuid1 = UUID.randomUUID();
+
+    // shouldn't find any attempt
+    assertFalse(pipelinesProcessMapper.getLastAttempt(uuid1).isPresent());
+
+    // insert some processes
+    pipelinesProcessMapper.create(
+        new PipelinesProcessStatus().setDatasetKey(uuid1).setAttempt(1).setCreatedBy(TEST_USER));
+    pipelinesProcessMapper.create(
+        new PipelinesProcessStatus().setDatasetKey(uuid1).setAttempt(2).setCreatedBy(TEST_USER));
+
+    // get last attempt
+    assertEquals(2, pipelinesProcessMapper.getLastAttempt(uuid1).get().intValue());
+
+    // add new attempt
+    pipelinesProcessMapper.create(
+        new PipelinesProcessStatus().setDatasetKey(uuid1).setAttempt(3).setCreatedBy(TEST_USER));
+    assertEquals(3, pipelinesProcessMapper.getLastAttempt(uuid1).get().intValue());
   }
 }
