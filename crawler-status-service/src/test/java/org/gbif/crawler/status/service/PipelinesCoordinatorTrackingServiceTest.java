@@ -44,7 +44,7 @@ public class PipelinesCoordinatorTrackingServiceTest {
     PipelineProcess mockProcess = createMockProcess();
     when(pipelineProcessMapper.get(uuid, attempt)).thenReturn(mockProcess);
 
-    PipelineWorkflow workflow = trackingService.getPipelinesWorkflow(uuid, attempt);
+    PipelineWorkflow workflow = trackingService.getPipelineWorkflow(uuid, attempt);
 
     // TODO: assertd
   }
