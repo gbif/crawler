@@ -8,7 +8,6 @@ import org.gbif.crawler.status.service.persistence.PipelineProcessMapper;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -72,12 +71,6 @@ public class PipelinesCoordinatorTrackingServiceTest {
     assertEquals(1, thirdLevelSteps.get(0).getAllSteps().size());
     assertNull(thirdLevelSteps.get(1).getNextSteps());
     assertEquals(1, thirdLevelSteps.get(1).getAllSteps().size());
-  }
-
-  private List<PipelineStep> getStepsByType(PipelineProcess process, List<StepType> types) {
-    return process.getSteps().stream()
-        .filter(s -> types.contains(s.getName()))
-        .collect(Collectors.toList());
   }
 
   private static PipelineProcess createMockProcess(UUID datasetKey, int attempt) {
