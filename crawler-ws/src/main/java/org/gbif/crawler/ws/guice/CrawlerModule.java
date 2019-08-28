@@ -52,6 +52,7 @@ class CrawlerModule extends PrivateServiceModule {
 
     bind(DatasetProcessService.class).to(DatasetProcessServiceImpl.class).in(Scopes.SINGLETON);
     bind(PipelinesRunningProcessService.class).to(PipelinesRunningProcessServiceImpl.class).in(Scopes.SINGLETON);
+    bind(PipelinesHistoryTrackingService.class).to(PipelinesCoordinatorTrackingServiceImpl.class).in(Scopes.SINGLETON);
     expose(DatasetProcessService.class);
     expose(PipelinesRunningProcessService.class);
     expose(Executor.class);

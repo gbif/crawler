@@ -1,7 +1,5 @@
 package org.gbif.crawler.status.service.guice;
 
-import org.gbif.crawler.status.service.PipelinesHistoryTrackingService;
-import org.gbif.crawler.status.service.impl.PipelinesCoordinatorTrackingServiceImpl;
 import org.gbif.crawler.status.service.model.PipelineProcess;
 import org.gbif.crawler.status.service.model.PipelineStep;
 import org.gbif.crawler.status.service.persistence.PipelineProcessMapper;
@@ -15,7 +13,6 @@ import java.time.LocalDateTime;
 import java.util.Properties;
 import java.util.UUID;
 
-import com.google.inject.Scopes;
 import org.apache.ibatis.type.LocalDateTimeTypeHandler;
 
 /**
@@ -23,8 +20,8 @@ import org.apache.ibatis.type.LocalDateTimeTypeHandler;
  */
 public class CrawlerStatusServiceModule extends PrivateServiceModule {
 
-  public static final String PROPS_PREFIX = "crawler.status.";
-  public static final String DB_PROPS_PREFIX = "db.";
+  private static final String PROPS_PREFIX = "crawler.status.";
+  private static final String DB_PROPS_PREFIX = "db.";
 
   /**
    * Uses the given properties to configure the service.
@@ -38,9 +35,7 @@ public class CrawlerStatusServiceModule extends PrivateServiceModule {
   @Override
   protected void configureService() {
     install(new CrawlerStatusMyBatisModule(PropertiesUtil.filterProperties(getProperties(), DB_PROPS_PREFIX)));
-    bind(PipelinesHistoryTrackingService.class).to(PipelinesCoordinatorTrackingServiceImpl.class).in(Scopes.SINGLETON);
     expose(PipelineProcessMapper.class);
-    expose(PipelinesHistoryTrackingService.class);
   }
 
   /**
@@ -62,7 +57,6 @@ public class CrawlerStatusServiceModule extends PrivateServiceModule {
       addAlias("Step").to(PipelineStep.class);
       addAlias("MetricInfoTypeHandler").to(MetricInfoTypeHandler.class);
       addAlias("UuidTypeHandler").to(UuidTypeHandler.class);
-      addAlias("LocalDateTimeTypeHandler").to(LocalDateTimeTypeHandler.class);
     }
 
     @Override
