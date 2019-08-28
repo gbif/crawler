@@ -34,6 +34,9 @@ import com.google.inject.Inject;
 @Path("pipelines/history")
 public class PipelinesHistoryResource {
 
+  private static final String REGISTRY_ADMIN = "REGISTRY_ADMIN";
+  private static final String REGISTRY_EDITOR = "REGISTRY_EDITOR";
+
   private final PipelinesHistoryTrackingService historyTrackingService;
 
   @Inject
@@ -61,7 +64,6 @@ public class PipelinesHistoryResource {
    * Lists the history of all pipelines.
    */
   @GET
-  @RolesAllowed("REGISTRY_ADMIN")
   public PagingResponse<PipelineProcess> history(@Context Pageable pageable) {
     return historyTrackingService.history(pageable);
   }
@@ -71,7 +73,6 @@ public class PipelinesHistoryResource {
    */
   @GET
   @Path("{datasetKey}")
-  @RolesAllowed("REGISTRY_ADMIN")
   public PagingResponse<PipelineProcess> history(@PathParam("datasetKey") String datasetKey, @Context Pageable pageable) {
     return historyTrackingService.history(UUID.fromString(datasetKey), pageable);
   }
@@ -85,11 +86,18 @@ public class PipelinesHistoryResource {
    return historyTrackingService.get(UUID.fromString(datasetKey), Integer.parseInt(attempt));
   }
 
+  @GET
+  @Path("workflow/{datasetKey}/{attempt}")
+  public PipelineWorkflow getPipelineWorkflow(@PathParam("datasetKey") String datasetKey, @PathParam("attempt") String attempt) {
+    return historyTrackingService.getPipelineWorkflow(UUID.fromString(datasetKey), Integer.parseInt(attempt));
+  }
+
   /**
    * Re-run a pipeline step.
    */
   @POST
   @Path("{datasetKey}/{attempt}")
+  @RolesAllowed({REGISTRY_ADMIN, REGISTRY_EDITOR})
   public Response runPipelineAttempt(@PathParam("datasetKey") String datasetKey, @PathParam("attempt") String attempt,
                                      @QueryParam("steps") String steps, @QueryParam("reason") String reason) {
 
@@ -106,6 +114,7 @@ public class PipelinesHistoryResource {
   @POST
   @Path("process/{processKey}")
   @Consumes(MediaType.APPLICATION_JSON)
+  @RolesAllowed({REGISTRY_ADMIN, REGISTRY_EDITOR})
   public PipelineStep addPipelineStep(@PathParam("processKey") String processKey, PipelineStep pipelineStep) {
     return historyTrackingService.addPipelineStep(Long.parseLong(processKey), pipelineStep);
   }
@@ -116,6 +125,7 @@ public class PipelinesHistoryResource {
    */
   @POST
   @Path("process/{processKey}/{status}")
+  @RolesAllowed({REGISTRY_ADMIN, REGISTRY_EDITOR})
   public void updatePipelineStep(@PathParam("processKey") String processKey, @PathParam("status") String status) {
     historyTrackingService.updatePipelineStep(Long.parseLong(processKey), PipelineStep.Status.valueOf(status.toUpperCase()));
   }
@@ -126,6 +136,7 @@ public class PipelinesHistoryResource {
    */
   @POST
   @Path("{datasetKey}")
+  @RolesAllowed({REGISTRY_ADMIN, REGISTRY_EDITOR})
   public Response runPipelineAttempt(@PathParam("datasetKey") String datasetKey, @QueryParam("steps") String steps,
                                      @QueryParam("reason") String reason) {
     return toHttpResponse(historyTrackingService.runLastAttempt(UUID.fromString(datasetKey),
@@ -133,12 +144,6 @@ public class PipelinesHistoryResource {
                                                                   .map(StepType::valueOf)
                                                                   .collect(Collectors.toSet()),
                                                                 reason));
-  }
-
-  @POST
-  @Path("workflow/{datasetKey}/{attempt}")
-  public PipelineWorkflow getPipelineWorkflow(@PathParam("datasetKey") String datasetKey, @PathParam("attempt") String attempt) {
-    return historyTrackingService.getPipelineWorkflow(UUID.fromString(datasetKey), Integer.parseInt(attempt));
   }
 
 }
