@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
 <mapper namespace="org.gbif.crawler.status.service.persistence.PipelineProcessMapper">
 
-  <resultMap id="PIPELINES_PROCESS_MAP" type="PipelinesProcess" autoMapping="true">
+  <resultMap id="PIPELINES_PROCESS_MAP" type="PipelineProcess" autoMapping="true">
     <id property="key" column="key"/>
     <collection property="steps" column="key" select="listSteps"/>
   </resultMap>
@@ -42,7 +42,7 @@
     #{pipelinesProcessKey,jdbcType=BIGINT}
   </sql>
 
-  <insert id="create" parameterType="PipelinesProcess" useGeneratedKeys="true" keyProperty="key">
+  <insert id="create" parameterType="PipelineProcess" useGeneratedKeys="true" keyProperty="key">
     INSERT INTO pipeline_process(<include refid="PIPELINES_PROCESS_FIELDS_CREATE"/>)
     VALUES (<include refid="PIPELINES_PROCESS_VALUES_CREATE"/>)
   </insert>

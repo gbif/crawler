@@ -58,7 +58,7 @@ public class CrawlerStatusServiceModule extends PrivateServiceModule {
       addMapperClass(PipelineProcessMapper.class);
 
       // alias
-      addAlias("PipelinesProcess").to(PipelineProcess.class);
+      addAlias("PipelineProcess").to(PipelineProcess.class);
       addAlias("Step").to(PipelineStep.class);
       addAlias("MetricInfoTypeHandler").to(MetricInfoTypeHandler.class);
       addAlias("UuidTypeHandler").to(UuidTypeHandler.class);
