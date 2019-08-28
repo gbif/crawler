@@ -13,8 +13,6 @@ public class PipelineWorkflow implements Serializable {
 
   private UUID datasetKey;
   private int attempt;
-
-  // there should be only one initial step
   private List<WorkflowStep> steps;
 
   public UUID getDatasetKey() {

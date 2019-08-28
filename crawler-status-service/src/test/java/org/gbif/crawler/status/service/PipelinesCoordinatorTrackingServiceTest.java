@@ -2,10 +2,7 @@ package org.gbif.crawler.status.service;
 
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.crawler.status.service.impl.PipelinesCoordinatorTrackingServiceImpl;
-import org.gbif.crawler.status.service.model.PipelineProcess;
-import org.gbif.crawler.status.service.model.PipelineStep;
-import org.gbif.crawler.status.service.model.PipelineWorkflow;
-import org.gbif.crawler.status.service.model.StepType;
+import org.gbif.crawler.status.service.model.*;
 import org.gbif.crawler.status.service.persistence.PipelineProcessMapper;
 
 import java.time.LocalDateTime;
@@ -56,47 +53,25 @@ public class PipelinesCoordinatorTrackingServiceTest {
     assertEquals(attempt, workflow.getAttempt());
 
     // first level of steps
-    assertEquals(
-        StepType.ABCD_TO_VERBATIM, workflow.getSteps().get(0).getLastStep().getName());
+    assertEquals(StepType.ABCD_TO_VERBATIM, workflow.getSteps().get(0).getLastStep().getName());
     assertEquals(1, workflow.getSteps().size());
     assertEquals(2, workflow.getSteps().get(0).getAllSteps().size());
     assertEquals(1, workflow.getSteps().get(0).getNextSteps().size());
     assertEquals(Status.COMPLETED, workflow.getSteps().get(0).getLastStep().getState());
 
     // second level of steps
-    assertEquals(
-        StepType.VERBATIM_TO_INTERPRETED,
-        workflow.getSteps().get(0).getNextSteps().get(0).getLastStep().getName());
-    assertEquals(1, workflow.getSteps().get(0).getNextSteps().get(0).getAllSteps().size());
+    List<WorkflowStep> secondLevelSteps = workflow.getSteps().get(0).getNextSteps();
+    assertEquals(StepType.VERBATIM_TO_INTERPRETED, secondLevelSteps.get(0).getLastStep().getName());
+    assertEquals(1, secondLevelSteps.get(0).getAllSteps().size());
     assertEquals(2, workflow.getSteps().get(0).getNextSteps().get(0).getNextSteps().size());
 
     // third level of steps
-    assertNull(
-        workflow.getSteps().get(0).getNextSteps().get(0).getNextSteps().get(0).getNextSteps());
-    assertEquals(
-        1,
-        workflow
-            .getSteps()
-            .get(0)
-            .getNextSteps()
-            .get(0)
-            .getNextSteps()
-            .get(0)
-            .getAllSteps()
-            .size());
-    assertNull(
-        workflow.getSteps().get(0).getNextSteps().get(0).getNextSteps().get(1).getNextSteps());
-    assertEquals(
-        1,
-        workflow
-            .getSteps()
-            .get(0)
-            .getNextSteps()
-            .get(0)
-            .getNextSteps()
-            .get(1)
-            .getAllSteps()
-            .size());
+    List<WorkflowStep> thirdLevelSteps =
+        workflow.getSteps().get(0).getNextSteps().get(0).getNextSteps();
+    assertNull(thirdLevelSteps.get(0).getNextSteps());
+    assertEquals(1, thirdLevelSteps.get(0).getAllSteps().size());
+    assertNull(thirdLevelSteps.get(1).getNextSteps());
+    assertEquals(1, thirdLevelSteps.get(1).getAllSteps().size());
   }
 
   private List<PipelineStep> getStepsByType(PipelineProcess process, List<StepType> types) {
