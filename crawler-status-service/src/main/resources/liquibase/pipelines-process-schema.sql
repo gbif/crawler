@@ -14,17 +14,20 @@ CREATE TYPE pipeline_step_status AS ENUM ('SUBMITTED', 'RUNNING', 'FAILED', 'COM
 
 CREATE TYPE pipeline_step_type AS ENUM ('DWCA_TO_VERBATIM', 'XML_TO_VERBATIM', 'ABCD_TO_VERBATIM', 'VERBATIM_TO_INTERPRETED', 'INTERPRETED_TO_INDEX', 'HIVE_VIEW');
 
+CREATE TYPE pipeline_step_runner AS ENUM ('STANDALONE', 'DISTRIBUTED', 'UNKNOWN');
+
 CREATE TABLE pipeline_step (
  key bigserial NOT NULL PRIMARY KEY,
  name pipeline_step_type NOT NULL,
- runner text,
- started timestamp with time zone,
+ runner pipeline_step_runner,
+ started timestamp with time zone NOT NULL DEFAULT now(),
  finished timestamp with time zone,
  state pipeline_step_status NOT NULL,
  message text,
  metrics hstore,
  rerun_reason text,
- created timestamp with time zone NOT NULL DEFAULT now(),
  created_by text NOT NULL,
+ modified timestamp with time zone,
+ modified_by text,
  pipeline_process_key integer NOT NULL REFERENCES pipeline_process (key) ON DELETE CASCADE
 );

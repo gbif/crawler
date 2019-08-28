@@ -3,6 +3,7 @@ package org.gbif.crawler.status.service.persistence;
 import org.gbif.crawler.status.service.model.PipelineProcess;
 import org.gbif.crawler.status.service.model.PipelineStep;
 import org.gbif.crawler.status.service.model.PipelineStep.Status;
+import org.gbif.crawler.status.service.model.StepRunner;
 import org.gbif.crawler.status.service.model.StepType;
 
 import java.time.LocalDateTime;
@@ -25,6 +26,7 @@ import static org.junit.Assert.assertTrue;
 public class PipelineProcessMapperTest extends BaseMapperTest {
 
   private static final String TEST_USER = "test";
+  private static final String UPDATER_USER = "updater";
 
   private static PipelineProcessMapper pipelineProcessMapper;
 
@@ -94,7 +96,7 @@ public class PipelineProcessMapperTest extends BaseMapperTest {
     PipelineStep step =
         new PipelineStep()
             .setName(StepType.ABCD_TO_VERBATIM)
-            .setRunner("runner test")
+            .setRunner(StepRunner.STANDALONE)
             .setState(Status.COMPLETED)
             .setStarted(LocalDateTime.now().minusMinutes(1))
             .setFinished(LocalDateTime.now())
@@ -165,7 +167,7 @@ public class PipelineProcessMapperTest extends BaseMapperTest {
   }
 
   @Test
-  public void updatePipelineStepStateTest() {
+  public void updatePipelineStepTest() {
     // insert one process
     PipelineProcess process =
         new PipelineProcess()
@@ -178,14 +180,20 @@ public class PipelineProcessMapperTest extends BaseMapperTest {
     PipelineStep step =
         new PipelineStep()
             .setName(StepType.ABCD_TO_VERBATIM)
+            .setStarted(LocalDateTime.now())
             .setState(Status.SUBMITTED)
             .setCreatedBy(TEST_USER);
     pipelineProcessMapper.addPipelineStep(process.getKey(), step);
     assertEquals(Status.SUBMITTED, pipelineProcessMapper.getPipelineStep(step.getKey()).getState());
 
     // change step state
-    pipelineProcessMapper.updatePipelineStepState(step.getKey(), Status.COMPLETED);
-    assertEquals(Status.COMPLETED, pipelineProcessMapper.getPipelineStep(step.getKey()).getState());
+    step.setFinished(LocalDateTime.now().plusHours(1));
+    step.setState(Status.COMPLETED);
+    step.setModifiedBy(UPDATER_USER);
+    step.setRerunReason("reason");
+
+    pipelineProcessMapper.updatePipelineStep(step);
+    assertTrue(pipelineProcessMapper.getPipelineStep(step.getKey()).lenientEquals(step));
   }
 
   @Test

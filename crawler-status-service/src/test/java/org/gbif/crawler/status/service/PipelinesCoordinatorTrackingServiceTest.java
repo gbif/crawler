@@ -31,8 +31,9 @@ public class PipelinesCoordinatorTrackingServiceTest {
 
   @Before
   public void setup() throws Exception {
+    // TODO: inject datasetService
     trackingService =
-        new PipelinesCoordinatorTrackingServiceImpl(messagePublisher, pipelineProcessMapper);
+        new PipelinesCoordinatorTrackingServiceImpl(messagePublisher, pipelineProcessMapper, null);
   }
 
   @Test

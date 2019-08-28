@@ -11,6 +11,7 @@ import org.gbif.crawler.status.service.model.PipelineProcess;
 import org.gbif.crawler.status.service.model.PipelineStep;
 import org.gbif.crawler.status.service.model.PipelineStep.MetricInfo;
 import org.gbif.crawler.status.service.model.PipelineStep.Status;
+import org.gbif.crawler.status.service.model.StepRunner;
 import org.gbif.crawler.status.service.model.StepType;
 
 import java.text.DecimalFormat;
@@ -296,7 +297,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
                 Optional<String> successfulMessageOpt =
                     getAsString(crawlId, Fn.SUCCESSFUL_MESSAGE.apply(path));
 
-                getAsString(crawlId, Fn.RUNNER.apply(path)).ifPresent(step::setRunner);
+                getAsString(crawlId, Fn.RUNNER.apply(path)).ifPresent(r -> step.setRunner(StepRunner.valueOf(r)));
 
                 // dates
                 step.setStarted(startDateOpt.orElse(endDateOpt.orElse(null)));

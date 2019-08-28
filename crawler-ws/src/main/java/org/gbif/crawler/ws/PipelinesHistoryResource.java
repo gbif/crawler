@@ -14,16 +14,11 @@ import java.util.Arrays;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.security.RolesAllowed;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
 
 import com.google.inject.Inject;
 
@@ -73,10 +68,11 @@ public class PipelinesHistoryResource {
    */
   @POST
   @RolesAllowed({REGISTRY_ADMIN, REGISTRY_EDITOR})
-  public Response all(@QueryParam("steps") String steps, @QueryParam("reason") String reason) {
+  public Response all(@QueryParam("steps") String steps, @QueryParam("reason") String reason, @Context SecurityContext security) {
     return toHttpResponse(historyTrackingService.runLastAttempt(Arrays.stream(steps.split(","))
                                                                   .map(StepType::valueOf)
-                                                                  .collect(Collectors.toSet()), reason));
+                                                                  .collect(Collectors.toSet()),reason, security.getUserPrincipal().getName()
+                                                                ));
   }
 
   /**
@@ -110,13 +106,15 @@ public class PipelinesHistoryResource {
   @Path("{datasetKey}/{attempt}")
   @RolesAllowed({REGISTRY_ADMIN, REGISTRY_EDITOR})
   public Response runPipelineAttempt(@PathParam("datasetKey") String datasetKey, @PathParam("attempt") String attempt,
-                                     @QueryParam("steps") String steps, @QueryParam("reason") String reason) {
+                                     @QueryParam("steps") String steps, @QueryParam("reason") String reason,
+                                     @Context SecurityContext security) {
 
     return  toHttpResponse(historyTrackingService.runPipelineAttempt(UUID.fromString(datasetKey),
                                                                                         Integer.parseInt(attempt),
                                                                                         Arrays.stream(steps.split(","))
                                                                                           .map(StepType::valueOf)
-                                                                                          .collect(Collectors.toSet()), reason));
+                                                                                          .collect(Collectors.toSet()), reason,
+                                                                                        security.getUserPrincipal().getName()));
   }
 
   /**
@@ -126,19 +124,21 @@ public class PipelinesHistoryResource {
   @Path("process/{processKey}")
   @Consumes(MediaType.APPLICATION_JSON)
   @RolesAllowed({REGISTRY_ADMIN, REGISTRY_EDITOR})
-  public PipelineStep addPipelineStep(@PathParam("processKey") String processKey, PipelineStep pipelineStep) {
-    return historyTrackingService.addPipelineStep(Long.parseLong(processKey), pipelineStep);
+  public PipelineStep addPipelineStep(@PathParam("processKey") String processKey, PipelineStep pipelineStep, @Context
+    SecurityContext security) {
+    return historyTrackingService.addPipelineStep(Long.parseLong(processKey), pipelineStep, security.getUserPrincipal().getName());
   }
 
 
   /**
    * Updates the step status.
    */
-  @POST
-  @Path("process/{processKey}/{status}")
+  @PUT
+  @Path("process/{processKey}")
   @RolesAllowed({REGISTRY_ADMIN, REGISTRY_EDITOR})
-  public void updatePipelineStep(@PathParam("processKey") String processKey, @PathParam("status") String status) {
-    historyTrackingService.updatePipelineStep(Long.parseLong(processKey), PipelineStep.Status.valueOf(status.toUpperCase()));
+  public void updatePipelineStep(@PathParam("processKey") String processKey, String status, @Context SecurityContext security) {
+    historyTrackingService.updatePipelineStepStatus(Long.parseLong(processKey), PipelineStep.Status.valueOf(status.toUpperCase()),
+                                                    security.getUserPrincipal().getName());
   }
 
 
@@ -149,12 +149,12 @@ public class PipelinesHistoryResource {
   @Path("{datasetKey}")
   @RolesAllowed({REGISTRY_ADMIN, REGISTRY_EDITOR})
   public Response runPipelineAttempt(@PathParam("datasetKey") String datasetKey, @QueryParam("steps") String steps,
-                                     @QueryParam("reason") String reason) {
+                                     @QueryParam("reason") String reason, @Context SecurityContext security) {
     return toHttpResponse(historyTrackingService.runLastAttempt(UUID.fromString(datasetKey),
                                                                 Arrays.stream(steps.split(","))
                                                                   .map(StepType::valueOf)
                                                                   .collect(Collectors.toSet()),
-                                                                reason));
+                                                                reason, security.getUserPrincipal().getName()));
   }
 
 }

@@ -60,5 +60,5 @@ public interface PipelineProcessMapper {
 
   PipelineStep getPipelineStep(@Param("key") long key);
 
-  void updatePipelineStepState(@Param("stepId") long stepId, @Param("state") PipelineStep.Status state);
+  void updatePipelineStep(@Param("step") PipelineStep step);
 }

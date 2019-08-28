@@ -18,6 +18,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import org.codehaus.jackson.map.DeserializationConfig;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -64,20 +66,20 @@ public class PipelinesCoordinatorTrackingServiceImpl implements PipelinesHistory
   }
 
   @Override
-  public RunPipelineResponse runLastAttempt(UUID datasetKey, Set<StepType> steps, String reason) {
-    Integer lastAttempt = 0; //Get the last successful attempt of each step
-    return runPipelineAttempt(datasetKey, lastAttempt, steps, reason);
+  public RunPipelineResponse runLastAttempt(UUID datasetKey, Set<StepType> steps, String reason, String user) {
+    Integer lastAttempt = mapper.getLastAttempt(datasetKey).orElse(null);
+    return runPipelineAttempt(datasetKey, lastAttempt, steps, reason, user);
   }
 
 
   @Override
-  public RunPipelineResponse runLastAttempt(Set<StepType> steps, String reason) {
+  public RunPipelineResponse runLastAttempt(Set<StepType> steps, String reason, String user) {
     PagingRequest pagingRequest = new PagingRequest(0,1000);
     PagingResponse<Dataset> response = datasetService.list(pagingRequest);
     try {
       do {
         response.getResults().forEach(dataset -> {
-          runLastAttempt(dataset.getKey(), steps, reason);
+          runLastAttempt(dataset.getKey(), steps, reason, user);
         });
         pagingRequest.setOffset(response.getResults().size());
         response = datasetService.list(pagingRequest);
@@ -132,12 +134,13 @@ public class PipelinesCoordinatorTrackingServiceImpl implements PipelinesHistory
         return PipelineStep.Status.FAILED;
       } else if(statuses.contains(PipelineStep.Status.RUNNING)) {
         return PipelineStep.Status.RUNNING;
+      } else if(statuses.contains(PipelineStep.Status.SUBMITTED)) {
+        return PipelineStep.Status.SUBMITTED;
       } else {
         return PipelineStep.Status.COMPLETED;
       }
     }
   }
-
 
   @Override
   public PagingResponse<PipelineProcess> history(Pageable pageable) {
@@ -156,16 +159,18 @@ public class PipelinesCoordinatorTrackingServiceImpl implements PipelinesHistory
   }
 
   @Override
-  public RunPipelineResponse runPipelineAttempt(UUID datasetKey, Integer attempt, Set<StepType> steps, String reason) {
+  public RunPipelineResponse runPipelineAttempt(UUID datasetKey, Integer attempt, Set<StepType> steps, String reason,
+                                                String user) {
     Objects.requireNonNull(datasetKey, "DatasetKey can't be null");
     Objects.requireNonNull(attempt, "Attempt can't be null");
     Objects.requireNonNull(steps, "Steps can't be null");
     Objects.requireNonNull(reason, "Reason can't be null");
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(user), "user can't be null");
 
     PipelineProcess status = mapper.get(datasetKey, attempt);
 
     //Checks that the pipelines is not in RUNNING state
-    if(getStatus(status) == PipelineStep.Status.RUNNING) {
+    if(getStatus(status) == PipelineStep.Status.RUNNING || getStatus(status) == PipelineStep.Status.SUBMITTED) {
       return new RunPipelineResponse.Builder()
               .setResponseStatus(RunPipelineResponse.ResponseStatus.PIPELINE_IN_SUBMITTED)
               .setStep(steps)
@@ -195,6 +200,9 @@ public class PipelinesCoordinatorTrackingServiceImpl implements PipelinesHistory
             } else {
               responseBuilder.setResponseStatus(RunPipelineResponse.ResponseStatus.UNSUPPORTED_STEP);
             }
+
+            // update rerun reason and modifier user
+            mapper.updatePipelineStep(step.setRerunReason(reason).setModifiedBy(user));
           } catch (IOException ex) {
             LOG.error("Error reading message", ex);
             throw Throwables.propagate(ex);
@@ -229,25 +237,30 @@ public class PipelinesCoordinatorTrackingServiceImpl implements PipelinesHistory
   }
 
   @Override
-  public PipelineStep addPipelineStep(Long pipelineProcessKey, PipelineStep pipelineStep) {
+  public PipelineStep addPipelineStep(Long pipelineProcessKey, PipelineStep pipelineStep, String user) {
     Objects.requireNonNull(pipelineProcessKey, "PipelineProcessKey can't be null");
     Objects.requireNonNull(pipelineStep, "PipelineStep can't be null");
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(user), "user can't be null");
 
+    pipelineStep.setModifiedBy(user);
     mapper.addPipelineStep(pipelineProcessKey, pipelineStep);
     return pipelineStep;
   }
 
   @Override
-  public void updatePipelineStep(Long pipelineStepKey, PipelineStep.Status status) {
+  public void updatePipelineStepStatus(Long pipelineStepKey, PipelineStep.Status status, String user) {
     Objects.requireNonNull(pipelineStepKey, "PipelineStepKey can't be null");
     Objects.requireNonNull(status, "Status can't be null");
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(user), "user can't be null");
 
     PipelineStep step = mapper.getPipelineStep(pipelineStepKey);
-    step.setState(status);
-    if (PipelineStep.Status.FAILED == status || PipelineStep.Status.COMPLETED == status) {
+    if (step.getState() != status && (PipelineStep.Status.FAILED == status || PipelineStep.Status.COMPLETED == status)) {
       step.setFinished(LocalDateTime.now());
     }
-    mapper.updatePipelineStepState(pipelineStepKey, status);
+
+    step.setState(status);
+    step.setModifiedBy(user);
+    mapper.updatePipelineStep(step);
   }
 
   @Override

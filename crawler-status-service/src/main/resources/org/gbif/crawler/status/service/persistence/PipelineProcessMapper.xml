@@ -29,25 +29,32 @@
   </sql>
 
   <sql id="STEP_FIELDS_CREATE">
-    name, runner, started, finished, state, message, metrics, rerun_reason, created, created_by, pipeline_process_key
+    name, runner, started, finished, state, message, metrics, rerun_reason, created_by, pipeline_process_key
   </sql>
 
   <sql id="STEP_FIELDS_SELECT">
-    key, name, runner, started, finished, state, message, metrics, rerun_reasont, created, created_by, pipeline_process_key
+    key, name, runner, started, finished, state, message, metrics, rerun_reason, created_by, modified, modified_by, pipeline_process_key
   </sql>
 
   <sql id="STEP_VALUES_CREATE">
     #{step.name,jdbcType=OTHER},
-    #{step.runner,jdbcType=VARCHAR},
-    #{step.started,jdbcType=OTHER},
+    #{step.runner,jdbcType=OTHER},
+    now(), <!-- started -->
     #{step.finished,jdbcType=OTHER},
     #{step.state,jdbcType=OTHER},
     #{step.message,jdbcType=VARCHAR},
     #{step.metrics,jdbcType=OTHER,typeHandler=MetricInfoTypeHandler}::hstore,
     #{step.rerunReason,jdbcType=VARCHAR},
-    now(), <!-- created -->
     #{step.createdBy,jdbcType=VARCHAR},
     #{pipelinesProcessKey,jdbcType=BIGINT}
+  </sql>
+
+  <sql id="STEP_UPDATE">
+    finished = #{step.finished,jdbcType=OTHER},
+    state = #{step.state,jdbcType=OTHER},
+    rerun_reason = #{step.rerunReason,jdbcType=VARCHAR},
+    modified = now(),
+    modified_by = #{step.modifiedBy,jdbcType=VARCHAR}
   </sql>
 
   <insert id="create" parameterType="PipelineProcess" useGeneratedKeys="true" keyProperty="key">
@@ -115,10 +122,10 @@
     WHERE key = #{key,jdbcType=BIGINT}
   </select>
 
-  <update id="updatePipelineStepState">
+  <update id="updatePipelineStep">
     UPDATE pipeline_step
-    SET state = #{state,jdbcType=OTHER}
-    WHERE key = #{stepId,jdbcType=BIGINT}
+    SET <include refid="STEP_UPDATE"/>
+    WHERE key = #{step.key,jdbcType=BIGINT}
   </update>
 
 </mapper>
