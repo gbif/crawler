@@ -25,7 +25,7 @@
   </sql>
 
   <sql id="STEPS_FIELDS_CREATE">
-    name, runner, started, finished, state, message, metrics, rerun_reason, created, created_by, pipelines_process_key
+    name, runner, started, finished, state, message, metrics, rerun_reason, created, created_by, pipeline_process_key
   </sql>
 
   <sql id="STEP_VALUES_CREATE">
@@ -43,30 +43,30 @@
   </sql>
 
   <insert id="create" parameterType="PipelinesProcess" useGeneratedKeys="true" keyProperty="key">
-    INSERT INTO pipelines_process(<include refid="PIPELINES_PROCESS_FIELDS_CREATE"/>)
+    INSERT INTO pipeline_process(<include refid="PIPELINES_PROCESS_FIELDS_CREATE"/>)
     VALUES (<include refid="PIPELINES_PROCESS_VALUES_CREATE"/>)
   </insert>
 
   <insert id="addPipelineStep" useGeneratedKeys="true" keyProperty="step.key">
-    INSERT INTO pipelines_step(<include refid="STEPS_FIELDS_CREATE"/>)
+    INSERT INTO pipeline_step(<include refid="STEPS_FIELDS_CREATE"/>)
     VALUES (<include refid="STEP_VALUES_CREATE"/>)
   </insert>
 
   <select id="listSteps" resultMap="STEP_MAP">
     SELECT *
-    FROM pipelines_step
-    WHERE pipelines_process_key = #{key,jdbcType=BIGINT}
+    FROM pipeline_step
+    WHERE pipeline_process_key = #{key,jdbcType=BIGINT}
   </select>
 
   <select id="get" resultMap="PIPELINES_PROCESS_MAP">
     SELECT *
-    FROM pipelines_process
+    FROM pipeline_process
     WHERE dataset_key = #{datasetKey, jdbcType=OTHER} AND attempt = #{attempt, jdbcType=INTEGER}
   </select>
 
   <select id="getLastAttempt" resultType="Integer">
     SELECT p.attempt
-    FROM pipelines_process p
+    FROM pipeline_process p
     WHERE p.dataset_key = #{datasetKey, jdbcType=OTHER}
     ORDER BY p.attempt DESC
     LIMIT 1
@@ -74,7 +74,7 @@
 
   <select id="list" resultMap="PIPELINES_PROCESS_MAP">
     SELECT *
-    FROM pipelines_process
+    FROM pipeline_process
     <where>
       <if test="datasetKey != null">
         dataset_key = #{datasetKey, jdbcType=OTHER}
@@ -90,7 +90,7 @@
 
   <select id="count" resultType="Long">
     SELECT COUNT(*)
-    FROM pipelines_process
+    FROM pipeline_process
     <where>
       <if test="datasetKey != null">
         dataset_key = #{datasetKey, jdbcType=OTHER}
@@ -103,12 +103,12 @@
 
   <select id="getPipelineStep" resultMap="STEP_MAP">
     SELECT *
-    FROM pipelines_step
+    FROM pipeline_step
     WHERE key = #{key,jdbcType=BIGINT}
   </select>
 
   <update id="updatePipelineStepState">
-    UPDATE pipelines_step
+    UPDATE pipeline_step
     SET state = #{state,jdbcType=OTHER}
     WHERE key = #{stepId,jdbcType=BIGINT}
   </update>
