@@ -1,6 +1,6 @@
 package org.gbif.crawler.status.service.impl;
 
-import org.gbif.api.model.common.paging.PagingRequest;
+import org.gbif.api.model.common.paging.Pageable;
 import org.gbif.api.model.common.paging.PagingResponse;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.*;
@@ -113,19 +113,19 @@ public class PipelinesCoordinatorTrackingServiceImpl implements PipelinesHistory
 
 
   @Override
-  public PagingResponse<PipelineProcess> history(PagingRequest request) {
+  public PagingResponse<PipelineProcess> history(Pageable pageable) {
     long count = mapper.count(null, null);
-    List<PipelineProcess> statuses = mapper.list(null, null, request);
-    return new PagingResponse<>(request, count, statuses);
+    List<PipelineProcess> statuses = mapper.list(null, null, pageable);
+    return new PagingResponse<>(pageable, count, statuses);
   }
 
   @Override
-  public PagingResponse<PipelineProcess> history(UUID datasetKey, PagingRequest request) {
+  public PagingResponse<PipelineProcess> history(UUID datasetKey, Pageable pageable) {
     Objects.requireNonNull(datasetKey, "DatasetKey can't be null");
 
     long count = mapper.count(datasetKey, null);
-    List<PipelineProcess> statuses = mapper.list(datasetKey, null, request);
-    return new PagingResponse<>(request, count, statuses);
+    List<PipelineProcess> statuses = mapper.list(datasetKey, null, pageable);
+    return new PagingResponse<>(pageable, count, statuses);
   }
 
   @Override

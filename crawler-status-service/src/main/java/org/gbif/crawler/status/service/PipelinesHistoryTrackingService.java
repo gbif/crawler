@@ -1,6 +1,6 @@
 package org.gbif.crawler.status.service;
 
-import org.gbif.api.model.common.paging.PagingRequest;
+import org.gbif.api.model.common.paging.Pageable;
 import org.gbif.api.model.common.paging.PagingResponse;
 import org.gbif.crawler.status.service.model.PipelineProcess;
 import org.gbif.crawler.status.service.model.PipelineStep;
@@ -36,20 +36,20 @@ public interface PipelinesHistoryTrackingService {
 
   /**
    * Lists the history of all {@link PipelineProcess}, sorted descending from the most recent one.
-   * @param request paging request
+   * @param pageable paging request
    * @return a paged response that contains a list of {@link PipelineProcess}
    */
-  PagingResponse<PipelineProcess> history(PagingRequest request);
+  PagingResponse<PipelineProcess> history(Pageable pageable);
 
 
   /**
    * Lists the history of all {@link PipelineProcess} of a dataset, sorted descending from the most recent one.
    * @param datasetKey dataset identifier
-   * @param request paging request
+   * @param pageable paging request
    * @return a paged response that contains a list of {@link PipelineProcess}
    */
 
-  PagingResponse<PipelineProcess> history(UUID datasetKey, PagingRequest request);
+  PagingResponse<PipelineProcess> history(UUID datasetKey, Pageable pageable);
 
   /**
    * Gets the PipelineProcess identified by the the dataset and attempt identifiers.

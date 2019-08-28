@@ -1,7 +1,9 @@
 package org.gbif.crawler.ws.guice;
 
+import org.gbif.identity.inject.IdentityAccessModule;
 import org.gbif.ws.app.ConfUtils;
 import org.gbif.ws.server.guice.GbifServletListener;
+import org.gbif.ws.server.guice.WsAuthModule;
 
 import java.util.List;
 import java.util.Properties;
@@ -29,6 +31,8 @@ public class CrawlWsServletListener extends GbifServletListener {
   protected List<Module> getModules(Properties properties) {
     List<Module> modules = Lists.newArrayList();
     modules.add(new CrawlerModule(properties));
+    modules.add(new WsAuthModule(properties));
+    modules.add(new IdentityAccessModule(properties));
     return modules;
   }
 

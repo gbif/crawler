@@ -1,6 +1,6 @@
 package org.gbif.crawler.ws;
 
-import org.gbif.api.model.common.paging.PagingRequest;
+import org.gbif.api.model.common.paging.Pageable;
 import org.gbif.api.model.common.paging.PagingResponse;
 import org.gbif.crawler.status.service.PipelinesHistoryTrackingService;
 import org.gbif.crawler.status.service.RunPipelineResponse;
@@ -12,6 +12,7 @@ import org.gbif.ws.util.ExtraMediaTypes;
 import java.util.Arrays;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -59,8 +60,9 @@ public class PipelinesHistoryResource {
    * Lists the history of all pipelines.
    */
   @GET
-  public PagingResponse<PipelineProcess> history(@Context PagingRequest pagingRequest) {
-    return historyTrackingService.history(pagingRequest);
+  @RolesAllowed("REGISTRY_ADMIN")
+  public PagingResponse<PipelineProcess> history(@Context Pageable pageable) {
+    return historyTrackingService.history(pageable);
   }
 
   /**
@@ -68,8 +70,9 @@ public class PipelinesHistoryResource {
    */
   @GET
   @Path("{datasetKey}")
-  public PagingResponse<PipelineProcess> history(@PathParam("datasetKey") String datasetKey, @Context PagingRequest pagingRequest) {
-    return historyTrackingService.history(UUID.fromString(datasetKey), pagingRequest);
+  @RolesAllowed("REGISTRY_ADMIN")
+  public PagingResponse<PipelineProcess> history(@PathParam("datasetKey") String datasetKey, @Context Pageable pageable) {
+    return historyTrackingService.history(UUID.fromString(datasetKey), pageable);
   }
 
   /**
@@ -87,7 +90,7 @@ public class PipelinesHistoryResource {
   @POST
   @Path("{datasetKey}/{attempt}")
   public Response runPipelineAttempt(@PathParam("datasetKey") String datasetKey, @PathParam("attempt") String attempt,
-                                                @QueryParam("steps") String steps, @QueryParam("reason") String reason) {
+                                     @QueryParam("steps") String steps, @QueryParam("reason") String reason) {
 
     return  toHttpResponse(historyTrackingService.runPipelineAttempt(UUID.fromString(datasetKey),
                                                                                         Integer.parseInt(attempt),
@@ -102,7 +105,7 @@ public class PipelinesHistoryResource {
   @POST
   @Path("process/{processKey}")
   @Consumes(MediaType.APPLICATION_JSON)
-  public PipelineStep addPipelineStep(@PathParam("processKey") String processKey, @Context PipelineStep pipelineStep) {
+  public PipelineStep addPipelineStep(@PathParam("processKey") String processKey, PipelineStep pipelineStep) {
     return historyTrackingService.addPipelineStep(Long.parseLong(processKey), pipelineStep);
   }
 
@@ -123,7 +126,7 @@ public class PipelinesHistoryResource {
   @POST
   @Path("{datasetKey}")
   public Response runPipelineAttempt(@PathParam("datasetKey") String datasetKey, @QueryParam("steps") String steps,
-                                 @QueryParam("reason") String reason) {
+                                     @QueryParam("reason") String reason) {
     return toHttpResponse(historyTrackingService.runLastAttempt(UUID.fromString(datasetKey),
                                                                 Arrays.stream(steps.split(","))
                                                                   .map(StepType::valueOf)
