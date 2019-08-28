@@ -34,6 +34,9 @@ public interface PipelinesHistoryTrackingService {
    */
   RunPipelineResponse runPipelineAttempt(UUID datasetKey, Integer attempt, Set<StepType> steps, String reason);
 
+
+  RunPipelineResponse runLastAttempt(Set<StepType> steps, String reason);
+
   /**
    * Lists the history of all {@link PipelineProcess}, sorted descending from the most recent one.
    * @param pageable paging request

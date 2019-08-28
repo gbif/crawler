@@ -69,6 +69,17 @@ public class PipelinesHistoryResource {
   }
 
   /**
+   * Lists the history of all pipelines.
+   */
+  @POST
+  @RolesAllowed({REGISTRY_ADMIN, REGISTRY_EDITOR})
+  public Response all(@QueryParam("steps") String steps, @QueryParam("reason") String reason) {
+    return toHttpResponse(historyTrackingService.runLastAttempt(Arrays.stream(steps.split(","))
+                                                                  .map(StepType::valueOf)
+                                                                  .collect(Collectors.toSet()), reason));
+  }
+
+  /**
    * Lists teh history of a dataset.
    */
   @GET

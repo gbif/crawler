@@ -1,7 +1,10 @@
 package org.gbif.crawler.status.service.impl;
 
 import org.gbif.api.model.common.paging.Pageable;
+import org.gbif.api.model.common.paging.PagingRequest;
 import org.gbif.api.model.common.paging.PagingResponse;
+import org.gbif.api.model.registry.Dataset;
+import org.gbif.api.service.registry.DatasetService;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.*;
 import org.gbif.crawler.status.service.PipelinesHistoryTrackingService;
@@ -50,17 +53,41 @@ public class PipelinesCoordinatorTrackingServiceImpl implements PipelinesHistory
   //MyBatis mapper
   private final PipelineProcessMapper mapper;
 
+  private final DatasetService datasetService;
+
 
   @Inject
-  public PipelinesCoordinatorTrackingServiceImpl(MessagePublisher publisher, PipelineProcessMapper mapper) {
+  public PipelinesCoordinatorTrackingServiceImpl(MessagePublisher publisher, PipelineProcessMapper mapper, DatasetService datasetService) {
     this.publisher = publisher;
     this.mapper = mapper;
+    this.datasetService = datasetService;
   }
 
   @Override
   public RunPipelineResponse runLastAttempt(UUID datasetKey, Set<StepType> steps, String reason) {
     Integer lastAttempt = 0; //Get the last successful attempt of each step
     return runPipelineAttempt(datasetKey, lastAttempt, steps, reason);
+  }
+
+
+  @Override
+  public RunPipelineResponse runLastAttempt(Set<StepType> steps, String reason) {
+    PagingRequest pagingRequest = new PagingRequest(0,1000);
+    PagingResponse<Dataset> response = datasetService.list(pagingRequest);
+    try {
+      do {
+        response.getResults().forEach(dataset -> {
+          runLastAttempt(dataset.getKey(), steps, reason);
+        });
+        pagingRequest.setOffset(response.getResults().size());
+        response = datasetService.list(pagingRequest);
+      } while (response.isEndOfRecords());
+    } catch (Exception ex) {
+      LOG.error("Error processing all datasets", ex);
+      return RunPipelineResponse.builder().setResponseStatus(RunPipelineResponse.ResponseStatus.ERROR).setStep(steps).build();
+    }
+
+    return RunPipelineResponse.builder().setResponseStatus(RunPipelineResponse.ResponseStatus.OK).setStep(steps).build();
   }
 
   /**
