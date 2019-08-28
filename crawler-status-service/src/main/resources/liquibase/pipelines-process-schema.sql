@@ -14,7 +14,7 @@ CREATE TYPE pipeline_step_status AS ENUM ('SUBMITTED', 'RUNNING', 'FAILED', 'COM
 
 CREATE TYPE pipeline_step_type AS ENUM ('DWCA_TO_VERBATIM', 'XML_TO_VERBATIM', 'ABCD_TO_VERBATIM', 'VERBATIM_TO_INTERPRETED', 'INTERPRETED_TO_INDEX', 'HIVE_VIEW');
 
-CREATE TABLE pipeline_step(
+CREATE TABLE pipeline_step (
  key bigserial NOT NULL PRIMARY KEY,
  name pipeline_step_type NOT NULL,
  runner text,

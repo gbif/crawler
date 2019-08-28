@@ -12,8 +12,12 @@
     <result property="metrics" column="metrics" typeHandler="MetricInfoTypeHandler"/>
   </resultMap>
 
-  <sql id="PIPELINES_PROCESS_FIELDS_CREATE">
+  <sql id="PIPELINE_PROCESS_FIELDS_CREATE">
     dataset_key, attempt, dataset_title, created, created_by
+  </sql>
+
+  <sql id="PIPELINE_PROCESS_FIELDS_SELECT">
+    key, dataset_key, attempt, dataset_title, created, created_by
   </sql>
 
   <sql id="PIPELINES_PROCESS_VALUES_CREATE">
@@ -24,8 +28,12 @@
     #{createdBy,jdbcType=VARCHAR}
   </sql>
 
-  <sql id="STEPS_FIELDS_CREATE">
+  <sql id="STEP_FIELDS_CREATE">
     name, runner, started, finished, state, message, metrics, rerun_reason, created, created_by, pipeline_process_key
+  </sql>
+
+  <sql id="STEP_FIELDS_SELECT">
+    key, name, runner, started, finished, state, message, metrics, rerun_reasont, created, created_by, pipeline_process_key
   </sql>
 
   <sql id="STEP_VALUES_CREATE">
@@ -43,23 +51,23 @@
   </sql>
 
   <insert id="create" parameterType="PipelineProcess" useGeneratedKeys="true" keyProperty="key">
-    INSERT INTO pipeline_process(<include refid="PIPELINES_PROCESS_FIELDS_CREATE"/>)
+    INSERT INTO pipeline_process(<include refid="PIPELINE_PROCESS_FIELDS_CREATE"/>)
     VALUES (<include refid="PIPELINES_PROCESS_VALUES_CREATE"/>)
   </insert>
 
   <insert id="addPipelineStep" useGeneratedKeys="true" keyProperty="step.key">
-    INSERT INTO pipeline_step(<include refid="STEPS_FIELDS_CREATE"/>)
+    INSERT INTO pipeline_step(<include refid="STEP_FIELDS_CREATE"/>)
     VALUES (<include refid="STEP_VALUES_CREATE"/>)
   </insert>
 
   <select id="listSteps" resultMap="STEP_MAP">
-    SELECT *
+    SELECT <include refid="STEP_FIELDS_SELECT"/>
     FROM pipeline_step
     WHERE pipeline_process_key = #{key,jdbcType=BIGINT}
   </select>
 
   <select id="get" resultMap="PIPELINES_PROCESS_MAP">
-    SELECT *
+    SELECT <include refid="PIPELINE_PROCESS_FIELDS_SELECT"/>
     FROM pipeline_process
     WHERE dataset_key = #{datasetKey, jdbcType=OTHER} AND attempt = #{attempt, jdbcType=INTEGER}
   </select>
@@ -73,7 +81,7 @@
   </select>
 
   <select id="list" resultMap="PIPELINES_PROCESS_MAP">
-    SELECT *
+    SELECT <include refid="PIPELINE_PROCESS_FIELDS_SELECT"/>
     FROM pipeline_process
     <where>
       <if test="datasetKey != null">
@@ -102,7 +110,7 @@
   </select>
 
   <select id="getPipelineStep" resultMap="STEP_MAP">
-    SELECT *
+    SELECT <include refid="STEP_FIELDS_SELECT"/>
     FROM pipeline_step
     WHERE key = #{key,jdbcType=BIGINT}
   </select>
