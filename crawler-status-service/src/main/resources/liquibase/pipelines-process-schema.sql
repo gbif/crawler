@@ -12,11 +12,11 @@ CREATE TABLE pipeline_process (
 
 CREATE TYPE pipeline_step_status AS ENUM ('SUBMITTED', 'RUNNING', 'FAILED', 'COMPLETED');
 
-CREATE TYPE pipeline_step_name AS ENUM ('DWCA_TO_VERBATIM', 'XML_TO_VERBATIM', 'ABCD_TO_VERBATIM', 'VERBATIM_TO_INTERPRETED', 'INTERPRETED_TO_INDEX', 'HIVE_VIEW');
+CREATE TYPE pipeline_step AS ENUM ('DWCA_TO_VERBATIM', 'XML_TO_VERBATIM', 'ABCD_TO_VERBATIM', 'VERBATIM_TO_INTERPRETED', 'INTERPRETED_TO_INDEX', 'HIVE_VIEW');
 
 CREATE TABLE pipeline_step(
  key bigserial NOT NULL PRIMARY KEY,
- name pipeline_step_name NOT NULL,
+ name pipeline_step NOT NULL,
  runner text,
  started timestamp with time zone,
  finished timestamp with time zone,
