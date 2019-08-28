@@ -75,8 +75,8 @@ public class BaseMapperTest {
       try (Connection connection =
           DriverManager.getConnection(
               postgresDb.getJdbcUrl(), postgresDb.getUsername(), postgresDb.getPassword())) {
-        connection.prepareStatement("DELETE FROM pipelines_step").executeUpdate();
-        connection.prepareStatement("DELETE FROM pipelines_process").executeUpdate();
+        connection.prepareStatement("DELETE FROM pipeline_step").executeUpdate();
+        connection.prepareStatement("DELETE FROM pipeline_process").executeUpdate();
       }
     } catch (ClassNotFoundException | SQLException ex) {
       throw new IllegalStateException(ex);

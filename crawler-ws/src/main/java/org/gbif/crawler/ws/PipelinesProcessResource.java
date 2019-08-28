@@ -1,15 +1,10 @@
 package org.gbif.crawler.ws;
 
 import org.gbif.crawler.pipelines.PipelinesRunningProcessService;
-import org.gbif.crawler.status.service.PipelinesHistoryTrackingService;
 import org.gbif.crawler.status.service.model.PipelineProcess;
-import org.gbif.crawler.status.service.model.StepType;
 import org.gbif.ws.util.ExtraMediaTypes;
 
-import java.util.Arrays;
 import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 

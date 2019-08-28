@@ -6,6 +6,7 @@ import org.gbif.crawler.status.service.PipelinesHistoryTrackingService;
 import org.gbif.crawler.status.service.RunPipelineResponse;
 import org.gbif.crawler.status.service.model.PipelineProcess;
 import org.gbif.crawler.status.service.model.PipelineStep;
+import org.gbif.crawler.status.service.model.PipelineWorkflow;
 import org.gbif.crawler.status.service.model.StepType;
 import org.gbif.ws.util.ExtraMediaTypes;
 
@@ -132,6 +133,12 @@ public class PipelinesHistoryResource {
                                                                   .map(StepType::valueOf)
                                                                   .collect(Collectors.toSet()),
                                                                 reason));
+  }
+
+  @POST
+  @Path("workflow/{datasetKey}/{attempt}")
+  public PipelineWorkflow getPipelineWorkflow(@PathParam("datasetKey") String datasetKey, @PathParam("attempt") String attempt) {
+    return historyTrackingService.getPipelineWorkflow(UUID.fromString(datasetKey), Integer.parseInt(attempt));
   }
 
 }

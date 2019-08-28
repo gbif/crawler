@@ -225,6 +225,9 @@ public class PipelinesCoordinatorTrackingServiceImpl implements PipelinesHistory
 
   @Override
   public PipelineWorkflow getPipelineWorkflow(UUID datasetKey, Integer attempt) {
+    Objects.requireNonNull(datasetKey, "datasetKey can't be null");
+    Objects.requireNonNull(attempt, "attempt can't be null");
+
     PipelineProcess process = mapper.get(datasetKey, attempt);
 
     // group the steps by its execution order in the workflow and then by name. This will create something
