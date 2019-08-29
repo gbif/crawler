@@ -33,7 +33,7 @@ public class PipelinesCoordinatorTrackingServiceTest {
   public void setup() throws Exception {
     // TODO: inject datasetService
     trackingService =
-        new PipelinesCoordinatorTrackingServiceImpl(messagePublisher, pipelineProcessMapper, null);
+        new PipelinesCoordinatorTrackingServiceImpl(messagePublisher, pipelineProcessMapper, null, null);
   }
 
   @Test

@@ -233,5 +233,9 @@
       <groupId>org.gbif.crawler</groupId>
       <artifactId>crawler-status-service</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.gbif.registry</groupId>
+      <artifactId>registry-ws-client</artifactId>
+    </dependency>
   </dependencies>
 </project>

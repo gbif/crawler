@@ -5,6 +5,7 @@ import org.gbif.api.model.common.paging.PagingRequest;
 import org.gbif.api.model.common.paging.PagingResponse;
 import org.gbif.api.model.registry.Dataset;
 import org.gbif.api.service.registry.DatasetService;
+import org.gbif.api.vocabulary.DatasetType;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.*;
 import org.gbif.crawler.status.service.PipelinesHistoryTrackingService;
@@ -15,6 +16,7 @@ import org.gbif.crawler.status.service.persistence.PipelineProcessMapper;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 
@@ -35,6 +37,9 @@ import org.slf4j.LoggerFactory;
 public class PipelinesCoordinatorTrackingServiceImpl implements PipelinesHistoryTrackingService {
 
   private static Logger LOG = LoggerFactory.getLogger(PipelinesCoordinatorTrackingServiceImpl.class);
+
+  //Used to iterate over all datasets
+  private static final int PAGE_SIZE = 200;
 
   //Used to read serialized messages stored in the data base as strings.
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
@@ -57,12 +62,16 @@ public class PipelinesCoordinatorTrackingServiceImpl implements PipelinesHistory
 
   private final DatasetService datasetService;
 
+  private final MessagePublisher messagePublisher;
+
 
   @Inject
-  public PipelinesCoordinatorTrackingServiceImpl(MessagePublisher publisher, PipelineProcessMapper mapper, DatasetService datasetService) {
+  public PipelinesCoordinatorTrackingServiceImpl(MessagePublisher publisher, PipelineProcessMapper mapper,
+                                                 DatasetService datasetService, MessagePublisher messagePublisher) {
     this.publisher = publisher;
     this.mapper = mapper;
     this.datasetService = datasetService;
+    this.messagePublisher = messagePublisher;
   }
 
   @Override
@@ -71,26 +80,43 @@ public class PipelinesCoordinatorTrackingServiceImpl implements PipelinesHistory
     return runPipelineAttempt(datasetKey, lastAttempt, steps, reason, user);
   }
 
-
-  @Override
-  public RunPipelineResponse runLastAttempt(Set<StepType> steps, String reason, String user) {
-    PagingRequest pagingRequest = new PagingRequest(0,1000);
-    PagingResponse<Dataset> response = datasetService.list(pagingRequest);
+  /**
+   * Utility method to run batch jobs on all dataset elements
+   */
+  private RunPipelineResponse doOnAllDatasets(Consumer<Dataset> onDataset) {
+    PagingRequest pagingRequest = new PagingRequest(0, PAGE_SIZE);
+    PagingResponse<Dataset> response = datasetService.listByType(DatasetType.OCCURRENCE, pagingRequest);
     try {
       do {
-        response.getResults().forEach(dataset -> {
-          runLastAttempt(dataset.getKey(), steps, reason, user);
-        });
+        response.getResults().forEach(onDataset);
         pagingRequest.setOffset(response.getResults().size());
         response = datasetService.list(pagingRequest);
       } while (response.isEndOfRecords());
     } catch (Exception ex) {
       LOG.error("Error processing all datasets", ex);
-      return RunPipelineResponse.builder().setResponseStatus(RunPipelineResponse.ResponseStatus.ERROR).setStep(steps).build();
+      return RunPipelineResponse.builder().setResponseStatus(RunPipelineResponse.ResponseStatus.ERROR).build();
     }
-
-    return RunPipelineResponse.builder().setResponseStatus(RunPipelineResponse.ResponseStatus.OK).setStep(steps).build();
+    return RunPipelineResponse.builder().setResponseStatus(RunPipelineResponse.ResponseStatus.OK).build();
   }
+
+  @Override
+  public RunPipelineResponse runLastAttempt(Set<StepType> steps, String reason, String user) {
+    return RunPipelineResponse.builder(doOnAllDatasets(dataset -> runLastAttempt(dataset.getKey(), steps, reason, user)))
+                              .setStep(steps).build();
+  }
+
+  @Override
+  public RunPipelineResponse crawlAll() {
+    return doOnAllDatasets(dataset -> {
+                                         try {
+                                           messagePublisher.send(new StartCrawlMessage(dataset.getKey()));
+                                         } catch (IOException ex) {
+                                           LOG.error("Error crawling all datasets", ex);
+                                           throw new RuntimeException(ex);
+                                         }
+                                       });
+  }
+
 
   /**
    * Search the last step executed of a specific StepType.

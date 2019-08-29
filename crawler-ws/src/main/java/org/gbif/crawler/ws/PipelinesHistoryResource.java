@@ -11,6 +11,8 @@ import org.gbif.crawler.status.service.model.StepType;
 import org.gbif.ws.util.ExtraMediaTypes;
 
 import java.util.Arrays;
+import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.security.RolesAllowed;
@@ -52,7 +54,6 @@ public class PipelinesHistoryResource {
     }
 
     return Response.ok().entity(runPipelineResponse).build();
-
   }
 
   /**
@@ -64,15 +65,29 @@ public class PipelinesHistoryResource {
   }
 
   /**
+   * Parse steps argument.
+   */
+  private Set<StepType> parseSteps(String steps) {
+    Objects.requireNonNull(steps, "Steps can't be null");
+    return Arrays.stream(steps.split(","))
+                          .map(s -> StepType.valueOf(s.toUpperCase()))
+                          .collect(Collectors.toSet());
+  }
+
+  @GET
+  @Path("crawlall")
+  public Response crawlAll() {
+    return toHttpResponse(historyTrackingService.crawlAll());
+  }
+
+  /**
    * Lists the history of all pipelines.
    */
   @POST
   @RolesAllowed({REGISTRY_ADMIN, REGISTRY_EDITOR})
   public Response all(@QueryParam("steps") String steps, @QueryParam("reason") String reason, @Context SecurityContext security) {
-    return toHttpResponse(historyTrackingService.runLastAttempt(Arrays.stream(steps.split(","))
-                                                                  .map(StepType::valueOf)
-                                                                  .collect(Collectors.toSet()),reason, security.getUserPrincipal().getName()
-                                                                ));
+    return toHttpResponse(historyTrackingService.runLastAttempt(parseSteps(steps), reason,
+                                                                security.getUserPrincipal().getName()));
   }
 
   /**
@@ -110,11 +125,9 @@ public class PipelinesHistoryResource {
                                      @Context SecurityContext security) {
 
     return  toHttpResponse(historyTrackingService.runPipelineAttempt(UUID.fromString(datasetKey),
-                                                                                        Integer.parseInt(attempt),
-                                                                                        Arrays.stream(steps.split(","))
-                                                                                          .map(StepType::valueOf)
-                                                                                          .collect(Collectors.toSet()), reason,
-                                                                                        security.getUserPrincipal().getName()));
+                                                                     Integer.parseInt(attempt),
+                                                                     parseSteps(steps), reason,
+                                                                     security.getUserPrincipal().getName()));
   }
 
   /**
@@ -151,10 +164,8 @@ public class PipelinesHistoryResource {
   public Response runPipelineAttempt(@PathParam("datasetKey") String datasetKey, @QueryParam("steps") String steps,
                                      @QueryParam("reason") String reason, @Context SecurityContext security) {
     return toHttpResponse(historyTrackingService.runLastAttempt(UUID.fromString(datasetKey),
-                                                                Arrays.stream(steps.split(","))
-                                                                  .map(StepType::valueOf)
-                                                                  .collect(Collectors.toSet()),
-                                                                reason, security.getUserPrincipal().getName()));
+                                                                parseSteps(steps), reason,
+                                                                security.getUserPrincipal().getName()));
   }
 
 }

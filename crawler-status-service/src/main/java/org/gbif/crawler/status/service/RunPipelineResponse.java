@@ -66,6 +66,15 @@ public class RunPipelineResponse {
   }
 
   /**
+   * @return a new Builder instance.
+   */
+  public static Builder builder(RunPipelineResponse runPipelineResponse) {
+    Builder builder = new Builder();
+    return builder.setStep(runPipelineResponse.steps)
+                  .setResponseStatus(runPipelineResponse.responseStatus);
+  }
+
+  /**
    * Builder for {@link RunPipelineResponse}.
    */
   public static class Builder {

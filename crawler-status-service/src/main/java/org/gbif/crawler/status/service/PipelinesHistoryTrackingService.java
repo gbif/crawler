@@ -36,8 +36,20 @@ public interface PipelinesHistoryTrackingService {
    */
   RunPipelineResponse runPipelineAttempt(UUID datasetKey, Integer attempt, Set<StepType> steps, String reason, String user);
 
-
+  /**
+   * Executes the last crawl attempt for all datasets.
+   * @param steps steps to be executed
+   * @param reason textual justification of why it has to be re-executed
+   * @param user the user who is running the attempt
+   * @return the response of the execution request
+   */
   RunPipelineResponse runLastAttempt(Set<StepType> steps, String reason, String user);
+
+  /**
+   * Executes a full crawl for all datasets.
+   * @return the response of the execution request
+   */
+  RunPipelineResponse crawlAll();
 
   /**
    * Lists the history of all {@link PipelineProcess}, sorted descending from the most recent one.
