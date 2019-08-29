@@ -92,6 +92,12 @@ public class HiveViewCallback extends AbstractMessageCallback<PipelinesInterpret
           .start()
           .waitFor();
 
+        if (exitValue != 0) {
+          throw new RuntimeException("Process has been finished with exit value - " + exitValue);
+        } else {
+          LOG.info("Process has been finished with exit value - {}", exitValue);
+        }
+
         LOG.info("Process has been finished with exit value - {}, dataset - {}_{}", exitValue, datasetId, attempt);
 
       } catch (InterruptedException | IOException ex) {
