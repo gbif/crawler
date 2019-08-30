@@ -2,6 +2,8 @@ package org.gbif.crawler.pipelines;
 
 import java.util.Set;
 
+import org.gbif.api.model.crawler.pipelines.StepRunner;
+import org.gbif.api.model.crawler.pipelines.StepType;
 import org.gbif.common.messaging.api.Message;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.PipelineBasedMessage;
@@ -21,31 +23,12 @@ import org.slf4j.MDC;
 import org.slf4j.MDC.MDCCloseable;
 
 import static org.gbif.crawler.constants.PipelinesNodePaths.getPipelinesInfoPath;
-import static org.gbif.crawler.pipelines.PipelineCallback.Steps.ALL;
 
 /**
  * Common class for building and handling a pipeline step. Contains {@link Builder} to simplify the creation process
  * and main handling process. Please see the main method {@link PipelineCallback#handleMessage}
  */
 public class PipelineCallback {
-
-  // General steps, each step is a microservice
-  public enum Steps {
-    ALL,
-    DWCA_TO_VERBATIM,
-    XML_TO_VERBATIM,
-    ABCD_TO_VERBATIM,
-    VERBATIM_TO_INTERPRETED,
-    INTERPRETED_TO_INDEX,
-    HIVE_VIEW
-  }
-
-  // General runners, STANDALONE - run an app using local resources, DISTRIBUTED - run an app using YARN cluster
-  public enum Runner {
-    STANDALONE,
-    DISTRIBUTED,
-    UNKNOWN
-  }
 
   private static final Logger LOG = LoggerFactory.getLogger(PipelineCallback.class);
 
@@ -69,7 +52,7 @@ public class PipelineCallback {
     private CuratorFramework curator;
     private PipelineBasedMessage incomingMessage;
     private Message outgoingMessage;
-    private String pipelinesStepName;
+    private StepType pipelinesStepName;
     private String zkRootElementPath;
     private Runnable runnable;
 
@@ -106,9 +89,9 @@ public class PipelineCallback {
     }
 
     /**
-     * @param pipelinesStepName the next pipeline step name - {@link Steps}
+     * @param pipelinesStepName the next pipeline step name - {@link StepType}
      */
-    public Builder pipelinesStepName(String pipelinesStepName) {
+    public Builder pipelinesStepName(StepType pipelinesStepName) {
       this.pipelinesStepName = pipelinesStepName;
       return this;
     }
@@ -152,7 +135,7 @@ public class PipelineCallback {
     Set<String> steps = inMessage.getPipelineSteps();
 
     // Check the step
-    if (!steps.contains(b.pipelinesStepName) && !steps.contains(ALL.name())) {
+    if (!steps.contains(b.pipelinesStepName.name()) && !steps.contains(StepType.ALL.name())) {
       return;
     }
 
@@ -202,7 +185,7 @@ public class PipelineCallback {
       }
 
       // Change zookeeper counter for passed steps
-      int size = steps.contains(ALL.name()) ? Steps.values().length - 3 : steps.size();
+      int size = steps.contains(StepType.ALL.name()) ? StepType.values().length - 3 : steps.size();
       ZookeeperUtils.checkMonitoringById(b.curator, size, crawlId);
 
     } catch (Exception ex) {
@@ -222,7 +205,7 @@ public class PipelineCallback {
     if (inMessage instanceof PipelinesAbcdMessage
         || inMessage instanceof PipelinesXmlMessage
         || inMessage instanceof PipelinesDwcaMessage) {
-      return Runner.STANDALONE.name();
+      return StepRunner.STANDALONE.name();
     }
 
     if (inMessage instanceof PipelinesIndexedMessage) {
@@ -237,6 +220,6 @@ public class PipelineCallback {
       return ((PipelinesVerbatimMessage) inMessage).getRunner();
     }
 
-    return Runner.UNKNOWN.name();
+    return StepRunner.UNKNOWN.name();
   }
 }

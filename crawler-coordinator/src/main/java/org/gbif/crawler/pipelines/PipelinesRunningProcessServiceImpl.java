@@ -1,18 +1,16 @@
 package org.gbif.crawler.pipelines;
 
 import org.gbif.api.exception.ServiceUnavailableException;
+import org.gbif.api.model.crawler.pipelines.PipelineProcess;
+import org.gbif.api.model.crawler.pipelines.PipelineStep;
+import org.gbif.api.model.crawler.pipelines.StepRunner;
+import org.gbif.api.model.crawler.pipelines.StepType;
 import org.gbif.api.service.registry.DatasetService;
 import org.gbif.common.messaging.api.Message;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.PipelineBasedMessage;
 import org.gbif.crawler.constants.CrawlerNodePaths;
 import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
-import org.gbif.crawler.status.service.model.PipelineProcess;
-import org.gbif.crawler.status.service.model.PipelineStep;
-import org.gbif.crawler.status.service.model.PipelineStep.MetricInfo;
-import org.gbif.crawler.status.service.model.PipelineStep.Status;
-import org.gbif.crawler.status.service.model.StepRunner;
-import org.gbif.crawler.status.service.model.StepType;
 
 import java.text.DecimalFormat;
 import java.time.LocalDate;
@@ -47,7 +45,8 @@ import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.gbif.crawler.constants.PipelinesNodePaths.ALL_STEPS;
+import static org.gbif.api.model.crawler.pipelines.PipelineStep.MetricInfo;
+import static org.gbif.api.model.crawler.pipelines.PipelineStep.Status;
 import static org.gbif.crawler.constants.PipelinesNodePaths.PIPELINES_ROOT;
 import static org.gbif.crawler.constants.PipelinesNodePaths.getPipelinesInfoPath;
 
@@ -198,7 +197,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
 
   @Override
   public Set<String> getAllStepsNames() {
-    return ALL_STEPS;
+    return StepType.ALL_STEPS.stream().map(StepType::getLabel).collect(Collectors.toSet());
   }
 
   @Override
@@ -278,26 +277,25 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
 
   /** Gets step info from ZK */
   private Set<PipelineStep> getStepInfo(String crawlId) {
-    return ALL_STEPS.stream()
+    return StepType.ALL_STEPS.stream()
         .map(
-            path -> {
-              // TODO: use same enum
-              PipelineStep step = new PipelineStep().setName(StepType.valueOf(path));
+            stepType -> {
+              PipelineStep step = new PipelineStep().setType(stepType);
 
               try {
                 Optional<LocalDateTime> startDateOpt =
-                    getAsDate(crawlId, Fn.START_DATE.apply(path));
-                Optional<LocalDateTime> endDateOpt = getAsDate(crawlId, Fn.END_DATE.apply(path));
+                    getAsDate(crawlId, Fn.START_DATE.apply(stepType.getLabel()));
+                Optional<LocalDateTime> endDateOpt = getAsDate(crawlId, Fn.END_DATE.apply(stepType.getLabel()));
                 Optional<Boolean> isErrorOpt =
-                    getAsBoolean(crawlId, Fn.ERROR_AVAILABILITY.apply(path));
+                    getAsBoolean(crawlId, Fn.ERROR_AVAILABILITY.apply(stepType.getLabel()));
                 Optional<String> errorMessageOpt =
-                    getAsString(crawlId, Fn.ERROR_MESSAGE.apply(path));
+                    getAsString(crawlId, Fn.ERROR_MESSAGE.apply(stepType.getLabel()));
                 Optional<Boolean> isSuccessful =
-                    getAsBoolean(crawlId, Fn.SUCCESSFUL_AVAILABILITY.apply(path));
+                    getAsBoolean(crawlId, Fn.SUCCESSFUL_AVAILABILITY.apply(stepType.getLabel()));
                 Optional<String> successfulMessageOpt =
-                    getAsString(crawlId, Fn.SUCCESSFUL_MESSAGE.apply(path));
+                    getAsString(crawlId, Fn.SUCCESSFUL_MESSAGE.apply(stepType.getLabel()));
 
-                getAsString(crawlId, Fn.RUNNER.apply(path)).ifPresent(r -> step.setRunner(StepRunner.valueOf(r)));
+                getAsString(crawlId, Fn.RUNNER.apply(stepType.getLabel())).ifPresent(r -> step.setRunner(StepRunner.valueOf(r)));
 
                 // dates
                 step.setStarted(startDateOpt.orElse(endDateOpt.orElse(null)));

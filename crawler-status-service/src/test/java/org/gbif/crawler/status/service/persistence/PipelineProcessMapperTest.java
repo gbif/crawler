@@ -1,10 +1,9 @@
 package org.gbif.crawler.status.service.persistence;
 
-import org.gbif.crawler.status.service.model.PipelineProcess;
-import org.gbif.crawler.status.service.model.PipelineStep;
-import org.gbif.crawler.status.service.model.PipelineStep.Status;
-import org.gbif.crawler.status.service.model.StepRunner;
-import org.gbif.crawler.status.service.model.StepType;
+import org.gbif.api.model.crawler.pipelines.PipelineProcess;
+import org.gbif.api.model.crawler.pipelines.PipelineStep;
+import org.gbif.api.model.crawler.pipelines.StepRunner;
+import org.gbif.api.model.crawler.pipelines.StepType;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -16,6 +15,9 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.postgresql.util.PSQLException;
+
+import static org.gbif.api.model.crawler.pipelines.PipelineStep.MetricInfo;
+import static org.gbif.api.model.crawler.pipelines.PipelineStep.Status;
 
 import static org.hamcrest.CoreMatchers.isA;
 import static org.junit.Assert.assertEquals;
@@ -95,13 +97,13 @@ public class PipelineProcessMapperTest extends BaseMapperTest {
     // add a step
     PipelineStep step =
         new PipelineStep()
-            .setName(StepType.ABCD_TO_VERBATIM)
+            .setType(StepType.ABCD_TO_VERBATIM)
             .setRunner(StepRunner.STANDALONE)
             .setState(Status.COMPLETED)
             .setStarted(LocalDateTime.now().minusMinutes(1))
             .setFinished(LocalDateTime.now())
             .setMessage("message")
-            .setMetrics(Collections.singleton(new PipelineStep.MetricInfo("n", "v")))
+            .setMetrics(Collections.singleton(new MetricInfo("n", "v")))
             .setCreatedBy(TEST_USER);
     pipelineProcessMapper.addPipelineStep(process.getKey(), step);
     assertTrue(step.getKey() > 0);
@@ -156,8 +158,8 @@ public class PipelineProcessMapperTest extends BaseMapperTest {
     // add a step
     PipelineStep step =
         new PipelineStep()
-            .setName(StepType.ABCD_TO_VERBATIM)
-            .setState(Status.SUBMITTED)
+            .setType(StepType.ABCD_TO_VERBATIM)
+            .setState(Status.RUNNING)
             .setCreatedBy(TEST_USER);
     pipelineProcessMapper.addPipelineStep(process.getKey(), step);
 
@@ -179,12 +181,12 @@ public class PipelineProcessMapperTest extends BaseMapperTest {
     // add a step
     PipelineStep step =
         new PipelineStep()
-            .setName(StepType.ABCD_TO_VERBATIM)
+            .setType(StepType.ABCD_TO_VERBATIM)
             .setStarted(LocalDateTime.now())
-            .setState(Status.SUBMITTED)
+            .setState(Status.RUNNING)
             .setCreatedBy(TEST_USER);
     pipelineProcessMapper.addPipelineStep(process.getKey(), step);
-    assertEquals(Status.SUBMITTED, pipelineProcessMapper.getPipelineStep(step.getKey()).getState());
+    assertEquals(Status.RUNNING, pipelineProcessMapper.getPipelineStep(step.getKey()).getState());
 
     // change step state
     step.setFinished(LocalDateTime.now().plusHours(1));

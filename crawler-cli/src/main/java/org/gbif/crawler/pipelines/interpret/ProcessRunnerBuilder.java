@@ -1,5 +1,8 @@
 package org.gbif.crawler.pipelines.interpret;
 
+import org.gbif.api.model.crawler.pipelines.StepRunner;
+import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -8,9 +11,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.function.BiFunction;
-
-import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage;
-import org.gbif.crawler.pipelines.PipelineCallback.Runner;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,10 +66,10 @@ final class ProcessRunnerBuilder {
   }
 
   ProcessBuilder build() {
-    if (Runner.STANDALONE.name().equals(config.processRunner)) {
+    if (StepRunner.STANDALONE.name().equals(config.processRunner)) {
       return buildDirect();
     }
-    if (Runner.DISTRIBUTED.name().equals(config.processRunner)) {
+    if (StepRunner.DISTRIBUTED.name().equals(config.processRunner)) {
       return buildSpark();
     }
     throw new IllegalArgumentException("Wrong runner type - " + config.processRunner);

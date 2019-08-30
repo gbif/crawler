@@ -1,23 +1,22 @@
 package org.gbif.crawler.pipelines.balancer.handler;
 
-import java.io.IOException;
-
+import org.gbif.api.model.crawler.pipelines.StepRunner;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.PipelinesBalancerMessage;
 import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage;
 import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage.ValidationResult;
 import org.gbif.crawler.pipelines.HdfsUtils;
-import org.gbif.crawler.pipelines.PipelineCallback.Runner;
 import org.gbif.crawler.pipelines.balancer.BalancerConfiguration;
 import org.gbif.crawler.pipelines.dwca.DwcaToAvroConfiguration;
 import org.gbif.pipelines.common.PipelinesVariables.Metrics;
 import org.gbif.pipelines.common.PipelinesVariables.Pipeline;
 import org.gbif.pipelines.common.PipelinesVariables.Pipeline.Conversion;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.io.IOException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.gbif.pipelines.common.PipelinesVariables.Pipeline.Interpretation.RecordType.METADATA;
 
@@ -73,24 +72,24 @@ public class VerbatimMessageHandler {
    * Strategy 1 - Chooses a runner type by number of records in a dataset
    * Strategy 2 - Chooses a runner type by calculating verbatim.avro file size
    */
-  private static Runner computeRunner(BalancerConfiguration config, PipelinesVerbatimMessage message,
-      long recordsNumber)
+  private static StepRunner computeRunner(BalancerConfiguration config, PipelinesVerbatimMessage message,
+                                          long recordsNumber)
       throws IOException {
 
     String datasetId = message.getDatasetUuid().toString();
     String attempt = String.valueOf(message.getAttempt());
 
-    Runner runner;
+    StepRunner runner;
 
     if (message.getInterpretTypes().size() == 1 && message.getInterpretTypes().contains(METADATA.name())) {
-      runner = Runner.STANDALONE;
+      runner = StepRunner.STANDALONE;
       LOG.info("Interpret type is METADATA only, Spark Runner type - {}", runner);
       return runner;
     }
 
     // Strategy 1: Chooses a runner type by number of records in a dataset
     if (recordsNumber > 0) {
-      runner = recordsNumber >= config.switchRecordsNumber ? Runner.DISTRIBUTED : Runner.STANDALONE;
+      runner = recordsNumber >= config.switchRecordsNumber ? StepRunner.DISTRIBUTED : StepRunner.STANDALONE;
       LOG.info("Records number - {}, Spark Runner type - {}", recordsNumber, runner);
       return runner;
     }
@@ -101,7 +100,7 @@ public class VerbatimMessageHandler {
     long fileSizeByte = HdfsUtils.getFileSizeByte(verbatimPath, config.hdfsSiteConfig);
     if (fileSizeByte > 0) {
       long switchFileSizeByte = config.switchFileSizeMb * 1024L * 1024L;
-      runner = fileSizeByte > switchFileSizeByte ? Runner.DISTRIBUTED : Runner.STANDALONE;
+      runner = fileSizeByte > switchFileSizeByte ? StepRunner.DISTRIBUTED : StepRunner.STANDALONE;
       LOG.info("File size - {}, Spark Runner type - {}", fileSizeByte, runner);
       return runner;
     }

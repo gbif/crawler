@@ -29,15 +29,15 @@
   </sql>
 
   <sql id="STEP_FIELDS_CREATE">
-    name, runner, started, finished, state, message, metrics, rerun_reason, created_by, pipeline_process_key
+    type, runner, started, finished, state, message, metrics, rerun_reason, created_by, pipeline_process_key
   </sql>
 
   <sql id="STEP_FIELDS_SELECT">
-    key, name, runner, started, finished, state, message, metrics, rerun_reason, created_by, modified, modified_by, pipeline_process_key
+    key, type, runner, started, finished, state, message, metrics, rerun_reason, created_by, modified, modified_by, pipeline_process_key
   </sql>
 
   <sql id="STEP_VALUES_CREATE">
-    #{step.name,jdbcType=OTHER},
+    #{step.type,jdbcType=OTHER},
     #{step.runner,jdbcType=OTHER},
     now(), <!-- started -->
     #{step.finished,jdbcType=OTHER},

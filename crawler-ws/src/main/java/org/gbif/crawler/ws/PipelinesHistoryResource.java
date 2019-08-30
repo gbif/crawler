@@ -2,12 +2,12 @@ package org.gbif.crawler.ws;
 
 import org.gbif.api.model.common.paging.Pageable;
 import org.gbif.api.model.common.paging.PagingResponse;
+import org.gbif.api.model.crawler.pipelines.PipelineProcess;
+import org.gbif.api.model.crawler.pipelines.PipelineStep;
+import org.gbif.api.model.crawler.pipelines.PipelineWorkflow;
+import org.gbif.api.model.crawler.pipelines.StepType;
 import org.gbif.crawler.status.service.PipelinesHistoryTrackingService;
 import org.gbif.crawler.status.service.RunPipelineResponse;
-import org.gbif.crawler.status.service.model.PipelineProcess;
-import org.gbif.crawler.status.service.model.PipelineStep;
-import org.gbif.crawler.status.service.model.PipelineWorkflow;
-import org.gbif.crawler.status.service.model.StepType;
 import org.gbif.ws.util.ExtraMediaTypes;
 
 import java.util.Arrays;

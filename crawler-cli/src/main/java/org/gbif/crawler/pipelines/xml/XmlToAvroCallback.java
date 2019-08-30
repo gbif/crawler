@@ -1,5 +1,15 @@
 package org.gbif.crawler.pipelines.xml;
 
+import org.gbif.api.model.crawler.FinishReason;
+import org.gbif.api.model.crawler.pipelines.StepType;
+import org.gbif.api.vocabulary.EndpointType;
+import org.gbif.common.messaging.AbstractMessageCallback;
+import org.gbif.common.messaging.api.MessagePublisher;
+import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage;
+import org.gbif.common.messaging.api.messages.PipelinesXmlMessage;
+import org.gbif.converters.XmlToAvroConverter;
+import org.gbif.crawler.pipelines.PipelineCallback;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -11,25 +21,13 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-import org.gbif.api.model.crawler.FinishReason;
-import org.gbif.api.vocabulary.EndpointType;
-import org.gbif.common.messaging.AbstractMessageCallback;
-import org.gbif.common.messaging.api.MessagePublisher;
-import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage;
-import org.gbif.common.messaging.api.messages.PipelinesXmlMessage;
-import org.gbif.converters.XmlToAvroConverter;
-import org.gbif.crawler.pipelines.PipelineCallback;
-import org.gbif.crawler.pipelines.PipelineCallback.Steps;
-
+import com.google.common.collect.Sets;
 import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.slf4j.MDC.MDCCloseable;
 
-import com.google.common.collect.Sets;
-
-import static org.gbif.crawler.constants.PipelinesNodePaths.XML_TO_VERBATIM;
 import static org.gbif.crawler.pipelines.HdfsUtils.buildOutputPath;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -83,10 +81,10 @@ public class XmlToAvroCallback extends AbstractMessageCallback<PipelinesXmlMessa
 
       if (message.getPipelineSteps().isEmpty()) {
         message.setPipelineSteps(Sets.newHashSet(
-            Steps.XML_TO_VERBATIM.name(),
-            Steps.VERBATIM_TO_INTERPRETED.name(),
-            Steps.INTERPRETED_TO_INDEX.name(),
-            Steps.HIVE_VIEW.name()
+            StepType.XML_TO_VERBATIM.name(),
+            StepType.VERBATIM_TO_INTERPRETED.name(),
+            StepType.INTERPRETED_TO_INDEX.name(),
+            StepType.HIVE_VIEW.name()
         ));
       }
 
@@ -100,8 +98,8 @@ public class XmlToAvroCallback extends AbstractMessageCallback<PipelinesXmlMessa
           .incomingMessage(message)
           .outgoingMessage(new PipelinesVerbatimMessage(datasetId, attempt, config.interpretTypes, steps, endpointType))
           .curator(curator)
-          .zkRootElementPath(XML_TO_VERBATIM)
-          .pipelinesStepName(Steps.XML_TO_VERBATIM.name())
+          .zkRootElementPath(StepType.XML_TO_VERBATIM.getLabel())
+          .pipelinesStepName(StepType.XML_TO_VERBATIM)
           .publisher(publisher)
           .runnable(runnable)
           .build()

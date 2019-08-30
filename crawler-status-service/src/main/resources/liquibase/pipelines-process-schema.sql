@@ -10,7 +10,7 @@ CREATE TABLE pipeline_process (
  UNIQUE(dataset_key, attempt)
 );
 
-CREATE TYPE pipeline_step_status AS ENUM ('SUBMITTED', 'RUNNING', 'FAILED', 'COMPLETED');
+CREATE TYPE pipeline_step_status AS ENUM ('RUNNING', 'FAILED', 'COMPLETED');
 
 CREATE TYPE pipeline_step_type AS ENUM ('DWCA_TO_VERBATIM', 'XML_TO_VERBATIM', 'ABCD_TO_VERBATIM', 'VERBATIM_TO_INTERPRETED', 'INTERPRETED_TO_INDEX', 'HIVE_VIEW');
 
@@ -18,7 +18,7 @@ CREATE TYPE pipeline_step_runner AS ENUM ('STANDALONE', 'DISTRIBUTED', 'UNKNOWN'
 
 CREATE TABLE pipeline_step (
  key bigserial NOT NULL PRIMARY KEY,
- name pipeline_step_type NOT NULL,
+ type pipeline_step_type NOT NULL,
  runner pipeline_step_runner,
  started timestamp with time zone NOT NULL DEFAULT now(),
  finished timestamp with time zone,

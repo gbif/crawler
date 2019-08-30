@@ -7,15 +7,15 @@ import java.util.List;
 import org.gbif.common.messaging.api.Message;
 import org.gbif.common.messaging.api.MessagePublisher;
 
-public class MessagePublisherStab implements MessagePublisher {
+public class MessagePublisherStub implements MessagePublisher {
 
   private List<Message> messages = new ArrayList<>();
 
-  private MessagePublisherStab() {
+  private MessagePublisherStub() {
   }
 
-  public static MessagePublisherStab create() {
-    return new MessagePublisherStab();
+  public static MessagePublisherStub create() {
+    return new MessagePublisherStub();
   }
 
   @Override

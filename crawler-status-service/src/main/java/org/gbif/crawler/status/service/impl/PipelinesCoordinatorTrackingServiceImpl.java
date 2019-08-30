@@ -3,6 +3,7 @@ package org.gbif.crawler.status.service.impl;
 import org.gbif.api.model.common.paging.Pageable;
 import org.gbif.api.model.common.paging.PagingRequest;
 import org.gbif.api.model.common.paging.PagingResponse;
+import org.gbif.api.model.crawler.pipelines.*;
 import org.gbif.api.model.registry.Dataset;
 import org.gbif.api.service.registry.DatasetService;
 import org.gbif.api.vocabulary.DatasetType;
@@ -10,7 +11,6 @@ import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.*;
 import org.gbif.crawler.status.service.PipelinesHistoryTrackingService;
 import org.gbif.crawler.status.service.RunPipelineResponse;
-import org.gbif.crawler.status.service.model.*;
 import org.gbif.crawler.status.service.persistence.PipelineProcessMapper;
 
 import java.io.IOException;
@@ -36,7 +36,7 @@ import org.slf4j.LoggerFactory;
  */
 public class PipelinesCoordinatorTrackingServiceImpl implements PipelinesHistoryTrackingService {
 
-  private static Logger LOG = LoggerFactory.getLogger(PipelinesCoordinatorTrackingServiceImpl.class);
+  private static final Logger LOG = LoggerFactory.getLogger(PipelinesCoordinatorTrackingServiceImpl.class);
 
   //Used to iterate over all datasets
   private static final int PAGE_SIZE = 200;
@@ -62,16 +62,13 @@ public class PipelinesCoordinatorTrackingServiceImpl implements PipelinesHistory
 
   private final DatasetService datasetService;
 
-  private final MessagePublisher messagePublisher;
-
 
   @Inject
   public PipelinesCoordinatorTrackingServiceImpl(MessagePublisher publisher, PipelineProcessMapper mapper,
-                                                 DatasetService datasetService, MessagePublisher messagePublisher) {
+                                                 DatasetService datasetService) {
     this.publisher = publisher;
     this.mapper = mapper;
     this.datasetService = datasetService;
-    this.messagePublisher = messagePublisher;
   }
 
   @Override
@@ -109,7 +106,7 @@ public class PipelinesCoordinatorTrackingServiceImpl implements PipelinesHistory
   public RunPipelineResponse crawlAll() {
     return doOnAllDatasets(dataset -> {
                                          try {
-                                           messagePublisher.send(new StartCrawlMessage(dataset.getKey()));
+                                           publisher.send(new StartCrawlMessage(dataset.getKey()));
                                          } catch (IOException ex) {
                                            LOG.error("Error crawling all datasets", ex);
                                            throw new RuntimeException(ex);
@@ -126,15 +123,15 @@ public class PipelinesCoordinatorTrackingServiceImpl implements PipelinesHistory
    */
   private Optional<PipelineStep> getLatestSuccessfulStep(PipelineProcess pipelineProcess, StepType step) {
     return  pipelineProcess.getSteps().stream()
-              .filter(s -> step.equals(s.getName()))
+              .filter(s -> step.equals(s.getType()))
               .max(Comparator.comparing(PipelineStep::getStarted));
   }
 
   /**
    * Calculates the general state of a {@link PipelineProcess}.
-   * If one the latest steps of a specific {@link StepType} has a {@link org.gbif.crawler.status.service.model.PipelineStep.Status#FAILED}, the process is considered as FAILED.
-   * If all the latest steps of all {@link StepType} have the same {@link org.gbif.crawler.status.service.model.PipelineStep.Status}, that status  used for the {@link PipelineProcess}.
-   * If it has step in {@link org.gbif.crawler.status.service.model.PipelineStep.Status#RUNNING} it is decided as the process status, otherwise is {@link org.gbif.crawler.status.service.model.PipelineStep.Status#COMPLETED}
+   * If one the latest steps of a specific {@link StepType} has a {@link PipelineStep.Status#FAILED}, the process is considered as FAILED.
+   * If all the latest steps of all {@link StepType} have the same {@link PipelineStep.Status}, that status  used for the {@link PipelineProcess}.
+   * If it has step in {@link PipelineStep.Status#RUNNING} it is decided as the process status, otherwise is {@link PipelineStep.Status#COMPLETED}
    *
    * @param pipelineProcess that contains all the steps.
    * @return the calculated status of a {@link PipelineProcess}
@@ -146,7 +143,7 @@ public class PipelinesCoordinatorTrackingServiceImpl implements PipelinesHistory
     for (StepType stepType : StepType.values()) {
       pipelineProcess.getSteps()
         .stream()
-        .filter(s -> stepType == s.getName())
+        .filter(s -> stepType == s.getType())
         .max(Comparator.comparing(PipelineStep::getStarted))
         .ifPresent(step -> statuses.add(step.getState()));
     }
@@ -158,10 +155,8 @@ public class PipelinesCoordinatorTrackingServiceImpl implements PipelinesHistory
       //Checks the states by priority
       if (statuses.contains(PipelineStep.Status.FAILED)) {
         return PipelineStep.Status.FAILED;
-      } else if(statuses.contains(PipelineStep.Status.RUNNING)) {
+      } else if (statuses.contains(PipelineStep.Status.RUNNING)) {
         return PipelineStep.Status.RUNNING;
-      } else if(statuses.contains(PipelineStep.Status.SUBMITTED)) {
-        return PipelineStep.Status.SUBMITTED;
       } else {
         return PipelineStep.Status.COMPLETED;
       }
@@ -196,7 +191,7 @@ public class PipelinesCoordinatorTrackingServiceImpl implements PipelinesHistory
     PipelineProcess status = mapper.get(datasetKey, attempt);
 
     //Checks that the pipelines is not in RUNNING state
-    if(getStatus(status) == PipelineStep.Status.RUNNING || getStatus(status) == PipelineStep.Status.SUBMITTED) {
+    if(getStatus(status) == PipelineStep.Status.RUNNING) {
       return new RunPipelineResponse.Builder()
               .setResponseStatus(RunPipelineResponse.ResponseStatus.PIPELINE_IN_SUBMITTED)
               .setStep(steps)
@@ -308,11 +303,11 @@ public class PipelinesCoordinatorTrackingServiceImpl implements PipelinesHistory
         process.getSteps().stream()
             .collect(
                 Collectors.groupingBy(
-                    s -> s.getName().getExecutionOrder(),
+                    s -> s.getType().getExecutionOrder(),
                     () ->
                         new TreeMap<Integer, Map<StepType, List<PipelineStep>>>(
                             Comparator.reverseOrder()),
-                    Collectors.groupingBy(PipelineStep::getName)));
+                    Collectors.groupingBy(PipelineStep::getType)));
 
     // iterate from steps in the last position to the ones in the first one so that we can create
     // the worfklow hierarchy

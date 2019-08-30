@@ -1,14 +1,6 @@
 package org.gbif.crawler.pipelines.indexing;
 
-import java.io.IOException;
-import java.time.Instant;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-
+import org.gbif.api.model.crawler.pipelines.StepType;
 import org.gbif.api.model.registry.Dataset;
 import org.gbif.api.service.registry.DatasetService;
 import org.gbif.common.messaging.AbstractMessageCallback;
@@ -17,12 +9,19 @@ import org.gbif.common.messaging.api.messages.PipelinesIndexedMessage;
 import org.gbif.common.messaging.api.messages.PipelinesInterpretedMessage;
 import org.gbif.crawler.pipelines.HdfsUtils;
 import org.gbif.crawler.pipelines.PipelineCallback;
-import org.gbif.crawler.pipelines.PipelineCallback.Steps;
 import org.gbif.crawler.pipelines.dwca.DwcaToAvroConfiguration;
 import org.gbif.pipelines.common.PipelinesVariables.Metrics;
 import org.gbif.pipelines.common.PipelinesVariables.Pipeline.Interpretation;
 import org.gbif.pipelines.common.PipelinesVariables.Pipeline.Interpretation.RecordType;
 
+import java.io.IOException;
+import java.time.Instant;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Strings;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -32,12 +31,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.slf4j.MDC.MDCCloseable;
-
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Strings;
-
-import static org.gbif.crawler.constants.PipelinesNodePaths.INTERPRETED_TO_INDEX;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -94,8 +87,8 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
           .incomingMessage(message)
           .outgoingMessage(new PipelinesIndexedMessage(datasetId, attempt, steps))
           .curator(curator)
-          .zkRootElementPath(INTERPRETED_TO_INDEX)
-          .pipelinesStepName(Steps.INTERPRETED_TO_INDEX.name())
+          .zkRootElementPath(StepType.INTERPRETED_TO_INDEX.getLabel())
+          .pipelinesStepName(StepType.INTERPRETED_TO_INDEX)
           .publisher(publisher)
           .runnable(runnable)
           .build()

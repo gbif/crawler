@@ -1,8 +1,9 @@
 package org.gbif.crawler.status.service;
 
+import org.gbif.api.model.crawler.pipelines.*;
+import org.gbif.api.service.registry.DatasetService;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.crawler.status.service.impl.PipelinesCoordinatorTrackingServiceImpl;
-import org.gbif.crawler.status.service.model.*;
 import org.gbif.crawler.status.service.persistence.PipelineProcessMapper;
 
 import java.time.LocalDateTime;
@@ -15,7 +16,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import static org.gbif.crawler.status.service.model.PipelineStep.Status;
+import static org.gbif.api.model.crawler.pipelines.PipelineStep.Status;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -26,14 +27,14 @@ public class PipelinesCoordinatorTrackingServiceTest {
 
   @Mock private PipelineProcessMapper pipelineProcessMapper;
   @Mock private MessagePublisher messagePublisher;
+  @Mock private DatasetService datasetService;
 
   private PipelinesHistoryTrackingService trackingService;
 
   @Before
   public void setup() throws Exception {
-    // TODO: inject datasetService
     trackingService =
-        new PipelinesCoordinatorTrackingServiceImpl(messagePublisher, pipelineProcessMapper, null, null);
+        new PipelinesCoordinatorTrackingServiceImpl(messagePublisher, pipelineProcessMapper, datasetService);
   }
 
   @Test
@@ -53,7 +54,7 @@ public class PipelinesCoordinatorTrackingServiceTest {
     assertEquals(attempt, workflow.getAttempt());
 
     // first level of steps
-    assertEquals(StepType.ABCD_TO_VERBATIM, workflow.getSteps().get(0).getLastStep().getName());
+    assertEquals(StepType.ABCD_TO_VERBATIM, workflow.getSteps().get(0).getLastStep().getType());
     assertEquals(1, workflow.getSteps().size());
     assertEquals(2, workflow.getSteps().get(0).getAllSteps().size());
     assertEquals(1, workflow.getSteps().get(0).getNextSteps().size());
@@ -61,7 +62,7 @@ public class PipelinesCoordinatorTrackingServiceTest {
 
     // second level of steps
     List<WorkflowStep> secondLevelSteps = workflow.getSteps().get(0).getNextSteps();
-    assertEquals(StepType.VERBATIM_TO_INTERPRETED, secondLevelSteps.get(0).getLastStep().getName());
+    assertEquals(StepType.VERBATIM_TO_INTERPRETED, secondLevelSteps.get(0).getLastStep().getType());
     assertEquals(1, secondLevelSteps.get(0).getAllSteps().size());
     assertEquals(2, workflow.getSteps().get(0).getNextSteps().get(0).getNextSteps().size());
 
@@ -81,31 +82,31 @@ public class PipelinesCoordinatorTrackingServiceTest {
 
     // add steps
     PipelineStep s1 = new PipelineStep();
-    s1.setName(StepType.ABCD_TO_VERBATIM);
+    s1.setType(StepType.ABCD_TO_VERBATIM);
     s1.setState(Status.FAILED);
     s1.setStarted(LocalDateTime.now().minusMinutes(30));
     process.addStep(s1);
 
     PipelineStep s2 = new PipelineStep();
-    s2.setName(StepType.ABCD_TO_VERBATIM);
+    s2.setType(StepType.ABCD_TO_VERBATIM);
     s2.setState(Status.COMPLETED);
     s2.setStarted(LocalDateTime.now().minusMinutes(29));
     process.addStep(s2);
 
     PipelineStep s3 = new PipelineStep();
-    s3.setName(StepType.VERBATIM_TO_INTERPRETED);
+    s3.setType(StepType.VERBATIM_TO_INTERPRETED);
     s3.setState(Status.COMPLETED);
     s3.setStarted(LocalDateTime.now().minusMinutes(28));
     process.addStep(s3);
 
     PipelineStep s4 = new PipelineStep();
-    s4.setName(StepType.INTERPRETED_TO_INDEX);
+    s4.setType(StepType.INTERPRETED_TO_INDEX);
     s4.setState(Status.COMPLETED);
     s4.setStarted(LocalDateTime.now().minusMinutes(27));
     process.addStep(s4);
 
     PipelineStep s5 = new PipelineStep();
-    s5.setName(StepType.HIVE_VIEW);
+    s5.setType(StepType.HIVE_VIEW);
     s5.setState(Status.COMPLETED);
     s5.setStarted(LocalDateTime.now().minusMinutes(27));
     process.addStep(s5);

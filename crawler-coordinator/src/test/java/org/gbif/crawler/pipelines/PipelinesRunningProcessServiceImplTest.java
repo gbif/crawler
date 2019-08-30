@@ -1,15 +1,17 @@
 package org.gbif.crawler.pipelines;
 
+import org.gbif.api.model.crawler.pipelines.PipelineProcess;
+import org.gbif.api.model.crawler.pipelines.PipelineStep;
+import org.gbif.api.model.crawler.pipelines.StepType;
 import org.gbif.crawler.constants.PipelinesNodePaths;
 import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
-import org.gbif.crawler.status.service.model.PipelineProcess;
-import org.gbif.crawler.status.service.model.PipelineStep;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.Set;
+import java.util.concurrent.Executors;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -19,13 +21,15 @@ import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.RetryOneTime;
 import org.apache.curator.test.TestingServer;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
-@Ignore
 @RunWith(MockitoJUnitRunner.class)
 public class PipelinesRunningProcessServiceImplTest {
 
@@ -33,7 +37,7 @@ public class PipelinesRunningProcessServiceImplTest {
 
   private static final BiConsumer<Set<PipelineProcess>, Set<String>> ASSERT_FN = (s, ids) -> {
     Consumer<PipelineStep> checkFn = step -> {
-      Assert.assertTrue(PipelinesNodePaths.ALL_STEPS.contains(step.getName()));
+      Assert.assertTrue(StepType.ALL_STEPS.contains(step.getType()));
       Assert.assertNotNull(step.getStarted());
       Assert.assertNotNull(step.getFinished());
       Assert.assertEquals(PipelineStep.Status.COMPLETED, step.getState());
@@ -43,24 +47,24 @@ public class PipelinesRunningProcessServiceImplTest {
     s.forEach(status -> {
       Assert.assertNotNull(status);
       Assert.assertEquals(6, status.getSteps().size());
-//      Assert.assertTrue(ids.contains(status.getCrawlId()));
+      Assert.assertTrue(ids.contains(status.getDatasetKey() + "_" + status.getAttempt()));
       status.getSteps().forEach(step -> {
 
-        if (step.getName().equals(PipelinesNodePaths.DWCA_TO_VERBATIM)
-            || step.getName().equals(PipelinesNodePaths.XML_TO_VERBATIM)
-            || step.getName().equals(PipelinesNodePaths.ABCD_TO_VERBATIM)
-            || step.getName().equals(PipelinesNodePaths.VERBATIM_TO_INTERPRETED)) {
+        if (step.getType() == StepType.DWCA_TO_VERBATIM
+            || step.getType() == StepType.XML_TO_VERBATIM
+            || step.getType() == StepType.ABCD_TO_VERBATIM
+            || step.getType() == StepType.VERBATIM_TO_INTERPRETED) {
           checkFn.accept(step);
         }
-        if (step.getName().equals(PipelinesNodePaths.HIVE_VIEW)) {
-          Assert.assertTrue(PipelinesNodePaths.ALL_STEPS.contains(step.getName()));
+        if (step.getType() == StepType.HIVE_VIEW) {
+          Assert.assertTrue(StepType.ALL_STEPS.contains(step.getType()));
           Assert.assertNotNull(step.getStarted());
           Assert.assertNull(step.getFinished());
           Assert.assertEquals(PipelineStep.Status.FAILED, step.getState());
           Assert.assertEquals(MESSAGE, step.getMessage());
         }
-        if (step.getName().equals(PipelinesNodePaths.INTERPRETED_TO_INDEX)) {
-          Assert.assertTrue(PipelinesNodePaths.ALL_STEPS.contains(step.getName()));
+        if (step.getType() == StepType.INTERPRETED_TO_INDEX) {
+          Assert.assertTrue(StepType.ALL_STEPS.contains(step.getType()));
           Assert.assertNotNull(step.getStarted());
           Assert.assertNull(step.getFinished());
           Assert.assertEquals(PipelineStep.Status.RUNNING, step.getState());
@@ -85,8 +89,9 @@ public class PipelinesRunningProcessServiceImplTest {
         .retryPolicy(new RetryOneTime(1))
         .build();
     curator.start();
-//    service =
-//        new PipelinesProcessServiceImpl(curator, Executors.newSingleThreadExecutor(), null, null, null, "test");
+    service =
+        new PipelinesRunningProcessServiceImpl(
+            curator, Executors.newSingleThreadExecutor(), null, null, null, "test");
   }
 
   @After
@@ -186,27 +191,27 @@ public class PipelinesRunningProcessServiceImplTest {
   }
 
   private void addStatusToZookeeper(String crawlId) throws Exception {
-    Consumer<String> successfulFn = path -> {
+    Consumer<StepType> successfulFn = type -> {
       try {
-        updateMonitoringDate(crawlId, Fn.START_DATE.apply(path));
-        updateMonitoringDate(crawlId, Fn.END_DATE.apply(path));
-        updateMonitoring(crawlId, Fn.SUCCESSFUL_AVAILABILITY.apply(path), Boolean.TRUE.toString());
-        updateMonitoring(crawlId, Fn.SUCCESSFUL_MESSAGE.apply(path), MESSAGE);
+        updateMonitoringDate(crawlId, Fn.START_DATE.apply(type.getLabel()));
+        updateMonitoringDate(crawlId, Fn.END_DATE.apply(type.getLabel()));
+        updateMonitoring(crawlId, Fn.SUCCESSFUL_AVAILABILITY.apply(type.getLabel()), Boolean.TRUE.toString());
+        updateMonitoring(crawlId, Fn.SUCCESSFUL_MESSAGE.apply(type.getLabel()), MESSAGE);
       } catch (Exception ex) {
         throw new RuntimeException(ex.getCause());
       }
     };
 
-    successfulFn.accept(PipelinesNodePaths.DWCA_TO_VERBATIM);
-    successfulFn.accept(PipelinesNodePaths.XML_TO_VERBATIM);
-    successfulFn.accept(PipelinesNodePaths.ABCD_TO_VERBATIM);
-    successfulFn.accept(PipelinesNodePaths.VERBATIM_TO_INTERPRETED);
+    successfulFn.accept(StepType.DWCA_TO_VERBATIM);
+    successfulFn.accept(StepType.XML_TO_VERBATIM);
+    successfulFn.accept(StepType.ABCD_TO_VERBATIM);
+    successfulFn.accept(StepType.VERBATIM_TO_INTERPRETED);
 
-    updateMonitoringDate(crawlId, Fn.START_DATE.apply(PipelinesNodePaths.HIVE_VIEW));
-    updateMonitoring(crawlId, Fn.ERROR_AVAILABILITY.apply(PipelinesNodePaths.HIVE_VIEW), Boolean.TRUE.toString());
-    updateMonitoring(crawlId, Fn.ERROR_MESSAGE.apply(PipelinesNodePaths.HIVE_VIEW), MESSAGE);
+    updateMonitoringDate(crawlId, Fn.START_DATE.apply(StepType.HIVE_VIEW.getLabel()));
+    updateMonitoring(crawlId, Fn.ERROR_AVAILABILITY.apply(StepType.HIVE_VIEW.getLabel()), Boolean.TRUE.toString());
+    updateMonitoring(crawlId, Fn.ERROR_MESSAGE.apply(StepType.HIVE_VIEW.getLabel()), MESSAGE);
 
-    updateMonitoringDate(crawlId, Fn.START_DATE.apply(PipelinesNodePaths.INTERPRETED_TO_INDEX));
+    updateMonitoringDate(crawlId, Fn.START_DATE.apply(StepType.INTERPRETED_TO_INDEX.getLabel()));
   }
 
   /**

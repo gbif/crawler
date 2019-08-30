@@ -1,7 +1,6 @@
 package org.gbif.crawler.status.service;
 
-
-import org.gbif.crawler.status.service.model.StepType;
+import org.gbif.api.model.crawler.pipelines.StepType;
 
 import java.util.Objects;
 import java.util.Set;

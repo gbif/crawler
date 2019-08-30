@@ -1,7 +1,7 @@
 package org.gbif.crawler.status.service.guice;
 
-import org.gbif.crawler.status.service.model.PipelineProcess;
-import org.gbif.crawler.status.service.model.PipelineStep;
+import org.gbif.api.model.crawler.pipelines.PipelineProcess;
+import org.gbif.api.model.crawler.pipelines.PipelineStep;
 import org.gbif.crawler.status.service.persistence.PipelineProcessMapper;
 import org.gbif.crawler.status.service.persistence.handlers.MetricInfoTypeHandler;
 import org.gbif.mybatis.guice.MyBatisModule;

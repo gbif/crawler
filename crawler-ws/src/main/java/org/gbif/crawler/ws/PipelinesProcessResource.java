@@ -1,7 +1,7 @@
 package org.gbif.crawler.ws;
 
+import org.gbif.api.model.crawler.pipelines.PipelineProcess;
 import org.gbif.crawler.pipelines.PipelinesRunningProcessService;
-import org.gbif.crawler.status.service.model.PipelineProcess;
 import org.gbif.ws.util.ExtraMediaTypes;
 
 import java.util.Set;

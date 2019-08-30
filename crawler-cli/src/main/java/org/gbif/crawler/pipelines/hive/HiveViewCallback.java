@@ -1,23 +1,21 @@
 package org.gbif.crawler.pipelines.hive;
 
-import java.io.IOException;
-
+import org.gbif.api.model.crawler.pipelines.StepType;
 import org.gbif.common.messaging.AbstractMessageCallback;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.PipelinesInterpretedMessage;
 import org.gbif.crawler.pipelines.HdfsUtils;
 import org.gbif.crawler.pipelines.PipelineCallback;
-import org.gbif.crawler.pipelines.PipelineCallback.Steps;
 import org.gbif.crawler.pipelines.dwca.DwcaToAvroConfiguration;
 import org.gbif.pipelines.common.PipelinesVariables;
+
+import java.io.IOException;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.slf4j.MDC.MDCCloseable;
-
-import static org.gbif.crawler.constants.PipelinesNodePaths.HIVE_VIEW;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -54,8 +52,8 @@ public class HiveViewCallback extends AbstractMessageCallback<PipelinesInterpret
       PipelineCallback.create()
           .incomingMessage(message)
           .curator(curator)
-          .zkRootElementPath(HIVE_VIEW)
-          .pipelinesStepName(Steps.HIVE_VIEW.name())
+          .zkRootElementPath(StepType.HIVE_VIEW.getLabel())
+          .pipelinesStepName(StepType.HIVE_VIEW)
           .publisher(publisher)
           .runnable(runnable)
           .build()

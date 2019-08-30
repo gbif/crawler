@@ -1,12 +1,7 @@
 package org.gbif.crawler.pipelines.dwca;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-
 import org.gbif.api.model.crawler.OccurrenceValidationReport;
+import org.gbif.api.model.crawler.pipelines.StepType;
 import org.gbif.api.vocabulary.EndpointType;
 import org.gbif.common.messaging.AbstractMessageCallback;
 import org.gbif.common.messaging.api.MessagePublisher;
@@ -15,20 +10,23 @@ import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage;
 import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage.ValidationResult;
 import org.gbif.converters.DwcaToAvroConverter;
 import org.gbif.crawler.pipelines.PipelineCallback;
-import org.gbif.crawler.pipelines.PipelineCallback.Steps;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Sets;
 import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.slf4j.MDC.MDCCloseable;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Sets;
-
 import static org.gbif.api.vocabulary.DatasetType.OCCURRENCE;
 import static org.gbif.api.vocabulary.DatasetType.SAMPLING_EVENT;
-import static org.gbif.crawler.constants.PipelinesNodePaths.DWCA_TO_VERBATIM;
 import static org.gbif.crawler.pipelines.HdfsUtils.buildOutputPath;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -73,10 +71,10 @@ public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMes
 
       if (message.getPipelineSteps().isEmpty()) {
         message.setPipelineSteps(Sets.newHashSet(
-            Steps.DWCA_TO_VERBATIM.name(),
-            Steps.VERBATIM_TO_INTERPRETED.name(),
-            Steps.INTERPRETED_TO_INDEX.name(),
-            Steps.HIVE_VIEW.name()
+            StepType.DWCA_TO_VERBATIM.name(),
+            StepType.VERBATIM_TO_INTERPRETED.name(),
+            StepType.INTERPRETED_TO_INDEX.name(),
+            StepType.HIVE_VIEW.name()
         ));
       }
 
@@ -94,8 +92,8 @@ public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMes
           .incomingMessage(message)
           .outgoingMessage(new PipelinesVerbatimMessage(datasetId, attempt, config.interpretTypes, steps, endpointType, validationResult))
           .curator(curator)
-          .zkRootElementPath(DWCA_TO_VERBATIM)
-          .pipelinesStepName(Steps.DWCA_TO_VERBATIM.name())
+          .zkRootElementPath(StepType.DWCA_TO_VERBATIM.getLabel())
+          .pipelinesStepName(StepType.DWCA_TO_VERBATIM)
           .publisher(publisher)
           .runnable(runnable)
           .build()

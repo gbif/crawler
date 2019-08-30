@@ -1,32 +1,29 @@
 package org.gbif.crawler.pipelines.interpret;
 
-import java.io.IOException;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-
+import org.gbif.api.model.crawler.pipelines.StepType;
 import org.gbif.common.messaging.AbstractMessageCallback;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.PipelinesInterpretedMessage;
 import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage;
 import org.gbif.crawler.pipelines.HdfsUtils;
 import org.gbif.crawler.pipelines.PipelineCallback;
-import org.gbif.crawler.pipelines.PipelineCallback.Steps;
 import org.gbif.crawler.pipelines.dwca.DwcaToAvroConfiguration;
 import org.gbif.pipelines.common.PipelinesVariables.Metrics;
 import org.gbif.pipelines.common.PipelinesVariables.Pipeline;
 import org.gbif.pipelines.common.PipelinesVariables.Pipeline.Conversion;
 import org.gbif.pipelines.common.PipelinesVariables.Pipeline.Interpretation;
 
+import java.io.IOException;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+
+import com.google.common.base.Strings;
 import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.slf4j.MDC.MDCCloseable;
-
-import com.google.common.base.Strings;
-
-import static org.gbif.crawler.constants.PipelinesNodePaths.VERBATIM_TO_INTERPRETED;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -84,8 +81,8 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
           .incomingMessage(message)
           .outgoingMessage(new PipelinesInterpretedMessage(datasetId, attempt, steps, recordsNumber, repeatAttempt, message.getResetPrefix()))
           .curator(curator)
-          .zkRootElementPath(VERBATIM_TO_INTERPRETED)
-          .pipelinesStepName(Steps.VERBATIM_TO_INTERPRETED.name())
+          .zkRootElementPath(StepType.VERBATIM_TO_INTERPRETED.getLabel())
+          .pipelinesStepName(StepType.VERBATIM_TO_INTERPRETED)
           .publisher(publisher)
           .runnable(runnable)
           .build()
