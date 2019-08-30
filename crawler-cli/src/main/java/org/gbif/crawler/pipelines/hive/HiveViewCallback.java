@@ -98,8 +98,6 @@ public class HiveViewCallback extends AbstractMessageCallback<PipelinesInterpret
           LOG.info("Process has been finished with exit value - {}", exitValue);
         }
 
-        LOG.info("Process has been finished with exit value - {}, dataset - {}_{}", exitValue, datasetId, attempt);
-
       } catch (InterruptedException | IOException ex) {
         LOG.error(ex.getMessage(), ex);
         throw new IllegalStateException("Failed indexing on " + message.getDatasetUuid(), ex);
