@@ -104,6 +104,7 @@ final class ProcessRunnerBuilder {
     command.add("--datasetId=" + Objects.requireNonNull(message.getDatasetUuid()))
         .add("--attempt=" + message.getAttempt())
         .add("--runner=SparkRunner")
+        .add("--metaFileName=" + Objects.requireNonNull(config.metaFileName))
         .add("--inputPath=" + Objects.requireNonNull(config.repositoryPath))
         .add("--targetPath=" + Objects.requireNonNull(config.repositoryPath))
         .add("--hdfsSiteConfig=" + Objects.requireNonNull(config.hdfsSiteConfig))

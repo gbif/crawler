@@ -2,6 +2,7 @@ package org.gbif.crawler.pipelines.hive;
 
 import org.gbif.common.messaging.config.MessagingConfiguration;
 import org.gbif.crawler.common.ZooKeeperConfiguration;
+import org.gbif.pipelines.common.PipelinesVariables.Pipeline;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParametersDelegate;
@@ -45,6 +46,9 @@ public class HiveViewConfiguration {
   @Parameter(names = "--repository-path")
   @NotNull
   public String repositoryPath;
+
+  @Parameter(names = "--meta-file-name")
+  public String metaFileName = Pipeline.INTERPRETED_TO_HDFS + ".yml";
 
   @Parameter(names = "--distributed-main-class")
   @NotNull
