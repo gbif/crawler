@@ -155,9 +155,6 @@ public class HiveViewCallback extends AbstractMessageCallback<PipelinesInterpret
   }
 
   /**
-   * Reads number of records from the message or archive-to-avro metadata file
-   */
-  /**
    * Reads number of records from a archive-to-avro metadata file, verbatim-to-interpreted contains attempted records
    * count, which is not accurate enough
    */
