@@ -168,7 +168,6 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
     return count;
   }
 
-
   /**
    * Computes the memory for executor in Gb, where min is config.sparkExecutorMemoryGbMin and
    * max is config.sparkExecutorMemoryGbMax

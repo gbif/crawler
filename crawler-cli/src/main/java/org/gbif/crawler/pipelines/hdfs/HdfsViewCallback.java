@@ -9,7 +9,7 @@ import org.gbif.crawler.pipelines.HdfsUtils;
 import org.gbif.crawler.pipelines.PipelineCallback;
 import org.gbif.crawler.pipelines.PipelineCallback.Steps;
 import org.gbif.crawler.pipelines.dwca.DwcaToAvroConfiguration;
-import org.gbif.pipelines.common.PipelinesVariables;
+import org.gbif.pipelines.common.PipelinesVariables.Metrics;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
@@ -72,13 +72,11 @@ public class HdfsViewCallback extends AbstractMessageCallback<PipelinesInterpret
   private Runnable createRunnable(PipelinesInterpretedMessage message) {
     return () -> {
       try {
-        String datasetId = message.getDatasetUuid().toString();
-        String attempt = Integer.toString(message.getAttempt());
 
         long recordsNumber = getRecordNumber(message);
 
-        int sparkParallelism = computeSparkParallelism(datasetId, attempt);
         int sparkExecutorNumbers = computeSparkExecutorNumbers(recordsNumber);
+        int sparkParallelism = computeSparkParallelism(sparkExecutorNumbers);
         String sparkExecutorMemory = computeSparkExecutorMemory(sparkExecutorNumbers);
 
         // Assembles a terminal java process and runs it
@@ -106,19 +104,16 @@ public class HdfsViewCallback extends AbstractMessageCallback<PipelinesInterpret
   }
 
   /**
-   * Computes the number of thread for spark.default.parallelism, top limit is config.sparkParallelismMax
+   * Compute the number of thread for spark.default.parallelism, top limit is config.sparkParallelismMax
+   * Remember YARN will create the same number of files
    */
-  private int computeSparkParallelism(String datasetId, String attempt) throws IOException {
-    // Chooses a runner type by calculating number of files
-    String basic = PipelinesVariables.Pipeline.Interpretation.RecordType.BASIC.name().toLowerCase();
-    String directoryName = PipelinesVariables.Pipeline.Interpretation.DIRECTORY_NAME;
-    String basicPath = String.join("/", config.repositoryPath, datasetId, attempt, directoryName, basic);
-    int count = HdfsUtils.getFileCount(basicPath, config.hdfsSiteConfig);
-    count *= 2; // 2 Times more threads than files
-    if (count < config.sparkParallelismMin) {
+  private int computeSparkParallelism(int executorNumbers) {
+    int count = executorNumbers * config.sparkExecutorCores * 2;
+
+    if(count < config.sparkParallelismMin) {
       return config.sparkParallelismMin;
     }
-    if (count > config.sparkParallelismMax) {
+    if(count > config.sparkParallelismMax){
       return config.sparkParallelismMax;
     }
     return count;
@@ -164,13 +159,13 @@ public class HdfsViewCallback extends AbstractMessageCallback<PipelinesInterpret
     String metaFileName = new DwcaToAvroConfiguration().metaFileName;
     String metaPath = String.join("/", config.repositoryPath, datasetId, attempt, metaFileName);
 
-    String recordsNumber = HdfsUtils.getValueByKey(config.hdfsSiteConfig, metaPath, PipelinesVariables.Metrics.ARCHIVE_TO_ER_COUNT);
+    String recordsNumber = HdfsUtils.getValueByKey(config.hdfsSiteConfig, metaPath, Metrics.ARCHIVE_TO_ER_COUNT);
     if (recordsNumber == null || recordsNumber.isEmpty()) {
       if (message.getNumberOfRecords() != null) {
         return message.getNumberOfRecords();
       } else {
         throw new IllegalArgumentException(
-          "Please check archive-to-avro metadata yaml file or message records number, recordsNumber can't be null or empty!");
+            "Please check archive-to-avro metadata yaml file or message records number, recordsNumber can't be null or empty!");
       }
     }
     return Long.parseLong(recordsNumber);
