@@ -31,10 +31,10 @@ public class PipelinesNodePaths {
   public static final String ABCD_TO_VERBATIM = "abcdToVerbatim";
   public static final String VERBATIM_TO_INTERPRETED = "verbatimToInterpreted";
   public static final String INTERPRETED_TO_INDEX = "interpretedToIndex";
-  public static final String HIVE_VIEW = "hiveView";
+  public static final String HDFS_VIEW = "hdfsView";
 
   public static final Set<String> ALL_STEPS =
-    Sets.newHashSet(XML_TO_VERBATIM, ABCD_TO_VERBATIM, DWCA_TO_VERBATIM, VERBATIM_TO_INTERPRETED, INTERPRETED_TO_INDEX, HIVE_VIEW);
+    Sets.newHashSet(XML_TO_VERBATIM, ABCD_TO_VERBATIM, DWCA_TO_VERBATIM, VERBATIM_TO_INTERPRETED, INTERPRETED_TO_INDEX, HDFS_VIEW);
 
   public static class Fn {
 

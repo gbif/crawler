@@ -1,4 +1,4 @@
-package org.gbif.crawler.pipelines.hive;
+package org.gbif.crawler.pipelines.hdfs;
 
 import org.gbif.common.messaging.DefaultMessagePublisher;
 import org.gbif.common.messaging.MessageListener;
@@ -13,27 +13,27 @@ import com.google.common.util.concurrent.AbstractIdleService;
 /**
  * A service which listens to the {@link org.gbif.common.messaging.api.messages.PipelinesInterpretedMessage }
  */
-public class HiveViewService extends AbstractIdleService {
+public class HdfsViewService extends AbstractIdleService {
 
-  private static final Logger LOG = LoggerFactory.getLogger(HiveViewService.class);
-  private final HiveViewConfiguration config;
+  private static final Logger LOG = LoggerFactory.getLogger(HdfsViewService.class);
+  private final HdfsViewConfiguration config;
   private MessageListener listener;
   private MessagePublisher publisher;
   private CuratorFramework curator;
 
-  public HiveViewService(HiveViewConfiguration config) {
+  public HdfsViewService(HdfsViewConfiguration config) {
     this.config = config;
   }
 
   @Override
   protected void startUp() throws Exception {
-    LOG.info("Started pipelines-hive-view service with parameters : {}", config);
+    LOG.info("Started pipelines-hdfs-view service with parameters : {}", config);
     // Prefetch is one, since this is a long-running process.
     listener = new MessageListener(config.messaging.getConnectionParameters(), 1);
     publisher = new DefaultMessagePublisher(config.messaging.getConnectionParameters());
     curator = config.zooKeeper.getCuratorFramework();
 
-    listener.listen(config.queueName, config.poolSize, new HiveViewCallback(config, publisher, curator));
+    listener.listen(config.queueName, config.poolSize, new HdfsViewCallback(config, publisher, curator));
   }
 
   @Override
@@ -41,6 +41,6 @@ public class HiveViewService extends AbstractIdleService {
     listener.close();
     publisher.close();
     curator.close();
-    LOG.info("Stopping pipelines-hive-view service");
+    LOG.info("Stopping pipelines-hdfs-view service");
   }
 }

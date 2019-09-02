@@ -1,4 +1,4 @@
-package org.gbif.crawler.pipelines.hive;
+package org.gbif.crawler.pipelines.hdfs;
 
 import java.io.IOException;
 
@@ -17,23 +17,23 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.slf4j.MDC.MDCCloseable;
 
-import static org.gbif.crawler.constants.PipelinesNodePaths.HIVE_VIEW;
+import static org.gbif.crawler.constants.PipelinesNodePaths.HDFS_VIEW;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Callback which is called when the {@link PipelinesInterpretedMessage} is received.
  * <p>
- * The main method is {@link HiveViewCallback#handleMessage}
+ * The main method is {@link HdfsViewCallback#handleMessage}
  */
-public class HiveViewCallback extends AbstractMessageCallback<PipelinesInterpretedMessage> {
+public class HdfsViewCallback extends AbstractMessageCallback<PipelinesInterpretedMessage> {
 
-  private static final Logger LOG = LoggerFactory.getLogger(HiveViewCallback.class);
-  private final HiveViewConfiguration config;
+  private static final Logger LOG = LoggerFactory.getLogger(HdfsViewCallback.class);
+  private final HdfsViewConfiguration config;
   private final MessagePublisher publisher;
   private final CuratorFramework curator;
 
-  HiveViewCallback(HiveViewConfiguration config, MessagePublisher publisher, CuratorFramework curator) {
+  HdfsViewCallback(HdfsViewConfiguration config, MessagePublisher publisher, CuratorFramework curator) {
     this.curator = checkNotNull(curator, "curator cannot be null");
     this.config = checkNotNull(config, "config cannot be null");
     this.publisher = publisher;
@@ -54,8 +54,8 @@ public class HiveViewCallback extends AbstractMessageCallback<PipelinesInterpret
       PipelineCallback.create()
           .incomingMessage(message)
           .curator(curator)
-          .zkRootElementPath(HIVE_VIEW)
-          .pipelinesStepName(Steps.HIVE_VIEW.name())
+          .zkRootElementPath(HDFS_VIEW)
+          .pipelinesStepName(Steps.HDFS_VIEW.name())
           .publisher(publisher)
           .runnable(runnable)
           .build()

@@ -76,7 +76,7 @@ public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMes
             Steps.DWCA_TO_VERBATIM.name(),
             Steps.VERBATIM_TO_INTERPRETED.name(),
             Steps.INTERPRETED_TO_INDEX.name(),
-            Steps.HIVE_VIEW.name()
+            Steps.HDFS_VIEW.name()
         ));
       }
 

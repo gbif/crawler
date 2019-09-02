@@ -37,7 +37,7 @@ public class PipelineCallback {
     ABCD_TO_VERBATIM,
     VERBATIM_TO_INTERPRETED,
     INTERPRETED_TO_INDEX,
-    HIVE_VIEW
+    HDFS_VIEW
   }
 
   // General runners, STANDALONE - run an app using local resources, DISTRIBUTED - run an app using YARN cluster

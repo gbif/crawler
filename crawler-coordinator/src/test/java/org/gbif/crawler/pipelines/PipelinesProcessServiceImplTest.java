@@ -32,7 +32,7 @@ import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 import static org.gbif.crawler.constants.PipelinesNodePaths.ABCD_TO_VERBATIM;
 import static org.gbif.crawler.constants.PipelinesNodePaths.ALL_STEPS;
 import static org.gbif.crawler.constants.PipelinesNodePaths.DWCA_TO_VERBATIM;
-import static org.gbif.crawler.constants.PipelinesNodePaths.HIVE_VIEW;
+import static org.gbif.crawler.constants.PipelinesNodePaths.HDFS_VIEW;
 import static org.gbif.crawler.constants.PipelinesNodePaths.INTERPRETED_TO_INDEX;
 import static org.gbif.crawler.constants.PipelinesNodePaths.VERBATIM_TO_INTERPRETED;
 import static org.gbif.crawler.constants.PipelinesNodePaths.XML_TO_VERBATIM;
@@ -64,7 +64,7 @@ public class PipelinesProcessServiceImplTest {
             || step.getName().equals(VERBATIM_TO_INTERPRETED)) {
           checkFn.accept(step);
         }
-        if (step.getName().equals(HIVE_VIEW)) {
+        if (step.getName().equals(HDFS_VIEW)) {
           Assert.assertTrue(ALL_STEPS.contains(step.getName()));
           Assert.assertNotNull(step.getStarted());
           Assert.assertNull(step.getFinished());
@@ -214,9 +214,9 @@ public class PipelinesProcessServiceImplTest {
     successfulFn.accept(ABCD_TO_VERBATIM);
     successfulFn.accept(VERBATIM_TO_INTERPRETED);
 
-    updateMonitoringDate(crawlId, Fn.START_DATE.apply(HIVE_VIEW));
-    updateMonitoring(crawlId, Fn.ERROR_AVAILABILITY.apply(HIVE_VIEW), Boolean.TRUE.toString());
-    updateMonitoring(crawlId, Fn.ERROR_MESSAGE.apply(HIVE_VIEW), MESSAGE);
+    updateMonitoringDate(crawlId, Fn.START_DATE.apply(HDFS_VIEW));
+    updateMonitoring(crawlId, Fn.ERROR_AVAILABILITY.apply(HDFS_VIEW), Boolean.TRUE.toString());
+    updateMonitoring(crawlId, Fn.ERROR_MESSAGE.apply(HDFS_VIEW), MESSAGE);
 
     updateMonitoringDate(crawlId, Fn.START_DATE.apply(INTERPRETED_TO_INDEX));
   }
