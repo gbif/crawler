@@ -9,6 +9,7 @@ import org.gbif.common.messaging.MessageListener;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.CrawlResponseMessage;
 import org.gbif.common.messaging.api.messages.OccurrenceFragmentedMessage;
+import org.gbif.common.messaging.api.messages.Platform;
 import org.gbif.crawler.constants.CrawlerNodePaths;
 import org.gbif.crawler.ws.client.CrawlerWsClient;
 import org.gbif.occurrence.OccurrenceParser;
@@ -127,9 +128,13 @@ public class FragmenterService extends AbstractIdleService {
     public void handleMessage(CrawlResponseMessage message) {
       MDC.put("datasetKey", message.getDatasetUuid().toString());
       LOG.debug("Received crawl response message for [{}]", message.getDatasetUuid());
+      if (!Platform.OCCURRENCE.equivalent(message.getPlatform())) {
+        return;
+      }
       Stopwatch stopwatch = Stopwatch.createStarted();
       OccurrenceParser parser = new OccurrenceParser();
       List<RawXmlOccurrence> list = null;
+
 
       try {
         try {

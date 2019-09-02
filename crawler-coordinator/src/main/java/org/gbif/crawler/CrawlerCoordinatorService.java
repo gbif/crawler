@@ -1,6 +1,7 @@
 package org.gbif.crawler;
 
 import org.gbif.api.exception.ServiceUnavailableException;
+import org.gbif.common.messaging.api.messages.Platform;
 
 import java.util.UUID;
 
@@ -14,6 +15,7 @@ public interface CrawlerCoordinatorService {
    *
    * @param datasetKey of the dataset to crawl
    * @param priority    of this crawl. Lower numbers mean higher priorities. This priority can be chosen arbitrarily.
+   * @param platform indexing platform that performs the crawl
    *
    * @throws ServiceUnavailableException if there are any problems communicating with the Registry or ZooKeeper.
    *                                     ZooKeeper will already have been retried.
@@ -21,13 +23,14 @@ public interface CrawlerCoordinatorService {
    *                                     for crawling
    * @throws AlreadyCrawlingException    if the dataset is already being crawled
    */
-  void initiateCrawl(UUID datasetKey, int priority);
+  void initiateCrawl(UUID datasetKey, int priority, Platform platform);
 
   /**
    * Initiates a crawl of an existing dataset without any explicit priority. Implementations are free to chose a
    * default priority.
    *
    * @param datasetKey of the dataset to crawl
+   * @param platform indexing platform that performs the crawl
    *
    * @throws ServiceUnavailableException if there are any problems communicating with the Registry or ZooKeeper.
    *                                     ZooKeeper will already have been retried.
@@ -35,6 +38,6 @@ public interface CrawlerCoordinatorService {
    *                                     for crawling
    * @throws AlreadyCrawlingException    if the dataset is already being crawled
    */
-  void initiateCrawl(UUID datasetKey);
+  void initiateCrawl(UUID datasetKey, Platform platform);
 
 }

@@ -13,6 +13,7 @@ import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.PipelinesDwcaMessage;
 import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage;
 import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage.ValidationResult;
+import org.gbif.common.messaging.api.messages.Platform;
 import org.gbif.converters.DwcaToAvroConverter;
 import org.gbif.crawler.pipelines.PipelineCallback;
 import org.gbif.crawler.pipelines.PipelineCallback.Steps;
@@ -57,6 +58,10 @@ public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMes
    */
   @Override
   public void handleMessage(PipelinesDwcaMessage message) {
+
+    if (!Platform.PIPELINES.equivalent(message.getPlatform())) {
+      return;
+    }
 
     UUID datasetId = message.getDatasetUuid();
     Integer attempt = message.getAttempt();

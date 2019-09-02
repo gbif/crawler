@@ -59,7 +59,7 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
   private final HttpClient httpClient;
 
   IndexingCallback(IndexingConfiguration config, MessagePublisher publisher, DatasetService datasetService,
-      CuratorFramework curator, HttpClient httpClient) {
+                  CuratorFramework curator, HttpClient httpClient) {
     this.curator = checkNotNull(curator, "curator cannot be null");
     this.config = checkNotNull(config, "config cannot be null");
     this.datasetService = checkNotNull(datasetService, "config cannot be null");
