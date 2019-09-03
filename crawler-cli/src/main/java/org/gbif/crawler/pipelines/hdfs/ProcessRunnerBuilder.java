@@ -1,4 +1,4 @@
-package org.gbif.crawler.pipelines.hive;
+package org.gbif.crawler.pipelines.hdfs;
 
 import org.gbif.common.messaging.api.messages.PipelinesInterpretedMessage;
 
@@ -23,13 +23,13 @@ final class ProcessRunnerBuilder {
 
   private static final String DELIMITER = " ";
 
-  private HiveViewConfiguration config;
+  private HdfsViewConfiguration config;
   private PipelinesInterpretedMessage message;
   private int sparkParallelism;
   private int sparkExecutorNumbers;
   private String sparkExecutorMemory;
 
-  ProcessRunnerBuilder config(HiveViewConfiguration config) {
+  ProcessRunnerBuilder config(HdfsViewConfiguration config) {
     this.config = Objects.requireNonNull(config);
     return this;
   }
@@ -104,8 +104,9 @@ final class ProcessRunnerBuilder {
     command.add("--datasetId=" + Objects.requireNonNull(message.getDatasetUuid()))
         .add("--attempt=" + message.getAttempt())
         .add("--runner=SparkRunner")
+        .add("--metaFileName=" + Objects.requireNonNull(config.metaFileName))
         .add("--inputPath=" + Objects.requireNonNull(config.repositoryPath))
-        .add("--targetPath=" + Objects.requireNonNull(config.repositoryPath))
+        .add("--targetPath=" + Objects.requireNonNull(config.repositoryTargetPath))
         .add("--hdfsSiteConfig=" + Objects.requireNonNull(config.hdfsSiteConfig))
         .add("--coreSiteConfig=" + Objects.requireNonNull(config.coreSiteConfig))
         .add("--properties=" + Objects.requireNonNull(config.pipelinesConfig));

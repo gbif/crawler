@@ -9,6 +9,7 @@ import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage;
 import org.gbif.common.messaging.api.messages.PipelinesXmlMessage;
 import org.gbif.converters.XmlToAvroConverter;
 import org.gbif.crawler.pipelines.PipelineCallback;
+import org.gbif.registry.ws.client.pipelines.PipelinesHistoryWsClient;
 
 import java.io.File;
 import java.io.IOException;
@@ -46,11 +47,14 @@ public class XmlToAvroCallback extends AbstractMessageCallback<PipelinesXmlMessa
   private final XmlToAvroConfiguration config;
   private final MessagePublisher publisher;
   private final CuratorFramework curator;
+  private final PipelinesHistoryWsClient historyWsClient;
 
-  public XmlToAvroCallback(XmlToAvroConfiguration config, MessagePublisher publisher, CuratorFramework curator) {
+  public XmlToAvroCallback(XmlToAvroConfiguration config, MessagePublisher publisher, CuratorFramework curator,
+                           PipelinesHistoryWsClient historyWsClient) {
     this.curator = checkNotNull(curator, "curator cannot be null");
     this.config = checkNotNull(config, "config cannot be null");
     this.publisher = publisher;
+    this.historyWsClient = historyWsClient;
   }
 
   /**
@@ -84,7 +88,7 @@ public class XmlToAvroCallback extends AbstractMessageCallback<PipelinesXmlMessa
             StepType.XML_TO_VERBATIM.name(),
             StepType.VERBATIM_TO_INTERPRETED.name(),
             StepType.INTERPRETED_TO_INDEX.name(),
-            StepType.HIVE_VIEW.name()
+            StepType.HDFS_VIEW.name()
         ));
       }
 
@@ -102,6 +106,7 @@ public class XmlToAvroCallback extends AbstractMessageCallback<PipelinesXmlMessa
           .pipelinesStepName(StepType.XML_TO_VERBATIM)
           .publisher(publisher)
           .runnable(runnable)
+          .historyWsClient(historyWsClient)
           .build()
           .handleMessage();
 

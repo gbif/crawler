@@ -1,8 +1,9 @@
-package org.gbif.crawler.pipelines.hive;
+package org.gbif.crawler.pipelines.hdfs;
 
 import org.gbif.common.messaging.config.MessagingConfiguration;
 import org.gbif.crawler.common.RegistryConfiguration;
 import org.gbif.crawler.common.ZooKeeperConfiguration;
+import org.gbif.pipelines.common.PipelinesVariables.Pipeline;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParametersDelegate;
@@ -12,9 +13,9 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
 /**
- * Configuration required to start Hive View processing
+ * Configuration required to start Hdfs View processing
  */
-public class HiveViewConfiguration {
+public class HdfsViewConfiguration {
 
   @ParametersDelegate
   @Valid
@@ -46,6 +47,13 @@ public class HiveViewConfiguration {
   @Parameter(names = "--repository-path")
   @NotNull
   public String repositoryPath;
+
+  @Parameter(names = "--repository-target-path")
+  @NotNull
+  public String repositoryTargetPath;
+
+  @Parameter(names = "--meta-file-name")
+  public String metaFileName = Pipeline.INTERPRETED_TO_HDFS + ".yml";
 
   @Parameter(names = "--distributed-main-class")
   @NotNull

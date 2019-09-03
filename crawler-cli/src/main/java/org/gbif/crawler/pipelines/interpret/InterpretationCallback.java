@@ -12,6 +12,7 @@ import org.gbif.pipelines.common.PipelinesVariables.Metrics;
 import org.gbif.pipelines.common.PipelinesVariables.Pipeline;
 import org.gbif.pipelines.common.PipelinesVariables.Pipeline.Conversion;
 import org.gbif.pipelines.common.PipelinesVariables.Pipeline.Interpretation;
+import org.gbif.registry.ws.client.pipelines.PipelinesHistoryWsClient;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -39,11 +40,14 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
   private final InterpreterConfiguration config;
   private final MessagePublisher publisher;
   private final CuratorFramework curator;
+  private PipelinesHistoryWsClient historyWsClient;
 
-  InterpretationCallback(InterpreterConfiguration config, MessagePublisher publisher, CuratorFramework curator) {
+  InterpretationCallback(InterpreterConfiguration config, MessagePublisher publisher, CuratorFramework curator,
+                         PipelinesHistoryWsClient historyWsClient) {
     this.curator = checkNotNull(curator, "curator cannot be null");
     this.config = checkNotNull(config, "config cannot be null");
     this.publisher = publisher;
+    this.historyWsClient = historyWsClient;
   }
 
   /**
@@ -85,6 +89,7 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
           .pipelinesStepName(StepType.VERBATIM_TO_INTERPRETED)
           .publisher(publisher)
           .runnable(runnable)
+          .historyWsClient(historyWsClient)
           .build()
           .handleMessage();
 
@@ -164,7 +169,6 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
     }
     return count;
   }
-
 
   /**
    * Computes the memory for executor in Gb, where min is config.sparkExecutorMemoryGbMin and

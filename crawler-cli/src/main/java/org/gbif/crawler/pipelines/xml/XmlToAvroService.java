@@ -3,6 +3,7 @@ package org.gbif.crawler.pipelines.xml;
 import org.gbif.common.messaging.DefaultMessagePublisher;
 import org.gbif.common.messaging.MessageListener;
 import org.gbif.common.messaging.api.MessagePublisher;
+import org.gbif.registry.ws.client.pipelines.PipelinesHistoryWsClient;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
@@ -37,8 +38,10 @@ public class XmlToAvroService extends AbstractIdleService {
     // CrawlFinishedMessage
     publisher = new DefaultMessagePublisher(config.messaging.getConnectionParameters());
     curator = config.zooKeeper.getCuratorFramework();
+    PipelinesHistoryWsClient
+      historyWsClient = config.registry.newRegistryInjector().getInstance(PipelinesHistoryWsClient.class);
 
-    listener.listen(config.queueName, config.poolSize, new XmlToAvroCallback(config, publisher, curator));
+    listener.listen(config.queueName, config.poolSize, new XmlToAvroCallback(config, publisher, curator, historyWsClient));
   }
 
   @Override

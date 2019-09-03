@@ -10,7 +10,7 @@
 
   <groupId>org.gbif.crawler</groupId>
   <artifactId>crawler-motherpom</artifactId>
-  <version>0.77-SNAPSHOT</version>
+  <version>0.79-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>Crawler :: Mother POM</name>
@@ -147,11 +147,6 @@
       <dependency>
         <groupId>org.gbif.crawler</groupId>
         <artifactId>crawler-cleanup</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.gbif.crawler</groupId>
-        <artifactId>crawler-status-service</artifactId>
         <version>${project.version}</version>
       </dependency>
 

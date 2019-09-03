@@ -56,7 +56,7 @@ public class PipelinesRunningProcessServiceImplTest {
             || step.getType() == StepType.VERBATIM_TO_INTERPRETED) {
           checkFn.accept(step);
         }
-        if (step.getType() == StepType.HIVE_VIEW) {
+        if (step.getType() == StepType.HDFS_VIEW) {
           Assert.assertTrue(StepType.ALL_STEPS.contains(step.getType()));
           Assert.assertNotNull(step.getStarted());
           Assert.assertNull(step.getFinished());
@@ -207,9 +207,9 @@ public class PipelinesRunningProcessServiceImplTest {
     successfulFn.accept(StepType.ABCD_TO_VERBATIM);
     successfulFn.accept(StepType.VERBATIM_TO_INTERPRETED);
 
-    updateMonitoringDate(crawlId, Fn.START_DATE.apply(StepType.HIVE_VIEW.getLabel()));
-    updateMonitoring(crawlId, Fn.ERROR_AVAILABILITY.apply(StepType.HIVE_VIEW.getLabel()), Boolean.TRUE.toString());
-    updateMonitoring(crawlId, Fn.ERROR_MESSAGE.apply(StepType.HIVE_VIEW.getLabel()), MESSAGE);
+    updateMonitoringDate(crawlId, Fn.START_DATE.apply(StepType.HDFS_VIEW.getLabel()));
+    updateMonitoring(crawlId, Fn.ERROR_AVAILABILITY.apply(StepType.HDFS_VIEW.getLabel()), Boolean.TRUE.toString());
+    updateMonitoring(crawlId, Fn.ERROR_MESSAGE.apply(StepType.HDFS_VIEW.getLabel()), MESSAGE);
 
     updateMonitoringDate(crawlId, Fn.START_DATE.apply(StepType.INTERPRETED_TO_INDEX.getLabel()));
   }

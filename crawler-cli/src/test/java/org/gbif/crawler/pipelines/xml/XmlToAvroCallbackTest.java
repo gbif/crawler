@@ -3,10 +3,10 @@ package org.gbif.crawler.pipelines.xml;
 import org.gbif.api.model.crawler.FinishReason;
 import org.gbif.api.vocabulary.EndpointType;
 import org.gbif.common.messaging.api.messages.PipelinesXmlMessage;
-import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
 import org.gbif.crawler.pipelines.HdfsUtils;
 import org.gbif.crawler.pipelines.MessagePublisherStub;
 import org.gbif.crawler.pipelines.ZookeeperUtils;
+import org.gbif.registry.ws.client.pipelines.PipelinesHistoryWsClient;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,9 +25,11 @@ import org.apache.hadoop.hdfs.MiniDFSCluster;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import static org.gbif.api.model.pipelines.StepType.ALL;
 import static org.gbif.api.model.pipelines.StepType.XML_TO_VERBATIM;
+import static org.gbif.crawler.constants.PipelinesNodePaths.Fn;
 import static org.gbif.crawler.constants.PipelinesNodePaths.getPipelinesInfoPath;
 
 import static org.junit.Assert.assertEquals;
@@ -48,6 +50,7 @@ public class XmlToAvroCallbackTest {
   private static CuratorFramework curator;
   private static TestingServer server;
   private static MessagePublisherStub publisher;
+  private static PipelinesHistoryWsClient historyWsClient;
 
   @BeforeClass
   public static void setUp() throws Exception {
@@ -69,6 +72,7 @@ public class XmlToAvroCallbackTest {
     curator.start();
 
     publisher = MessagePublisherStub.create();
+    historyWsClient = Mockito.mock(PipelinesHistoryWsClient.class);
   }
 
   @AfterClass
@@ -89,7 +93,7 @@ public class XmlToAvroCallbackTest {
     config.repositoryPath = hdfsUri;
     config.xmlReaderParallelism = 4;
     config.archiveRepositorySubdir = Collections.singleton("xml");
-    XmlToAvroCallback callback = new XmlToAvroCallback(config, publisher, curator);
+    XmlToAvroCallback callback = new XmlToAvroCallback(config, publisher, curator, historyWsClient);
     PipelinesXmlMessage message =
         new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL, Collections.singleton(ALL.name()), EndpointType.BIOCASE_XML_ARCHIVE);
     String crawlId = DATASET_UUID + "_" + attempt;
@@ -120,7 +124,7 @@ public class XmlToAvroCallbackTest {
     config.repositoryPath = hdfsUri;
     config.xmlReaderParallelism = 4;
     config.archiveRepositorySubdir = Collections.singleton("xml");
-    XmlToAvroCallback callback = new XmlToAvroCallback(config, publisher, curator);
+    XmlToAvroCallback callback = new XmlToAvroCallback(config, publisher, curator, historyWsClient);
     PipelinesXmlMessage message =
         new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL, Collections.singleton(ALL.name()), EndpointType.BIOCASE_XML_ARCHIVE);
     String crawlId = DATASET_UUID + "_" + attempt;
@@ -151,7 +155,7 @@ public class XmlToAvroCallbackTest {
     config.repositoryPath = hdfsUri;
     config.xmlReaderParallelism = 4;
     config.archiveRepositorySubdir = Collections.singleton("xml");
-    XmlToAvroCallback callback = new XmlToAvroCallback(config, publisher, curator);
+    XmlToAvroCallback callback = new XmlToAvroCallback(config, publisher, curator, historyWsClient);
     PipelinesXmlMessage message =
         new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL, Collections.singleton(ALL.name()), EndpointType.BIOCASE_XML_ARCHIVE);
     String crawlId = DATASET_UUID + "_" + attempt;
@@ -184,7 +188,7 @@ public class XmlToAvroCallbackTest {
     config.repositoryPath = hdfsUri;
     config.xmlReaderParallelism = 4;
     config.archiveRepositorySubdir = Collections.singleton("xml");
-    XmlToAvroCallback callback = new XmlToAvroCallback(config, publisher, curator);
+    XmlToAvroCallback callback = new XmlToAvroCallback(config, publisher, curator, historyWsClient);
     PipelinesXmlMessage message =
         new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NOT_MODIFIED, Collections.singleton(ALL.name()), EndpointType.BIOCASE_XML_ARCHIVE);
     String crawlId = DATASET_UUID + "_" + attempt;

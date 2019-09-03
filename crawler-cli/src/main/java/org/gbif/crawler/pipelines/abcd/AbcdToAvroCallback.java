@@ -79,7 +79,7 @@ public class AbcdToAvroCallback extends AbstractMessageCallback<PipelinesAbcdMes
             StepType.ABCD_TO_VERBATIM.name(),
             StepType.VERBATIM_TO_INTERPRETED.name(),
             StepType.INTERPRETED_TO_INDEX.name(),
-            StepType.HIVE_VIEW.name()
+            StepType.HDFS_VIEW.name()
         ));
       }
 
