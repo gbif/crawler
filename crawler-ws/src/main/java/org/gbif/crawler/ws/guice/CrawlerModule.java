@@ -9,9 +9,6 @@ import org.gbif.common.messaging.config.MessagingConfiguration;
 import org.gbif.crawler.DatasetProcessServiceImpl;
 import org.gbif.crawler.pipelines.PipelinesRunningProcessService;
 import org.gbif.crawler.pipelines.PipelinesRunningProcessServiceImpl;
-import org.gbif.crawler.status.service.PipelinesHistoryTrackingService;
-import org.gbif.crawler.status.service.guice.CrawlerStatusServiceModule;
-import org.gbif.crawler.status.service.impl.PipelinesCoordinatorTrackingServiceImpl;
 import org.gbif.registry.metasync.MetadataSynchroniserImpl;
 import org.gbif.registry.metasync.api.MetadataSynchroniser;
 import org.gbif.registry.ws.client.guice.RegistryWsClientModule;
@@ -48,11 +45,8 @@ class CrawlerModule extends PrivateServiceModule {
 
   @Override
   protected void configureService() {
-    install(new CrawlerStatusServiceModule(getVerbatimProperties()));
-
     bind(DatasetProcessService.class).to(DatasetProcessServiceImpl.class).in(Scopes.SINGLETON);
     bind(PipelinesRunningProcessService.class).to(PipelinesRunningProcessServiceImpl.class).in(Scopes.SINGLETON);
-    bind(PipelinesHistoryTrackingService.class).to(PipelinesCoordinatorTrackingServiceImpl.class).in(Scopes.SINGLETON);
     expose(DatasetProcessService.class);
     expose(PipelinesRunningProcessService.class);
     expose(Executor.class);
@@ -61,7 +55,6 @@ class CrawlerModule extends PrivateServiceModule {
     expose(DatasetService.class);
     expose(MetadataSynchroniser.class);
     expose(MessagePublisher.class);
-    expose(PipelinesHistoryTrackingService.class);
 
     expose(String.class).annotatedWith(Names.named("overcrawledReportFilePath"));
     expose(String.class).annotatedWith(Names.named("pipelines.envPrefix"));

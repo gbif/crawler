@@ -1,6 +1,6 @@
 package org.gbif.crawler.ws;
 
-import org.gbif.api.model.crawler.pipelines.PipelineProcess;
+import org.gbif.api.model.pipelines.PipelineProcess;
 import org.gbif.crawler.pipelines.PipelinesRunningProcessService;
 import org.gbif.ws.util.ExtraMediaTypes;
 
@@ -15,14 +15,14 @@ import com.google.inject.Inject;
  */
 @Produces({MediaType.APPLICATION_JSON, ExtraMediaTypes.APPLICATION_JAVASCRIPT})
 @Path("pipelines/process")
-public class PipelinesProcessResource {
+public class PipelinesRunningProcessResource {
 
   private final PipelinesRunningProcessService service;
 
 
 
   @Inject
-  public PipelinesProcessResource(PipelinesRunningProcessService service) {
+  public PipelinesRunningProcessResource(PipelinesRunningProcessService service) {
     this.service = service;
   }
 

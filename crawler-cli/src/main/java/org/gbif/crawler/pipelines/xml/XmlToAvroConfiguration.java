@@ -1,8 +1,9 @@
 package org.gbif.crawler.pipelines.xml;
 
-import org.gbif.api.model.crawler.pipelines.StepType;
+import org.gbif.api.model.pipelines.StepType;
 import org.gbif.common.messaging.config.MessagingConfiguration;
 import org.gbif.crawler.common.AvroWriteConfiguration;
+import org.gbif.crawler.common.RegistryConfiguration;
 import org.gbif.crawler.common.ZooKeeperConfiguration;
 import org.gbif.pipelines.common.PipelinesVariables.Pipeline;
 import org.gbif.pipelines.common.PipelinesVariables.Pipeline.Conversion;
@@ -76,6 +77,11 @@ public class XmlToAvroConfiguration {
   @NotNull
   public String fileName = Conversion.FILE_NAME + Pipeline.AVRO_EXTENSION;
 
+  @ParametersDelegate
+  @NotNull
+  @Valid
+  public RegistryConfiguration registry = new RegistryConfiguration();
+
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
@@ -96,6 +102,7 @@ public class XmlToAvroConfiguration {
         .add("hdfsSiteConfig", hdfsSiteConfig)
         .add("interpretTypes", interpretTypes.toString())
         .add("metaFileName", metaFileName)
+        .add("registry", registry)
         .toString();
   }
 }

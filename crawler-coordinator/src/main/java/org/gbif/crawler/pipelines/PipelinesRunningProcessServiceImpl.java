@@ -1,10 +1,10 @@
 package org.gbif.crawler.pipelines;
 
 import org.gbif.api.exception.ServiceUnavailableException;
-import org.gbif.api.model.crawler.pipelines.PipelineProcess;
-import org.gbif.api.model.crawler.pipelines.PipelineStep;
-import org.gbif.api.model.crawler.pipelines.StepRunner;
-import org.gbif.api.model.crawler.pipelines.StepType;
+import org.gbif.api.model.pipelines.PipelineProcess;
+import org.gbif.api.model.pipelines.PipelineStep;
+import org.gbif.api.model.pipelines.StepRunner;
+import org.gbif.api.model.pipelines.StepType;
 import org.gbif.api.service.registry.DatasetService;
 import org.gbif.common.messaging.api.Message;
 import org.gbif.common.messaging.api.MessagePublisher;
@@ -45,8 +45,8 @@ import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.gbif.api.model.crawler.pipelines.PipelineStep.MetricInfo;
-import static org.gbif.api.model.crawler.pipelines.PipelineStep.Status;
+import static org.gbif.api.model.pipelines.PipelineStep.MetricInfo;
+import static org.gbif.api.model.pipelines.PipelineStep.Status;
 import static org.gbif.crawler.constants.PipelinesNodePaths.PIPELINES_ROOT;
 import static org.gbif.crawler.constants.PipelinesNodePaths.getPipelinesInfoPath;
 
@@ -54,6 +54,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 /** Pipelines monitoring service collects all necessary information from Zookeeper */
 public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProcessService {
+
+  // TODO: use another object instead of PipelineProcess??
 
   private static final Logger LOG = LoggerFactory.getLogger(PipelinesRunningProcessServiceImpl.class);
 

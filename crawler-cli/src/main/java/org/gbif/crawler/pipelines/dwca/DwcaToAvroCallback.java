@@ -1,7 +1,7 @@
 package org.gbif.crawler.pipelines.dwca;
 
 import org.gbif.api.model.crawler.OccurrenceValidationReport;
-import org.gbif.api.model.crawler.pipelines.StepType;
+import org.gbif.api.model.pipelines.StepType;
 import org.gbif.api.vocabulary.EndpointType;
 import org.gbif.common.messaging.AbstractMessageCallback;
 import org.gbif.common.messaging.api.MessagePublisher;
@@ -10,6 +10,7 @@ import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage;
 import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage.ValidationResult;
 import org.gbif.converters.DwcaToAvroConverter;
 import org.gbif.crawler.pipelines.PipelineCallback;
+import org.gbif.registry.ws.client.pipelines.PipelinesHistoryWsClient;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -43,11 +44,14 @@ public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMes
   private final DwcaToAvroConfiguration config;
   private final MessagePublisher publisher;
   private final CuratorFramework curator;
+  private final PipelinesHistoryWsClient historyWsClient;
 
-  DwcaToAvroCallback(DwcaToAvroConfiguration config, MessagePublisher publisher, CuratorFramework curator) {
+  DwcaToAvroCallback(DwcaToAvroConfiguration config, MessagePublisher publisher, CuratorFramework curator,
+                     PipelinesHistoryWsClient historyWsClient) {
     this.curator = checkNotNull(curator, "curator cannot be null");
     this.config = checkNotNull(config, "config cannot be null");
     this.publisher = publisher;
+    this.historyWsClient = historyWsClient;
   }
 
   /**
@@ -96,6 +100,7 @@ public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMes
           .pipelinesStepName(StepType.DWCA_TO_VERBATIM)
           .publisher(publisher)
           .runnable(runnable)
+          .historyWsClient(historyWsClient)
           .build()
           .handleMessage();
 

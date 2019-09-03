@@ -1,20 +1,16 @@
 package org.gbif.crawler.pipelines;
 
-import java.util.Set;
-
-import org.gbif.api.model.crawler.pipelines.StepRunner;
-import org.gbif.api.model.crawler.pipelines.StepType;
+import org.gbif.api.model.pipelines.PipelineStep;
+import org.gbif.api.model.pipelines.StepRunner;
+import org.gbif.api.model.pipelines.StepType;
 import org.gbif.common.messaging.api.Message;
 import org.gbif.common.messaging.api.MessagePublisher;
-import org.gbif.common.messaging.api.messages.PipelineBasedMessage;
-import org.gbif.common.messaging.api.messages.PipelinesAbcdMessage;
-import org.gbif.common.messaging.api.messages.PipelinesBalancerMessage;
-import org.gbif.common.messaging.api.messages.PipelinesDwcaMessage;
-import org.gbif.common.messaging.api.messages.PipelinesIndexedMessage;
-import org.gbif.common.messaging.api.messages.PipelinesInterpretedMessage;
-import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage;
-import org.gbif.common.messaging.api.messages.PipelinesXmlMessage;
+import org.gbif.common.messaging.api.messages.*;
 import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
+import org.gbif.registry.ws.client.pipelines.PipelinesHistoryWsClient;
+
+import java.util.Optional;
+import java.util.Set;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
@@ -55,6 +51,7 @@ public class PipelineCallback {
     private StepType pipelinesStepName;
     private String zkRootElementPath;
     private Runnable runnable;
+    private PipelinesHistoryWsClient historyWsClient;
 
     /**
      * @param publisher MQ message publisher
@@ -112,6 +109,14 @@ public class PipelineCallback {
       return this;
     }
 
+    /**
+     * @param historyWsClient ws client to track the history of pipelines processes
+     */
+    public Builder historyWsClient(PipelinesHistoryWsClient historyWsClient) {
+      this.historyWsClient = historyWsClient;
+      return this;
+    }
+
     public PipelineCallback build() {
       return new PipelineCallback(this);
     }
@@ -122,11 +127,13 @@ public class PipelineCallback {
    * <p>
    * 1) Receives a MQ message
    * 2) Updates Zookeeper start date monitoring metrics
-   * 3) Runs runnable function, which is the main message processing logic
-   * 4) Updates Zookeeper end date monitoring metrics
-   * 5) Sends a wrapped message to Balancer microservice
-   * 6) Updates Zookeeper successful or error monitoring metrics
-   * 7) Cleans Zookeeper monitoring metrics if the received message is the last
+   * 3) Create pipeline step in tracking service
+   * 4) Runs runnable function, which is the main message processing logic
+   * 5) Updates Zookeeper end date monitoring metrics
+   * 6) Update status in tracking service
+   * 7) Sends a wrapped message to Balancer microservice
+   * 8) Updates Zookeeper successful or error monitoring metrics
+   * 9) Cleans Zookeeper monitoring metrics if the received message is the last
    */
   public void handleMessage() {
 
@@ -141,6 +148,7 @@ public class PipelineCallback {
 
     // Start main process
     String crawlId = inMessage.getDatasetUuid().toString() + "_" + inMessage.getAttempt();
+    Optional<TrackingInfo> trackingInfo = Optional.empty();
 
     try (MDCCloseable mdc = MDC.putCloseable("crawlId", crawlId)) {
 
@@ -161,12 +169,18 @@ public class PipelineCallback {
       String runnerPath = Fn.RUNNER.apply(b.zkRootElementPath);
       ZookeeperUtils.updateMonitoring(b.curator, crawlId, runnerPath, getRunner(inMessage));
 
+      // track the pipeline step
+      trackingInfo = trackPipelineStep();
+
       LOG.info("Handler has been started, crawlId - {}", crawlId);
       b.runnable.run();
       LOG.info("Handler has been finished, crawlId - {}", crawlId);
 
       String endDatePath = Fn.END_DATE.apply(b.zkRootElementPath);
       ZookeeperUtils.updateMonitoringDate(b.curator, crawlId, endDatePath);
+
+      // update tracking status
+      trackingInfo.ifPresent(info -> updateTrackingStatus(info, PipelineStep.Status.COMPLETED));
 
       // Send a wrapped outgoing message to Balancer queue
       if (b.outgoingMessage != null) {
@@ -197,6 +211,46 @@ public class PipelineCallback {
 
       String errorMessagePath = Fn.ERROR_MESSAGE.apply(b.zkRootElementPath);
       ZookeeperUtils.updateMonitoring(b.curator, crawlId, errorMessagePath, error);
+
+      // update tracking status
+      trackingInfo.ifPresent(info -> updateTrackingStatus(info, PipelineStep.Status.FAILED));
+    }
+  }
+
+  private Optional<TrackingInfo> trackPipelineStep() {
+    try {
+      // create pipeline process
+      long processKey =
+          b.historyWsClient.createPipelineProcess(
+              b.incomingMessage.getDatasetUuid(), b.incomingMessage.getAttempt());
+
+      // add step to the process
+      PipelineStep step =
+          new PipelineStep()
+              .setMessage(b.incomingMessage.toString())
+              .setType(b.pipelinesStepName)
+              .setState(PipelineStep.Status.RUNNING)
+              .setRunner(StepRunner.valueOf(getRunner(b.incomingMessage)));
+      long stepKey = b.historyWsClient.addPipelineStep(processKey, step);
+
+      return Optional.of(new TrackingInfo(processKey, stepKey));
+    } catch (Exception ex) {
+      // we don't want to break the crawling if the tracking fails
+      LOG.error("Couldn't track pipeline step for message {}", b.incomingMessage, ex);
+      return Optional.empty();
+    }
+  }
+
+  private void updateTrackingStatus(TrackingInfo trackingInfo, PipelineStep.Status status) {
+    try {
+      b.historyWsClient.updatePipelineStep(trackingInfo.processKey, trackingInfo.stepKey, status);
+    } catch (Exception ex) {
+      // we don't want to break the crawling if the tracking fails
+      LOG.error(
+          "Couldn't update tracking status for process {} and step {}",
+          trackingInfo.processKey,
+          trackingInfo.stepKey,
+          ex);
     }
   }
 
@@ -221,5 +275,15 @@ public class PipelineCallback {
     }
 
     return StepRunner.UNKNOWN.name();
+  }
+
+  private static class TrackingInfo {
+    long processKey;
+    long stepKey;
+
+    TrackingInfo(long processKey, long stepKey) {
+      this.processKey = processKey;
+      this.stepKey = stepKey;
+    }
   }
 }

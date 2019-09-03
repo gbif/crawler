@@ -1,6 +1,6 @@
 package org.gbif.crawler.pipelines;
 
-import org.gbif.api.model.crawler.pipelines.PipelineProcess;
+import org.gbif.api.model.pipelines.PipelineProcess;
 
 import java.util.Set;
 

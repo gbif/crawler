@@ -2,6 +2,7 @@ package org.gbif.crawler.pipelines.interpret;
 
 import org.gbif.common.messaging.config.MessagingConfiguration;
 import org.gbif.crawler.common.AvroWriteConfiguration;
+import org.gbif.crawler.common.RegistryConfiguration;
 import org.gbif.crawler.common.ZooKeeperConfiguration;
 import org.gbif.pipelines.common.PipelinesVariables.Pipeline;
 
@@ -152,6 +153,11 @@ public class InterpreterConfiguration {
   @Parameter(names = "--yarn-queue")
   public String yarnQueue;
 
+  @ParametersDelegate
+  @NotNull
+  @Valid
+  public RegistryConfiguration registry = new RegistryConfiguration();
+
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
@@ -186,6 +192,7 @@ public class InterpreterConfiguration {
         .add("sparkParallelismMax", sparkParallelismMax)
         .add("sparkParallelismMin", sparkParallelismMin)
         .add("yarnQueue", yarnQueue)
+        .add("registry", registry)
         .toString();
   }
 }

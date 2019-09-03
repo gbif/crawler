@@ -1,6 +1,6 @@
 package org.gbif.crawler.pipelines.balancer.handler;
 
-import org.gbif.api.model.crawler.pipelines.StepRunner;
+import org.gbif.api.model.pipelines.StepRunner;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.PipelinesBalancerMessage;
 import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage;

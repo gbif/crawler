@@ -1,6 +1,7 @@
 package org.gbif.crawler.pipelines.hive;
 
 import org.gbif.common.messaging.config.MessagingConfiguration;
+import org.gbif.crawler.common.RegistryConfiguration;
 import org.gbif.crawler.common.ZooKeeperConfiguration;
 
 import com.beust.jcommander.Parameter;
@@ -122,6 +123,11 @@ public class HiveViewConfiguration {
 
   @Parameter(names = "--process-output-directory")
   public String processOutputDirectory;
+
+  @ParametersDelegate
+  @NotNull
+  @Valid
+  public RegistryConfiguration registry = new RegistryConfiguration();
 
   @Override
   public String toString() {

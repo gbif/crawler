@@ -1,6 +1,6 @@
 package org.gbif.crawler.pipelines.indexing;
 
-import org.gbif.api.model.crawler.pipelines.StepType;
+import org.gbif.api.model.pipelines.StepType;
 import org.gbif.api.model.registry.Dataset;
 import org.gbif.api.service.registry.DatasetService;
 import org.gbif.common.messaging.AbstractMessageCallback;
@@ -13,6 +13,7 @@ import org.gbif.crawler.pipelines.dwca.DwcaToAvroConfiguration;
 import org.gbif.pipelines.common.PipelinesVariables.Metrics;
 import org.gbif.pipelines.common.PipelinesVariables.Pipeline.Interpretation;
 import org.gbif.pipelines.common.PipelinesVariables.Pipeline.Interpretation.RecordType;
+import org.gbif.registry.ws.client.pipelines.PipelinesHistoryWsClient;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -50,14 +51,16 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
   private final DatasetService datasetService;
   private final CuratorFramework curator;
   private final HttpClient httpClient;
+  private final PipelinesHistoryWsClient historyWsClient;
 
   IndexingCallback(IndexingConfiguration config, MessagePublisher publisher, DatasetService datasetService,
-      CuratorFramework curator, HttpClient httpClient) {
+      CuratorFramework curator, HttpClient httpClient, PipelinesHistoryWsClient historyWsClient) {
     this.curator = checkNotNull(curator, "curator cannot be null");
     this.config = checkNotNull(config, "config cannot be null");
     this.datasetService = checkNotNull(datasetService, "config cannot be null");
     this.publisher = publisher;
     this.httpClient = httpClient;
+    this.historyWsClient = historyWsClient;
   }
 
   /**
@@ -91,6 +94,7 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
           .pipelinesStepName(StepType.INTERPRETED_TO_INDEX)
           .publisher(publisher)
           .runnable(runnable)
+          .historyWsClient(historyWsClient)
           .build()
           .handleMessage();
 

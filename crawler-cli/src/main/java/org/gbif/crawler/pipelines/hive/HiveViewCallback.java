@@ -1,6 +1,6 @@
 package org.gbif.crawler.pipelines.hive;
 
-import org.gbif.api.model.crawler.pipelines.StepType;
+import org.gbif.api.model.pipelines.StepType;
 import org.gbif.common.messaging.AbstractMessageCallback;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.PipelinesInterpretedMessage;
@@ -8,6 +8,7 @@ import org.gbif.crawler.pipelines.HdfsUtils;
 import org.gbif.crawler.pipelines.PipelineCallback;
 import org.gbif.crawler.pipelines.dwca.DwcaToAvroConfiguration;
 import org.gbif.pipelines.common.PipelinesVariables;
+import org.gbif.registry.ws.client.pipelines.PipelinesHistoryWsClient;
 
 import java.io.IOException;
 
@@ -30,11 +31,14 @@ public class HiveViewCallback extends AbstractMessageCallback<PipelinesInterpret
   private final HiveViewConfiguration config;
   private final MessagePublisher publisher;
   private final CuratorFramework curator;
+  private final PipelinesHistoryWsClient historyWsClient;
 
-  HiveViewCallback(HiveViewConfiguration config, MessagePublisher publisher, CuratorFramework curator) {
+  HiveViewCallback(HiveViewConfiguration config, MessagePublisher publisher, CuratorFramework curator,
+                   PipelinesHistoryWsClient historyWsClient) {
     this.curator = checkNotNull(curator, "curator cannot be null");
     this.config = checkNotNull(config, "config cannot be null");
     this.publisher = publisher;
+    this.historyWsClient = historyWsClient;
   }
 
   /** Handles a MQ {@link PipelinesInterpretedMessage} message */
@@ -56,6 +60,7 @@ public class HiveViewCallback extends AbstractMessageCallback<PipelinesInterpret
           .pipelinesStepName(StepType.HIVE_VIEW)
           .publisher(publisher)
           .runnable(runnable)
+          .historyWsClient(historyWsClient)
           .build()
           .handleMessage();
 

@@ -1,6 +1,6 @@
 package org.gbif.crawler.pipelines.abcd;
 
-import org.gbif.api.model.crawler.pipelines.StepType;
+import org.gbif.api.model.pipelines.StepType;
 import org.gbif.api.vocabulary.EndpointType;
 import org.gbif.common.messaging.AbstractMessageCallback;
 import org.gbif.common.messaging.api.MessagePublisher;
@@ -10,6 +10,7 @@ import org.gbif.common.messaging.api.messages.PipelinesXmlMessage;
 import org.gbif.crawler.pipelines.PipelineCallback;
 import org.gbif.crawler.pipelines.xml.XmlToAvroCallback;
 import org.gbif.crawler.pipelines.xml.XmlToAvroConfiguration;
+import org.gbif.registry.ws.client.pipelines.PipelinesHistoryWsClient;
 
 import java.util.Set;
 import java.util.UUID;
@@ -36,11 +37,14 @@ public class AbcdToAvroCallback extends AbstractMessageCallback<PipelinesAbcdMes
   private final XmlToAvroConfiguration config;
   private final MessagePublisher publisher;
   private final CuratorFramework curator;
+  private final PipelinesHistoryWsClient historyWsClient;
 
-  public AbcdToAvroCallback(XmlToAvroConfiguration config, MessagePublisher publisher, CuratorFramework curator) {
+  public AbcdToAvroCallback(XmlToAvroConfiguration config, MessagePublisher publisher, CuratorFramework curator,
+                            PipelinesHistoryWsClient historyWsClient) {
     this.curator = checkNotNull(curator, "curator cannot be null");
     this.config = checkNotNull(config, "config cannot be null");
     this.publisher = publisher;
+    this.historyWsClient = historyWsClient;
   }
 
   /**
@@ -93,6 +97,7 @@ public class AbcdToAvroCallback extends AbstractMessageCallback<PipelinesAbcdMes
           .pipelinesStepName(StepType.ABCD_TO_VERBATIM)
           .publisher(publisher)
           .runnable(runnable)
+          .historyWsClient(historyWsClient)
           .build()
           .handleMessage();
 
