@@ -11,6 +11,7 @@ import org.gbif.api.util.MachineTagUtils;
 import org.gbif.api.util.comparators.EndpointCreatedComparator;
 import org.gbif.api.util.comparators.EndpointPriorityComparator;
 import org.gbif.api.vocabulary.EndpointType;
+import org.gbif.common.messaging.api.messages.Platform;
 import org.gbif.crawler.constants.CrawlerNodePaths;
 
 import java.io.IOException;
@@ -97,12 +98,12 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
   }
 
   @Override
-  public void initiateCrawl(UUID datasetKey, int priority) {
+  public void initiateCrawl(UUID datasetKey, int priority, Platform platform) {
     MDC.put("datasetKey", datasetKey.toString());
 
     metrics.timerStart();
     try {
-      doScheduleCrawl(datasetKey, priority);
+      doScheduleCrawl(datasetKey, priority, platform);
     } catch (RuntimeException e) {
       metrics.unsuccessfulSchedule();
       throw e;
@@ -115,8 +116,8 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
   }
 
   @Override
-  public void initiateCrawl(UUID datasetKey) {
-    initiateCrawl(datasetKey, DEFAULT_PRIORITY);
+  public void initiateCrawl(UUID datasetKey, Platform platform) {
+    initiateCrawl(datasetKey, DEFAULT_PRIORITY, platform);
   }
 
   /**
@@ -167,7 +168,7 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
   /**
    * This is the main entry point into this service and should be called by all methods wanting to schedule a crawl.
    */
-  private void doScheduleCrawl(UUID datasetKey, int priority) {
+  private void doScheduleCrawl(UUID datasetKey, int priority, Platform platform) {
     checkNotNull(datasetKey, "datasetKey can't be null");
 
     // We first have to check if the dataset can be crawled.
@@ -182,7 +183,7 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
     Long declaredCount = updateOrRetrieveDeclaredRecordCount(dataset, endpoint.get(), datasetKey);
 
     // This object holds all information needed by Crawlers to crawl the endpoint
-    CrawlJob crawlJob = getCrawlJob(datasetKey, dataset, endpoint.get(), declaredCount);
+    CrawlJob crawlJob = getCrawlJob(datasetKey, dataset, endpoint.get(), declaredCount, platform);
 
     byte[] dataBytes = serializeCrawlJob(crawlJob);
     queueCrawlJob(datasetKey, isAbcdArchive(endpoint.get()), isDarwinCoreArchive(endpoint.get()), priority, dataBytes);
@@ -352,7 +353,7 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
    *
    * @return populated object ready to be put into ZooKeeper
    */
-  private CrawlJob getCrawlJob(UUID datasetKey, Dataset dataset, Endpoint endpoint, Long declaredCount) {
+  private CrawlJob getCrawlJob(UUID datasetKey, Dataset dataset, Endpoint endpoint, Long declaredCount, Platform platform) {
     checkNotNull(dataset, "dataset can't be null");
     checkNotNull(endpoint, "endpoint can't be null");
 
@@ -382,6 +383,8 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
         LOG.warn("Unsupported endpoint for occurrence dataset [{}] - [{}]", datasetKey, endpoint.getType());
         break;
     }
+
+    properties.put("platform", platform.name());
 
     if (declaredCount != null) {
       properties.put("declaredCount", String.valueOf(declaredCount));

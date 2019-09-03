@@ -3,6 +3,7 @@ package org.gbif.crawler.pipelines.xml;
 import org.gbif.api.model.crawler.FinishReason;
 import org.gbif.api.vocabulary.EndpointType;
 import org.gbif.common.messaging.api.messages.PipelinesXmlMessage;
+import org.gbif.common.messaging.api.messages.Platform;
 import org.gbif.crawler.pipelines.HdfsUtils;
 import org.gbif.crawler.pipelines.MessagePublisherStub;
 import org.gbif.crawler.pipelines.ZookeeperUtils;
@@ -95,7 +96,8 @@ public class XmlToAvroCallbackTest {
     config.archiveRepositorySubdir = Collections.singleton("xml");
     XmlToAvroCallback callback = new XmlToAvroCallback(config, publisher, curator, historyWsClient);
     PipelinesXmlMessage message =
-        new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL, Collections.singleton(ALL.name()), EndpointType.BIOCASE_XML_ARCHIVE);
+        new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL, Collections.singleton(ALL.name()),
+                                EndpointType.BIOCASE_XML_ARCHIVE, Platform.PIPELINES);
     String crawlId = DATASET_UUID + "_" + attempt;
 
     // When
@@ -126,7 +128,8 @@ public class XmlToAvroCallbackTest {
     config.archiveRepositorySubdir = Collections.singleton("xml");
     XmlToAvroCallback callback = new XmlToAvroCallback(config, publisher, curator, historyWsClient);
     PipelinesXmlMessage message =
-        new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL, Collections.singleton(ALL.name()), EndpointType.BIOCASE_XML_ARCHIVE);
+        new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL, Collections.singleton(ALL.name()),
+                                EndpointType.BIOCASE_XML_ARCHIVE, Platform.PIPELINES);
     String crawlId = DATASET_UUID + "_" + attempt;
 
     // When
@@ -157,7 +160,8 @@ public class XmlToAvroCallbackTest {
     config.archiveRepositorySubdir = Collections.singleton("xml");
     XmlToAvroCallback callback = new XmlToAvroCallback(config, publisher, curator, historyWsClient);
     PipelinesXmlMessage message =
-        new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL, Collections.singleton(ALL.name()), EndpointType.BIOCASE_XML_ARCHIVE);
+        new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL, Collections.singleton(ALL.name()),
+                                EndpointType.BIOCASE_XML_ARCHIVE, Platform.PIPELINES);
     String crawlId = DATASET_UUID + "_" + attempt;
 
     // When
@@ -190,7 +194,8 @@ public class XmlToAvroCallbackTest {
     config.archiveRepositorySubdir = Collections.singleton("xml");
     XmlToAvroCallback callback = new XmlToAvroCallback(config, publisher, curator, historyWsClient);
     PipelinesXmlMessage message =
-        new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NOT_MODIFIED, Collections.singleton(ALL.name()), EndpointType.BIOCASE_XML_ARCHIVE);
+        new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NOT_MODIFIED, Collections.singleton(ALL.name()),
+                                EndpointType.BIOCASE_XML_ARCHIVE, Platform.PIPELINES);
     String crawlId = DATASET_UUID + "_" + attempt;
 
     // When

@@ -52,11 +52,12 @@
     <gbif-httputils.version>0.12</gbif-httputils.version>
     <gbif-microservice.version>0.7</gbif-microservice.version>
     <gbif-occurrence.version>0.86</gbif-occurrence.version>
-    <gbif-postal-service.version>0.36</gbif-postal-service.version>
+    <gbif-postal-service.version>0.37-SNAPSHOT</gbif-postal-service.version>
     <gbif-registry.version>2.125-SNAPSHOT</gbif-registry.version>
     <gbif-wrangler.version>0.2</gbif-wrangler.version>
     <gbif-archives-converters.version>2.2.3</gbif-archives-converters.version>
     <gbif-pipelines-common.version>2.2.3</gbif-pipelines-common.version>
+    <gbif-metrics.version>0.33</gbif-metrics.version>
 
     <guava.version>18.0</guava.version>
     <guice.version>4.0</guice.version>
@@ -238,6 +239,11 @@
         <groupId>org.gbif</groupId>
         <artifactId>gbif-microservice</artifactId>
         <version>${gbif-microservice.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.gbif.metrics</groupId>
+        <artifactId>metrics-ws-client</artifactId>
+        <version>${gbif-metrics.version}</version>
       </dependency>
       <dependency>
         <groupId>org.gbif.pipelines</groupId>

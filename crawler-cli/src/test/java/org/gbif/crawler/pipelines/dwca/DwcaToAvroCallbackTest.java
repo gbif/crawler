@@ -5,6 +5,7 @@ import org.gbif.api.model.crawler.OccurrenceValidationReport;
 import org.gbif.api.vocabulary.DatasetType;
 import org.gbif.api.vocabulary.EndpointType;
 import org.gbif.common.messaging.api.messages.PipelinesDwcaMessage;
+import org.gbif.common.messaging.api.messages.Platform;
 import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
 import org.gbif.crawler.pipelines.HdfsUtils;
 import org.gbif.crawler.pipelines.MessagePublisherStub;
@@ -106,7 +107,7 @@ public class DwcaToAvroCallbackTest {
     DwcaValidationReport reason = new DwcaValidationReport(uuid, report);
     PipelinesDwcaMessage message =
         new PipelinesDwcaMessage(uuid, DatasetType.OCCURRENCE, URI.create(DUMMY_URL), attempt, reason,
-                                 Collections.singleton(ALL.name()), EndpointType.DWC_ARCHIVE);
+                                 Collections.singleton(ALL.name()), EndpointType.DWC_ARCHIVE, Platform.PIPELINES);
 
     // When
     callback.handleMessage(message);
@@ -144,7 +145,7 @@ public class DwcaToAvroCallbackTest {
     DwcaValidationReport reason = new DwcaValidationReport(uuid, report);
     PipelinesDwcaMessage message =
         new PipelinesDwcaMessage(uuid, DatasetType.OCCURRENCE, URI.create(DUMMY_URL), attempt, reason,
-            Collections.singleton(DWCA_TO_VERBATIM.name()), EndpointType.DWC_ARCHIVE);
+            Collections.singleton(DWCA_TO_VERBATIM.name()), EndpointType.DWC_ARCHIVE, Platform.PIPELINES);
 
     // When
     callback.handleMessage(message);
@@ -181,7 +182,7 @@ public class DwcaToAvroCallbackTest {
     DwcaValidationReport reason = new DwcaValidationReport(uuid, report);
     PipelinesDwcaMessage message =
         new PipelinesDwcaMessage(uuid, DatasetType.OCCURRENCE, URI.create(DUMMY_URL), attempt, reason,
-            Collections.singleton(ALL.name()), EndpointType.DWC_ARCHIVE);
+            Collections.singleton(ALL.name()), EndpointType.DWC_ARCHIVE, Platform.PIPELINES);
 
     // When
     callback.handleMessage(message);
@@ -218,7 +219,7 @@ public class DwcaToAvroCallbackTest {
     DwcaValidationReport reason = new DwcaValidationReport(uuid, report);
     PipelinesDwcaMessage message =
         new PipelinesDwcaMessage(uuid, DatasetType.METADATA, URI.create(DUMMY_URL), attempt, reason,
-            Collections.singleton(ALL.name()), EndpointType.DWC_ARCHIVE);
+            Collections.singleton(ALL.name()), EndpointType.DWC_ARCHIVE, Platform.PIPELINES);
 
     // When
     callback.handleMessage(message);
@@ -252,7 +253,7 @@ public class DwcaToAvroCallbackTest {
     DwcaValidationReport reason = new DwcaValidationReport(uuid, report);
     PipelinesDwcaMessage message =
         new PipelinesDwcaMessage(uuid, DatasetType.OCCURRENCE, URI.create(DUMMY_URL), attempt, reason,
-            Collections.singleton(ALL.name()), EndpointType.DWC_ARCHIVE);
+            Collections.singleton(ALL.name()), EndpointType.DWC_ARCHIVE, Platform.PIPELINES);
 
     // When
     callback.handleMessage(message);

@@ -2,11 +2,13 @@ package org.gbif.crawler.abcda.downloader;
 
 import java.io.File;
 import java.util.Date;
+import java.util.Optional;
 
 import org.gbif.api.model.crawler.CrawlJob;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.AbcdaDownloadFinishedMessage;
 import org.gbif.common.messaging.api.messages.DatasetBasedMessage;
+import org.gbif.common.messaging.api.messages.Platform;
 import org.gbif.crawler.abcda.AbcdaConfiguration;
 import org.gbif.crawler.common.DownloadCrawlConsumer;
 
@@ -24,7 +26,11 @@ public class AbcdaCrawlConsumer extends DownloadCrawlConsumer {
 
   @Override
   protected DatasetBasedMessage createFinishedMessage(CrawlJob crawlJob) {
-    return new AbcdaDownloadFinishedMessage(crawlJob.getDatasetKey(), crawlJob.getTargetUrl(), crawlJob.getAttempt(), new Date(), true, crawlJob.getEndpointType());
+    return new AbcdaDownloadFinishedMessage(crawlJob.getDatasetKey(), crawlJob.getTargetUrl(), crawlJob.getAttempt(),
+                                            new Date(), true, crawlJob.getEndpointType(),
+                                            Optional.ofNullable(crawlJob.getProperty("platform"))
+                                                    .map(v -> Platform.valueOf(v.toUpperCase()))
+                                                    .orElse(Platform.ALL));
   }
 
   @Override

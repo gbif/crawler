@@ -7,6 +7,7 @@ import org.gbif.common.messaging.AbstractMessageCallback;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage;
 import org.gbif.common.messaging.api.messages.PipelinesXmlMessage;
+import org.gbif.common.messaging.api.messages.Platform;
 import org.gbif.converters.XmlToAvroConverter;
 import org.gbif.crawler.pipelines.PipelineCallback;
 import org.gbif.registry.ws.client.pipelines.PipelinesHistoryWsClient;
@@ -62,6 +63,10 @@ public class XmlToAvroCallback extends AbstractMessageCallback<PipelinesXmlMessa
    */
   @Override
   public void handleMessage(PipelinesXmlMessage message) {
+
+    if (!Platform.PIPELINES.equivalent(message.getPlatform())) {
+      return;
+    }
 
     UUID datasetId = message.getDatasetUuid();
     Integer attempt = message.getAttempt();

@@ -155,7 +155,7 @@ public class AbcdaPagerService extends AbstractIdleService {
 
     private void sendXmlPage(byte[] serializedRecord, AbcdaDownloadFinishedMessage message) throws IOException {
       publisher.send(new CrawlResponseMessage(message.getDatasetUuid(), message.getAttempt(), 1, serializedRecord,
-          1, Optional.absent(), ""));
+                                              1, Optional.absent(), "", message.getPlatform()));
     }
 
     private void incrementCounter(UUID datasetKey, DistributedAtomicLong counter, long count) {
@@ -165,7 +165,7 @@ public class AbcdaPagerService extends AbstractIdleService {
           if (value.succeeded()) {
             LOG.debug("Set counter of pages crawled for [{}] to [{}]", datasetKey, value.postValue());
           } else {
-            LOG.warn("Failed to update counter of pages crawled for [{}]", datasetKey, value.postValue());
+            LOG.warn("Failed to update counter of pages crawled for [{}] to [{}]", datasetKey, value.postValue());
           }
         }
       } catch (Exception e) {

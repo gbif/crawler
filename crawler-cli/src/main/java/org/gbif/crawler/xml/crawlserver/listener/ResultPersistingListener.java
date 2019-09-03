@@ -49,7 +49,7 @@ public class ResultPersistingListener
 
   @Override
   public void response(List<Byte> response, int retry, long duration, Optional<Integer> recordCount,
-    Optional<Boolean> endOfRecords) {
+                       Optional<Boolean> endOfRecords) {
     String contextString =
       getCurrentContext().getLowerBound().or("null") + "-" + getCurrentContext().getUpperBound().or("null");
     if (response == null || response.isEmpty()) {
