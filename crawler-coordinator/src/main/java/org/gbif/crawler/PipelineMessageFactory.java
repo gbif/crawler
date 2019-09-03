@@ -1,6 +1,5 @@
 package org.gbif.crawler;
 
-import org.gbif.api.model.metrics.cube.Dimension;
 import org.gbif.api.model.metrics.cube.OccurrenceCube;
 import org.gbif.api.model.metrics.cube.ReadBuilder;
 import org.gbif.api.model.registry.Dataset;
