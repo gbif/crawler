@@ -28,9 +28,7 @@ public class AbcdaCrawlConsumer extends DownloadCrawlConsumer {
   protected DatasetBasedMessage createFinishedMessage(CrawlJob crawlJob) {
     return new AbcdaDownloadFinishedMessage(crawlJob.getDatasetKey(), crawlJob.getTargetUrl(), crawlJob.getAttempt(),
                                             new Date(), true, crawlJob.getEndpointType(),
-                                            Optional.ofNullable(crawlJob.getProperty("platform"))
-                                                    .map(v -> Platform.valueOf(v.toUpperCase()))
-                                                    .orElse(Platform.ALL));
+                                            Platform.parseOrDefault(crawlJob.getProperty("platform"), Platform.ALL));
   }
 
   @Override

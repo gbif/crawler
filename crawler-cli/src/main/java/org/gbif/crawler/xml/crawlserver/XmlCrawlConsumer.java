@@ -75,7 +75,7 @@ class XmlCrawlConsumer extends CrawlConsumer {
     crawler.addListener(new CrawlerZooKeeperUpdatingListener(builder.getCrawlConfiguration(), curator));
     crawler.addListener(new LoggingCrawlListener(builder.getCrawlConfiguration()));
     crawler.addListener(new MessagingCrawlListener(publisher, builder.getCrawlConfiguration(), crawlJob.getEndpointType(),
-                                                   java.util.Optional.ofNullable(crawlJob.getProperties().get("platform")).map(p -> Platform.valueOf(p.toUpperCase())).orElse(Platform.ALL)));
+                                                   Platform.parseOrDefault(crawlJob.getProperty("platform"), Platform.ALL)));
     if (responseArchive != null) {
       crawler.addListener(new ResultPersistingListener(responseArchive, builder.getCrawlConfiguration()));
     }
