@@ -90,7 +90,7 @@ public class PipelinesCoordinatorTrackingServiceImpl implements PipelinesHistory
       do {
         response.getResults().forEach(onDataset);
         pagingRequest.setOffset(response.getResults().size());
-        response = datasetService.list(pagingRequest);
+        response = datasetService.listByType(DatasetType.OCCURRENCE, pagingRequest);
       } while (response.isEndOfRecords());
     } catch (Exception ex) {
       LOG.error("Error processing all datasets", ex);
