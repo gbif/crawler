@@ -1,6 +1,6 @@
 package org.gbif.crawler.pipelines.interpret;
 
-import org.gbif.api.model.crawler.pipelines.StepRunner;
+import org.gbif.api.model.pipelines.StepRunner;
 import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage;
 
 import java.io.File;

@@ -3,12 +3,12 @@ package org.gbif.crawler.pipelines.hive;
 import org.gbif.common.messaging.DefaultMessagePublisher;
 import org.gbif.common.messaging.MessageListener;
 import org.gbif.common.messaging.api.MessagePublisher;
+import org.gbif.registry.ws.client.pipelines.PipelinesHistoryWsClient;
 
+import com.google.common.util.concurrent.AbstractIdleService;
 import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.util.concurrent.AbstractIdleService;
 
 /**
  * A service which listens to the {@link org.gbif.common.messaging.api.messages.PipelinesInterpretedMessage }
@@ -32,8 +32,10 @@ public class HiveViewService extends AbstractIdleService {
     listener = new MessageListener(config.messaging.getConnectionParameters(), 1);
     publisher = new DefaultMessagePublisher(config.messaging.getConnectionParameters());
     curator = config.zooKeeper.getCuratorFramework();
+    PipelinesHistoryWsClient
+      historyWsClient = config.registry.newRegistryInjector().getInstance(PipelinesHistoryWsClient.class);
 
-    listener.listen(config.queueName, config.poolSize, new HiveViewCallback(config, publisher, curator));
+    listener.listen(config.queueName, config.poolSize, new HiveViewCallback(config, publisher, curator, historyWsClient));
   }
 
   @Override

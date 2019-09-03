@@ -1,7 +1,7 @@
 package org.gbif.crawler.pipelines.xml;
 
 import org.gbif.api.model.crawler.FinishReason;
-import org.gbif.api.model.crawler.pipelines.StepType;
+import org.gbif.api.model.pipelines.StepType;
 import org.gbif.api.vocabulary.EndpointType;
 import org.gbif.common.messaging.AbstractMessageCallback;
 import org.gbif.common.messaging.api.MessagePublisher;

@@ -1,7 +1,6 @@
 package org.gbif.crawler.pipelines.interpret;
 
-import org.gbif.api.model.crawler.pipelines.StepRunner;
-import org.gbif.api.model.crawler.pipelines.StepType;
+import org.gbif.api.model.pipelines.StepRunner;
 import org.gbif.api.vocabulary.EndpointType;
 import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage;
 import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage.ValidationResult;
@@ -12,7 +11,7 @@ import java.util.UUID;
 
 import org.junit.Test;
 
-import static org.gbif.api.model.crawler.pipelines.StepType.*;
+import static org.gbif.api.model.pipelines.StepType.ALL;
 
 import static org.junit.Assert.assertEquals;
 

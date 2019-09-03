@@ -1,6 +1,6 @@
 package org.gbif.crawler.pipelines.indexing;
 
-import org.gbif.api.model.crawler.pipelines.StepRunner;
+import org.gbif.api.model.pipelines.StepRunner;
 import org.gbif.common.messaging.api.messages.PipelinesInterpretedMessage;
 
 import java.io.File;

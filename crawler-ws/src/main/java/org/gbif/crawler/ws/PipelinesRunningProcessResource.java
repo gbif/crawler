@@ -19,8 +19,6 @@ public class PipelinesRunningProcessResource {
 
   private final PipelinesRunningProcessService service;
 
-
-
   @Inject
   public PipelinesRunningProcessResource(PipelinesRunningProcessService service) {
     this.service = service;

@@ -9,6 +9,7 @@ import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
 import org.gbif.crawler.pipelines.HdfsUtils;
 import org.gbif.crawler.pipelines.MessagePublisherStub;
 import org.gbif.crawler.pipelines.ZookeeperUtils;
+import org.gbif.registry.ws.client.pipelines.PipelinesHistoryWsClient;
 
 import java.io.File;
 import java.io.IOException;
@@ -28,9 +29,10 @@ import org.apache.hadoop.hdfs.MiniDFSCluster;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.Mockito;
 
-import static org.gbif.api.model.crawler.pipelines.StepType.ALL;
-import static org.gbif.api.model.crawler.pipelines.StepType.DWCA_TO_VERBATIM;
+import static org.gbif.api.model.pipelines.StepType.ALL;
+import static org.gbif.api.model.pipelines.StepType.DWCA_TO_VERBATIM;
 import static org.gbif.crawler.constants.PipelinesNodePaths.getPipelinesInfoPath;
 
 import static org.junit.Assert.assertEquals;
@@ -52,6 +54,7 @@ public class DwcaToAvroCallbackTest {
   private static CuratorFramework curator;
   private static TestingServer server;
   private static MessagePublisherStub publisher;
+  private static PipelinesHistoryWsClient historyWsClient;
 
   @BeforeClass
   public static void setUp() throws Exception {
@@ -73,6 +76,8 @@ public class DwcaToAvroCallbackTest {
     curator.start();
 
     publisher = MessagePublisherStub.create();
+
+    historyWsClient = Mockito.mock(PipelinesHistoryWsClient.class);
   }
 
   @AfterClass
@@ -91,7 +96,7 @@ public class DwcaToAvroCallbackTest {
     config.archiveRepository = INPUT_DATASET_FOLDER;
     config.repositoryPath = hdfsUri;
 
-    DwcaToAvroCallback callback = new DwcaToAvroCallback(config, publisher, curator);
+    DwcaToAvroCallback callback = new DwcaToAvroCallback(config, publisher, curator, historyWsClient);
 
     UUID uuid = UUID.fromString(DATASET_UUID);
     int attempt = 2;
@@ -129,7 +134,7 @@ public class DwcaToAvroCallbackTest {
     config.archiveRepository = INPUT_DATASET_FOLDER;
     config.repositoryPath = hdfsUri;
 
-    DwcaToAvroCallback callback = new DwcaToAvroCallback(config, publisher, curator);
+    DwcaToAvroCallback callback = new DwcaToAvroCallback(config, publisher, curator, historyWsClient);
 
     UUID uuid = UUID.fromString(DATASET_UUID);
     int attempt = 2;
@@ -166,7 +171,7 @@ public class DwcaToAvroCallbackTest {
     config.archiveRepository = INPUT_DATASET_FOLDER + "/1";
     config.repositoryPath = hdfsUri;
 
-    DwcaToAvroCallback callback = new DwcaToAvroCallback(config, publisher, curator);
+    DwcaToAvroCallback callback = new DwcaToAvroCallback(config, publisher, curator, historyWsClient);
 
     UUID uuid = UUID.fromString(DATASET_UUID);
     int attempt = 2;
@@ -203,7 +208,7 @@ public class DwcaToAvroCallbackTest {
     config.archiveRepository = INPUT_DATASET_FOLDER;
     config.repositoryPath = hdfsUri;
 
-    DwcaToAvroCallback callback = new DwcaToAvroCallback(config, publisher, curator);
+    DwcaToAvroCallback callback = new DwcaToAvroCallback(config, publisher, curator, historyWsClient);
 
     UUID uuid = UUID.fromString(DATASET_UUID);
     int attempt = 2;
@@ -237,7 +242,7 @@ public class DwcaToAvroCallbackTest {
     config.archiveRepository = INPUT_DATASET_FOLDER;
     config.repositoryPath = hdfsUri;
 
-    DwcaToAvroCallback callback = new DwcaToAvroCallback(config, publisher, curator);
+    DwcaToAvroCallback callback = new DwcaToAvroCallback(config, publisher, curator, historyWsClient);
 
     UUID uuid = UUID.fromString(DATASET_UUID);
     int attempt = 2;

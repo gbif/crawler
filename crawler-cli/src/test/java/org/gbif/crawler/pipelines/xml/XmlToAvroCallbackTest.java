@@ -26,8 +26,8 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import static org.gbif.api.model.crawler.pipelines.StepType.ALL;
-import static org.gbif.api.model.crawler.pipelines.StepType.XML_TO_VERBATIM;
+import static org.gbif.api.model.pipelines.StepType.ALL;
+import static org.gbif.api.model.pipelines.StepType.XML_TO_VERBATIM;
 import static org.gbif.crawler.constants.PipelinesNodePaths.getPipelinesInfoPath;
 
 import static org.junit.Assert.assertEquals;

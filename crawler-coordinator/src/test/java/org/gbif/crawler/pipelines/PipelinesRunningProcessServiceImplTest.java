@@ -1,8 +1,8 @@
 package org.gbif.crawler.pipelines;
 
-import org.gbif.api.model.crawler.pipelines.PipelineProcess;
-import org.gbif.api.model.crawler.pipelines.PipelineStep;
-import org.gbif.api.model.crawler.pipelines.StepType;
+import org.gbif.api.model.pipelines.PipelineProcess;
+import org.gbif.api.model.pipelines.PipelineStep;
+import org.gbif.api.model.pipelines.StepType;
 import org.gbif.crawler.constants.PipelinesNodePaths;
 import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
 
