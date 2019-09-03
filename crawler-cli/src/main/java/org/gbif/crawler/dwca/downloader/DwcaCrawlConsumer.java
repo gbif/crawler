@@ -40,7 +40,7 @@ public class DwcaCrawlConsumer extends DownloadCrawlConsumer {
                                            new Date(),
                                            true,
                                            crawlJob.getEndpointType(),
-                                           java.util.Optional.ofNullable(crawlJob.getProperties().get("platform")).map(p -> Platform.valueOf(p.toUpperCase())).orElse(Platform.ALL));
+                                           Platform.parseOrDefault(crawlJob.getProperty("platform"), Platform.ALL));
   }
 
   @Override
