@@ -65,6 +65,7 @@ public class XmlToAvroCallback extends AbstractMessageCallback<PipelinesXmlMessa
   public void handleMessage(PipelinesXmlMessage message) {
 
     if (!Platform.PIPELINES.equivalent(message.getPlatform())) {
+      LOG.info("Skip message because pipelines don't support the platform {}", message);
       return;
     }
 

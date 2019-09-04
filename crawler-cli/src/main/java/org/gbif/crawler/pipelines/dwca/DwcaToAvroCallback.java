@@ -62,6 +62,7 @@ public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMes
   public void handleMessage(PipelinesDwcaMessage message) {
 
     if (!Platform.PIPELINES.equivalent(message.getPlatform())) {
+      LOG.info("Skip message because pipelines don't support the platform {}", message);
       return;
     }
 

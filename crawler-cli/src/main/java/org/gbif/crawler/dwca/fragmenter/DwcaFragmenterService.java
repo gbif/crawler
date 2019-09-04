@@ -106,7 +106,8 @@ public class DwcaFragmenterService extends DwcaService {
       UUID datasetKey = message.getDatasetUuid();
       MDC.put("datasetKey", datasetKey.toString());
 
-      if (Platform.OCCURRENCE.equivalent(message.getPlatform())) {
+      if (!Platform.OCCURRENCE.equivalent(message.getPlatform())) {
+        LOG.info("Skip message because Occurrence don't support the platform {}", message);
         return;
       }
 
