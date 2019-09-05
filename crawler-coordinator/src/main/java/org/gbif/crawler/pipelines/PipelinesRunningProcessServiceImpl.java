@@ -5,10 +5,6 @@ import org.gbif.api.model.pipelines.PipelineProcess;
 import org.gbif.api.model.pipelines.PipelineStep;
 import org.gbif.api.model.pipelines.StepRunner;
 import org.gbif.api.model.pipelines.StepType;
-import org.gbif.api.service.registry.DatasetService;
-import org.gbif.common.messaging.api.Message;
-import org.gbif.common.messaging.api.MessagePublisher;
-import org.gbif.common.messaging.api.messages.PipelineBasedMessage;
 import org.gbif.crawler.constants.CrawlerNodePaths;
 import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
 
@@ -22,7 +18,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 
 import com.google.common.base.Charsets;
 import com.google.common.cache.CacheBuilder;
@@ -31,7 +29,6 @@ import com.google.common.cache.LoadingCache;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.curator.framework.CuratorFramework;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RestHighLevelClient;
@@ -55,24 +52,21 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /** Pipelines monitoring service collects all necessary information from Zookeeper */
 public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProcessService {
 
-  // TODO: use another object instead of PipelineProcess??
-
   private static final Logger LOG = LoggerFactory.getLogger(PipelinesRunningProcessServiceImpl.class);
 
   private static final String FILTER_NAME = "org.gbif.pipelines.transforms.";
   private static final DecimalFormat DF = new DecimalFormat("0");
-  private static final ObjectMapper MAPPER = new ObjectMapper();
+  private static final BiFunction<UUID, Integer, String> CRAWL_ID_GENERATOR =
+    (datasetKey, attempt) -> datasetKey + "_" + attempt;
 
   private final CuratorFramework curator;
   private final Executor executor;
   private final RestHighLevelClient client;
   private final String envPrefix;
-  private final DatasetService datasetService;
-  private final MessagePublisher publisher;
   private final LoadingCache<String, PipelineProcess> statusCache =
       CacheBuilder.newBuilder()
           .expireAfterWrite(2, TimeUnit.MINUTES)
-          .build(CacheLoader.from(this::loadRunningPipelinesProcess));
+          .build(CacheLoader.from(this::loadRunningPipelineProcess));
 
   /**
    * Creates a CrawlerMetricsService. Responsible for interacting with a ZooKeeper instance in a
@@ -86,24 +80,24 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
       CuratorFramework curator,
       Executor executor,
       RestHighLevelClient client,
-      DatasetService datasetService,
-      MessagePublisher publisher,
       @Named("pipelines.envPrefix") String envPrefix) {
     this.curator = checkNotNull(curator, "curator can't be null");
     this.executor = checkNotNull(executor, "executor can't be null");
-    this.datasetService = datasetService;
     this.client = client;
     this.envPrefix = envPrefix;
-    this.publisher = publisher;
   }
 
-  /** Reads all monitoring information from Zookeeper pipelines root path */
   @Override
-  public Set<PipelineProcess> getPipelinesProcesses() {
+  public Set<PipelineProcess> getPipelineProcesses() {
+    return getPipelineProcesses(null);
+  }
+
+  @Override
+  public Set<PipelineProcess> getPipelineProcesses(@Nullable UUID datasetKey) {
     Set<PipelineProcess> set =
-        new TreeSet<>(
-            Comparator.comparing(PipelineProcess::getDatasetKey)
-                .thenComparing(PipelineProcess::getAttempt));
+      new TreeSet<>(
+        Comparator.comparing(PipelineProcess::getDatasetKey)
+          .thenComparing(PipelineProcess::getAttempt));
     try {
       String path = CrawlerNodePaths.buildPath(PIPELINES_ROOT);
 
@@ -113,16 +107,17 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
 
       // Reads all nodes in async mode
       CompletableFuture[] futures =
-          curator.getChildren().forPath(path).stream()
-              .map(
-                  id ->
-                      CompletableFuture.runAsync(
-                          () -> {
-                            PipelineProcess process = getPipelinesProcess(id);
-                            Optional.ofNullable(process).ifPresent(set::add);
-                          },
-                          executor))
-              .toArray(CompletableFuture[]::new);
+        curator.getChildren().forPath(path).stream()
+          .filter(node -> datasetKey == null || node.startsWith(datasetKey.toString()))
+          .map(
+            id ->
+              CompletableFuture.runAsync(
+                () -> {
+                  PipelineProcess process = getPipelineProcessByCrawlId(id);
+                  Optional.ofNullable(process).ifPresent(set::add);
+                },
+                executor))
+          .toArray(CompletableFuture[]::new);
 
       // Waits all threads
       CompletableFuture.allOf(futures).get();
@@ -138,13 +133,12 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
     return set;
   }
 
-  /**
-   * Reads monitoring information from Zookeeper by crawlId node path
-   *
-   * @param crawlId path to dataset info
-   */
   @Override
-  public PipelineProcess getPipelinesProcess(String crawlId) {
+  public PipelineProcess getPipelineProcess(UUID datasetKey, int attempt) {
+    return getPipelineProcessByCrawlId(CRAWL_ID_GENERATOR.apply(datasetKey, attempt));
+  }
+
+  private PipelineProcess getPipelineProcessByCrawlId(String crawlId) {
     try {
       return statusCache.get(crawlId);
     } catch (ExecutionException e) {
@@ -152,13 +146,18 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
     }
   }
 
-  /**
-   * Removes a Zookeeper monitoring root node by crawlId
-   *
-   * @param crawlId root node path
-   */
   @Override
-  public void deletePipelinesProcess(String crawlId) {
+  public void deletePipelineProcess(UUID datasetKey, int attempt) {
+    deleteZkPipelinesNode(CRAWL_ID_GENERATOR.apply(datasetKey, attempt));
+  }
+
+  /** Removes pipelines root Zookeeper path */
+  @Override
+  public void deleteAllPipelineProcess() {
+    deleteZkPipelinesNode(null);
+  }
+
+  private void deleteZkPipelinesNode(String crawlId) {
     try {
       String path = getPipelinesInfoPath(crawlId);
       if (checkExists(path)) {
@@ -169,86 +168,12 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
     }
   }
 
-  /** Removes pipelines root Zookeeper path */
-  @Override
-  public void deleteAllPipelinesProcess() {
-    deletePipelinesProcess(null);
-  }
-
-  /** Restart last failed pipelines step */
-  @Override
-  public void restartFailedStepByDatasetKey(String crawlId, String stepName) {
-    checkNotNull(crawlId, "crawlId can't be null");
-    checkNotNull(stepName, "stepName can't be null");
-
-    try {
-      Optional<String> mqMessage = getAsString(crawlId, Fn.MQ_MESSAGE.apply(stepName));
-      Optional<String> mqClassName = getAsString(crawlId, Fn.MQ_CLASS_NAME.apply(stepName));
-      if (publisher != null && mqClassName.isPresent() && mqMessage.isPresent()) {
-        deletePipelinesProcess(crawlId + "/" + stepName);
-        Message m =
-            (PipelineBasedMessage)
-                MAPPER.readValue(mqMessage.get(), Class.forName(mqClassName.get()));
-        publisher.send(m);
-      }
-    } catch (Exception ex) {
-      LOG.error("crawlId {}", crawlId, ex.getCause());
-      throw new ServiceUnavailableException("Error communicating with ZooKeeper", ex);
-    }
-  }
-
-  @Override
-  public Set<String> getAllStepsNames() {
-    return StepType.ALL_STEPS.stream().map(StepType::getLabel).collect(Collectors.toSet());
-  }
-
-  @Override
-  public Set<PipelineProcess> getProcessesByDatasetKey(String datasetKey) {
-    Set<PipelineProcess> set =
-        new TreeSet<>(
-            Comparator.comparing(PipelineProcess::getDatasetKey)
-                .thenComparing(PipelineProcess::getAttempt));
-    try {
-      String path = CrawlerNodePaths.buildPath(PIPELINES_ROOT);
-
-      if (!checkExists(path)) {
-        return Collections.emptySet();
-      }
-
-      // Reads all nodes in async mode
-      CompletableFuture[] futures =
-          curator.getChildren().forPath(path).stream()
-              .filter(node -> node.startsWith(datasetKey))
-              .map(
-                  id ->
-                      CompletableFuture.runAsync(
-                          () -> {
-                            PipelineProcess process = getPipelinesProcess(id);
-                            Optional.ofNullable(process).ifPresent(set::add);
-                          },
-                          executor))
-              .toArray(CompletableFuture[]::new);
-
-      // Waits all threads
-      CompletableFuture.allOf(futures).get();
-
-    } catch (InterruptedException ignored) {
-      Thread.currentThread().interrupt();
-    } catch (ExecutionException ex) {
-      LOG.warn("Caught exception trying to retrieve dataset", ex.getCause());
-    } catch (Exception ex) {
-      throw new ServiceUnavailableException("Error communicating with ZooKeeper", ex);
-    }
-
-    return set;
-  }
-
   /**
    * Reads monitoring information from Zookeeper by crawlId node path
    *
    * @param crawlId path to dataset info
    */
-  private PipelineProcess loadRunningPipelinesProcess(String crawlId) {
+  private PipelineProcess loadRunningPipelineProcess(String crawlId) {
     checkNotNull(crawlId, "crawlId can't be null");
 
     try {
@@ -264,8 +189,6 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
           new PipelineProcess()
               .setDatasetKey(UUID.fromString(ids[0]))
               .setAttempt(Integer.parseInt(ids[1]));
-      Optional.ofNullable(datasetService)
-          .ifPresent(s -> status.setDatasetTitle(s.get(UUID.fromString(ids[0])).getTitle()));
 
       // ALL_STEPS - static set of all pipelines steps: DWCA_TO_AVRO, VERBATIM_TO_INTERPRETED and etc.
       getStepInfo(crawlId).stream().filter(s -> Objects.nonNull(s.getStarted())).forEach(status::addStep);
@@ -312,6 +235,10 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
                 } else if (startDateOpt.isPresent() && !endDateOpt.isPresent()) {
                   step.setState(Status.RUNNING);
                 }
+
+                // Gets metrics info fro ELK
+                // FIXME: now metrics are duplicated for each step because there is no way to filter them by step in the ES index
+                getMetricInfo(crawlId).forEach(step::addMetricInfo);
 
               } catch (Exception ex) {
                 LOG.error(ex.getMessage(), ex);
@@ -367,7 +294,6 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
   /**
    * Gets metrics info from ELK
    */
-  // FIXME: remove if it's not gonna be used in the monitoring UI
   private Set<MetricInfo> getMetricInfo(String crawlId) {
     if (client != null) {
       try {

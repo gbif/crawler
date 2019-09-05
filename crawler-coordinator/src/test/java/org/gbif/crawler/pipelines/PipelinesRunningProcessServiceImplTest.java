@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -91,7 +92,7 @@ public class PipelinesRunningProcessServiceImplTest {
     curator.start();
     service =
         new PipelinesRunningProcessServiceImpl(
-            curator, Executors.newSingleThreadExecutor(), null, null, null, "test");
+            curator, Executors.newSingleThreadExecutor(), null, "test");
   }
 
   @After
@@ -103,7 +104,7 @@ public class PipelinesRunningProcessServiceImplTest {
   @Test
   public void testEmptyGetRunningPipelinesProcesses() {
     // When
-    Set<PipelineProcess> set = service.getPipelinesProcesses();
+    Set<PipelineProcess> set = service.getPipelineProcesses();
 
     // Should
     Assert.assertEquals(0, set.size());
@@ -112,10 +113,11 @@ public class PipelinesRunningProcessServiceImplTest {
   @Test
   public void testEmptyPipelinesProcessByCrawlId() {
     // State
-    String crawlId = "a731e3b1-bc81-4c1f-aad7-aba75ce3cf3b_1";
+    UUID datasetKey = UUID.fromString("a731e3b1-bc81-4c1f-aad7-aba75ce3cf3b");
+    int attempt = 1;
 
     // When
-    PipelineProcess status = service.getPipelinesProcess(crawlId);
+    PipelineProcess status = service.getPipelineProcess(datasetKey, attempt);
 
     // Should
     Assert.assertNotNull(status);
@@ -125,10 +127,11 @@ public class PipelinesRunningProcessServiceImplTest {
   @Test
   public void testEmptyPipelinesProcessByDatasetId() {
     // State
-    String datasetKey = "a731e3b1-bc81-4c1f-aad7-aba75ce3cf3b";
+    UUID datasetKey = UUID.fromString("a731e3b1-bc81-4c1f-aad7-aba75ce3cf3b");
+    int attempt = 1;
 
     // When
-    Set<PipelineProcess> set = service.getProcessesByDatasetKey(datasetKey);
+    Set<PipelineProcess> set = service.getPipelineProcesses(datasetKey);
 
     // Should
     Assert.assertEquals(0, set.size());
@@ -144,7 +147,7 @@ public class PipelinesRunningProcessServiceImplTest {
     }
 
     // When
-    Set<PipelineProcess> set = service.getPipelinesProcesses();
+    Set<PipelineProcess> set = service.getPipelineProcesses();
 
     // Should
     Assert.assertEquals(2, set.size());
@@ -159,11 +162,13 @@ public class PipelinesRunningProcessServiceImplTest {
   @Test
   public void testPipelinesProcessByCrawlId() throws Exception {
     // State
-    String crawlId = "a731e3b1-bc81-4c1f-aad7-aba75ce3cf3b_1";
+    UUID datasetKey = UUID.fromString("a731e3b1-bc81-4c1f-aad7-aba75ce3cf3b");
+    int attempt = 1;
+    String crawlId = datasetKey.toString() + "_" + attempt;
     addStatusToZookeeper(crawlId);
 
     // When
-    PipelineProcess status = service.getPipelinesProcess(crawlId);
+    PipelineProcess status = service.getPipelineProcess(datasetKey, attempt);
 
     // Should
     Assert.assertNotNull(status);
@@ -176,12 +181,12 @@ public class PipelinesRunningProcessServiceImplTest {
   @Test
   public void testPipelinesProcessByDatasetId() throws Exception {
     // State
-    String datasetId = "a731e3b1-bc81-4c1f-aad7-aba75ce3cf3b";
+    UUID datasetId = UUID.fromString("a731e3b1-bc81-4c1f-aad7-aba75ce3cf3b");
     String crawlId = "a731e3b1-bc81-4c1f-aad7-aba75ce3cf3b_1";
     addStatusToZookeeper(crawlId);
 
     // When
-    Set<PipelineProcess> set = service.getProcessesByDatasetKey(datasetId);
+    Set<PipelineProcess> set = service.getPipelineProcesses(datasetId);
 
     // Should
     ASSERT_FN.accept(set, Collections.singleton(crawlId));

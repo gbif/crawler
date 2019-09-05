@@ -5,6 +5,7 @@ import org.gbif.crawler.pipelines.PipelinesRunningProcessService;
 import org.gbif.ws.util.ExtraMediaTypes;
 
 import java.util.Set;
+import java.util.UUID;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 
@@ -14,7 +15,7 @@ import com.google.inject.Inject;
  * Pipelines monitoring resource HTTP endpoint
  */
 @Produces({MediaType.APPLICATION_JSON, ExtraMediaTypes.APPLICATION_JAVASCRIPT})
-@Path("pipelines/process")
+@Path("pipelines/running")
 public class PipelinesRunningProcessResource {
 
   private final PipelinesRunningProcessService service;
@@ -25,52 +26,11 @@ public class PipelinesRunningProcessResource {
   }
 
   /**
-   * Returns information about specific dataset by crawlId
-   *
-   * @param crawlId is datasetKey_attempt (f10932cc-683e-46ab-93da-9605688a4f27_10)
-   */
-  @GET
-  @Path("crawlId/{crawlId}")
-  public PipelineProcess getRunningPipelinesProcess(@PathParam("crawlId") String crawlId) {
-    return service.getPipelinesProcess(crawlId);
-  }
-
-
-  /**
-   * Restart last failed pipelines step
-   */
-  @POST
-  @Path("crawlId/{crawlId}/restart/{stepName}")
-  public void restartFailedStepByDatasetKey(@PathParam("crawlId") String crawlId, @PathParam("stepName") String stepName) {
-    service.restartFailedStepByDatasetKey(crawlId, stepName);
-  }
-
-  /**
-   * Removes a Zookeeper monitoring root node by crawlId
-   *
-   * @param crawlId is datasetKey_attempt (f10932cc-683e-46ab-93da-9605688a4f27_10)
-   */
-  @DELETE
-  @Path("crawlId/{crawlId}")
-  public void deletePipelinesProcess(@PathParam("crawlId") String crawlId) {
-    service.deletePipelinesProcess(crawlId);
-  }
-
-  /**
-   * Removes pipelines ZK path
-   */
-  @DELETE
-  public void deletePipelinesProcess() {
-    service.deleteAllPipelinesProcess();
-  }
-
-  /**
    * Returns information about all running datasets
    */
   @GET
-  @Path("running")
   public Set<PipelineProcess> getPipelinesProcesses() {
-    return service.getPipelinesProcesses();
+    return service.getPipelineProcesses();
   }
 
   /**
@@ -79,18 +39,43 @@ public class PipelinesRunningProcessResource {
    * @param datasetKey typical dataset UUID
    */
   @GET
-  @Path("datasetKey/{datasetKey}")
-  public Set<PipelineProcess> getPipelinesProcessesByDatasetKey(@PathParam("datasetKey") String datasetKey) {
-    return service.getProcessesByDatasetKey(datasetKey);
+  @Path("{datasetKey}")
+  public Set<PipelineProcess> getPipelinesProcessesByDatasetKey(@PathParam("datasetKey") UUID datasetKey) {
+    return service.getPipelineProcesses(datasetKey);
   }
 
- /**
-   * Returns list of pipelines steps names
+
+  /**
+   * Returns information about specific running process.
+   *
+   * @param datasetKey dataset of the process
+   * @param attempt attempt of the process
    */
   @GET
-  @Path("steps")
-  public Set<String> getAllStepsNames() {
-    return service.getAllStepsNames();
+  @Path("{datasetKey}/{attempt}")
+  public PipelineProcess getRunningPipelinesProcess(@PathParam("datasetKey") UUID datasetKey,
+                                                    @PathParam("attempt") int attempt) {
+    return service.getPipelineProcess(datasetKey, attempt);
   }
 
+  /**
+   * Removes a Zookeeper monitoring root node by crawlId
+   *
+   * @param datasetKey dataset of the process
+   * @param attempt attempt of the process
+   * */
+  @DELETE
+  @Path("{datasetKey}/{attempt}")
+  public void deletePipelinesProcess(@PathParam("datasetKey") UUID datasetKey,
+                                     @PathParam("attempt") int attempt) {
+    service.deletePipelineProcess(datasetKey, attempt);
+  }
+
+  /**
+   * Removes pipelines ZK path
+   */
+  @DELETE
+  public void deletePipelinesProcess() {
+    service.deleteAllPipelineProcess();
+  }
 }

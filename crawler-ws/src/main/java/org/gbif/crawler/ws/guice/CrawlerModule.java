@@ -52,9 +52,9 @@ class CrawlerModule extends PrivateServiceModule {
     expose(Executor.class);
     expose(CuratorFramework.class);
     expose(RestHighLevelClient.class);
-    expose(DatasetService.class);
-    expose(MetadataSynchroniser.class);
-    expose(MessagePublisher.class);
+//    expose(DatasetService.class);
+//    expose(MetadataSynchroniser.class);
+//    expose(MessagePublisher.class);
 
     expose(String.class).annotatedWith(Names.named("overcrawledReportFilePath"));
     expose(String.class).annotatedWith(Names.named("pipelines.envPrefix"));
@@ -105,53 +105,53 @@ class CrawlerModule extends PrivateServiceModule {
     return new RestHighLevelClient(RestClient.builder(HttpHost.create(esUrl)).build());
   }
 
-  /**
-   * Provides an DatasetService to query info about datasets. This is shared between all requests.
-   *
-   * @param url to registry
-   */
-  @Provides
-  @Singleton
-  public DatasetService provideDatasetService(@Named("registry.ws.url") String url) {
-    Properties p = new Properties();
-    p.setProperty("registry.ws.url", url);
-    return Guice.createInjector(new RegistryWsClientModule(p), new AnonymousAuthModule()).getInstance(DatasetService.class);
-  }
+//  /**
+//   * Provides an DatasetService to query info about datasets. This is shared between all requests.
+//   *
+//   * @param url to registry
+//   */
+//  @Provides
+//  @Singleton
+//  public DatasetService provideDatasetService(@Named("registry.ws.url") String url) {
+//    Properties p = new Properties();
+//    p.setProperty("registry.ws.url", url);
+//    return Guice.createInjector(new RegistryWsClientModule(p), new AnonymousAuthModule()).getInstance(DatasetService.class);
+//  }
+//
+//  /**
+//   * Provides an MetadataSynchroniser. This is shared between all requests.
+//   *
+//   * @param url to registry
+//   */
+//  @Provides
+//  @Singleton
+//  public MetadataSynchroniser provideMetadataSynchroniser(@Named("registry.ws.url") String url) {
+//    Properties p = new Properties();
+//    p.setProperty("registry.ws.url", url);
+//    InstallationService installationService = Guice.createInjector(new RegistryWsClientModule(p), new AnonymousAuthModule()).getInstance(InstallationService.class);
+//    return new MetadataSynchroniserImpl(installationService);
+//  }
 
-  /**
-   * Provides an MetadataSynchroniser. This is shared between all requests.
-   *
-   * @param url to registry
-   */
-  @Provides
-  @Singleton
-  public MetadataSynchroniser provideMetadataSynchroniser(@Named("registry.ws.url") String url) {
-    Properties p = new Properties();
-    p.setProperty("registry.ws.url", url);
-    InstallationService installationService = Guice.createInjector(new RegistryWsClientModule(p), new AnonymousAuthModule()).getInstance(InstallationService.class);
-    return new MetadataSynchroniserImpl(installationService);
-  }
-
-  /**
-   * Provides an RabbitMQ publisher
-   */
-  @Provides
-  @Singleton
-  public MessagePublisher provideMessagePublisher(
-      @Named("mq.host") String host,
-      @Named("mq.virtualHost") String virtualHost,
-      @Named("mq.username") String username,
-      @Named("mq.password") String password) {
-    MessagingConfiguration configuration = new MessagingConfiguration();
-    configuration.host = host;
-    configuration.virtualHost = virtualHost;
-    configuration.username = username;
-    configuration.password = password;
-    try {
-      return new DefaultMessagePublisher(configuration.getConnectionParameters());
-    } catch (IOException e) {
-      return null;
-    }
-  }
+//  /**
+//   * Provides an RabbitMQ publisher
+//   */
+//  @Provides
+//  @Singleton
+//  public MessagePublisher provideMessagePublisher(
+//      @Named("mq.host") String host,
+//      @Named("mq.virtualHost") String virtualHost,
+//      @Named("mq.username") String username,
+//      @Named("mq.password") String password) {
+//    MessagingConfiguration configuration = new MessagingConfiguration();
+//    configuration.host = host;
+//    configuration.virtualHost = virtualHost;
+//    configuration.username = username;
+//    configuration.password = password;
+//    try {
+//      return new DefaultMessagePublisher(configuration.getConnectionParameters());
+//    } catch (IOException e) {
+//      return null;
+//    }
+//  }
 
 }
