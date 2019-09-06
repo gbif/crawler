@@ -15,7 +15,7 @@ import com.google.inject.Inject;
  * Pipelines monitoring resource HTTP endpoint
  */
 @Produces({MediaType.APPLICATION_JSON, ExtraMediaTypes.APPLICATION_JAVASCRIPT})
-@Path("pipelines/running")
+@Path("pipelines/process/running")
 public class PipelinesRunningProcessResource {
 
   private final PipelinesRunningProcessService service;
