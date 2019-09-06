@@ -1,5 +1,6 @@
 package org.gbif.crawler.pipelines;
 
+import org.gbif.api.model.pipelines.PipelineProcess;
 import org.gbif.api.model.pipelines.PipelineStep;
 import org.gbif.api.model.pipelines.StepRunner;
 import org.gbif.api.model.pipelines.StepType;
@@ -219,10 +220,14 @@ public class PipelineCallback {
 
   private Optional<TrackingInfo> trackPipelineStep() {
     try {
-      // create pipeline process
-      long processKey =
-          b.historyWsClient.createPipelineProcess(
-              b.incomingMessage.getDatasetUuid(), b.incomingMessage.getAttempt());
+      // get pipeline process if exists or create a new one
+      Optional<PipelineProcess> process =
+          Optional.ofNullable(
+              b.historyWsClient.getPipelineProcess(
+                  b.incomingMessage.getDatasetUuid(), b.incomingMessage.getAttempt()));
+
+      long processKey = process.map(PipelineProcess::getKey).orElseGet(() -> b.historyWsClient.createPipelineProcess(
+        b.incomingMessage.getDatasetUuid(), b.incomingMessage.getAttempt()));
 
       // add step to the process
       PipelineStep step =
