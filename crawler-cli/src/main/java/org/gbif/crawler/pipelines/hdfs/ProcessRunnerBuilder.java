@@ -28,6 +28,7 @@ final class ProcessRunnerBuilder {
   private int sparkParallelism;
   private int sparkExecutorNumbers;
   private String sparkExecutorMemory;
+  private int numberOfShards;
 
   ProcessRunnerBuilder config(HdfsViewConfiguration config) {
     this.config = Objects.requireNonNull(config);
@@ -51,6 +52,11 @@ final class ProcessRunnerBuilder {
 
   ProcessRunnerBuilder sparkExecutorMemory(String sparkExecutorMemory) {
     this.sparkExecutorMemory = sparkExecutorMemory;
+    return this;
+  }
+
+  ProcessRunnerBuilder numberOfShards(int numberOfShards) {
+    this.numberOfShards = numberOfShards;
     return this;
   }
 
@@ -109,6 +115,7 @@ final class ProcessRunnerBuilder {
         .add("--targetPath=" + Objects.requireNonNull(config.repositoryTargetPath))
         .add("--hdfsSiteConfig=" + Objects.requireNonNull(config.hdfsSiteConfig))
         .add("--coreSiteConfig=" + Objects.requireNonNull(config.coreSiteConfig))
+        .add("--numberOfShards=" + numberOfShards)
         .add("--properties=" + Objects.requireNonNull(config.pipelinesConfig));
 
     // Adds user name to run a command if it is necessary
