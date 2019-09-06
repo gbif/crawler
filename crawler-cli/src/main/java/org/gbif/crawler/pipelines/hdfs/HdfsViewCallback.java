@@ -19,6 +19,7 @@ import org.slf4j.MDC;
 import org.slf4j.MDC.MDCCloseable;
 
 import static org.gbif.api.model.pipelines.StepType.HDFS_VIEW;
+import static org.gbif.pipelines.common.PipelinesVariables.Pipeline.Interpretation.DIRECTORY_NAME;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -83,17 +84,19 @@ public class HdfsViewCallback extends AbstractMessageCallback<PipelinesInterpret
         int sparkExecutorNumbers = computeSparkExecutorNumbers(recordsNumber);
         int sparkParallelism = computeSparkParallelism(sparkExecutorNumbers);
         String sparkExecutorMemory = computeSparkExecutorMemory(sparkExecutorNumbers);
+        int numberOfShards = computeNumberOfShards(message);
 
         // Assembles a terminal java process and runs it
         int exitValue = ProcessRunnerBuilder.create()
-          .config(config)
-          .message(message)
-          .sparkParallelism(sparkParallelism)
-          .sparkExecutorMemory(sparkExecutorMemory)
-          .sparkExecutorNumbers(sparkExecutorNumbers)
-          .build()
-          .start()
-          .waitFor();
+            .config(config)
+            .message(message)
+            .sparkParallelism(sparkParallelism)
+            .sparkExecutorMemory(sparkExecutorMemory)
+            .sparkExecutorNumbers(sparkExecutorNumbers)
+            .numberOfShards(numberOfShards)
+            .build()
+            .start()
+            .waitFor();
 
         if (exitValue != 0) {
           throw new RuntimeException("Process has been finished with exit value - " + exitValue);
@@ -174,6 +177,14 @@ public class HdfsViewCallback extends AbstractMessageCallback<PipelinesInterpret
       }
     }
     return Long.parseLong(recordsNumber);
+  }
+
+  private int computeNumberOfShards(PipelinesInterpretedMessage message) throws IOException {
+    String datasetId = message.getDatasetUuid().toString();
+    String attempt = Integer.toString(message.getAttempt());
+    String dirPath = String.join("/", config.repositoryPath, datasetId, attempt, DIRECTORY_NAME);
+    long sizeByte = HdfsUtils.getFileSizeByte(dirPath, config.hdfsSiteConfig);
+    throw  new UnsupportedOperationException("FIX ME!");
   }
 
 

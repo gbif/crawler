@@ -137,6 +137,12 @@ public class HdfsViewConfiguration {
   @Valid
   public RegistryConfiguration registry = new RegistryConfiguration();
 
+  @Parameter(names = "--hdfs-avro-coefficient-ratio")
+  public int hdfsAvroCoefficientRatio = 75;
+
+  @Parameter(names = "--hdfs-avro-expected-file-size-in-mb")
+  public int hdfsAvroExpectedFileSizeInMb = 350;
+
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
@@ -146,6 +152,8 @@ public class HdfsViewConfiguration {
       .add("hdfsSiteConfig", hdfsSiteConfig)
       .add("coreSiteConfig", coreSiteConfig)
       .add("repositoryPath", repositoryPath)
+      .add("hdfsAvroCoefficient", hdfsAvroCoefficientRatio)
+      .add("hdfsAvroExpectedFileSizeInMb", hdfsAvroExpectedFileSizeInMb)
       .toString();
   }
 
