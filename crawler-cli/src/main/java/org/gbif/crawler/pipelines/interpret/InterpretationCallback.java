@@ -60,7 +60,8 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
     Integer attempt = Optional.ofNullable(message.getAttempt()).orElseGet(() -> getLatestAttempt(message));
 
     try (MDCCloseable mdc1 = MDC.putCloseable("datasetId", datasetId.toString());
-        MDCCloseable mdc2 = MDC.putCloseable("attempt", attempt.toString())) {
+        MDCCloseable mdc2 = MDC.putCloseable("attempt", attempt.toString());
+        MDCCloseable mdc3 = MDC.putCloseable("step", StepType.VERBATIM_TO_INTERPRETED.name())) {
 
       LOG.info("Message handler began - {}", message);
 

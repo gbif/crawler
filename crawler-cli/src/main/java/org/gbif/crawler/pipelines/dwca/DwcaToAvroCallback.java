@@ -70,7 +70,8 @@ public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMes
     Integer attempt = message.getAttempt();
 
     try (MDCCloseable mdc1 = MDC.putCloseable("datasetId", datasetId.toString());
-        MDCCloseable mdc2 = MDC.putCloseable("attempt", attempt.toString())) {
+        MDCCloseable mdc2 = MDC.putCloseable("attempt", attempt.toString());
+        MDCCloseable mdc3 = MDC.putCloseable("step", StepType.DWCA_TO_VERBATIM.name())) {
 
       LOG.info("Message handler began - {}", message);
 

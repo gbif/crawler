@@ -73,7 +73,8 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
     Integer attempt = message.getAttempt();
 
     try (MDCCloseable mdc1 = MDC.putCloseable("datasetId", datasetId.toString());
-        MDCCloseable mdc2 = MDC.putCloseable("attempt", attempt.toString())) {
+        MDCCloseable mdc2 = MDC.putCloseable("attempt", attempt.toString());
+        MDCCloseable mdc3 = MDC.putCloseable("step", StepType.INTERPRETED_TO_INDEX.name())) {
 
       LOG.info("Message handler began - {}", message);
 

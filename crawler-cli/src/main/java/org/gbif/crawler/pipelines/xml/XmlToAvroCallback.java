@@ -73,7 +73,8 @@ public class XmlToAvroCallback extends AbstractMessageCallback<PipelinesXmlMessa
     Integer attempt = message.getAttempt();
 
     try (MDCCloseable mdc1 = MDC.putCloseable("datasetId", message.getDatasetUuid().toString());
-        MDCCloseable mdc2 = MDC.putCloseable("attempt", message.getAttempt().toString())) {
+        MDCCloseable mdc2 = MDC.putCloseable("attempt", message.getAttempt().toString());
+        MDCCloseable mdc3 = MDC.putCloseable("step", StepType.XML_TO_VERBATIM.name())) {
       LOG.info("Message handler began - {}", message);
 
       if (message.getReason() != FinishReason.NORMAL) {

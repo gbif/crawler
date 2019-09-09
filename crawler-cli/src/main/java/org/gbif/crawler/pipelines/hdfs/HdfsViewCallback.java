@@ -49,7 +49,8 @@ public class HdfsViewCallback extends AbstractMessageCallback<PipelinesInterpret
   public void handleMessage(PipelinesInterpretedMessage message) {
 
     try (MDCCloseable mdc1 = MDC.putCloseable("datasetId", message.getDatasetUuid().toString());
-        MDCCloseable mdc2 = MDC.putCloseable("attempt", message.getAttempt().toString())) {
+        MDCCloseable mdc2 = MDC.putCloseable("attempt", message.getAttempt().toString());
+        MDCCloseable mdc3 = MDC.putCloseable("step", HDFS_VIEW.name())) {
 
       LOG.info("Message handler began - {}", message);
 

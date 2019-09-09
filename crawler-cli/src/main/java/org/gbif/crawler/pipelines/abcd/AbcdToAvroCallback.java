@@ -57,7 +57,8 @@ public class AbcdToAvroCallback extends AbstractMessageCallback<PipelinesAbcdMes
     Integer attempt = message.getAttempt();
 
     try (MDCCloseable mdc1 = MDC.putCloseable("datasetId", datasetId.toString());
-        MDCCloseable mdc2 = MDC.putCloseable("attempt", attempt.toString())) {
+        MDCCloseable mdc2 = MDC.putCloseable("attempt", attempt.toString());
+        MDCCloseable mdc3 = MDC.putCloseable("step", StepType.ABCD_TO_VERBATIM.name())) {
 
       LOG.info("Message handler began - {}", message);
 
