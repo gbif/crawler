@@ -237,8 +237,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
                 }
 
                 // Gets metrics info fro ELK
-                // FIXME: now metrics are duplicated for each step because there is no way to filter them by step in the ES index
-                getMetricInfo(crawlId).forEach(step::addMetricInfo);
+                getMetricInfo(crawlId, step).forEach(step::addMetricInfo);
 
               } catch (Exception ex) {
                 LOG.error(ex.getMessage(), ex);
@@ -294,10 +293,10 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
   /**
    * Gets metrics info from ELK
    */
-  private Set<MetricInfo> getMetricInfo(String crawlId) {
+  private Set<MetricInfo> getMetricInfo(String crawlId, PipelineStep step) {
     if (client != null) {
       try {
-        SearchResponse search = client.search(getEsMetricQuery(crawlId));
+        SearchResponse search = client.search(getEsMetricQuery(crawlId, step));
 
         Aggregations aggregations = search.getAggregations();
         if (aggregations == null) {
@@ -357,7 +356,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
    *
    * }</pre>
    */
-  private SearchRequest getEsMetricQuery(String crawlId) {
+  private SearchRequest getEsMetricQuery(String crawlId, PipelineStep step) {
 
     String[] ids = crawlId.split("_");
     String year = String.valueOf(LocalDate.now().getYear());
@@ -370,6 +369,8 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
     BoolQueryBuilder booleanQuery = QueryBuilders.boolQuery();
     booleanQuery.must(QueryBuilders.matchQuery("datasetId", ids[0]));
     booleanQuery.must(QueryBuilders.matchQuery("attempt", ids[1]));
+    booleanQuery.must(QueryBuilders.matchQuery("step", step.getType().name()));
+    booleanQuery.must(QueryBuilders.rangeQuery("@timestamp").gte(step.getStarted()));
     booleanQuery.must(QueryBuilders.matchQuery("type", "GAUGE"));
     booleanQuery.must(
         QueryBuilders.matchPhrasePrefixQuery("name", "driver.PipelinesOptionsFactory"));
