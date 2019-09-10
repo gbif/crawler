@@ -44,7 +44,7 @@ public class HdfsUtils {
     FileSystem fs = getFileSystem(fileUri, hdfsSiteConfig);
     Path path = new Path(fileUri);
 
-    return fs.exists(path) ? fs.getFileStatus(path).getLen() : -1;
+    return fs.exists(path) ? fs.getContentSummary(path).getLength() : -1;
   }
 
   /**

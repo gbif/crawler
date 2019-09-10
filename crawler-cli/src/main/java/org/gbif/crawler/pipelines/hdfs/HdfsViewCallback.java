@@ -117,12 +117,12 @@ public class HdfsViewCallback extends AbstractMessageCallback<PipelinesInterpret
    * Remember YARN will create the same number of files
    */
   private int computeSparkParallelism(int executorNumbers) {
-    int count = executorNumbers * config.sparkExecutorCores * 2;
+    int count = executorNumbers * config.sparkExecutorCores * 4;
 
-    if(count < config.sparkParallelismMin) {
+    if (count < config.sparkParallelismMin) {
       return config.sparkParallelismMin;
     }
-    if(count > config.sparkParallelismMax){
+    if (count > config.sparkParallelismMax) {
       return config.sparkParallelismMax;
     }
     return count;
@@ -134,10 +134,10 @@ public class HdfsViewCallback extends AbstractMessageCallback<PipelinesInterpret
    */
   private String computeSparkExecutorMemory(int sparkExecutorNumbers) {
 
-    if(sparkExecutorNumbers < config.sparkExecutorMemoryGbMin) {
+    if (sparkExecutorNumbers < config.sparkExecutorMemoryGbMin) {
       return config.sparkExecutorMemoryGbMin + "G";
     }
-    if(sparkExecutorNumbers > config.sparkExecutorMemoryGbMax){
+    if (sparkExecutorNumbers > config.sparkExecutorMemoryGbMax) {
       return config.sparkExecutorMemoryGbMax + "G";
     }
     return sparkExecutorNumbers + "G";
@@ -148,11 +148,12 @@ public class HdfsViewCallback extends AbstractMessageCallback<PipelinesInterpret
    * max is config.sparkExecutorNumbersMax
    */
   private int computeSparkExecutorNumbers(long recordsNumber) {
-    int sparkExecutorNumbers = (int) Math.ceil(recordsNumber / (config.sparkExecutorCores * config.sparkRecordsPerThread));
-    if(sparkExecutorNumbers < config.sparkExecutorNumbersMin) {
+    int sparkExecutorNumbers =
+        (int) Math.ceil(recordsNumber / (config.sparkExecutorCores * config.sparkRecordsPerThread * 1f));
+    if (sparkExecutorNumbers < config.sparkExecutorNumbersMin) {
       return config.sparkExecutorNumbersMin;
     }
-    if(sparkExecutorNumbers > config.sparkExecutorNumbersMax){
+    if (sparkExecutorNumbers > config.sparkExecutorNumbersMax) {
       return config.sparkExecutorNumbersMax;
     }
     return sparkExecutorNumbers;
@@ -185,7 +186,14 @@ public class HdfsViewCallback extends AbstractMessageCallback<PipelinesInterpret
     String attempt = Integer.toString(message.getAttempt());
     String dirPath = String.join("/", config.repositoryPath, datasetId, attempt, DIRECTORY_NAME);
     long sizeByte = HdfsUtils.getFileSizeByte(dirPath, config.hdfsSiteConfig);
-    throw  new UnsupportedOperationException("FIX ME!");
+    if (sizeByte == -1d) {
+      throw new IllegalArgumentException("Please check interpretation source directory! - " + dirPath);
+    }
+    long sizeExpected = config.hdfsAvroExpectedFileSizeInMb * 1048576L; // 1024 * 1024
+    double numberOfShards = (sizeByte * config.hdfsAvroCoefficientRatio / 100f) / sizeExpected;
+    double numberOfShardsFloor = Math.floor(numberOfShards);
+    numberOfShards = numberOfShards - numberOfShardsFloor > 0.5d ? numberOfShardsFloor + 1 : numberOfShardsFloor;
+    return numberOfShards <= 0 ? 1 : (int) numberOfShards;
   }
 
 

@@ -141,7 +141,7 @@ public class HdfsViewConfiguration {
   public int hdfsAvroCoefficientRatio = 75;
 
   @Parameter(names = "--hdfs-avro-expected-file-size-in-mb")
-  public int hdfsAvroExpectedFileSizeInMb = 350;
+  public int hdfsAvroExpectedFileSizeInMb = 300;
 
   @Override
   public String toString() {
