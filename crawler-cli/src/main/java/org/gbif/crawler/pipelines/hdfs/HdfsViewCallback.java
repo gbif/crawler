@@ -111,7 +111,7 @@ public class HdfsViewCallback extends AbstractMessageCallback<PipelinesInterpret
    * Remember YARN will create the same number of files
    */
   private int computeSparkParallelism(int executorNumbers) {
-    int count = executorNumbers * config.sparkExecutorCores * 2;
+    int count = executorNumbers * config.sparkExecutorCores * 4;
 
     if (count < config.sparkParallelismMin) {
       return config.sparkParallelismMin;
