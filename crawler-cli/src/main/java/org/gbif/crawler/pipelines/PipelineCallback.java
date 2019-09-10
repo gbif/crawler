@@ -248,7 +248,7 @@ public class PipelineCallback {
 
   private void updateTrackingStatus(TrackingInfo trackingInfo, PipelineStep.Status status) {
     try {
-      b.historyWsClient.updatePipelineStep(trackingInfo.processKey, trackingInfo.stepKey, status);
+      b.historyWsClient.updatePipelineStepStatusAndMetrics(trackingInfo.processKey, trackingInfo.stepKey, status);
     } catch (Exception ex) {
       // we don't want to break the crawling if the tracking fails
       LOG.error(
