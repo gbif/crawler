@@ -2,6 +2,7 @@ package org.gbif.crawler.xml.crawlserver.listener;
 
 import org.gbif.api.model.crawler.FinishReason;
 import org.gbif.api.model.crawler.ProcessState;
+import org.gbif.common.messaging.api.messages.Platform;
 import org.gbif.crawler.AbstractCrawlListener;
 import org.gbif.crawler.CrawlConfiguration;
 import org.gbif.crawler.CrawlContext;
@@ -48,10 +49,12 @@ public class CrawlerZooKeeperUpdatingListener<CTX extends CrawlContext>
 
   private final CrawlConfiguration configuration;
   private final CuratorFramework curator;
+  private final Platform platform;
 
-  public CrawlerZooKeeperUpdatingListener(CrawlConfiguration configuration, CuratorFramework curator) {
+  public CrawlerZooKeeperUpdatingListener(CrawlConfiguration configuration, CuratorFramework curator, Platform platform) {
     this.configuration = configuration;
     this.curator = curator;
+    this.platform = platform;
   }
 
   @Override
@@ -97,7 +100,7 @@ public class CrawlerZooKeeperUpdatingListener<CTX extends CrawlContext>
   public void finishCrawlNormally() {
     finishCrawl(FinishReason.NORMAL);
 
-    if (totalRecordCount == 0) {
+    if (totalRecordCount == 0 || !Platform.OCCURRENCE.equivalent(platform)) {
       // Empty dataset, this is the end of processing.
       createOrUpdate(curator, configuration.getDatasetKey(), PROCESS_STATE_OCCURRENCE, ProcessState.EMPTY);
     }
