@@ -108,6 +108,7 @@ public class DwcaFragmenterService extends DwcaService {
 
       if (!Platform.OCCURRENCE.equivalent(message.getPlatform())) {
         LOG.info("Skip message because Occurrence don't support the platform {}", message);
+        createOrUpdate(curator, datasetKey, PROCESS_STATE_OCCURRENCE, ProcessState.FINISHED);
         return;
       }
 
