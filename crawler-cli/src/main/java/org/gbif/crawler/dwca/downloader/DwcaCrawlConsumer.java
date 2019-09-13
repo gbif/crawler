@@ -5,6 +5,7 @@ import org.gbif.api.model.crawler.CrawlJob;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.DatasetBasedMessage;
 import org.gbif.common.messaging.api.messages.DwcaDownloadFinishedMessage;
+import org.gbif.common.messaging.api.messages.Platform;
 import org.gbif.crawler.common.DownloadCrawlConsumer;
 import org.gbif.crawler.dwca.DwcaConfiguration;
 
@@ -38,7 +39,8 @@ public class DwcaCrawlConsumer extends DownloadCrawlConsumer {
                                            crawlJob.getAttempt(),
                                            new Date(),
                                            true,
-                                           crawlJob.getEndpointType());
+                                           crawlJob.getEndpointType(),
+                                           Platform.parseOrDefault(crawlJob.getProperty("platform"), Platform.ALL));
   }
 
   @Override

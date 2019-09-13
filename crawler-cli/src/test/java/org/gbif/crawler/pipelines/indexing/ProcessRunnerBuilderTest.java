@@ -1,15 +1,16 @@
 package org.gbif.crawler.pipelines.indexing;
 
+import org.gbif.api.model.pipelines.StepRunner;
+import org.gbif.common.messaging.api.messages.PipelinesInterpretedMessage;
+
 import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
 
-import org.gbif.common.messaging.api.messages.PipelinesInterpretedMessage;
-import org.gbif.crawler.pipelines.PipelineCallback.Runner;
-
 import org.junit.Test;
 
-import static org.gbif.crawler.pipelines.PipelineCallback.Steps.ALL;
+import static org.gbif.api.model.pipelines.StepType.ALL;
+
 import static org.junit.Assert.assertEquals;
 
 public class ProcessRunnerBuilderTest {
@@ -46,7 +47,7 @@ public class ProcessRunnerBuilderTest {
     config.coreSiteConfig = "core.xml";
     config.hdfsSiteConfig = "hdfs.xml";
     config.driverJavaOptions = "-Dlog4j.configuration=file:/home/crap/config/log4j-indexing-pipeline.properties";
-    config.processRunner = Runner.STANDALONE.name();
+    config.processRunner = StepRunner.STANDALONE.name();
     config.esHosts = new String[]{"http://host.com:9300"};
     config.pipelinesConfig = "/path/ws.config";
 
@@ -96,7 +97,7 @@ public class ProcessRunnerBuilderTest {
     config.coreSiteConfig = "core.xml";
     config.hdfsSiteConfig = "hdfs.xml";
     config.deployMode = "cluster";
-    config.processRunner = Runner.DISTRIBUTED.name();
+    config.processRunner = StepRunner.DISTRIBUTED.name();
     config.esHosts = new String[]{"http://host.com:9300"};
     config.pipelinesConfig = "/path/ws.config";
 
@@ -155,7 +156,7 @@ public class ProcessRunnerBuilderTest {
     config.extraClassPath = "logstash-gelf.jar";
     config.driverJavaOptions = "-Dlog4j.configuration=file:log4j.properties";
     config.deployMode = "cluster";
-    config.processRunner = Runner.DISTRIBUTED.name();
+    config.processRunner = StepRunner.DISTRIBUTED.name();
     config.esHosts = new String[]{"http://host.com:9300"};
     config.yarnQueue = "pipelines";
     config.pipelinesConfig = "/path/ws.config";

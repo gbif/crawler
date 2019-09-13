@@ -3,6 +3,9 @@ package org.gbif.crawler.pipelines.hdfs;
 import org.gbif.common.messaging.DefaultMessagePublisher;
 import org.gbif.common.messaging.MessageListener;
 import org.gbif.common.messaging.api.MessagePublisher;
+import org.gbif.registry.ws.client.pipelines.PipelinesHistoryWsClient;
+
+import java.nio.channels.Pipe;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
@@ -32,8 +35,10 @@ public class HdfsViewService extends AbstractIdleService {
     listener = new MessageListener(config.messaging.getConnectionParameters(), 1);
     publisher = new DefaultMessagePublisher(config.messaging.getConnectionParameters());
     curator = config.zooKeeper.getCuratorFramework();
+    PipelinesHistoryWsClient historyWsClient =
+      config.registry.newRegistryInjector().getInstance(PipelinesHistoryWsClient.class);
 
-    listener.listen(config.queueName, config.poolSize, new HdfsViewCallback(config, publisher, curator));
+    listener.listen(config.queueName, config.poolSize, new HdfsViewCallback(config, publisher, curator, historyWsClient));
   }
 
   @Override

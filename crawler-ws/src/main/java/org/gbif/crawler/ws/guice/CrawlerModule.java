@@ -1,36 +1,34 @@
 package org.gbif.crawler.ws.guice;
 
+import org.gbif.api.service.crawler.DatasetProcessService;
+import org.gbif.api.service.registry.DatasetService;
+import org.gbif.api.service.registry.InstallationService;
+import org.gbif.common.messaging.DefaultMessagePublisher;
+import org.gbif.common.messaging.api.MessagePublisher;
+import org.gbif.common.messaging.config.MessagingConfiguration;
+import org.gbif.crawler.DatasetProcessServiceImpl;
+import org.gbif.crawler.pipelines.PipelinesRunningProcessService;
+import org.gbif.crawler.pipelines.PipelinesRunningProcessServiceImpl;
+import org.gbif.registry.metasync.MetadataSynchroniserImpl;
+import org.gbif.registry.metasync.api.MetadataSynchroniser;
+import org.gbif.registry.ws.client.guice.RegistryWsClientModule;
+import org.gbif.service.guice.PrivateServiceModule;
+import org.gbif.ws.client.guice.AnonymousAuthModule;
+
 import java.io.IOException;
 import java.util.Properties;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
-import org.gbif.api.service.crawler.DatasetProcessService;
-import org.gbif.api.service.registry.DatasetService;
-import org.gbif.common.messaging.DefaultMessagePublisher;
-import org.gbif.common.messaging.api.MessagePublisher;
-import org.gbif.common.messaging.config.MessagingConfiguration;
-import org.gbif.crawler.DatasetProcessServiceImpl;
-import org.gbif.crawler.pipelines.PipelinesProcessService;
-import org.gbif.crawler.pipelines.PipelinesProcessServiceImpl;
-import org.gbif.registry.ws.client.guice.RegistryWsClientModule;
-import org.gbif.service.guice.PrivateServiceModule;
-import org.gbif.ws.client.guice.AnonymousAuthModule;
-
+import com.google.inject.*;
+import com.google.inject.name.Named;
+import com.google.inject.name.Names;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.apache.http.HttpHost;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
-
-import com.google.inject.Guice;
-import com.google.inject.Inject;
-import com.google.inject.Provides;
-import com.google.inject.Scopes;
-import com.google.inject.Singleton;
-import com.google.inject.name.Named;
-import com.google.inject.name.Names;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -48,14 +46,15 @@ class CrawlerModule extends PrivateServiceModule {
   @Override
   protected void configureService() {
     bind(DatasetProcessService.class).to(DatasetProcessServiceImpl.class).in(Scopes.SINGLETON);
-    bind(PipelinesProcessService.class).to(PipelinesProcessServiceImpl.class).in(Scopes.SINGLETON);
+    bind(PipelinesRunningProcessService.class).to(PipelinesRunningProcessServiceImpl.class).in(Scopes.SINGLETON);
     expose(DatasetProcessService.class);
-    expose(PipelinesProcessService.class);
+    expose(PipelinesRunningProcessService.class);
     expose(Executor.class);
     expose(CuratorFramework.class);
     expose(RestHighLevelClient.class);
-    expose(DatasetService.class);
-    expose(MessagePublisher.class);
+//    expose(DatasetService.class);
+//    expose(MetadataSynchroniser.class);
+//    expose(MessagePublisher.class);
 
     expose(String.class).annotatedWith(Names.named("overcrawledReportFilePath"));
     expose(String.class).annotatedWith(Names.named("pipelines.envPrefix"));
@@ -106,39 +105,53 @@ class CrawlerModule extends PrivateServiceModule {
     return new RestHighLevelClient(RestClient.builder(HttpHost.create(esUrl)).build());
   }
 
-  /**
-   * Provides an DatasetService to query info about datasets. This is shared between all requests.
-   *
-   * @param url to registry
-   */
-  @Provides
-  @Singleton
-  public DatasetService provideDatasetService(@Named("registry.ws.url") String url) {
-    Properties p = new Properties();
-    p.setProperty("registry.ws.url", url);
-    return Guice.createInjector(new RegistryWsClientModule(p), new AnonymousAuthModule()).getInstance(DatasetService.class);
-  }
+//  /**
+//   * Provides an DatasetService to query info about datasets. This is shared between all requests.
+//   *
+//   * @param url to registry
+//   */
+//  @Provides
+//  @Singleton
+//  public DatasetService provideDatasetService(@Named("registry.ws.url") String url) {
+//    Properties p = new Properties();
+//    p.setProperty("registry.ws.url", url);
+//    return Guice.createInjector(new RegistryWsClientModule(p), new AnonymousAuthModule()).getInstance(DatasetService.class);
+//  }
+//
+//  /**
+//   * Provides an MetadataSynchroniser. This is shared between all requests.
+//   *
+//   * @param url to registry
+//   */
+//  @Provides
+//  @Singleton
+//  public MetadataSynchroniser provideMetadataSynchroniser(@Named("registry.ws.url") String url) {
+//    Properties p = new Properties();
+//    p.setProperty("registry.ws.url", url);
+//    InstallationService installationService = Guice.createInjector(new RegistryWsClientModule(p), new AnonymousAuthModule()).getInstance(InstallationService.class);
+//    return new MetadataSynchroniserImpl(installationService);
+//  }
 
-  /**
-   * Provides an RabbitMQ publisher
-   */
-  @Provides
-  @Singleton
-  public MessagePublisher provideMessagePublisher(
-      @Named("mq.host") String host,
-      @Named("mq.virtualHost") String virtualHost,
-      @Named("mq.username") String username,
-      @Named("mq.password") String password) {
-    MessagingConfiguration configuration = new MessagingConfiguration();
-    configuration.host = host;
-    configuration.virtualHost = virtualHost;
-    configuration.username = username;
-    configuration.password = password;
-    try {
-      return new DefaultMessagePublisher(configuration.getConnectionParameters());
-    } catch (IOException e) {
-      return null;
-    }
-  }
+//  /**
+//   * Provides an RabbitMQ publisher
+//   */
+//  @Provides
+//  @Singleton
+//  public MessagePublisher provideMessagePublisher(
+//      @Named("mq.host") String host,
+//      @Named("mq.virtualHost") String virtualHost,
+//      @Named("mq.username") String username,
+//      @Named("mq.password") String password) {
+//    MessagingConfiguration configuration = new MessagingConfiguration();
+//    configuration.host = host;
+//    configuration.virtualHost = virtualHost;
+//    configuration.username = username;
+//    configuration.password = password;
+//    try {
+//      return new DefaultMessagePublisher(configuration.getConnectionParameters());
+//    } catch (IOException e) {
+//      return null;
+//    }
+//  }
 
 }

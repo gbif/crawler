@@ -30,6 +30,8 @@ public class MessagingCrawlListener<CTX extends CrawlContext> implements CrawlLi
 
   private final EndpointType endpointType;
 
+  private final Platform platform;
+
   private CrawlContext lastContext;
 
   private int totalRecordCount;
@@ -41,10 +43,11 @@ public class MessagingCrawlListener<CTX extends CrawlContext> implements CrawlLi
    */
   private long duration;
 
-  public MessagingCrawlListener(MessagePublisher publisher, CrawlConfiguration configuration, EndpointType endpointType) {
+  public MessagingCrawlListener(MessagePublisher publisher, CrawlConfiguration configuration, EndpointType endpointType, Platform platform) {
     this.publisher = checkNotNull(publisher);
     this.configuration = checkNotNull(configuration);
     this.endpointType = endpointType;
+    this.platform = platform;
   }
 
   @Override
@@ -65,14 +68,15 @@ public class MessagingCrawlListener<CTX extends CrawlContext> implements CrawlLi
 
   @Override
   public void response(List<Byte> response, int retry, long duration, Optional<Integer> recordCount,
-    Optional<Boolean> endOfRecords) {
+                       Optional<Boolean> endOfRecords) {
     if (recordCount.isPresent()) {
       totalRecordCount += recordCount.get();
     }
     this.retry = retry;
     this.duration = duration;
     Message msg = new CrawlResponseMessage(configuration.getDatasetKey(), configuration.getAttempt(), retry,
-      Bytes.toArray(response), duration, recordCount, lastContext.toString());
+                                           Bytes.toArray(response), duration, recordCount, lastContext.toString(),
+                                           platform);
     sendMessageSilently(msg);
   }
 
@@ -111,7 +115,7 @@ public class MessagingCrawlListener<CTX extends CrawlContext> implements CrawlLi
 
   private void finishCrawl(FinishReason reason) {
     Message msg =
-      new CrawlFinishedMessage(configuration.getDatasetKey(), configuration.getAttempt(), totalRecordCount, reason, endpointType);
+      new CrawlFinishedMessage(configuration.getDatasetKey(), configuration.getAttempt(), totalRecordCount, reason, endpointType, platform);
     sendMessageSilently(msg);
   }
 

@@ -1,14 +1,6 @@
 package org.gbif.crawler.pipelines.indexing;
 
-import java.io.IOException;
-import java.time.Instant;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-
+import org.gbif.api.model.pipelines.StepType;
 import org.gbif.api.model.registry.Dataset;
 import org.gbif.api.service.registry.DatasetService;
 import org.gbif.common.messaging.AbstractMessageCallback;
@@ -17,12 +9,20 @@ import org.gbif.common.messaging.api.messages.PipelinesIndexedMessage;
 import org.gbif.common.messaging.api.messages.PipelinesInterpretedMessage;
 import org.gbif.crawler.pipelines.HdfsUtils;
 import org.gbif.crawler.pipelines.PipelineCallback;
-import org.gbif.crawler.pipelines.PipelineCallback.Steps;
 import org.gbif.crawler.pipelines.dwca.DwcaToAvroConfiguration;
 import org.gbif.pipelines.common.PipelinesVariables.Metrics;
 import org.gbif.pipelines.common.PipelinesVariables.Pipeline.Interpretation;
 import org.gbif.pipelines.common.PipelinesVariables.Pipeline.Interpretation.RecordType;
+import org.gbif.registry.ws.client.pipelines.PipelinesHistoryWsClient;
 
+import java.io.IOException;
+import java.time.Instant;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Strings;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -32,12 +32,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.slf4j.MDC.MDCCloseable;
-
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Strings;
-
-import static org.gbif.crawler.constants.PipelinesNodePaths.INTERPRETED_TO_INDEX;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -57,14 +51,16 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
   private final DatasetService datasetService;
   private final CuratorFramework curator;
   private final HttpClient httpClient;
+  private final PipelinesHistoryWsClient historyWsClient;
 
   IndexingCallback(IndexingConfiguration config, MessagePublisher publisher, DatasetService datasetService,
-      CuratorFramework curator, HttpClient httpClient) {
+      CuratorFramework curator, HttpClient httpClient, PipelinesHistoryWsClient historyWsClient) {
     this.curator = checkNotNull(curator, "curator cannot be null");
     this.config = checkNotNull(config, "config cannot be null");
     this.datasetService = checkNotNull(datasetService, "config cannot be null");
     this.publisher = publisher;
     this.httpClient = httpClient;
+    this.historyWsClient = historyWsClient;
   }
 
   /**
@@ -77,7 +73,8 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
     Integer attempt = message.getAttempt();
 
     try (MDCCloseable mdc1 = MDC.putCloseable("datasetId", datasetId.toString());
-        MDCCloseable mdc2 = MDC.putCloseable("attempt", attempt.toString())) {
+        MDCCloseable mdc2 = MDC.putCloseable("attempt", attempt.toString());
+        MDCCloseable mdc3 = MDC.putCloseable("step", StepType.INTERPRETED_TO_INDEX.name())) {
 
       LOG.info("Message handler began - {}", message);
 
@@ -94,10 +91,11 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
           .incomingMessage(message)
           .outgoingMessage(new PipelinesIndexedMessage(datasetId, attempt, steps))
           .curator(curator)
-          .zkRootElementPath(INTERPRETED_TO_INDEX)
-          .pipelinesStepName(Steps.INTERPRETED_TO_INDEX.name())
+          .zkRootElementPath(StepType.INTERPRETED_TO_INDEX.getLabel())
+          .pipelinesStepName(StepType.INTERPRETED_TO_INDEX)
           .publisher(publisher)
           .runnable(runnable)
+          .historyWsClient(historyWsClient)
           .build()
           .handleMessage();
 

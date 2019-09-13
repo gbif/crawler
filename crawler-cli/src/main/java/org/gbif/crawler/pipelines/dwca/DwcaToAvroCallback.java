@@ -1,34 +1,34 @@
 package org.gbif.crawler.pipelines.dwca;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-
 import org.gbif.api.model.crawler.OccurrenceValidationReport;
+import org.gbif.api.model.pipelines.StepType;
 import org.gbif.api.vocabulary.EndpointType;
 import org.gbif.common.messaging.AbstractMessageCallback;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.PipelinesDwcaMessage;
 import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage;
 import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage.ValidationResult;
+import org.gbif.common.messaging.api.messages.Platform;
 import org.gbif.converters.DwcaToAvroConverter;
 import org.gbif.crawler.pipelines.PipelineCallback;
-import org.gbif.crawler.pipelines.PipelineCallback.Steps;
+import org.gbif.registry.ws.client.pipelines.PipelinesHistoryWsClient;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Sets;
 import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.slf4j.MDC.MDCCloseable;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Sets;
-
 import static org.gbif.api.vocabulary.DatasetType.OCCURRENCE;
 import static org.gbif.api.vocabulary.DatasetType.SAMPLING_EVENT;
-import static org.gbif.crawler.constants.PipelinesNodePaths.DWCA_TO_VERBATIM;
 import static org.gbif.crawler.pipelines.HdfsUtils.buildOutputPath;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -45,11 +45,14 @@ public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMes
   private final DwcaToAvroConfiguration config;
   private final MessagePublisher publisher;
   private final CuratorFramework curator;
+  private final PipelinesHistoryWsClient historyWsClient;
 
-  DwcaToAvroCallback(DwcaToAvroConfiguration config, MessagePublisher publisher, CuratorFramework curator) {
+  DwcaToAvroCallback(DwcaToAvroConfiguration config, MessagePublisher publisher, CuratorFramework curator,
+                     PipelinesHistoryWsClient historyWsClient) {
     this.curator = checkNotNull(curator, "curator cannot be null");
     this.config = checkNotNull(config, "config cannot be null");
     this.publisher = publisher;
+    this.historyWsClient = historyWsClient;
   }
 
   /**
@@ -58,11 +61,17 @@ public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMes
   @Override
   public void handleMessage(PipelinesDwcaMessage message) {
 
+    if (!Platform.PIPELINES.equivalent(message.getPlatform())) {
+      LOG.info("Skip message because pipelines don't support the platform {}", message);
+      return;
+    }
+
     UUID datasetId = message.getDatasetUuid();
     Integer attempt = message.getAttempt();
 
     try (MDCCloseable mdc1 = MDC.putCloseable("datasetId", datasetId.toString());
-        MDCCloseable mdc2 = MDC.putCloseable("attempt", attempt.toString())) {
+        MDCCloseable mdc2 = MDC.putCloseable("attempt", attempt.toString());
+        MDCCloseable mdc3 = MDC.putCloseable("step", StepType.DWCA_TO_VERBATIM.name())) {
 
       LOG.info("Message handler began - {}", message);
 
@@ -73,10 +82,10 @@ public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMes
 
       if (message.getPipelineSteps().isEmpty()) {
         message.setPipelineSteps(Sets.newHashSet(
-            Steps.DWCA_TO_VERBATIM.name(),
-            Steps.VERBATIM_TO_INTERPRETED.name(),
-            Steps.INTERPRETED_TO_INDEX.name(),
-            Steps.HDFS_VIEW.name()
+            StepType.DWCA_TO_VERBATIM.name(),
+            StepType.VERBATIM_TO_INTERPRETED.name(),
+            StepType.INTERPRETED_TO_INDEX.name(),
+            StepType.HDFS_VIEW.name()
         ));
       }
 
@@ -94,10 +103,11 @@ public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMes
           .incomingMessage(message)
           .outgoingMessage(new PipelinesVerbatimMessage(datasetId, attempt, config.interpretTypes, steps, endpointType, validationResult))
           .curator(curator)
-          .zkRootElementPath(DWCA_TO_VERBATIM)
-          .pipelinesStepName(Steps.DWCA_TO_VERBATIM.name())
+          .zkRootElementPath(StepType.DWCA_TO_VERBATIM.getLabel())
+          .pipelinesStepName(StepType.DWCA_TO_VERBATIM)
           .publisher(publisher)
           .runnable(runnable)
+          .historyWsClient(historyWsClient)
           .build()
           .handleMessage();
 

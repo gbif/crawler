@@ -2,6 +2,7 @@ package org.gbif.crawler.xml.crawlserver;
 
 import org.gbif.api.model.crawler.CrawlJob;
 import org.gbif.common.messaging.api.MessagePublisher;
+import org.gbif.common.messaging.api.messages.Platform;
 import org.gbif.crawler.Crawler;
 import org.gbif.crawler.common.CrawlConsumer;
 import org.gbif.crawler.strategy.ScientificNameRangeCrawlContext;
@@ -71,9 +72,11 @@ class XmlCrawlConsumer extends CrawlConsumer {
 
     Crawler<ScientificNameRangeCrawlContext, String, HttpResponse, List<Byte>> crawler = builder.build();
 
-    crawler.addListener(new CrawlerZooKeeperUpdatingListener(builder.getCrawlConfiguration(), curator));
+    crawler.addListener(new CrawlerZooKeeperUpdatingListener(builder.getCrawlConfiguration(), curator,
+                                                             Platform.parseOrDefault(crawlJob.getProperty("platform"), Platform.ALL)));
     crawler.addListener(new LoggingCrawlListener(builder.getCrawlConfiguration()));
-    crawler.addListener(new MessagingCrawlListener(publisher, builder.getCrawlConfiguration(), crawlJob.getEndpointType()));
+    crawler.addListener(new MessagingCrawlListener(publisher, builder.getCrawlConfiguration(), crawlJob.getEndpointType(),
+                                                   Platform.parseOrDefault(crawlJob.getProperty("platform"), Platform.ALL)));
     if (responseArchive != null) {
       crawler.addListener(new ResultPersistingListener(responseArchive, builder.getCrawlConfiguration()));
     }

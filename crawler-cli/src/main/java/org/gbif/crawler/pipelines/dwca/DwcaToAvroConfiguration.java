@@ -1,22 +1,22 @@
 package org.gbif.crawler.pipelines.dwca;
 
-import java.util.Collections;
-import java.util.Set;
-
+import org.gbif.api.model.pipelines.StepType;
 import org.gbif.common.messaging.config.MessagingConfiguration;
 import org.gbif.crawler.common.AvroWriteConfiguration;
+import org.gbif.crawler.common.RegistryConfiguration;
 import org.gbif.crawler.common.ZooKeeperConfiguration;
 import org.gbif.pipelines.common.PipelinesVariables.Pipeline;
 import org.gbif.pipelines.common.PipelinesVariables.Pipeline.Conversion;
 
-import com.beust.jcommander.Parameter;
-import com.beust.jcommander.ParametersDelegate;
-import com.google.common.base.MoreObjects;
+import java.util.Collections;
+import java.util.Set;
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
-import static org.gbif.crawler.pipelines.PipelineCallback.Steps.ALL;
+import com.beust.jcommander.Parameter;
+import com.beust.jcommander.ParametersDelegate;
+import com.google.common.base.MoreObjects;
 
 /**
  * Configuration required to convert downloaded DwCArchive and etc to avro (ExtendedRecord)
@@ -63,11 +63,16 @@ public class DwcaToAvroConfiguration {
 
   @Parameter(names = "--interpret-types")
   @NotNull
-  public Set<String> interpretTypes = Collections.singleton(ALL.name());
+  public Set<String> interpretTypes = Collections.singleton(StepType.ALL.name());
 
   @Parameter(names = "--file-name")
   @NotNull
   public String fileName = Conversion.FILE_NAME + Pipeline.AVRO_EXTENSION;
+
+  @ParametersDelegate
+  @NotNull
+  @Valid
+  public RegistryConfiguration registry = new RegistryConfiguration();
 
   @Override
   public String toString() {

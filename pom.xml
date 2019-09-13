@@ -44,7 +44,7 @@
 
     <dwc-api.version>1.20</dwc-api.version>
     <dwca-io.version>2.6</dwca-io.version>
-    <gbif-api.version>0.87</gbif-api.version>
+    <gbif-api.version>0.89-SNAPSHOT</gbif-api.version>
     <gbif-cli.version>0.13</gbif-cli.version>
     <gbif-common-service.version>0.17</gbif-common-service.version>
     <gbif-common-ws.version>0.43</gbif-common-ws.version>
@@ -52,11 +52,12 @@
     <gbif-httputils.version>0.12</gbif-httputils.version>
     <gbif-microservice.version>0.7</gbif-microservice.version>
     <gbif-occurrence.version>0.86</gbif-occurrence.version>
-    <gbif-postal-service.version>0.36</gbif-postal-service.version>
-    <gbif-registry.version>2.124</gbif-registry.version>
+    <gbif-postal-service.version>0.37-SNAPSHOT</gbif-postal-service.version>
+    <gbif-registry.version>2.125-SNAPSHOT</gbif-registry.version>
     <gbif-wrangler.version>0.2</gbif-wrangler.version>
     <gbif-archives-converters.version>2.2.3</gbif-archives-converters.version>
     <gbif-pipelines-common.version>2.2.3</gbif-pipelines-common.version>
+    <gbif-metrics.version>0.33</gbif-metrics.version>
 
     <guava.version>18.0</guava.version>
     <guice.version>4.0</guice.version>
@@ -73,6 +74,7 @@
     <joda-time.version>2.9.6</joda-time.version>
     <jsr305.version>3.0.1</jsr305.version>
     <junit.version>4.12</junit.version>
+    <hamcrest.version>1.3</hamcrest.version>
     <logback.version>1.1.7</logback.version>
     <logstash-encoder.version>4.11</logstash-encoder.version>
     <metainf-services.version>1.7</metainf-services.version>
@@ -239,6 +241,11 @@
         <version>${gbif-microservice.version}</version>
       </dependency>
       <dependency>
+        <groupId>org.gbif.metrics</groupId>
+        <artifactId>metrics-ws-client</artifactId>
+        <version>${gbif-metrics.version}</version>
+      </dependency>
+      <dependency>
         <groupId>org.gbif.pipelines</groupId>
         <artifactId>archives-converters</artifactId>
         <version>${gbif-archives-converters.version}</version>
@@ -400,6 +407,12 @@
         <groupId>junit</groupId>
         <artifactId>junit</artifactId>
         <version>${junit.version}</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.hamcrest</groupId>
+        <artifactId>hamcrest-library</artifactId>
+        <version>${hamcrest.version}</version>
         <scope>test</scope>
       </dependency>
       <dependency>

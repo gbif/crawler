@@ -1,15 +1,16 @@
 package org.gbif.crawler.pipelines.hdfs;
 
-import java.io.IOException;
-
+import org.gbif.api.model.pipelines.StepType;
 import org.gbif.common.messaging.AbstractMessageCallback;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.PipelinesInterpretedMessage;
 import org.gbif.crawler.pipelines.HdfsUtils;
 import org.gbif.crawler.pipelines.PipelineCallback;
-import org.gbif.crawler.pipelines.PipelineCallback.Steps;
 import org.gbif.crawler.pipelines.dwca.DwcaToAvroConfiguration;
 import org.gbif.pipelines.common.PipelinesVariables.Metrics;
+import org.gbif.registry.ws.client.pipelines.PipelinesHistoryWsClient;
+
+import java.io.IOException;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
@@ -17,7 +18,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.slf4j.MDC.MDCCloseable;
 
-import static org.gbif.crawler.constants.PipelinesNodePaths.HDFS_VIEW;
+import static org.gbif.api.model.pipelines.StepType.HDFS_VIEW;
 import static org.gbif.pipelines.common.PipelinesVariables.Pipeline.Interpretation.DIRECTORY_NAME;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -33,11 +34,14 @@ public class HdfsViewCallback extends AbstractMessageCallback<PipelinesInterpret
   private final HdfsViewConfiguration config;
   private final MessagePublisher publisher;
   private final CuratorFramework curator;
+  private final PipelinesHistoryWsClient historyWsClient;
 
-  HdfsViewCallback(HdfsViewConfiguration config, MessagePublisher publisher, CuratorFramework curator) {
+  HdfsViewCallback(HdfsViewConfiguration config, MessagePublisher publisher, CuratorFramework curator,
+                   PipelinesHistoryWsClient historyWsClient) {
     this.curator = checkNotNull(curator, "curator cannot be null");
     this.config = checkNotNull(config, "config cannot be null");
     this.publisher = publisher;
+    this.historyWsClient = historyWsClient;
   }
 
   /** Handles a MQ {@link PipelinesInterpretedMessage} message */
@@ -45,7 +49,8 @@ public class HdfsViewCallback extends AbstractMessageCallback<PipelinesInterpret
   public void handleMessage(PipelinesInterpretedMessage message) {
 
     try (MDCCloseable mdc1 = MDC.putCloseable("datasetId", message.getDatasetUuid().toString());
-        MDCCloseable mdc2 = MDC.putCloseable("attempt", message.getAttempt().toString())) {
+        MDCCloseable mdc2 = MDC.putCloseable("attempt", message.getAttempt().toString());
+        MDCCloseable mdc3 = MDC.putCloseable("step", HDFS_VIEW.name())) {
 
       LOG.info("Message handler began - {}", message);
 
@@ -55,10 +60,11 @@ public class HdfsViewCallback extends AbstractMessageCallback<PipelinesInterpret
       PipelineCallback.create()
           .incomingMessage(message)
           .curator(curator)
-          .zkRootElementPath(HDFS_VIEW)
-          .pipelinesStepName(Steps.HDFS_VIEW.name())
+          .zkRootElementPath(HDFS_VIEW.getLabel())
+          .pipelinesStepName(StepType.HDFS_VIEW)
           .publisher(publisher)
           .runnable(runnable)
+          .historyWsClient(historyWsClient)
           .build()
           .handleMessage();
 

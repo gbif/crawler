@@ -6,6 +6,7 @@ import org.gbif.api.service.registry.DatasetService;
 import org.gbif.common.messaging.DefaultMessagePublisher;
 import org.gbif.common.messaging.MessageListener;
 import org.gbif.common.messaging.api.MessagePublisher;
+import org.gbif.registry.ws.client.pipelines.PipelinesHistoryWsClient;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.http.client.config.RequestConfig;
@@ -48,8 +49,11 @@ public class IndexingService extends AbstractIdleService {
             .setSocketTimeout(60_000)
             .build())
         .build();
+    PipelinesHistoryWsClient
+      historyWsClient = config.registry.newRegistryInjector().getInstance(PipelinesHistoryWsClient.class);
 
-    listener.listen(config.queueName, config.poolSize, new IndexingCallback(config, publisher, datasetService, curator, httpClient));
+    listener.listen(config.queueName, config.poolSize, new IndexingCallback(config, publisher, datasetService, curator,
+                                                                            httpClient, historyWsClient));
   }
 
   @Override

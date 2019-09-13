@@ -1,18 +1,23 @@
 package org.gbif.crawler.pipelines;
 
+import org.gbif.api.model.pipelines.PipelineProcess;
+import org.gbif.api.model.pipelines.PipelineStep;
+import org.gbif.api.model.pipelines.StepType;
+import org.gbif.crawler.constants.PipelinesNodePaths;
+import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
+
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
-import org.gbif.crawler.pipelines.PipelinesProcessStatus.PipelinesStep;
-import org.gbif.crawler.pipelines.PipelinesProcessStatus.PipelinesStep.Status;
-
+import com.google.common.base.Charsets;
+import com.google.common.collect.Sets;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.RetryOneTime;
@@ -24,58 +29,46 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import com.google.common.base.Charsets;
-import com.google.common.collect.Sets;
-
 import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
-import static org.gbif.crawler.constants.PipelinesNodePaths.ABCD_TO_VERBATIM;
-import static org.gbif.crawler.constants.PipelinesNodePaths.ALL_STEPS;
-import static org.gbif.crawler.constants.PipelinesNodePaths.DWCA_TO_VERBATIM;
-import static org.gbif.crawler.constants.PipelinesNodePaths.HDFS_VIEW;
-import static org.gbif.crawler.constants.PipelinesNodePaths.INTERPRETED_TO_INDEX;
-import static org.gbif.crawler.constants.PipelinesNodePaths.VERBATIM_TO_INTERPRETED;
-import static org.gbif.crawler.constants.PipelinesNodePaths.XML_TO_VERBATIM;
-import static org.gbif.crawler.constants.PipelinesNodePaths.getPipelinesInfoPath;
-
 @RunWith(MockitoJUnitRunner.class)
-public class PipelinesProcessServiceImplTest {
+public class PipelinesRunningProcessServiceImplTest {
 
   private static final String MESSAGE = "info";
 
-  private static final BiConsumer<Set<PipelinesProcessStatus>, Set<String>> ASSERT_FN = (s, ids) -> {
-    Consumer<PipelinesStep> checkFn = step -> {
-      Assert.assertTrue(ALL_STEPS.contains(step.getName()));
+  private static final BiConsumer<Set<PipelineProcess>, Set<String>> ASSERT_FN = (s, ids) -> {
+    Consumer<PipelineStep> checkFn = step -> {
+      Assert.assertTrue(StepType.ALL_STEPS.contains(step.getType()));
       Assert.assertNotNull(step.getStarted());
       Assert.assertNotNull(step.getFinished());
-      Assert.assertEquals(Status.COMPLETED, step.getState());
+      Assert.assertEquals(PipelineStep.Status.COMPLETED, step.getState());
       Assert.assertEquals(MESSAGE, step.getMessage());
     };
 
     s.forEach(status -> {
       Assert.assertNotNull(status);
       Assert.assertEquals(6, status.getSteps().size());
-      Assert.assertTrue(ids.contains(status.getCrawlId()));
+      Assert.assertTrue(ids.contains(status.getDatasetKey() + "_" + status.getAttempt()));
       status.getSteps().forEach(step -> {
 
-        if (step.getName().equals(DWCA_TO_VERBATIM)
-            || step.getName().equals(XML_TO_VERBATIM)
-            || step.getName().equals(ABCD_TO_VERBATIM)
-            || step.getName().equals(VERBATIM_TO_INTERPRETED)) {
+        if (step.getType() == StepType.DWCA_TO_VERBATIM
+            || step.getType() == StepType.XML_TO_VERBATIM
+            || step.getType() == StepType.ABCD_TO_VERBATIM
+            || step.getType() == StepType.VERBATIM_TO_INTERPRETED) {
           checkFn.accept(step);
         }
-        if (step.getName().equals(HDFS_VIEW)) {
-          Assert.assertTrue(ALL_STEPS.contains(step.getName()));
+        if (step.getType() == StepType.HDFS_VIEW) {
+          Assert.assertTrue(StepType.ALL_STEPS.contains(step.getType()));
           Assert.assertNotNull(step.getStarted());
           Assert.assertNull(step.getFinished());
-          Assert.assertEquals(Status.FAILED, step.getState());
+          Assert.assertEquals(PipelineStep.Status.FAILED, step.getState());
           Assert.assertEquals(MESSAGE, step.getMessage());
         }
-        if (step.getName().equals(INTERPRETED_TO_INDEX)) {
-          Assert.assertTrue(ALL_STEPS.contains(step.getName()));
+        if (step.getType() == StepType.INTERPRETED_TO_INDEX) {
+          Assert.assertTrue(StepType.ALL_STEPS.contains(step.getType()));
           Assert.assertNotNull(step.getStarted());
           Assert.assertNull(step.getFinished());
-          Assert.assertEquals(Status.RUNNING, step.getState());
+          Assert.assertEquals(PipelineStep.Status.RUNNING, step.getState());
           Assert.assertNull(MESSAGE, step.getMessage());
         }
       });
@@ -85,7 +78,7 @@ public class PipelinesProcessServiceImplTest {
 
   private CuratorFramework curator;
   private TestingServer server;
-  private PipelinesProcessServiceImpl service;
+  private PipelinesRunningProcessServiceImpl service;
 
 
   @Before
@@ -98,7 +91,8 @@ public class PipelinesProcessServiceImplTest {
         .build();
     curator.start();
     service =
-        new PipelinesProcessServiceImpl(curator, Executors.newSingleThreadExecutor(), null, null, null, "test");
+        new PipelinesRunningProcessServiceImpl(
+            curator, Executors.newSingleThreadExecutor(), null, "test");
   }
 
   @After
@@ -110,7 +104,7 @@ public class PipelinesProcessServiceImplTest {
   @Test
   public void testEmptyGetRunningPipelinesProcesses() {
     // When
-    Set<PipelinesProcessStatus> set = service.getRunningPipelinesProcesses();
+    Set<PipelineProcess> set = service.getPipelineProcesses();
 
     // Should
     Assert.assertEquals(0, set.size());
@@ -119,10 +113,11 @@ public class PipelinesProcessServiceImplTest {
   @Test
   public void testEmptyPipelinesProcessByCrawlId() {
     // State
-    String crawlId = "a731e3b1-bc81-4c1f-aad7-aba75ce3cf3b_1";
+    UUID datasetKey = UUID.fromString("a731e3b1-bc81-4c1f-aad7-aba75ce3cf3b");
+    int attempt = 1;
 
     // When
-    PipelinesProcessStatus status = service.getRunningPipelinesProcess(crawlId);
+    PipelineProcess status = service.getPipelineProcess(datasetKey, attempt);
 
     // Should
     Assert.assertNotNull(status);
@@ -132,10 +127,11 @@ public class PipelinesProcessServiceImplTest {
   @Test
   public void testEmptyPipelinesProcessByDatasetId() {
     // State
-    String datasetKey = "a731e3b1-bc81-4c1f-aad7-aba75ce3cf3b";
+    UUID datasetKey = UUID.fromString("a731e3b1-bc81-4c1f-aad7-aba75ce3cf3b");
+    int attempt = 1;
 
     // When
-    Set<PipelinesProcessStatus> set = service.getPipelinesProcessesByDatasetKey(datasetKey);
+    Set<PipelineProcess> set = service.getPipelineProcesses(datasetKey);
 
     // Should
     Assert.assertEquals(0, set.size());
@@ -151,7 +147,7 @@ public class PipelinesProcessServiceImplTest {
     }
 
     // When
-    Set<PipelinesProcessStatus> set = service.getRunningPipelinesProcesses();
+    Set<PipelineProcess> set = service.getPipelineProcesses();
 
     // Should
     Assert.assertEquals(2, set.size());
@@ -166,11 +162,13 @@ public class PipelinesProcessServiceImplTest {
   @Test
   public void testPipelinesProcessByCrawlId() throws Exception {
     // State
-    String crawlId = "a731e3b1-bc81-4c1f-aad7-aba75ce3cf3b_1";
+    UUID datasetKey = UUID.fromString("a731e3b1-bc81-4c1f-aad7-aba75ce3cf3b");
+    int attempt = 1;
+    String crawlId = datasetKey.toString() + "_" + attempt;
     addStatusToZookeeper(crawlId);
 
     // When
-    PipelinesProcessStatus status = service.getRunningPipelinesProcess(crawlId);
+    PipelineProcess status = service.getPipelineProcess(datasetKey, attempt);
 
     // Should
     Assert.assertNotNull(status);
@@ -183,12 +181,12 @@ public class PipelinesProcessServiceImplTest {
   @Test
   public void testPipelinesProcessByDatasetId() throws Exception {
     // State
-    String datasetId = "a731e3b1-bc81-4c1f-aad7-aba75ce3cf3b";
+    UUID datasetId = UUID.fromString("a731e3b1-bc81-4c1f-aad7-aba75ce3cf3b");
     String crawlId = "a731e3b1-bc81-4c1f-aad7-aba75ce3cf3b_1";
     addStatusToZookeeper(crawlId);
 
     // When
-    Set<PipelinesProcessStatus> set = service.getPipelinesProcessesByDatasetKey(datasetId);
+    Set<PipelineProcess> set = service.getPipelineProcesses(datasetId);
 
     // Should
     ASSERT_FN.accept(set, Collections.singleton(crawlId));
@@ -198,27 +196,27 @@ public class PipelinesProcessServiceImplTest {
   }
 
   private void addStatusToZookeeper(String crawlId) throws Exception {
-    Consumer<String> successfulFn = path -> {
+    Consumer<StepType> successfulFn = type -> {
       try {
-        updateMonitoringDate(crawlId, Fn.START_DATE.apply(path));
-        updateMonitoringDate(crawlId, Fn.END_DATE.apply(path));
-        updateMonitoring(crawlId, Fn.SUCCESSFUL_AVAILABILITY.apply(path), Boolean.TRUE.toString());
-        updateMonitoring(crawlId, Fn.SUCCESSFUL_MESSAGE.apply(path), MESSAGE);
+        updateMonitoringDate(crawlId, Fn.START_DATE.apply(type.getLabel()));
+        updateMonitoringDate(crawlId, Fn.END_DATE.apply(type.getLabel()));
+        updateMonitoring(crawlId, Fn.SUCCESSFUL_AVAILABILITY.apply(type.getLabel()), Boolean.TRUE.toString());
+        updateMonitoring(crawlId, Fn.SUCCESSFUL_MESSAGE.apply(type.getLabel()), MESSAGE);
       } catch (Exception ex) {
         throw new RuntimeException(ex.getCause());
       }
     };
 
-    successfulFn.accept(DWCA_TO_VERBATIM);
-    successfulFn.accept(XML_TO_VERBATIM);
-    successfulFn.accept(ABCD_TO_VERBATIM);
-    successfulFn.accept(VERBATIM_TO_INTERPRETED);
+    successfulFn.accept(StepType.DWCA_TO_VERBATIM);
+    successfulFn.accept(StepType.XML_TO_VERBATIM);
+    successfulFn.accept(StepType.ABCD_TO_VERBATIM);
+    successfulFn.accept(StepType.VERBATIM_TO_INTERPRETED);
 
-    updateMonitoringDate(crawlId, Fn.START_DATE.apply(HDFS_VIEW));
-    updateMonitoring(crawlId, Fn.ERROR_AVAILABILITY.apply(HDFS_VIEW), Boolean.TRUE.toString());
-    updateMonitoring(crawlId, Fn.ERROR_MESSAGE.apply(HDFS_VIEW), MESSAGE);
+    updateMonitoringDate(crawlId, Fn.START_DATE.apply(StepType.HDFS_VIEW.getLabel()));
+    updateMonitoring(crawlId, Fn.ERROR_AVAILABILITY.apply(StepType.HDFS_VIEW.getLabel()), Boolean.TRUE.toString());
+    updateMonitoring(crawlId, Fn.ERROR_MESSAGE.apply(StepType.HDFS_VIEW.getLabel()), MESSAGE);
 
-    updateMonitoringDate(crawlId, Fn.START_DATE.apply(INTERPRETED_TO_INDEX));
+    updateMonitoringDate(crawlId, Fn.START_DATE.apply(StepType.INTERPRETED_TO_INDEX.getLabel()));
   }
 
   /**
@@ -236,7 +234,7 @@ public class PipelinesProcessServiceImplTest {
    * @param crawlId root node path
    */
   private void deleteMonitoringById(String crawlId) throws Exception {
-    String path = getPipelinesInfoPath(crawlId);
+    String path = PipelinesNodePaths.getPipelinesInfoPath(crawlId);
     if (checkExists(path)) {
       curator.delete().deletingChildrenIfNeeded().forPath(path);
     }
@@ -250,7 +248,7 @@ public class PipelinesProcessServiceImplTest {
    * @param value some String value
    */
   private void updateMonitoring(String crawlId, String path, String value) throws Exception {
-    String fullPath = getPipelinesInfoPath(crawlId, path);
+    String fullPath = PipelinesNodePaths.getPipelinesInfoPath(crawlId, path);
     byte[] bytes = value.getBytes(Charsets.UTF_8);
     if (checkExists(fullPath)) {
       curator.setData().forPath(fullPath, bytes);

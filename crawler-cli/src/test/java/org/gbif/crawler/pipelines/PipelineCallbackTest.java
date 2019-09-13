@@ -1,5 +1,11 @@
 package org.gbif.crawler.pipelines;
 
+import org.gbif.api.model.pipelines.StepType;
+import org.gbif.common.messaging.api.Message;
+import org.gbif.common.messaging.api.MessagePublisher;
+import org.gbif.common.messaging.api.messages.PipelineBasedMessage;
+import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
+
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -9,12 +15,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
-import org.gbif.common.messaging.api.Message;
-import org.gbif.common.messaging.api.MessagePublisher;
-import org.gbif.common.messaging.api.messages.PipelineBasedMessage;
-import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
-import org.gbif.crawler.pipelines.PipelineCallback.Steps;
-
+import com.google.common.base.Charsets;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.RetryOneTime;
@@ -28,12 +29,8 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import com.google.common.base.Charsets;
-
-import static org.gbif.crawler.constants.PipelinesNodePaths.DWCA_TO_VERBATIM;
 import static org.gbif.crawler.constants.PipelinesNodePaths.SIZE;
 import static org.gbif.crawler.constants.PipelinesNodePaths.getPipelinesInfoPath;
-import static org.gbif.crawler.pipelines.PipelineCallback.Steps.ALL;
 
 @RunWith(MockitoJUnitRunner.class)
 public class PipelineCallbackTest {
@@ -73,9 +70,9 @@ public class PipelineCallbackTest {
     UUID datasetKey = UUID.fromString("a731e3b1-bc81-4c1f-aad7-aba75ce3cf3b");
     int attempt = 1;
     String crawlId = datasetKey + "_" + attempt;
-    String rootPath = DWCA_TO_VERBATIM;
-    String nextStepName = Steps.DWCA_TO_VERBATIM.name();
-    Set<String> pipelineSteps = Collections.singleton(ALL.name());
+    String rootPath = StepType.DWCA_TO_VERBATIM.getLabel();
+    StepType nextStepName = StepType.DWCA_TO_VERBATIM;
+    Set<String> pipelineSteps = Collections.singleton(StepType.ALL.name());
     PipelineBasedMessage incomingMessage = createMessage(datasetKey, attempt, pipelineSteps);
     Runnable runnable = () -> System.out.println("RUN!");
     Message outgoingMessage = () -> null;
@@ -93,8 +90,8 @@ public class PipelineCallbackTest {
         .build()
         .handleMessage();
 
-    Optional<LocalDateTime> startDate = getAsDate(crawlId, Fn.START_DATE.apply(DWCA_TO_VERBATIM));
-    Optional<LocalDateTime> endDate = getAsDate(crawlId, Fn.END_DATE.apply(DWCA_TO_VERBATIM));
+    Optional<LocalDateTime> startDate = getAsDate(crawlId, Fn.START_DATE.apply(rootPath));
+    Optional<LocalDateTime> endDate = getAsDate(crawlId, Fn.END_DATE.apply(rootPath));
 
     // Run second time to check
     PipelineCallback.create()
@@ -108,8 +105,8 @@ public class PipelineCallbackTest {
         .build()
         .handleMessage();
 
-    Optional<LocalDateTime> startDateTwo = getAsDate(crawlId, Fn.START_DATE.apply(DWCA_TO_VERBATIM));
-    Optional<LocalDateTime> endDateTwo = getAsDate(crawlId, Fn.END_DATE.apply(DWCA_TO_VERBATIM));
+    Optional<LocalDateTime> startDateTwo = getAsDate(crawlId, Fn.START_DATE.apply(rootPath));
+    Optional<LocalDateTime> endDateTwo = getAsDate(crawlId, Fn.END_DATE.apply(rootPath));
 
     // Should
     Assert.assertTrue(startDate.isPresent());
@@ -121,11 +118,11 @@ public class PipelineCallbackTest {
     Assert.assertEquals(startDate.get(), startDateTwo.get());
     Assert.assertEquals(endDate.get(), endDateTwo.get());
 
-    Assert.assertTrue(getAsBoolean(crawlId, Fn.ERROR_AVAILABILITY.apply(DWCA_TO_VERBATIM)).isPresent());
-    Assert.assertTrue(getAsString(crawlId, Fn.ERROR_MESSAGE.apply(DWCA_TO_VERBATIM)).isPresent());
+    Assert.assertTrue(getAsBoolean(crawlId, Fn.ERROR_AVAILABILITY.apply(rootPath)).isPresent());
+    Assert.assertTrue(getAsString(crawlId, Fn.ERROR_MESSAGE.apply(rootPath)).isPresent());
 
-    Assert.assertTrue(getAsBoolean(crawlId, Fn.SUCCESSFUL_AVAILABILITY.apply(DWCA_TO_VERBATIM)).isPresent());
-    Assert.assertFalse(getAsString(crawlId, Fn.SUCCESSFUL_MESSAGE.apply(DWCA_TO_VERBATIM)).isPresent());
+    Assert.assertTrue(getAsBoolean(crawlId, Fn.SUCCESSFUL_AVAILABILITY.apply(rootPath)).isPresent());
+    Assert.assertFalse(getAsString(crawlId, Fn.SUCCESSFUL_MESSAGE.apply(rootPath)).isPresent());
 
     // Postprocess
     deleteMonitoringById(crawlId);
@@ -138,9 +135,9 @@ public class PipelineCallbackTest {
     UUID datasetKey = UUID.fromString("a731e3b1-bc81-4c1f-aad7-aba75ce3cf3b");
     int attempt = 1;
     String crawlId = datasetKey + "_" + attempt;
-    String rootPath = DWCA_TO_VERBATIM;
-    String nextStepName = Steps.DWCA_TO_VERBATIM.name();
-    Set<String> pipelineSteps = Collections.singleton(ALL.name());
+    String rootPath = StepType.DWCA_TO_VERBATIM.getLabel();
+    StepType nextStepName = StepType.DWCA_TO_VERBATIM;
+    Set<String> pipelineSteps = Collections.singleton(StepType.ALL.name());
     PipelineBasedMessage incomingMessage = createMessage(datasetKey, attempt, pipelineSteps);
     Runnable runnable = () -> System.out.println("RUN!");
     Message outgoingMessage = () -> null;
@@ -158,14 +155,14 @@ public class PipelineCallbackTest {
       .handleMessage();
 
     // Should
-    Assert.assertTrue(getAsDate(crawlId, Fn.START_DATE.apply(DWCA_TO_VERBATIM)).isPresent());
-    Assert.assertTrue(getAsDate(crawlId, Fn.END_DATE.apply(DWCA_TO_VERBATIM)).isPresent());
+    Assert.assertTrue(getAsDate(crawlId, Fn.START_DATE.apply(rootPath)).isPresent());
+    Assert.assertTrue(getAsDate(crawlId, Fn.END_DATE.apply(rootPath)).isPresent());
 
-    Assert.assertFalse(getAsBoolean(crawlId, Fn.ERROR_AVAILABILITY.apply(DWCA_TO_VERBATIM)).isPresent());
-    Assert.assertFalse(getAsString(crawlId, Fn.ERROR_MESSAGE.apply(DWCA_TO_VERBATIM)).isPresent());
+    Assert.assertFalse(getAsBoolean(crawlId, Fn.ERROR_AVAILABILITY.apply(rootPath)).isPresent());
+    Assert.assertFalse(getAsString(crawlId, Fn.ERROR_MESSAGE.apply(rootPath)).isPresent());
 
-    Assert.assertTrue(getAsBoolean(crawlId, Fn.SUCCESSFUL_AVAILABILITY.apply(DWCA_TO_VERBATIM)).isPresent());
-    Assert.assertTrue(getAsString(crawlId, Fn.SUCCESSFUL_MESSAGE.apply(DWCA_TO_VERBATIM)).isPresent());
+    Assert.assertTrue(getAsBoolean(crawlId, Fn.SUCCESSFUL_AVAILABILITY.apply(rootPath)).isPresent());
+    Assert.assertTrue(getAsString(crawlId, Fn.SUCCESSFUL_MESSAGE.apply(rootPath)).isPresent());
 
     Assert.assertTrue(getAsString(crawlId, SIZE).isPresent());
     Assert.assertEquals("1", getAsString(crawlId, SIZE).get());
@@ -181,8 +178,8 @@ public class PipelineCallbackTest {
     UUID datasetKey = UUID.fromString("a731e3b1-bc81-4c1f-aad7-aba75ce3cf3b");
     int attempt = 1;
     String crawlId = datasetKey + "_" + attempt;
-    String rootPath = DWCA_TO_VERBATIM;
-    String nextStepName = Steps.DWCA_TO_VERBATIM.name();
+    String rootPath = StepType.DWCA_TO_VERBATIM.getLabel();
+    StepType nextStepName = StepType.DWCA_TO_VERBATIM;
     Set<String> pipelineSteps = Collections.singleton("DWCA_TO_VERBATIM");
     PipelineBasedMessage incomingMessage = createMessage(datasetKey, attempt, pipelineSteps);
     Runnable runnable = () -> System.out.println("RUN!");
@@ -214,9 +211,9 @@ public class PipelineCallbackTest {
     UUID datasetKey = UUID.fromString("a731e3b1-bc81-4c1f-aad7-aba75ce3cf3b");
     int attempt = 1;
     String crawlId = datasetKey + "_" + attempt;
-    String rootPath = DWCA_TO_VERBATIM;
-    String nextStepName = Steps.DWCA_TO_VERBATIM.name();
-    Set<String> pipelineSteps = Collections.singleton(ALL.name());
+    String rootPath = StepType.DWCA_TO_VERBATIM.getLabel();
+    StepType nextStepName = StepType.DWCA_TO_VERBATIM;
+    Set<String> pipelineSteps = Collections.singleton(StepType.ALL.name());
     PipelineBasedMessage incomingMessage = createMessage(datasetKey, attempt, pipelineSteps);
     Runnable runnable = () -> {throw new RuntimeException("Oops!");};
     Message outgoingMessage = () -> null;
@@ -234,14 +231,14 @@ public class PipelineCallbackTest {
       .handleMessage();
 
     // Should
-    Assert.assertTrue(getAsDate(crawlId, Fn.START_DATE.apply(DWCA_TO_VERBATIM)).isPresent());
-    Assert.assertFalse(getAsDate(crawlId, Fn.END_DATE.apply(DWCA_TO_VERBATIM)).isPresent());
+    Assert.assertTrue(getAsDate(crawlId, Fn.START_DATE.apply(rootPath)).isPresent());
+    Assert.assertFalse(getAsDate(crawlId, Fn.END_DATE.apply(rootPath)).isPresent());
 
-    Assert.assertTrue(getAsBoolean(crawlId, Fn.ERROR_AVAILABILITY.apply(DWCA_TO_VERBATIM)).isPresent());
-    Assert.assertTrue(getAsString(crawlId, Fn.ERROR_MESSAGE.apply(DWCA_TO_VERBATIM)).isPresent());
+    Assert.assertTrue(getAsBoolean(crawlId, Fn.ERROR_AVAILABILITY.apply(rootPath)).isPresent());
+    Assert.assertTrue(getAsString(crawlId, Fn.ERROR_MESSAGE.apply(rootPath)).isPresent());
 
-    Assert.assertFalse(getAsBoolean(crawlId, Fn.SUCCESSFUL_AVAILABILITY.apply(DWCA_TO_VERBATIM)).isPresent());
-    Assert.assertFalse(getAsString(crawlId, Fn.SUCCESSFUL_MESSAGE.apply(DWCA_TO_VERBATIM)).isPresent());
+    Assert.assertFalse(getAsBoolean(crawlId, Fn.SUCCESSFUL_AVAILABILITY.apply(rootPath)).isPresent());
+    Assert.assertFalse(getAsString(crawlId, Fn.SUCCESSFUL_MESSAGE.apply(rootPath)).isPresent());
 
     Assert.assertFalse(getAsString(crawlId, SIZE).isPresent());
 
@@ -256,9 +253,9 @@ public class PipelineCallbackTest {
     UUID datasetKey = UUID.fromString("a731e3b1-bc81-4c1f-aad7-aba75ce3cf3b");
     int attempt = 1;
     String crawlId = datasetKey + "_" + attempt;
-    String rootPath = DWCA_TO_VERBATIM;
-    String nextStepName = Steps.DWCA_TO_VERBATIM.name();
-    Set<String> pipelineSteps = Collections.singleton(ALL.name());
+    String rootPath = StepType.DWCA_TO_VERBATIM.getLabel();
+    StepType nextStepName = StepType.DWCA_TO_VERBATIM;
+    Set<String> pipelineSteps = Collections.singleton(StepType.ALL.name());
     PipelineBasedMessage incomingMessage = createMessage(datasetKey, attempt, pipelineSteps);
     Runnable runnable = () -> System.out.println("RUN!");
     Message outgoingMessage = () -> null;
@@ -291,9 +288,9 @@ public class PipelineCallbackTest {
     UUID datasetKey = UUID.fromString("a731e3b1-bc81-4c1f-aad7-aba75ce3cf3b");
     int attempt = 1;
     String crawlId = datasetKey + "_" + attempt;
-    String rootPath = DWCA_TO_VERBATIM;
-    String nextStepName = Steps.DWCA_TO_VERBATIM.name();
-    Set<String> pipelineSteps = Collections.singleton(ALL.name());
+    String rootPath = StepType.DWCA_TO_VERBATIM.getLabel();
+    StepType nextStepName = StepType.DWCA_TO_VERBATIM;
+    Set<String> pipelineSteps = Collections.singleton(StepType.ALL.name());
     PipelineBasedMessage incomingMessage = createMessage(datasetKey, attempt, pipelineSteps);
     Runnable runnable = () -> System.out.println("RUN!");
     Message outgoingMessage = () -> null;

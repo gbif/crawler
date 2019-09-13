@@ -1,32 +1,30 @@
 package org.gbif.crawler.pipelines.interpret;
 
-import java.io.IOException;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-
+import org.gbif.api.model.pipelines.StepType;
 import org.gbif.common.messaging.AbstractMessageCallback;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.PipelinesInterpretedMessage;
 import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage;
 import org.gbif.crawler.pipelines.HdfsUtils;
 import org.gbif.crawler.pipelines.PipelineCallback;
-import org.gbif.crawler.pipelines.PipelineCallback.Steps;
 import org.gbif.crawler.pipelines.dwca.DwcaToAvroConfiguration;
 import org.gbif.pipelines.common.PipelinesVariables.Metrics;
 import org.gbif.pipelines.common.PipelinesVariables.Pipeline;
 import org.gbif.pipelines.common.PipelinesVariables.Pipeline.Conversion;
 import org.gbif.pipelines.common.PipelinesVariables.Pipeline.Interpretation;
+import org.gbif.registry.ws.client.pipelines.PipelinesHistoryWsClient;
 
+import java.io.IOException;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+
+import com.google.common.base.Strings;
 import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.slf4j.MDC.MDCCloseable;
-
-import com.google.common.base.Strings;
-
-import static org.gbif.crawler.constants.PipelinesNodePaths.VERBATIM_TO_INTERPRETED;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -42,11 +40,14 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
   private final InterpreterConfiguration config;
   private final MessagePublisher publisher;
   private final CuratorFramework curator;
+  private PipelinesHistoryWsClient historyWsClient;
 
-  InterpretationCallback(InterpreterConfiguration config, MessagePublisher publisher, CuratorFramework curator) {
+  InterpretationCallback(InterpreterConfiguration config, MessagePublisher publisher, CuratorFramework curator,
+                         PipelinesHistoryWsClient historyWsClient) {
     this.curator = checkNotNull(curator, "curator cannot be null");
     this.config = checkNotNull(config, "config cannot be null");
     this.publisher = publisher;
+    this.historyWsClient = historyWsClient;
   }
 
   /**
@@ -59,7 +60,8 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
     Integer attempt = Optional.ofNullable(message.getAttempt()).orElseGet(() -> getLatestAttempt(message));
 
     try (MDCCloseable mdc1 = MDC.putCloseable("datasetId", datasetId.toString());
-        MDCCloseable mdc2 = MDC.putCloseable("attempt", attempt.toString())) {
+        MDCCloseable mdc2 = MDC.putCloseable("attempt", attempt.toString());
+        MDCCloseable mdc3 = MDC.putCloseable("step", StepType.VERBATIM_TO_INTERPRETED.name())) {
 
       LOG.info("Message handler began - {}", message);
 
@@ -84,10 +86,11 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
           .incomingMessage(message)
           .outgoingMessage(new PipelinesInterpretedMessage(datasetId, attempt, steps, recordsNumber, repeatAttempt, message.getResetPrefix()))
           .curator(curator)
-          .zkRootElementPath(VERBATIM_TO_INTERPRETED)
-          .pipelinesStepName(Steps.VERBATIM_TO_INTERPRETED.name())
+          .zkRootElementPath(StepType.VERBATIM_TO_INTERPRETED.getLabel())
+          .pipelinesStepName(StepType.VERBATIM_TO_INTERPRETED)
           .publisher(publisher)
           .runnable(runnable)
+          .historyWsClient(historyWsClient)
           .build()
           .handleMessage();
 

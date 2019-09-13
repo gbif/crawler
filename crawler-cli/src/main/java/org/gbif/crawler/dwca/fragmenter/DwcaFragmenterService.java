@@ -12,6 +12,7 @@ import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.DwcaMetasyncFinishedMessage;
 import org.gbif.common.messaging.api.messages.DwcaValidationFinishedMessage;
 import org.gbif.common.messaging.api.messages.OccurrenceFragmentedMessage;
+import org.gbif.common.messaging.api.messages.Platform;
 import org.gbif.crawler.dwca.DwcaService;
 import org.gbif.dwc.DwcFiles;
 import org.gbif.dwc.terms.DwcTerm;
@@ -104,6 +105,12 @@ public class DwcaFragmenterService extends DwcaService {
     public void handleMessage(DwcaMetasyncFinishedMessage message) {
       UUID datasetKey = message.getDatasetUuid();
       MDC.put("datasetKey", datasetKey.toString());
+
+      if (!Platform.OCCURRENCE.equivalent(message.getPlatform())) {
+        LOG.info("Skip message because Occurrence don't support the platform {}", message);
+        createOrUpdate(curator, datasetKey, PROCESS_STATE_OCCURRENCE, ProcessState.FINISHED);
+        return;
+      }
 
       if (message.getDatasetType() == DatasetType.METADATA) {
         // for metadata only dataset this is the last step

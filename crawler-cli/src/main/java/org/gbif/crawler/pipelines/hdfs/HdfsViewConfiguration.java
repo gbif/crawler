@@ -1,6 +1,7 @@
 package org.gbif.crawler.pipelines.hdfs;
 
 import org.gbif.common.messaging.config.MessagingConfiguration;
+import org.gbif.crawler.common.RegistryConfiguration;
 import org.gbif.crawler.common.ZooKeeperConfiguration;
 import org.gbif.pipelines.common.PipelinesVariables.Pipeline;
 
@@ -130,6 +131,11 @@ public class HdfsViewConfiguration {
 
   @Parameter(names = "--process-output-directory")
   public String processOutputDirectory;
+
+  @ParametersDelegate
+  @NotNull
+  @Valid
+  public RegistryConfiguration registry = new RegistryConfiguration();
 
   @Parameter(names = "--hdfs-avro-coefficient-ratio")
   public int hdfsAvroCoefficientRatio = 75;

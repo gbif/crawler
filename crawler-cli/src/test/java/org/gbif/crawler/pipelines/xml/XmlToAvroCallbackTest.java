@@ -1,17 +1,18 @@
 package org.gbif.crawler.pipelines.xml;
 
+import org.gbif.api.model.crawler.FinishReason;
+import org.gbif.api.vocabulary.EndpointType;
+import org.gbif.common.messaging.api.messages.PipelinesXmlMessage;
+import org.gbif.common.messaging.api.messages.Platform;
+import org.gbif.crawler.pipelines.HdfsUtils;
+import org.gbif.crawler.pipelines.MessagePublisherStub;
+import org.gbif.crawler.pipelines.ZookeeperUtils;
+import org.gbif.registry.ws.client.pipelines.PipelinesHistoryWsClient;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.UUID;
-
-import org.gbif.api.model.crawler.FinishReason;
-import org.gbif.api.vocabulary.EndpointType;
-import org.gbif.common.messaging.api.messages.PipelinesXmlMessage;
-import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
-import org.gbif.crawler.pipelines.HdfsUtils;
-import org.gbif.crawler.pipelines.MessagePublisherStab;
-import org.gbif.crawler.pipelines.ZookeeperUtils;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
@@ -23,13 +24,17 @@ import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
 import org.junit.AfterClass;
-import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.Mockito;
 
-import static org.gbif.crawler.constants.PipelinesNodePaths.XML_TO_VERBATIM;
+import static org.gbif.api.model.pipelines.StepType.ALL;
+import static org.gbif.api.model.pipelines.StepType.XML_TO_VERBATIM;
+import static org.gbif.crawler.constants.PipelinesNodePaths.Fn;
 import static org.gbif.crawler.constants.PipelinesNodePaths.getPipelinesInfoPath;
-import static org.gbif.crawler.pipelines.PipelineCallback.Steps.ALL;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class XmlToAvroCallbackTest {
@@ -45,7 +50,8 @@ public class XmlToAvroCallbackTest {
   private static FileSystem clusterFs;
   private static CuratorFramework curator;
   private static TestingServer server;
-  private static MessagePublisherStab publisher;
+  private static MessagePublisherStub publisher;
+  private static PipelinesHistoryWsClient historyWsClient;
 
   @BeforeClass
   public static void setUp() throws Exception {
@@ -66,7 +72,8 @@ public class XmlToAvroCallbackTest {
         .build();
     curator.start();
 
-    publisher = MessagePublisherStab.create();
+    publisher = MessagePublisherStub.create();
+    historyWsClient = Mockito.mock(PipelinesHistoryWsClient.class);
   }
 
   @AfterClass
@@ -87,9 +94,10 @@ public class XmlToAvroCallbackTest {
     config.repositoryPath = hdfsUri;
     config.xmlReaderParallelism = 4;
     config.archiveRepositorySubdir = Collections.singleton("xml");
-    XmlToAvroCallback callback = new XmlToAvroCallback(config, publisher, curator);
+    XmlToAvroCallback callback = new XmlToAvroCallback(config, publisher, curator, historyWsClient);
     PipelinesXmlMessage message =
-        new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL, Collections.singleton(ALL.name()), EndpointType.BIOCASE_XML_ARCHIVE);
+        new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL, Collections.singleton(ALL.name()),
+                                EndpointType.BIOCASE_XML_ARCHIVE, Platform.PIPELINES);
     String crawlId = DATASET_UUID + "_" + attempt;
 
     // When
@@ -99,13 +107,13 @@ public class XmlToAvroCallbackTest {
     Path path = new Path(hdfsUri + STRING_UUID + "/" + attempt + AVRO);
     assertTrue(cluster.getFileSystem().exists(path));
     assertTrue(clusterFs.getFileStatus(path).getLen() > 0);
-    Assert.assertTrue(ZookeeperUtils.checkExists(curator, getPipelinesInfoPath(crawlId, XML_TO_VERBATIM)));
-    Assert.assertTrue(ZookeeperUtils.checkExists(curator, getPipelinesInfoPath(crawlId, Fn.SUCCESSFUL_MESSAGE.apply(XML_TO_VERBATIM))));
-    Assert.assertEquals(1, publisher.getMessages().size());
+    assertTrue(ZookeeperUtils.checkExists(curator, getPipelinesInfoPath(crawlId, XML_TO_VERBATIM.getLabel())));
+    assertTrue(ZookeeperUtils.checkExists(curator, getPipelinesInfoPath(crawlId, Fn.SUCCESSFUL_MESSAGE.apply(XML_TO_VERBATIM.getLabel()))));
+    assertEquals(1, publisher.getMessages().size());
 
     // Clean
     HdfsUtils.deleteDirectory(null, path.toString());
-    curator.delete().deletingChildrenIfNeeded().forPath(getPipelinesInfoPath(crawlId, XML_TO_VERBATIM));
+    curator.delete().deletingChildrenIfNeeded().forPath(getPipelinesInfoPath(crawlId, XML_TO_VERBATIM.getLabel()));
     publisher.close();
   }
 
@@ -118,9 +126,10 @@ public class XmlToAvroCallbackTest {
     config.repositoryPath = hdfsUri;
     config.xmlReaderParallelism = 4;
     config.archiveRepositorySubdir = Collections.singleton("xml");
-    XmlToAvroCallback callback = new XmlToAvroCallback(config, publisher, curator);
+    XmlToAvroCallback callback = new XmlToAvroCallback(config, publisher, curator, historyWsClient);
     PipelinesXmlMessage message =
-        new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL, Collections.singleton(ALL.name()), EndpointType.BIOCASE_XML_ARCHIVE);
+        new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL, Collections.singleton(ALL.name()),
+                                EndpointType.BIOCASE_XML_ARCHIVE, Platform.PIPELINES);
     String crawlId = DATASET_UUID + "_" + attempt;
 
     // When
@@ -128,15 +137,15 @@ public class XmlToAvroCallbackTest {
 
     // Should
     Path path = new Path(hdfsUri + STRING_UUID + "/" + attempt + AVRO);
-    Assert.assertTrue(cluster.getFileSystem().exists(path));
-    Assert.assertTrue(clusterFs.getFileStatus(path).getLen() > 0);
-    Assert.assertTrue(ZookeeperUtils.checkExists(curator, getPipelinesInfoPath(crawlId, XML_TO_VERBATIM)));
-    Assert.assertTrue(ZookeeperUtils.checkExists(curator, getPipelinesInfoPath(crawlId, Fn.SUCCESSFUL_MESSAGE.apply(XML_TO_VERBATIM))));
-    Assert.assertEquals(1, publisher.getMessages().size());
+    assertTrue(cluster.getFileSystem().exists(path));
+    assertTrue(clusterFs.getFileStatus(path).getLen() > 0);
+    assertTrue(ZookeeperUtils.checkExists(curator, getPipelinesInfoPath(crawlId, XML_TO_VERBATIM.getLabel())));
+    assertTrue(ZookeeperUtils.checkExists(curator, getPipelinesInfoPath(crawlId, Fn.SUCCESSFUL_MESSAGE.apply(XML_TO_VERBATIM.getLabel()))));
+    assertEquals(1, publisher.getMessages().size());
 
     // Clean
     HdfsUtils.deleteDirectory(null, path.toString());
-    curator.delete().deletingChildrenIfNeeded().forPath(getPipelinesInfoPath(crawlId, XML_TO_VERBATIM));
+    curator.delete().deletingChildrenIfNeeded().forPath(getPipelinesInfoPath(crawlId, XML_TO_VERBATIM.getLabel()));
     publisher.close();
   }
 
@@ -149,9 +158,10 @@ public class XmlToAvroCallbackTest {
     config.repositoryPath = hdfsUri;
     config.xmlReaderParallelism = 4;
     config.archiveRepositorySubdir = Collections.singleton("xml");
-    XmlToAvroCallback callback = new XmlToAvroCallback(config, publisher, curator);
+    XmlToAvroCallback callback = new XmlToAvroCallback(config, publisher, curator, historyWsClient);
     PipelinesXmlMessage message =
-        new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL, Collections.singleton(ALL.name()), EndpointType.BIOCASE_XML_ARCHIVE);
+        new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL, Collections.singleton(ALL.name()),
+                                EndpointType.BIOCASE_XML_ARCHIVE, Platform.PIPELINES);
     String crawlId = DATASET_UUID + "_" + attempt;
 
     // When
@@ -159,17 +169,17 @@ public class XmlToAvroCallbackTest {
 
     // Should
     Path path = new Path(hdfsUri + STRING_UUID + "/" + attempt + AVRO);
-    Assert.assertFalse(cluster.getFileSystem().exists(path));
-    Assert.assertFalse(cluster.getFileSystem().exists(path.getParent()));
+    assertFalse(cluster.getFileSystem().exists(path));
+    assertFalse(cluster.getFileSystem().exists(path.getParent()));
     // NOTE: If you run this method independently, it will fail, it is normal
-    Assert.assertTrue(cluster.getFileSystem().exists(path.getParent().getParent()));
-    Assert.assertTrue(ZookeeperUtils.checkExists(curator, getPipelinesInfoPath(crawlId, XML_TO_VERBATIM)));
-    Assert.assertTrue(ZookeeperUtils.checkExists(curator, getPipelinesInfoPath(crawlId, Fn.ERROR_MESSAGE.apply(XML_TO_VERBATIM))));
-    Assert.assertTrue(publisher.getMessages().isEmpty());
+    assertTrue(cluster.getFileSystem().exists(path.getParent().getParent()));
+    assertTrue(ZookeeperUtils.checkExists(curator, getPipelinesInfoPath(crawlId, XML_TO_VERBATIM.getLabel())));
+    assertTrue(ZookeeperUtils.checkExists(curator, getPipelinesInfoPath(crawlId, Fn.ERROR_MESSAGE.apply(XML_TO_VERBATIM.getLabel()))));
+    assertTrue(publisher.getMessages().isEmpty());
 
     // Clean
     HdfsUtils.deleteDirectory(null, path.toString());
-    curator.delete().deletingChildrenIfNeeded().forPath(getPipelinesInfoPath(crawlId, XML_TO_VERBATIM));
+    curator.delete().deletingChildrenIfNeeded().forPath(getPipelinesInfoPath(crawlId, XML_TO_VERBATIM.getLabel()));
     publisher.close();
   }
 
@@ -182,9 +192,10 @@ public class XmlToAvroCallbackTest {
     config.repositoryPath = hdfsUri;
     config.xmlReaderParallelism = 4;
     config.archiveRepositorySubdir = Collections.singleton("xml");
-    XmlToAvroCallback callback = new XmlToAvroCallback(config, publisher, curator);
+    XmlToAvroCallback callback = new XmlToAvroCallback(config, publisher, curator, historyWsClient);
     PipelinesXmlMessage message =
-        new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NOT_MODIFIED, Collections.singleton(ALL.name()), EndpointType.BIOCASE_XML_ARCHIVE);
+        new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NOT_MODIFIED, Collections.singleton(ALL.name()),
+                                EndpointType.BIOCASE_XML_ARCHIVE, Platform.PIPELINES);
     String crawlId = DATASET_UUID + "_" + attempt;
 
     // When
@@ -192,10 +203,10 @@ public class XmlToAvroCallbackTest {
 
     // Should
     Path path = new Path(hdfsUri + STRING_UUID + "/" + attempt + AVRO);
-    Assert.assertFalse(cluster.getFileSystem().exists(path));
-    Assert.assertFalse(ZookeeperUtils.checkExists(curator, getPipelinesInfoPath(crawlId, XML_TO_VERBATIM)));
-    Assert.assertFalse(ZookeeperUtils.checkExists(curator, getPipelinesInfoPath(crawlId, Fn.SUCCESSFUL_MESSAGE.apply(XML_TO_VERBATIM))));
-    Assert.assertTrue(publisher.getMessages().isEmpty());
+    assertFalse(cluster.getFileSystem().exists(path));
+    assertFalse(ZookeeperUtils.checkExists(curator, getPipelinesInfoPath(crawlId, XML_TO_VERBATIM.getLabel())));
+    assertFalse(ZookeeperUtils.checkExists(curator, getPipelinesInfoPath(crawlId, Fn.SUCCESSFUL_MESSAGE.apply(XML_TO_VERBATIM.getLabel()))));
+    assertTrue(publisher.getMessages().isEmpty());
 
     // Clean
     HdfsUtils.deleteDirectory(null, path.toString());

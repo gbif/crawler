@@ -6,6 +6,7 @@ import org.gbif.api.model.registry.MachineTag;
 import org.gbif.api.service.registry.DatasetService;
 import org.gbif.api.vocabulary.DatasetType;
 import org.gbif.api.vocabulary.EndpointType;
+import org.gbif.common.messaging.api.messages.Platform;
 import org.gbif.crawler.constants.CrawlerNodePaths;
 
 import java.io.IOException;
@@ -158,7 +159,7 @@ public class CrawlerCoordinatorServiceImplTest {
     thrown.expectMessage("does not exist");
 
     when(datasetService.get(uuid)).thenReturn(null);
-    service.initiateCrawl(uuid, 5);
+    service.initiateCrawl(uuid, 5, Platform.ALL);
   }
 
   @Test
@@ -167,7 +168,7 @@ public class CrawlerCoordinatorServiceImplTest {
     thrown.expectMessage("already scheduled");
 
     curator.create().forPath("/crawls/" + uuid.toString());
-    service.initiateCrawl(uuid, 5);
+    service.initiateCrawl(uuid, 5, Platform.ALL);
   }
 
   @Test
@@ -175,7 +176,7 @@ public class CrawlerCoordinatorServiceImplTest {
     thrown.expect(IllegalArgumentException.class);
     thrown.expectMessage("endpoints");
 
-    service.initiateCrawl(uuid, 5);
+    service.initiateCrawl(uuid, 5, Platform.ALL);
   }
 
   @Test
@@ -187,7 +188,7 @@ public class CrawlerCoordinatorServiceImplTest {
     endpoint.setType(EndpointType.TAPIR);
     dataset.getEndpoints().add(endpoint);
 
-    service.initiateCrawl(uuid, 5);
+    service.initiateCrawl(uuid, 5, Platform.ALL);
   }
 
   @Test
@@ -200,7 +201,7 @@ public class CrawlerCoordinatorServiceImplTest {
     dataset.getEndpoints().add(endpoint);
     dataset.setDeleted(new Date());
 
-    service.initiateCrawl(uuid, 5);
+    service.initiateCrawl(uuid, 5, Platform.ALL);
   }
 
   @Test
@@ -216,7 +217,7 @@ public class CrawlerCoordinatorServiceImplTest {
     tag.setKey(123);
     dataset.getMachineTags().add(tag);
     dataset.getMachineTags().add(MachineTag.newInstance(DECLARED_COUNT,"1234"));
-    service.initiateCrawl(uuid, 5);
+    service.initiateCrawl(uuid, 5, Platform.ALL);
 
     List<String> children = curator.getChildren().forPath("/crawls");
     assertThat(children.size(), equalTo(1));

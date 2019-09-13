@@ -1,17 +1,18 @@
 package org.gbif.crawler.pipelines.interpret;
 
+import org.gbif.api.model.pipelines.StepRunner;
+import org.gbif.api.vocabulary.EndpointType;
+import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage;
+import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage.ValidationResult;
+
 import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
 
-import org.gbif.api.vocabulary.EndpointType;
-import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage;
-import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage.ValidationResult;
-import org.gbif.crawler.pipelines.PipelineCallback.Runner;
-
 import org.junit.Test;
 
-import static org.gbif.crawler.pipelines.PipelineCallback.Steps.ALL;
+import static org.gbif.api.model.pipelines.StepType.ALL;
+
 import static org.junit.Assert.assertEquals;
 
 public class ProcessRunnerBuilderTest {
@@ -51,7 +52,7 @@ public class ProcessRunnerBuilderTest {
     config.coreSiteConfig = "core.xml";
     config.hdfsSiteConfig = "hdfs.xml";
     config.driverJavaOptions = "-Dlog4j.configuration=file:/home/crap/config/log4j-interpretation-pipeline.properties";
-    config.processRunner = Runner.STANDALONE.name();
+    config.processRunner = StepRunner.STANDALONE.name();
 
     UUID datasetId = UUID.fromString("de7ffb5e-c07b-42dc-8a88-f67a4465fe3d");
     int attempt = 1;
@@ -100,7 +101,7 @@ public class ProcessRunnerBuilderTest {
     config.coreSiteConfig = "core.xml";
     config.hdfsSiteConfig = "hdfs.xml";
     config.deployMode = "cluster";
-    config.processRunner = Runner.DISTRIBUTED.name();
+    config.processRunner = StepRunner.DISTRIBUTED.name();
 
     UUID datasetId = UUID.fromString("de7ffb5e-c07b-42dc-8a88-f67a4465fe3d");
     int attempt = 1;
@@ -161,7 +162,7 @@ public class ProcessRunnerBuilderTest {
     config.extraClassPath = "logstash-gelf.jar";
     config.driverJavaOptions = "-Dlog4j.configuration=file:log4j.properties";
     config.deployMode = "cluster";
-    config.processRunner = Runner.DISTRIBUTED.name();
+    config.processRunner = StepRunner.DISTRIBUTED.name();
     config.yarnQueue = "pipelines";
 
     UUID datasetId = UUID.fromString("de7ffb5e-c07b-42dc-8a88-f67a4465fe3d");

@@ -1,5 +1,7 @@
 package org.gbif.crawler.pipelines.hdfs;
 
+import org.gbif.common.messaging.api.messages.PipelinesInterpretedMessage;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -8,8 +10,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.function.BiFunction;
-
-import org.gbif.common.messaging.api.messages.PipelinesInterpretedMessage;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
