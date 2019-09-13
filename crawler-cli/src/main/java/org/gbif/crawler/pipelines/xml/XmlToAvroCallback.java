@@ -82,14 +82,6 @@ public class XmlToAvroCallback extends AbstractMessageCallback<PipelinesXmlMessa
         return;
       }
 
-      // Workaround to wait fs
-      try {
-        LOG.info("Waiting 20 seconds...");
-        TimeUnit.SECONDS.sleep(20);
-      } catch (InterruptedException ex) {
-        throw new RuntimeException(ex.getCause());
-      }
-
       if (message.getPipelineSteps().isEmpty()) {
         message.setPipelineSteps(Sets.newHashSet(
             StepType.XML_TO_VERBATIM.name(),

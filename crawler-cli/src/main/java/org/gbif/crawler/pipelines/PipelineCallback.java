@@ -199,6 +199,7 @@ public class PipelineCallback {
         ZookeeperUtils.updateMonitoring(b.curator, crawlId, successfulMessagePath, info);
       }
 
+      // TODO: remove ALL (also from Enum)
       // Change zookeeper counter for passed steps
       int size = steps.contains(StepType.ALL.name()) ? StepType.values().length - 3 : steps.size();
       ZookeeperUtils.checkMonitoringById(b.curator, size, crawlId);

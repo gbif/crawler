@@ -1,5 +1,6 @@
 package org.gbif.crawler.pipelines.abcd;
 
+import org.gbif.api.model.crawler.FinishReason;
 import org.gbif.api.model.pipelines.StepType;
 import org.gbif.api.vocabulary.EndpointType;
 import org.gbif.common.messaging.AbstractMessageCallback;
@@ -7,6 +8,7 @@ import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.PipelinesAbcdMessage;
 import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage;
 import org.gbif.common.messaging.api.messages.PipelinesXmlMessage;
+import org.gbif.common.messaging.api.messages.Platform;
 import org.gbif.crawler.pipelines.PipelineCallback;
 import org.gbif.crawler.pipelines.xml.XmlToAvroCallback;
 import org.gbif.crawler.pipelines.xml.XmlToAvroConfiguration;
@@ -65,14 +67,6 @@ public class AbcdToAvroCallback extends AbstractMessageCallback<PipelinesAbcdMes
       if (!message.isModified()) {
         LOG.info("Skip the message, cause it wasn't modified, exit from handler");
         return;
-      }
-
-      // Workaround to wait fs
-      try {
-        LOG.info("Waiting 20 seconds...");
-        TimeUnit.SECONDS.sleep(20);
-      } catch (InterruptedException ex) {
-        throw new RuntimeException(ex.getCause());
       }
 
       if (message.getPipelineSteps().isEmpty()) {

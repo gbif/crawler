@@ -7,12 +7,16 @@ import org.apache.commons.io.filefilter.HiddenFileFilter;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.atomic.AtomicValue;
 import org.apache.curator.framework.recipes.atomic.DistributedAtomicLong;
+
+import org.gbif.api.model.crawler.ProcessState;
 import org.gbif.common.messaging.AbstractMessageCallback;
 import org.gbif.common.messaging.DefaultMessagePublisher;
 import org.gbif.common.messaging.MessageListener;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.AbcdaDownloadFinishedMessage;
+import org.gbif.common.messaging.api.messages.AbcdaPagingFinishedMessage;
 import org.gbif.common.messaging.api.messages.CrawlResponseMessage;
+import org.gbif.common.messaging.api.messages.Platform;
 import org.gbif.crawler.abcda.AbcdaConfiguration;
 import org.gbif.utils.file.CompressionUtil;
 import org.slf4j.Logger;
@@ -27,6 +31,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.UUID;
 
+import static org.gbif.crawler.common.ZookeeperUtils.createOrUpdate;
 import static org.gbif.crawler.common.ZookeeperUtils.getCounter;
 import static org.gbif.crawler.constants.CrawlerNodePaths.*;
 
@@ -151,11 +156,42 @@ public class AbcdaPagerService extends AbstractIdleService {
         }
       }
       LOG.info("Finished extracting response pages, total of [{}] pages from ABCD-A for dataset [{}]", counter, datasetKey);
+
+      sendPipelinesMessage(message);
+    }
+
+    private void sendPipelinesMessage(AbcdaDownloadFinishedMessage message) {
+      LOG.info("Sending messages to pipelines for abcd paging finished for dataset {}", message.getDatasetUuid());
+
+      if (!Platform.OCCURRENCE.equivalent(message.getPlatform())) {
+        LOG.info("Finishing abcd crawling for occurrence, this messages goes only to platform {}", message.getPlatform());
+        createOrUpdate(curator, message.getDatasetUuid(), PROCESS_STATE_OCCURRENCE, ProcessState.FINISHED);
+        return;
+      }
+
+      try {
+        publisher.send(
+          new AbcdaPagingFinishedMessage(
+            message.getDatasetUuid(),
+            message.getSource(),
+            message.getAttempt(),
+            message.getLastModified(),
+            message.isModified(),
+            message.getEndpointType(),
+            message.getPlatform()));
+      } catch (IOException e) {
+        LOG.error(
+            "Couldn't send message to pipelines for abcd paging finished for dataset {}",
+            message.getDatasetUuid(),
+            e);
+      }
     }
 
     private void sendXmlPage(byte[] serializedRecord, AbcdaDownloadFinishedMessage message) throws IOException {
-      publisher.send(new CrawlResponseMessage(message.getDatasetUuid(), message.getAttempt(), 1, serializedRecord,
+      if (Platform.OCCURRENCE.equivalent(message.getPlatform())) {
+        publisher.send(new CrawlResponseMessage(message.getDatasetUuid(), message.getAttempt(), 1, serializedRecord,
                                               1, Optional.absent(), "", message.getPlatform()));
+      }
     }
 
     private void incrementCounter(UUID datasetKey, DistributedAtomicLong counter, long count) {

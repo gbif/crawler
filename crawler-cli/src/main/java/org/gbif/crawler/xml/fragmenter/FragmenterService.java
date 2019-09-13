@@ -128,10 +128,12 @@ public class FragmenterService extends AbstractIdleService {
     public void handleMessage(CrawlResponseMessage message) {
       MDC.put("datasetKey", message.getDatasetUuid().toString());
       LOG.debug("Received crawl response message for [{}]", message.getDatasetUuid());
+
       if (!Platform.OCCURRENCE.equivalent(message.getPlatform())) {
         LOG.info("Skip message because Occurrence don't support the platform {}", message);
         return;
       }
+
       Stopwatch stopwatch = Stopwatch.createStarted();
       OccurrenceParser parser = new OccurrenceParser();
       List<RawXmlOccurrence> list = null;
