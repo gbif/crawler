@@ -1,5 +1,7 @@
 package org.gbif.crawler.pipelines.hdfs;
 
+import java.io.IOException;
+
 import org.gbif.api.model.pipelines.StepType;
 import org.gbif.common.messaging.AbstractMessageCallback;
 import org.gbif.common.messaging.api.MessagePublisher;
@@ -9,8 +11,6 @@ import org.gbif.crawler.pipelines.PipelineCallback;
 import org.gbif.crawler.pipelines.dwca.DwcaToAvroConfiguration;
 import org.gbif.pipelines.common.PipelinesVariables.Metrics;
 import org.gbif.registry.ws.client.pipelines.PipelinesHistoryWsClient;
-
-import java.io.IOException;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;

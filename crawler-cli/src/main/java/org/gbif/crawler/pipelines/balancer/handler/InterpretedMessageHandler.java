@@ -1,5 +1,7 @@
 package org.gbif.crawler.pipelines.balancer.handler;
 
+import java.io.IOException;
+
 import org.gbif.api.model.pipelines.StepRunner;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.PipelinesBalancerMessage;
@@ -11,11 +13,10 @@ import org.gbif.pipelines.common.PipelinesVariables.Metrics;
 import org.gbif.pipelines.common.PipelinesVariables.Pipeline;
 import org.gbif.pipelines.common.PipelinesVariables.Pipeline.Conversion;
 
-import java.io.IOException;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * Populates and sends the {@link PipelinesInterpretedMessage} message, the main method

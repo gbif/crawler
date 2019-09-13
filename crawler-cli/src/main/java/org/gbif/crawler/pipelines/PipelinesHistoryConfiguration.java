@@ -1,9 +1,9 @@
 package org.gbif.crawler.pipelines;
 
 import java.util.StringJoiner;
-import javax.validation.constraints.NotNull;
 
 import com.beust.jcommander.Parameter;
+import javax.validation.constraints.NotNull;
 
 /** Class to provide the necessary configuration to use the pipelines history service. */
 @SuppressWarnings("PublicField")

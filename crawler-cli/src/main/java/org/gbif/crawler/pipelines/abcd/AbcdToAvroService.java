@@ -6,10 +6,11 @@ import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.crawler.pipelines.xml.XmlToAvroConfiguration;
 import org.gbif.registry.ws.client.pipelines.PipelinesHistoryWsClient;
 
-import com.google.common.util.concurrent.AbstractIdleService;
 import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.util.concurrent.AbstractIdleService;
 
 /**
  * Service for the {@link AbcdToAvroCommand}.

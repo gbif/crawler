@@ -5,8 +5,6 @@ import org.gbif.common.messaging.MessageListener;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.registry.ws.client.pipelines.PipelinesHistoryWsClient;
 
-import java.nio.channels.Pipe;
-
 import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
