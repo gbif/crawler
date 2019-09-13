@@ -1,21 +1,19 @@
 package org.gbif.crawler.pipelines;
 
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+
 import org.gbif.api.model.pipelines.StepType;
 import org.gbif.common.messaging.api.Message;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.PipelineBasedMessage;
 import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
 
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
-import java.util.Collections;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-
-import com.google.common.base.Charsets;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.RetryOneTime;
@@ -28,6 +26,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+
+import com.google.common.base.Charsets;
+import com.google.common.collect.Sets;
 
 import static org.gbif.crawler.constants.PipelinesNodePaths.SIZE;
 import static org.gbif.crawler.constants.PipelinesNodePaths.getPipelinesInfoPath;
@@ -72,7 +73,12 @@ public class PipelineCallbackTest {
     String crawlId = datasetKey + "_" + attempt;
     String rootPath = StepType.DWCA_TO_VERBATIM.getLabel();
     StepType nextStepName = StepType.DWCA_TO_VERBATIM;
-    Set<String> pipelineSteps = Collections.singleton(StepType.ALL.name());
+    Set<String> pipelineSteps = Sets.newHashSet(
+        StepType.DWCA_TO_VERBATIM.name(),
+        StepType.VERBATIM_TO_INTERPRETED.name(),
+        StepType.INTERPRETED_TO_INDEX.name(),
+        StepType.HDFS_VIEW.name()
+    );
     PipelineBasedMessage incomingMessage = createMessage(datasetKey, attempt, pipelineSteps);
     Runnable runnable = () -> System.out.println("RUN!");
     Message outgoingMessage = () -> null;
@@ -137,7 +143,12 @@ public class PipelineCallbackTest {
     String crawlId = datasetKey + "_" + attempt;
     String rootPath = StepType.DWCA_TO_VERBATIM.getLabel();
     StepType nextStepName = StepType.DWCA_TO_VERBATIM;
-    Set<String> pipelineSteps = Collections.singleton(StepType.ALL.name());
+    Set<String> pipelineSteps = Sets.newHashSet(
+        StepType.DWCA_TO_VERBATIM.name(),
+        StepType.VERBATIM_TO_INTERPRETED.name(),
+        StepType.INTERPRETED_TO_INDEX.name(),
+        StepType.HDFS_VIEW.name()
+    );
     PipelineBasedMessage incomingMessage = createMessage(datasetKey, attempt, pipelineSteps);
     Runnable runnable = () -> System.out.println("RUN!");
     Message outgoingMessage = () -> null;
@@ -180,7 +191,7 @@ public class PipelineCallbackTest {
     String crawlId = datasetKey + "_" + attempt;
     String rootPath = StepType.DWCA_TO_VERBATIM.getLabel();
     StepType nextStepName = StepType.DWCA_TO_VERBATIM;
-    Set<String> pipelineSteps = Collections.singleton("DWCA_TO_VERBATIM");
+    Set<String> pipelineSteps = Sets.newHashSet(StepType.DWCA_TO_VERBATIM.name());
     PipelineBasedMessage incomingMessage = createMessage(datasetKey, attempt, pipelineSteps);
     Runnable runnable = () -> System.out.println("RUN!");
     Message outgoingMessage = () -> null;
@@ -213,7 +224,12 @@ public class PipelineCallbackTest {
     String crawlId = datasetKey + "_" + attempt;
     String rootPath = StepType.DWCA_TO_VERBATIM.getLabel();
     StepType nextStepName = StepType.DWCA_TO_VERBATIM;
-    Set<String> pipelineSteps = Collections.singleton(StepType.ALL.name());
+    Set<String> pipelineSteps = Sets.newHashSet(
+        StepType.DWCA_TO_VERBATIM.name(),
+        StepType.VERBATIM_TO_INTERPRETED.name(),
+        StepType.INTERPRETED_TO_INDEX.name(),
+        StepType.HDFS_VIEW.name()
+    );
     PipelineBasedMessage incomingMessage = createMessage(datasetKey, attempt, pipelineSteps);
     Runnable runnable = () -> {throw new RuntimeException("Oops!");};
     Message outgoingMessage = () -> null;
@@ -255,7 +271,7 @@ public class PipelineCallbackTest {
     String crawlId = datasetKey + "_" + attempt;
     String rootPath = StepType.DWCA_TO_VERBATIM.getLabel();
     StepType nextStepName = StepType.DWCA_TO_VERBATIM;
-    Set<String> pipelineSteps = Collections.singleton(StepType.ALL.name());
+    Set<String> pipelineSteps = Sets.newHashSet(StepType.DWCA_TO_VERBATIM.name());
     PipelineBasedMessage incomingMessage = createMessage(datasetKey, attempt, pipelineSteps);
     Runnable runnable = () -> System.out.println("RUN!");
     Message outgoingMessage = () -> null;
@@ -290,7 +306,12 @@ public class PipelineCallbackTest {
     String crawlId = datasetKey + "_" + attempt;
     String rootPath = StepType.DWCA_TO_VERBATIM.getLabel();
     StepType nextStepName = StepType.DWCA_TO_VERBATIM;
-    Set<String> pipelineSteps = Collections.singleton(StepType.ALL.name());
+    Set<String> pipelineSteps = Sets.newHashSet(
+        StepType.DWCA_TO_VERBATIM.name(),
+        StepType.VERBATIM_TO_INTERPRETED.name(),
+        StepType.INTERPRETED_TO_INDEX.name(),
+        StepType.HDFS_VIEW.name()
+    );
     PipelineBasedMessage incomingMessage = createMessage(datasetKey, attempt, pipelineSteps);
     Runnable runnable = () -> System.out.println("RUN!");
     Message outgoingMessage = () -> null;

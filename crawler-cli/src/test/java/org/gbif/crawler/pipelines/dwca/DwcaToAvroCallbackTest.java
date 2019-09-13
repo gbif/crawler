@@ -32,7 +32,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-import static org.gbif.api.model.pipelines.StepType.ALL;
 import static org.gbif.api.model.pipelines.StepType.DWCA_TO_VERBATIM;
 import static org.gbif.crawler.constants.PipelinesNodePaths.getPipelinesInfoPath;
 
@@ -107,7 +106,7 @@ public class DwcaToAvroCallbackTest {
     DwcaValidationReport reason = new DwcaValidationReport(uuid, report);
     PipelinesDwcaMessage message =
         new PipelinesDwcaMessage(uuid, DatasetType.OCCURRENCE, URI.create(DUMMY_URL), attempt, reason,
-                                 Collections.singleton(ALL.name()), EndpointType.DWC_ARCHIVE, Platform.PIPELINES);
+                                 Collections.emptySet(), EndpointType.DWC_ARCHIVE, Platform.PIPELINES);
 
     // When
     callback.handleMessage(message);
@@ -182,7 +181,7 @@ public class DwcaToAvroCallbackTest {
     DwcaValidationReport reason = new DwcaValidationReport(uuid, report);
     PipelinesDwcaMessage message =
         new PipelinesDwcaMessage(uuid, DatasetType.OCCURRENCE, URI.create(DUMMY_URL), attempt, reason,
-            Collections.singleton(ALL.name()), EndpointType.DWC_ARCHIVE, Platform.PIPELINES);
+            Collections.emptySet(), EndpointType.DWC_ARCHIVE, Platform.PIPELINES);
 
     // When
     callback.handleMessage(message);
@@ -219,7 +218,7 @@ public class DwcaToAvroCallbackTest {
     DwcaValidationReport reason = new DwcaValidationReport(uuid, report);
     PipelinesDwcaMessage message =
         new PipelinesDwcaMessage(uuid, DatasetType.METADATA, URI.create(DUMMY_URL), attempt, reason,
-            Collections.singleton(ALL.name()), EndpointType.DWC_ARCHIVE, Platform.PIPELINES);
+            Collections.singleton(DWCA_TO_VERBATIM.name()), EndpointType.DWC_ARCHIVE, Platform.PIPELINES);
 
     // When
     callback.handleMessage(message);
@@ -253,7 +252,7 @@ public class DwcaToAvroCallbackTest {
     DwcaValidationReport reason = new DwcaValidationReport(uuid, report);
     PipelinesDwcaMessage message =
         new PipelinesDwcaMessage(uuid, DatasetType.OCCURRENCE, URI.create(DUMMY_URL), attempt, reason,
-            Collections.singleton(ALL.name()), EndpointType.DWC_ARCHIVE, Platform.PIPELINES);
+            Collections.singleton(DWCA_TO_VERBATIM.name()), EndpointType.DWC_ARCHIVE, Platform.PIPELINES);
 
     // When
     callback.handleMessage(message);

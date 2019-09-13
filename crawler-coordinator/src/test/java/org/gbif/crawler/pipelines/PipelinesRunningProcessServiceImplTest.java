@@ -9,6 +9,7 @@ import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
@@ -38,7 +39,7 @@ public class PipelinesRunningProcessServiceImplTest {
 
   private static final BiConsumer<Set<PipelineProcess>, Set<String>> ASSERT_FN = (s, ids) -> {
     Consumer<PipelineStep> checkFn = step -> {
-      Assert.assertTrue(StepType.ALL_STEPS.contains(step.getType()));
+      Assert.assertTrue(Arrays.asList(StepType.values()).contains(step.getType()));
       Assert.assertNotNull(step.getStarted());
       Assert.assertNotNull(step.getFinished());
       Assert.assertEquals(PipelineStep.Status.COMPLETED, step.getState());
@@ -58,14 +59,14 @@ public class PipelinesRunningProcessServiceImplTest {
           checkFn.accept(step);
         }
         if (step.getType() == StepType.HDFS_VIEW) {
-          Assert.assertTrue(StepType.ALL_STEPS.contains(step.getType()));
+          Assert.assertTrue(Arrays.asList(StepType.values()).contains(step.getType()));
           Assert.assertNotNull(step.getStarted());
           Assert.assertNull(step.getFinished());
           Assert.assertEquals(PipelineStep.Status.FAILED, step.getState());
           Assert.assertEquals(MESSAGE, step.getMessage());
         }
         if (step.getType() == StepType.INTERPRETED_TO_INDEX) {
-          Assert.assertTrue(StepType.ALL_STEPS.contains(step.getType()));
+          Assert.assertTrue(Arrays.asList(StepType.values()).contains(step.getType()));
           Assert.assertNotNull(step.getStarted());
           Assert.assertNull(step.getFinished());
           Assert.assertEquals(PipelineStep.Status.RUNNING, step.getState());

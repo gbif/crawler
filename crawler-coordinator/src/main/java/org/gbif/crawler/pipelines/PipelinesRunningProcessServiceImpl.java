@@ -1,5 +1,25 @@
 package org.gbif.crawler.pipelines;
 
+import java.text.DecimalFormat;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import org.gbif.api.exception.ServiceUnavailableException;
 import org.gbif.api.model.pipelines.PipelineProcess;
 import org.gbif.api.model.pipelines.PipelineStep;
@@ -8,26 +28,6 @@ import org.gbif.api.model.pipelines.StepType;
 import org.gbif.crawler.constants.CrawlerNodePaths;
 import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
 
-import java.text.DecimalFormat;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
-import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
-import java.util.function.BiFunction;
-import java.util.stream.Collectors;
-import javax.annotation.Nullable;
-
-import com.google.common.base.Charsets;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import org.apache.curator.framework.CuratorFramework;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
@@ -41,6 +41,14 @@ import org.elasticsearch.search.aggregations.metrics.max.ParsedMax;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Charsets;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
+import javax.annotation.Nullable;
 
 import static org.gbif.api.model.pipelines.PipelineStep.MetricInfo;
 import static org.gbif.api.model.pipelines.PipelineStep.Status;
@@ -202,23 +210,18 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
 
   /** Gets step info from ZK */
   private Set<PipelineStep> getStepInfo(String crawlId) {
-    return StepType.ALL_STEPS.stream()
+    return Stream.of(StepType.values())
         .map(
             stepType -> {
               PipelineStep step = new PipelineStep().setType(stepType);
 
               try {
-                Optional<LocalDateTime> startDateOpt =
-                    getAsDate(crawlId, Fn.START_DATE.apply(stepType.getLabel()));
+                Optional<LocalDateTime> startDateOpt = getAsDate(crawlId, Fn.START_DATE.apply(stepType.getLabel()));
                 Optional<LocalDateTime> endDateOpt = getAsDate(crawlId, Fn.END_DATE.apply(stepType.getLabel()));
-                Optional<Boolean> isErrorOpt =
-                    getAsBoolean(crawlId, Fn.ERROR_AVAILABILITY.apply(stepType.getLabel()));
-                Optional<String> errorMessageOpt =
-                    getAsString(crawlId, Fn.ERROR_MESSAGE.apply(stepType.getLabel()));
-                Optional<Boolean> isSuccessful =
-                    getAsBoolean(crawlId, Fn.SUCCESSFUL_AVAILABILITY.apply(stepType.getLabel()));
-                Optional<String> successfulMessageOpt =
-                    getAsString(crawlId, Fn.SUCCESSFUL_MESSAGE.apply(stepType.getLabel()));
+                Optional<Boolean> isErrorOpt = getAsBoolean(crawlId, Fn.ERROR_AVAILABILITY.apply(stepType.getLabel()));
+                Optional<String> errorMessageOpt = getAsString(crawlId, Fn.ERROR_MESSAGE.apply(stepType.getLabel()));
+                Optional<Boolean> isSuccessful = getAsBoolean(crawlId, Fn.SUCCESSFUL_AVAILABILITY.apply(stepType.getLabel()));
+                Optional<String> successfulMessageOpt = getAsString(crawlId, Fn.SUCCESSFUL_MESSAGE.apply(stepType.getLabel()));
 
                 getAsString(crawlId, Fn.RUNNER.apply(stepType.getLabel())).ifPresent(r -> step.setRunner(StepRunner.valueOf(r)));
 

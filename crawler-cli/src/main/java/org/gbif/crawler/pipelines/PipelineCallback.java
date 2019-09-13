@@ -150,7 +150,7 @@ public class PipelineCallback {
     Set<String> steps = inMessage.getPipelineSteps();
 
     // Check the step
-    if (!steps.contains(b.pipelinesStepName.name()) && !steps.contains(StepType.ALL.name())) {
+    if (!steps.contains(b.pipelinesStepName.name())) {
       return;
     }
 
