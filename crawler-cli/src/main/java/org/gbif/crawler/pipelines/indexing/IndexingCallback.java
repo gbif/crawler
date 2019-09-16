@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import org.gbif.api.model.pipelines.StepRunner;
 import org.gbif.api.model.pipelines.StepType;
 import org.gbif.api.model.registry.Dataset;
 import org.gbif.api.service.registry.DatasetService;
@@ -134,23 +135,26 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
         String indexName = computeIndexName(message, recordsNumber);
         String indexAlias = indexName.startsWith(datasetId) ? datasetId + "," + config.indexAlias : config.indexAlias;
         int numberOfShards = computeNumberOfShards(indexName, recordsNumber);
-        int sparkParallelism = computeSparkParallelism(datasetId, attempt);
-        int sparkExecutorNumbers = computeSparkExecutorNumbers(recordsNumber);
-        String sparkExecutorMemory = computeSparkExecutorMemory(sparkExecutorNumbers);
 
-        // Assembles a terminal java process and runs it
-        int exitValue = ProcessRunnerBuilder.create()
+        ProcessRunnerBuilder builder = ProcessRunnerBuilder.create()
             .config(config)
             .message(message)
-            .sparkParallelism(sparkParallelism)
-            .sparkExecutorMemory(sparkExecutorMemory)
-            .sparkExecutorNumbers(sparkExecutorNumbers)
             .esIndexName(indexName)
             .esAlias(indexAlias)
-            .esShardsNumber(numberOfShards)
-            .build()
-            .start()
-            .waitFor();
+            .esShardsNumber(numberOfShards);
+
+        if (config.processRunner.equalsIgnoreCase(StepRunner.DISTRIBUTED.name())) {
+
+          int sparkExecutorNumbers = computeSparkExecutorNumbers(recordsNumber);
+
+          builder.sparkParallelism(computeSparkParallelism(datasetId, attempt))
+              .sparkExecutorMemory(computeSparkExecutorMemory(sparkExecutorNumbers))
+              .sparkExecutorNumbers(sparkExecutorNumbers);
+
+        }
+
+        // Assembles a terminal java process and runs it
+        int exitValue = builder.build().start().waitFor();
 
         if (exitValue != 0) {
           throw new RuntimeException("Process has been finished with exit value - " + exitValue);

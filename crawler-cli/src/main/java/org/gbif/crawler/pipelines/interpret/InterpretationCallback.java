@@ -5,6 +5,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+import org.gbif.api.model.pipelines.StepRunner;
 import org.gbif.api.model.pipelines.StepType;
 import org.gbif.common.messaging.AbstractMessageCallback;
 import org.gbif.common.messaging.api.MessagePublisher;
@@ -125,23 +126,25 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
         String verbatim = Conversion.FILE_NAME + Pipeline.AVRO_EXTENSION;
         String path = message.getExtraPath() != null ? message.getExtraPath() :
             String.join("/", config.repositoryPath, datasetId, attempt, verbatim);
-        int sparkExecutorNumbers = computeSparkExecutorNumbers(recordsNumber);
-        int sparkParallelism = computeSparkParallelism(sparkExecutorNumbers);
-        String sparkExecutorMemory = computeSparkExecutorMemory(sparkExecutorNumbers);
+
+        ProcessRunnerBuilder builder = ProcessRunnerBuilder.create()
+            .config(config)
+            .message(message)
+            .inputPath(path);
+
+        if (config.processRunner.equalsIgnoreCase(StepRunner.DISTRIBUTED.name())) {
+
+          int sparkExecutorNumbers = computeSparkExecutorNumbers(recordsNumber);
+
+          builder.sparkParallelism(computeSparkParallelism(sparkExecutorNumbers))
+              .sparkExecutorMemory(computeSparkExecutorMemory(sparkExecutorNumbers))
+              .sparkExecutorNumbers(sparkExecutorNumbers);
+        }
 
         LOG.info("Start the process. Message - {}", message);
 
         // Assembles a terminal java process and runs it
-        int exitValue = ProcessRunnerBuilder.create()
-            .config(config)
-            .message(message)
-            .inputPath(path)
-            .sparkParallelism(sparkParallelism)
-            .sparkExecutorMemory(sparkExecutorMemory)
-            .sparkExecutorNumbers(sparkExecutorNumbers)
-            .build()
-            .start()
-            .waitFor();
+        int exitValue = builder.build().start().waitFor();
 
         if (exitValue != 0) {
           throw new RuntimeException("Process has been finished with exit value - " + exitValue);

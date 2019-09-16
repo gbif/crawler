@@ -2,6 +2,7 @@ package org.gbif.crawler.pipelines.hdfs;
 
 import java.io.IOException;
 
+import org.gbif.api.model.pipelines.StepRunner;
 import org.gbif.api.model.pipelines.StepType;
 import org.gbif.common.messaging.AbstractMessageCallback;
 import org.gbif.common.messaging.api.MessagePublisher;
@@ -40,7 +41,7 @@ public class HdfsViewCallback extends AbstractMessageCallback<PipelinesInterpret
   private final PipelinesHistoryWsClient historyWsClient;
 
   HdfsViewCallback(HdfsViewConfiguration config, MessagePublisher publisher, CuratorFramework curator,
-                   PipelinesHistoryWsClient historyWsClient) {
+      PipelinesHistoryWsClient historyWsClient) {
     this.curator = checkNotNull(curator, "curator cannot be null");
     this.config = checkNotNull(config, "config cannot be null");
     this.publisher = publisher;
@@ -88,24 +89,23 @@ public class HdfsViewCallback extends AbstractMessageCallback<PipelinesInterpret
     return () -> {
       try {
 
-        long recordsNumber = getRecordNumber(message);
-
-        int sparkExecutorNumbers = computeSparkExecutorNumbers(recordsNumber);
-        int sparkParallelism = computeSparkParallelism(sparkExecutorNumbers);
-        String sparkExecutorMemory = computeSparkExecutorMemory(sparkExecutorNumbers);
-        int numberOfShards = computeNumberOfShards(message);
-
-        // Assembles a terminal java process and runs it
-        int exitValue = ProcessRunnerBuilder.create()
+        ProcessRunnerBuilder builder = ProcessRunnerBuilder.create()
             .config(config)
             .message(message)
-            .sparkParallelism(sparkParallelism)
-            .sparkExecutorMemory(sparkExecutorMemory)
-            .sparkExecutorNumbers(sparkExecutorNumbers)
-            .numberOfShards(numberOfShards)
-            .build()
-            .start()
-            .waitFor();
+            .numberOfShards(computeNumberOfShards(message));
+
+        if (config.processRunner.equalsIgnoreCase(StepRunner.DISTRIBUTED.name())) {
+
+          long recordNumber = getRecordNumber(message);
+          int sparkExecutorNumbers = computeSparkExecutorNumbers(recordNumber);
+
+          builder.sparkParallelism(computeSparkParallelism(sparkExecutorNumbers))
+              .sparkExecutorMemory(computeSparkExecutorMemory(sparkExecutorNumbers))
+              .sparkExecutorNumbers(sparkExecutorNumbers);
+        }
+
+        // Assembles a terminal java process and runs it
+        int exitValue = builder.build().start().waitFor();
 
         if (exitValue != 0) {
           throw new RuntimeException("Process has been finished with exit value - " + exitValue);
