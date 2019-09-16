@@ -1,5 +1,14 @@
 package org.gbif.crawler.pipelines.indexing;
 
+import java.io.IOException;
+import java.time.Instant;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+
 import org.gbif.api.model.pipelines.StepType;
 import org.gbif.api.model.registry.Dataset;
 import org.gbif.api.service.registry.DatasetService;
@@ -15,14 +24,6 @@ import org.gbif.pipelines.common.PipelinesVariables.Pipeline.Interpretation;
 import org.gbif.pipelines.common.PipelinesVariables.Pipeline.Interpretation.RecordType;
 import org.gbif.registry.ws.client.pipelines.PipelinesHistoryWsClient;
 
-import java.io.IOException;
-import java.time.Instant;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
-
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Strings;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -32,6 +33,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.slf4j.MDC.MDCCloseable;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Strings;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

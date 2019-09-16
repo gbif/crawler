@@ -1,5 +1,15 @@
 package org.gbif.crawler.pipelines.xml;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Stream;
+
 import org.gbif.api.model.crawler.FinishReason;
 import org.gbif.api.model.pipelines.StepType;
 import org.gbif.api.vocabulary.EndpointType;
@@ -12,23 +22,13 @@ import org.gbif.converters.XmlToAvroConverter;
 import org.gbif.crawler.pipelines.PipelineCallback;
 import org.gbif.registry.ws.client.pipelines.PipelinesHistoryWsClient;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
-
-import com.google.common.collect.Sets;
 import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.slf4j.MDC.MDCCloseable;
+
+import com.google.common.collect.Sets;
 
 import static org.gbif.crawler.pipelines.HdfsUtils.buildOutputPath;
 

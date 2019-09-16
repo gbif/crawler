@@ -1,17 +1,24 @@
 package org.gbif.crawler.pipelines;
 
+import java.util.Optional;
+import java.util.Set;
+
 import org.gbif.api.model.pipelines.PipelineProcess;
 import org.gbif.api.model.pipelines.PipelineStep;
 import org.gbif.api.model.pipelines.StepRunner;
 import org.gbif.api.model.pipelines.StepType;
 import org.gbif.common.messaging.api.Message;
 import org.gbif.common.messaging.api.MessagePublisher;
-import org.gbif.common.messaging.api.messages.*;
+import org.gbif.common.messaging.api.messages.PipelineBasedMessage;
+import org.gbif.common.messaging.api.messages.PipelinesAbcdMessage;
+import org.gbif.common.messaging.api.messages.PipelinesBalancerMessage;
+import org.gbif.common.messaging.api.messages.PipelinesDwcaMessage;
+import org.gbif.common.messaging.api.messages.PipelinesIndexedMessage;
+import org.gbif.common.messaging.api.messages.PipelinesInterpretedMessage;
+import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage;
+import org.gbif.common.messaging.api.messages.PipelinesXmlMessage;
 import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
 import org.gbif.registry.ws.client.pipelines.PipelinesHistoryWsClient;
-
-import java.util.Optional;
-import java.util.Set;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
@@ -143,7 +150,7 @@ public class PipelineCallback {
     Set<String> steps = inMessage.getPipelineSteps();
 
     // Check the step
-    if (!steps.contains(b.pipelinesStepName.name()) && !steps.contains(StepType.ALL.name())) {
+    if (!steps.contains(b.pipelinesStepName.name())) {
       return;
     }
 

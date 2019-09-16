@@ -1,22 +1,22 @@
 package org.gbif.crawler.pipelines.xml;
 
-import org.gbif.api.model.pipelines.StepType;
+import java.util.Collections;
+import java.util.Set;
+
 import org.gbif.common.messaging.config.MessagingConfiguration;
 import org.gbif.crawler.common.AvroWriteConfiguration;
 import org.gbif.crawler.common.RegistryConfiguration;
 import org.gbif.crawler.common.ZooKeeperConfiguration;
 import org.gbif.pipelines.common.PipelinesVariables.Pipeline;
 import org.gbif.pipelines.common.PipelinesVariables.Pipeline.Conversion;
-
-import java.util.Collections;
-import java.util.Set;
-import javax.validation.Valid;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
+import org.gbif.pipelines.common.PipelinesVariables.Pipeline.Interpretation.RecordType;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParametersDelegate;
 import com.google.common.base.MoreObjects;
+import javax.validation.Valid;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
 
 /**
  * Configuration required to convert downloaded ABCD and etc to avro (ExtendedRecord)
@@ -71,7 +71,7 @@ public class XmlToAvroConfiguration {
 
   @Parameter(names = "--interpret-types")
   @NotNull
-  public Set<String> interpretTypes = Collections.singleton(StepType.ALL.name());
+  public Set<String> interpretTypes = Collections.singleton(RecordType.ALL.name());
 
   @Parameter(names = "--file-name")
   @NotNull

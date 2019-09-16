@@ -1,5 +1,11 @@
 package org.gbif.crawler.pipelines.dwca;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+
 import org.gbif.api.model.crawler.OccurrenceValidationReport;
 import org.gbif.api.model.pipelines.StepType;
 import org.gbif.api.vocabulary.EndpointType;
@@ -13,19 +19,14 @@ import org.gbif.converters.DwcaToAvroConverter;
 import org.gbif.crawler.pipelines.PipelineCallback;
 import org.gbif.registry.ws.client.pipelines.PipelinesHistoryWsClient;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Sets;
 import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.slf4j.MDC.MDCCloseable;
+
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Sets;
 
 import static org.gbif.api.vocabulary.DatasetType.OCCURRENCE;
 import static org.gbif.api.vocabulary.DatasetType.SAMPLING_EVENT;

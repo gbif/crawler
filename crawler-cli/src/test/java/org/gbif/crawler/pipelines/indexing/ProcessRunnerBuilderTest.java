@@ -2,14 +2,13 @@ package org.gbif.crawler.pipelines.indexing;
 
 import org.gbif.api.model.pipelines.StepRunner;
 import org.gbif.common.messaging.api.messages.PipelinesInterpretedMessage;
+import org.gbif.pipelines.common.PipelinesVariables.Pipeline.Interpretation.RecordType;
 
 import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
 
 import org.junit.Test;
-
-import static org.gbif.api.model.pipelines.StepType.ALL;
 
 import static org.junit.Assert.assertEquals;
 
@@ -53,7 +52,7 @@ public class ProcessRunnerBuilderTest {
 
     UUID datasetId = UUID.fromString("de7ffb5e-c07b-42dc-8a88-f67a4465fe3d");
     int attempt = 1;
-    Set<String> steps = Collections.singleton(ALL.name());
+    Set<String> steps = Collections.singleton(RecordType.ALL.name());
     PipelinesInterpretedMessage message = new PipelinesInterpretedMessage(datasetId, attempt, steps, 100L, false, null);
 
     String indexName = "occurrence";
@@ -103,7 +102,7 @@ public class ProcessRunnerBuilderTest {
 
     UUID datasetId = UUID.fromString("de7ffb5e-c07b-42dc-8a88-f67a4465fe3d");
     int attempt = 1;
-    Set<String> steps = Collections.singleton(ALL.name());
+    Set<String> steps = Collections.singleton(RecordType.ALL.name());
     PipelinesInterpretedMessage message = new PipelinesInterpretedMessage(datasetId, attempt, steps, null, false, null);
 
     String indexName = "occurrence";
@@ -163,7 +162,7 @@ public class ProcessRunnerBuilderTest {
 
     UUID datasetId = UUID.fromString("de7ffb5e-c07b-42dc-8a88-f67a4465fe3d");
     int attempt = 1;
-    Set<String> steps = Collections.singleton(ALL.name());
+    Set<String> steps = Collections.singleton(RecordType.ALL.name());
     PipelinesInterpretedMessage message = new PipelinesInterpretedMessage(datasetId, attempt, steps, 100L, false, null);
 
     String indexName = "occurrence";
