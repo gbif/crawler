@@ -9,6 +9,7 @@ import org.gbif.common.messaging.api.messages.PipelinesInterpretedMessage;
 import org.gbif.crawler.pipelines.HdfsUtils;
 import org.gbif.crawler.pipelines.PipelineCallback;
 import org.gbif.crawler.pipelines.dwca.DwcaToAvroConfiguration;
+import org.gbif.crawler.pipelines.indexing.IndexingConfiguration;
 import org.gbif.pipelines.common.PipelinesVariables.Metrics;
 import org.gbif.registry.ws.client.pipelines.PipelinesHistoryWsClient;
 
@@ -17,6 +18,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.slf4j.MDC.MDCCloseable;
+
+import com.google.common.base.Strings;
 
 import static org.gbif.api.model.pipelines.StepType.HDFS_VIEW;
 import static org.gbif.pipelines.common.PipelinesVariables.Pipeline.Interpretation.DIRECTORY_NAME;
@@ -51,6 +54,11 @@ public class HdfsViewCallback extends AbstractMessageCallback<PipelinesInterpret
     try (MDCCloseable mdc1 = MDC.putCloseable("datasetId", message.getDatasetUuid().toString());
         MDCCloseable mdc2 = MDC.putCloseable("attempt", message.getAttempt().toString());
         MDCCloseable mdc3 = MDC.putCloseable("step", HDFS_VIEW.name())) {
+
+      if (!isMessageCorrect(message)) {
+        LOG.info("Skip the message, cause the runner is different or it wasn't modified, exit from handler");
+        return;
+      }
 
       LOG.info("Message handler began - {}", message);
 
@@ -110,6 +118,17 @@ public class HdfsViewCallback extends AbstractMessageCallback<PipelinesInterpret
         throw new IllegalStateException("Failed indexing on " + message.getDatasetUuid(), ex);
       }
     };
+  }
+
+  /**
+   * Only correct messages can be handled, by now is only messages with the same runner as runner in service config
+   * {@link IndexingConfiguration#processRunner}
+   */
+  private boolean isMessageCorrect(PipelinesInterpretedMessage message) {
+    if (Strings.isNullOrEmpty(message.getRunner())) {
+      throw new IllegalArgumentException("Runner can't be null or empty " + message.toString());
+    }
+    return config.processRunner.equals(message.getRunner());
   }
 
   /**

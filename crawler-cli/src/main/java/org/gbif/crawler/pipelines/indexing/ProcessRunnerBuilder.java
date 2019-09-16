@@ -186,6 +186,7 @@ final class ProcessRunnerBuilder {
         throw new RuntimeException(ex);
       }
     };
+
     // The command side outputs
     if (config.processErrorDirectory != null) {
       builder.redirectError(createDirFn.apply("err", config.processErrorDirectory));

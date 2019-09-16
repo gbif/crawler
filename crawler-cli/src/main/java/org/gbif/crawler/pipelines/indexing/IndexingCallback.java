@@ -81,12 +81,12 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
         MDCCloseable mdc2 = MDC.putCloseable("attempt", attempt.toString());
         MDCCloseable mdc3 = MDC.putCloseable("step", StepType.INTERPRETED_TO_INDEX.name())) {
 
-      LOG.info("Message handler began - {}", message);
-
       if (!isMessageCorrect(message)) {
         LOG.info("Skip the message, cause the runner is different or it wasn't modified, exit from handler");
         return;
       }
+
+      LOG.info("Message handler began - {}", message);
 
       Set<String> steps = message.getPipelineSteps();
       Runnable runnable = createRunnable(message);

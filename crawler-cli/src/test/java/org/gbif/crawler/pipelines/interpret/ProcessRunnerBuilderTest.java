@@ -132,7 +132,7 @@ public class ProcessRunnerBuilderTest {
   public void testSparkRunnerCommandFull() {
     // When
     String expected =
-        "spark2-submit --conf spark.metrics.conf=metrics.properties --conf \"spark.driver.extraClassPath=logstash-gelf.jar\" "
+        "sudo -u user spark2-submit --conf spark.metrics.conf=metrics.properties --conf \"spark.driver.extraClassPath=logstash-gelf.jar\" "
             + "--driver-java-options \"-Dlog4j.configuration=file:log4j.properties\" --queue pipelines --conf spark.default.parallelism=1 "
             + "--conf spark.executor.memoryOverhead=1 --conf spark.dynamicAllocation.enabled=false "
             + "--conf \"spark.executor.extraJavaOptions=-XX:+UseG1GC\" "
@@ -164,6 +164,7 @@ public class ProcessRunnerBuilderTest {
     config.deployMode = "cluster";
     config.processRunner = StepRunner.DISTRIBUTED.name();
     config.yarnQueue = "pipelines";
+    config.otherUser = "user";
 
     UUID datasetId = UUID.fromString("de7ffb5e-c07b-42dc-8a88-f67a4465fe3d");
     int attempt = 1;

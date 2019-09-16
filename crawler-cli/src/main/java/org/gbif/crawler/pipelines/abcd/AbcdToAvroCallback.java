@@ -60,12 +60,12 @@ public class AbcdToAvroCallback extends AbstractMessageCallback<PipelinesAbcdMes
         MDCCloseable mdc2 = MDC.putCloseable("attempt", attempt.toString());
         MDCCloseable mdc3 = MDC.putCloseable("step", StepType.ABCD_TO_VERBATIM.name())) {
 
-      LOG.info("Message handler began - {}", message);
-
       if (!message.isModified()) {
         LOG.info("Skip the message, cause it wasn't modified, exit from handler");
         return;
       }
+
+      LOG.info("Message handler began - {}", message);
 
       if (message.getPipelineSteps().isEmpty()) {
         message.setPipelineSteps(Sets.newHashSet(

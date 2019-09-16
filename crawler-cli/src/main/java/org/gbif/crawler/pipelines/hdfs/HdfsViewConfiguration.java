@@ -59,6 +59,22 @@ public class HdfsViewConfiguration {
   @NotNull
   public String distributedMainClass;
 
+  @Parameter(names = "--standalone-stack-size")
+  @NotNull
+  public String standaloneStackSize;
+
+  @Parameter(names = "--standalone-heap-size")
+  @NotNull
+  public String standaloneHeapSize;
+
+  @Parameter(names = "--standalone-jar-path")
+  @NotNull
+  public String standaloneJarPath;
+
+  @Parameter(names = "--standalone-main-class")
+  @NotNull
+  public String standaloneMainClass;
+
   @Parameter(names = "--spark-parallelism-min")
   public int sparkParallelismMin;
 
@@ -102,14 +118,6 @@ public class HdfsViewConfiguration {
   @Parameter(names = "--deploy-mode")
   public String deployMode;
 
-  @Parameter(names = "--yarn-queue")
-  public String yarnQueue;
-
-  @Parameter(names = "--pipelines-config")
-  @Valid
-  @NotNull
-  public String pipelinesConfig;
-
   @Parameter(names = "--metrics-properties-path")
   public String metricsPropertiesPath;
 
@@ -142,6 +150,18 @@ public class HdfsViewConfiguration {
 
   @Parameter(names = "--hdfs-avro-expected-file-size-in-mb")
   public int hdfsAvroExpectedFileSizeInMb = 300;
+
+  @Parameter(names = "--process-runner")
+  @NotNull
+  public String processRunner;
+
+  @Parameter(names = "--yarn-queue")
+  public String yarnQueue;
+
+  @Parameter(names = "--pipelines-config")
+  @Valid
+  @NotNull
+  public String pipelinesConfig;
 
   @Override
   public String toString() {

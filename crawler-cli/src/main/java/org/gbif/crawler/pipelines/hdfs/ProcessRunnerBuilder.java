@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.function.BiFunction;
 
+import org.gbif.api.model.pipelines.StepRunner;
 import org.gbif.common.messaging.api.messages.PipelinesInterpretedMessage;
 
 import org.slf4j.Logger;
@@ -65,9 +66,31 @@ final class ProcessRunnerBuilder {
   }
 
   ProcessBuilder build() {
-    return buildSpark();
+    if (StepRunner.STANDALONE.name().equals(config.processRunner)) {
+      return buildDirect();
+    }
+    if (StepRunner.DISTRIBUTED.name().equals(config.processRunner)) {
+      return buildSpark();
+    }
+    throw new IllegalArgumentException("Wrong runner type - " + config.processRunner);
   }
 
+  /**
+   * Builds ProcessBuilder to process direct command
+   */
+  private ProcessBuilder buildDirect() {
+    StringJoiner joiner = new StringJoiner(DELIMITER).add("java")
+        .add("-XX:+UseG1GC")
+        .add("-Xms" + Objects.requireNonNull(config.standaloneStackSize))
+        .add("-Xmx" + Objects.requireNonNull(config.standaloneHeapSize))
+        .add(Objects.requireNonNull(config.driverJavaOptions))
+        .add("-cp")
+        .add(Objects.requireNonNull(config.standaloneJarPath))
+        .add(Objects.requireNonNull(config.standaloneMainClass))
+        .add("--pipelineStep=INTERPRETED_TO_HDFS");
+
+    return buildCommon(joiner);
+  }
 
   /**
    * Builds ProcessBuilder to process spark command
@@ -139,6 +162,7 @@ final class ProcessRunnerBuilder {
         throw new RuntimeException(ex);
       }
     };
+
     // The command side outputs
     if (config.processErrorDirectory != null) {
       builder.redirectError(createDirFn.apply("err", config.processErrorDirectory));
