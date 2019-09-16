@@ -23,6 +23,11 @@ public class HdfsViewConfiguration {
   public ZooKeeperConfiguration zooKeeper = new ZooKeeperConfiguration();
 
   @ParametersDelegate
+  @NotNull
+  @Valid
+  public RegistryConfiguration registry = new RegistryConfiguration();
+
+  @ParametersDelegate
   @Valid
   @NotNull
   public MessagingConfiguration messaging = new MessagingConfiguration();
@@ -56,23 +61,18 @@ public class HdfsViewConfiguration {
   public String metaFileName = Pipeline.INTERPRETED_TO_HDFS + ".yml";
 
   @Parameter(names = "--distributed-main-class")
-  @NotNull
   public String distributedMainClass;
 
   @Parameter(names = "--standalone-stack-size")
-  @NotNull
   public String standaloneStackSize;
 
   @Parameter(names = "--standalone-heap-size")
-  @NotNull
   public String standaloneHeapSize;
 
   @Parameter(names = "--standalone-jar-path")
-  @NotNull
   public String standaloneJarPath;
 
   @Parameter(names = "--standalone-main-class")
-  @NotNull
   public String standaloneMainClass;
 
   @Parameter(names = "--spark-parallelism-min")
@@ -82,34 +82,24 @@ public class HdfsViewConfiguration {
   public int sparkParallelismMax;
 
   @Parameter(names = "--spark-memory-overhead")
-  @NotNull
-  @Min(1)
   public int sparkMemoryOverhead;
 
   @Parameter(names = "--spark-executor-memory-gb-min")
-  @NotNull
-  @Min(1)
   public int sparkExecutorMemoryGbMin;
 
   @Parameter(names = "--spark-executor-memory-gb-max")
-  @NotNull
   public int sparkExecutorMemoryGbMax;
 
   @Parameter(names = "--spark-executor-cores")
-  @NotNull
   public int sparkExecutorCores;
 
   @Parameter(names = "--spark-executor-numbers-min")
-  @NotNull
-  @Min(1)
   public int sparkExecutorNumbersMin;
 
   @Parameter(names = "--spark-executor-numbers-max")
-  @NotNull
   public int sparkExecutorNumbersMax;
 
   @Parameter(names = "--spark-driver-memory")
-  @NotNull
   public String sparkDriverMemory;
 
   @Parameter(names = "--spark-records-per-thread")
@@ -128,7 +118,6 @@ public class HdfsViewConfiguration {
   public String driverJavaOptions;
 
   @Parameter(names = "--distributed-jar-path")
-  @NotNull
   public String distributedJarPath;
 
   @Parameter(names = "--other-user")
@@ -139,11 +128,6 @@ public class HdfsViewConfiguration {
 
   @Parameter(names = "--process-output-directory")
   public String processOutputDirectory;
-
-  @ParametersDelegate
-  @NotNull
-  @Valid
-  public RegistryConfiguration registry = new RegistryConfiguration();
 
   @Parameter(names = "--hdfs-avro-coefficient-ratio")
   public int hdfsAvroCoefficientRatio = 75;

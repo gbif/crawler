@@ -24,9 +24,19 @@ public class InterpreterConfiguration {
   public ZooKeeperConfiguration zooKeeper = new ZooKeeperConfiguration();
 
   @ParametersDelegate
+  @NotNull
+  @Valid
+  public RegistryConfiguration registry = new RegistryConfiguration();
+
+  @ParametersDelegate
   @Valid
   @NotNull
   public MessagingConfiguration messaging = new MessagingConfiguration();
+
+  @ParametersDelegate
+  @Valid
+  @NotNull
+  public AvroWriteConfiguration avroConfig = new AvroWriteConfiguration();
 
   @Parameter(names = "--queue-name")
   @NotNull
@@ -39,11 +49,6 @@ public class InterpreterConfiguration {
 
   @Parameter(names = "--meta-file-name")
   public String metaFileName = Pipeline.VERBATIM_TO_INTERPRETED + ".yml";
-
-  @ParametersDelegate
-  @Valid
-  @NotNull
-  public AvroWriteConfiguration avroConfig = new AvroWriteConfiguration();
 
   @Parameter(names = "--hdfs-site-config")
   @NotNull
@@ -71,61 +76,45 @@ public class InterpreterConfiguration {
   public int sparkRecordsPerThread;
 
   @Parameter(names = "--spark-memory-overhead")
-  @NotNull
-  @Min(1)
   public int sparkMemoryOverhead;
 
   @Parameter(names = "--spark-executor-memory-gb-min")
-  @NotNull
   public int sparkExecutorMemoryGbMin;
 
   @Parameter(names = "--spark-executor-memory-gb-max")
-  @NotNull
   public int sparkExecutorMemoryGbMax;
 
   @Parameter(names = "--spark-executor-cores")
-  @NotNull
   public int sparkExecutorCores;
 
   @Parameter(names = "--spark-executor-numbers-min")
-  @NotNull
-  @Min(1)
   public int sparkExecutorNumbersMin;
 
   @Parameter(names = "--spark-executor-numbers-max")
-  @NotNull
   public int sparkExecutorNumbersMax;
 
   @Parameter(names = "--spark-driver-memory")
-  @NotNull
   public String sparkDriverMemory;
 
   @Parameter(names = "--standalone-stack-size")
-  @NotNull
   public String standaloneStackSize;
 
   @Parameter(names = "--standalone-heap-size")
-  @NotNull
   public String standaloneHeapSize;
 
   @Parameter(names = "--distributed-jar-path")
-  @NotNull
   public String distributedJarPath;
 
   @Parameter(names = "--standalone-jar-path")
-  @NotNull
   public String standaloneJarPath;
 
   @Parameter(names = "--standalone-main-class")
-  @NotNull
   public String standaloneMainClass;
 
   @Parameter(names = "--distributed-main-class")
-  @NotNull
   public String distributedMainClass;
 
   @Parameter(names = "--repository-path")
-  @NotNull
   public String repositoryPath;
 
   @Parameter(names = "--process-error-directory")
@@ -152,11 +141,6 @@ public class InterpreterConfiguration {
 
   @Parameter(names = "--yarn-queue")
   public String yarnQueue;
-
-  @ParametersDelegate
-  @NotNull
-  @Valid
-  public RegistryConfiguration registry = new RegistryConfiguration();
 
   @Override
   public String toString() {
