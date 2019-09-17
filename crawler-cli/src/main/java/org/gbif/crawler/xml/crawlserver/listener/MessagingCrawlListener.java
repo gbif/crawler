@@ -74,10 +74,13 @@ public class MessagingCrawlListener<CTX extends CrawlContext> implements CrawlLi
     }
     this.retry = retry;
     this.duration = duration;
-    Message msg = new CrawlResponseMessage(configuration.getDatasetKey(), configuration.getAttempt(), retry,
-                                           Bytes.toArray(response), duration, recordCount, lastContext.toString(),
-                                           platform);
-    sendMessageSilently(msg);
+
+    if (Platform.OCCURRENCE.equivalent(platform)) {
+      Message msg = new CrawlResponseMessage(configuration.getDatasetKey(), configuration.getAttempt(), retry,
+                                             Bytes.toArray(response), duration, recordCount, lastContext.toString(),
+                                             platform);
+      sendMessageSilently(msg);
+    }
   }
 
   @Override

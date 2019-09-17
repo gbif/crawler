@@ -11,6 +11,7 @@ import org.gbif.common.messaging.AbstractMessageCallback;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.DwcaMetasyncFinishedMessage;
 import org.gbif.common.messaging.api.messages.DwcaValidationFinishedMessage;
+import org.gbif.common.messaging.api.messages.Platform;
 import org.gbif.crawler.constants.CrawlerNodePaths;
 import org.gbif.crawler.dwca.DwcaConfiguration;
 import org.gbif.crawler.dwca.DwcaService;
@@ -144,10 +145,12 @@ public class DwcaMetasyncService extends DwcaService {
 
       LOG.info("Finished updating metadata from DwC-A for dataset [{}]", datasetKey);
 
-      // send success message
-      publisher.send(new DwcaMetasyncFinishedMessage(datasetKey, dataset.getType(), message.getSource(),
+      if (Platform.OCCURRENCE.equivalent(message.getPlatform())) {
+        // send success message
+        publisher.send(new DwcaMetasyncFinishedMessage(datasetKey, dataset.getType(), message.getSource(),
                                                      message.getAttempt(), constituents, message.getValidationReport(),
                                                      message.getPlatform()), true);
+      }
     }
 
     private Map<String, UUID> processConstituents(Dataset parent, Archive archive) {
