@@ -133,14 +133,13 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
         long recordsNumber = getRecordNumber(message);
 
         String indexName = computeIndexName(message, recordsNumber);
-        String indexAlias = indexName.startsWith(datasetId) ? datasetId + "," + config.indexAlias : config.indexAlias;
         int numberOfShards = computeNumberOfShards(indexName, recordsNumber);
 
         ProcessRunnerBuilder builder = ProcessRunnerBuilder.create()
             .config(config)
             .message(message)
             .esIndexName(indexName)
-            .esAlias(indexAlias)
+            .esAlias(config.indexAlias)
             .esShardsNumber(numberOfShards);
 
         if (config.processRunner.equalsIgnoreCase(StepRunner.DISTRIBUTED.name())) {
@@ -238,6 +237,7 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
 
     if (recordsNumber >= config.indexIndepRecord) {
       idxName = datasetId + "_" + message.getAttempt();
+      idxName = prefix == null ? idxName : idxName + "_" + prefix;
       idxName = message.isRepeatAttempt() ? idxName + "_" + Instant.now().toEpochMilli() : idxName;
       LOG.info("ES Index name - {}, recordsNumber - {}", idxName, recordsNumber);
       return idxName;
