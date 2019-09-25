@@ -226,14 +226,10 @@ public class PipelineCallback {
 
   private Optional<TrackingInfo> trackPipelineStep() {
     try {
-      // get pipeline process if exists or create a new one
-      Optional<PipelineProcess> process =
-          Optional.ofNullable(
-              b.historyWsClient.getPipelineProcess(
-                  b.incomingMessage.getDatasetUuid(), b.incomingMessage.getAttempt()));
-
-      long processKey = process.map(PipelineProcess::getKey).orElseGet(() -> b.historyWsClient.createPipelineProcess(
-        b.incomingMessage.getDatasetUuid(), b.incomingMessage.getAttempt()));
+      // create pipeline process. If it already exists it returns the existing one (the db query does an upsert).
+      long processKey =
+          b.historyWsClient.createPipelineProcess(
+              b.incomingMessage.getDatasetUuid(), b.incomingMessage.getAttempt());
 
       // add step to the process
       PipelineStep step =
