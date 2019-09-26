@@ -24,8 +24,8 @@ public class StartCrawlMessageCallback extends AbstractMessageCallback<StartCraw
   public void handleMessage(StartCrawlMessage message) {
     LOG.debug("Trying to enqueue crawl for dataset [{}]", message.getDatasetUuid());
     try {
-      if (message.getPriority().isPresent()) {
-        service.initiateCrawl(message.getDatasetUuid(), message.getPriority().get(), message.getPlatform());
+      if (message.getPriority() != null) {
+        service.initiateCrawl(message.getDatasetUuid(), message.getPriority(), message.getPlatform());
       } else {
         service.initiateCrawl(message.getDatasetUuid(), message.getPlatform());
       }

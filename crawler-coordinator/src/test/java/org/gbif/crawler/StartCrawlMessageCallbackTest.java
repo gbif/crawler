@@ -25,7 +25,7 @@ public class StartCrawlMessageCallbackTest {
     StartCrawlMessage message = new StartCrawlMessage(UUID.randomUUID(), 5);
     callback.handleMessage(message);
 
-    verify(service).initiateCrawl(message.getDatasetUuid(), message.getPriority().get(), message.getPlatform());
+    verify(service).initiateCrawl(message.getDatasetUuid(), message.getPriority(), message.getPlatform());
   }
 
   @Test
