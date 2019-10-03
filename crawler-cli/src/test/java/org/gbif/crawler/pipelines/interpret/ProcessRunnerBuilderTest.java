@@ -77,7 +77,6 @@ public class ProcessRunnerBuilderTest {
     // When
     String expected =
         "spark2-submit --conf spark.default.parallelism=1 --conf spark.executor.memoryOverhead=1 --conf spark.dynamicAllocation.enabled=false "
-            + "--conf \"spark.executor.extraJavaOptions=-XX:+UseG1GC\" "
             + "--class org.gbif.Test --master yarn --deploy-mode cluster --executor-memory 1G --executor-cores 1 --num-executors 1 "
             + "--driver-memory 4G java.jar --datasetId=de7ffb5e-c07b-42dc-8a88-f67a4465fe3d --attempt=1 --interpretationTypes=ALL "
             + "--runner=SparkRunner --targetPath=tmp --metaFileName=verbatim-to-interpreted.yml --inputPath=verbatim.avro "
@@ -135,7 +134,6 @@ public class ProcessRunnerBuilderTest {
         "sudo -u user spark2-submit --conf spark.metrics.conf=metrics.properties --conf \"spark.driver.extraClassPath=logstash-gelf.jar\" "
             + "--driver-java-options \"-Dlog4j.configuration=file:log4j.properties\" --queue pipelines --conf spark.default.parallelism=1 "
             + "--conf spark.executor.memoryOverhead=1 --conf spark.dynamicAllocation.enabled=false "
-            + "--conf \"spark.executor.extraJavaOptions=-XX:+UseG1GC\" "
             + "--class org.gbif.Test --master yarn "
             + "--deploy-mode cluster --executor-memory 1G --executor-cores 1 --num-executors 1 --driver-memory 4G java.jar "
             + "--datasetId=de7ffb5e-c07b-42dc-8a88-f67a4465fe3d --attempt=1 --interpretationTypes=ALL --runner=SparkRunner "
