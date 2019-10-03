@@ -112,7 +112,6 @@ final class ProcessRunnerBuilder {
     joiner.add("--conf spark.default.parallelism=" + sparkParallelism)
         .add("--conf spark.executor.memoryOverhead=" + config.sparkMemoryOverhead)
         .add("--conf spark.dynamicAllocation.enabled=false")
-        .add("--conf \"spark.executor.extraJavaOptions=-XX:+UseG1GC\"")
         .add("--class " + Objects.requireNonNull(config.distributedMainClass))
         .add("--master yarn")
         .add("--deploy-mode " + Objects.requireNonNull(config.deployMode))
@@ -153,9 +152,9 @@ final class ProcessRunnerBuilder {
             .add("--occurrenceIdValid=" + vr.isOccurrenceIdValid())
         );
 
-    Optional.ofNullable(message.getValidationResult()).ifPresent(vr ->
-        Optional.ofNullable(vr.isUseExtendedRecordId()).ifPresent(x -> command.add("--useExtendedRecordId=" + x))
-    );
+    Optional.ofNullable(message.getValidationResult())
+        .flatMap(vr -> Optional.ofNullable(vr.isUseExtendedRecordId()))
+        .ifPresent(x -> command.add("--useExtendedRecordId=" + x));
 
     // Adds user name to run a command if it is necessary
     StringJoiner joiner = new StringJoiner(DELIMITER);
