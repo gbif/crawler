@@ -27,6 +27,7 @@ import org.gbif.api.model.pipelines.PipelineStep;
 import org.gbif.api.model.pipelines.StepRunner;
 import org.gbif.api.model.pipelines.StepType;
 import org.gbif.common.messaging.api.messages.PipelinesDwcaMessage;
+import org.gbif.common.messaging.api.messages.PipelinesXmlMessage;
 import org.gbif.crawler.constants.CrawlerNodePaths;
 import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
 
@@ -204,35 +205,50 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
 
       // ALL_STEPS - static set of all pipelines steps: DWCA_TO_AVRO, VERBATIM_TO_INTERPRETED and etc.
       getStepInfo(crawlId).stream().filter(s -> Objects.nonNull(s.getStarted())).forEach(status::addStep);
-
-      // get number of records
-      status.getSteps().stream()
-        .filter(s -> s.getType().getExecutionOrder() == 1)
-        .max(Comparator.comparing(PipelineStep::getStarted))
-        .ifPresent(
-          s -> {
-            if (s.getType() == StepType.DWCA_TO_VERBATIM) {
-              try {
-                status.setNumberRecords(
-                  OBJECT_MAPPER
-                    .readValue(s.getMessage(), PipelinesDwcaMessage.class)
-                    .getValidationReport()
-                    .getOccurrenceReport()
-                    .getCheckedRecords());
-              } catch (IOException e) {
-                LOG.warn(
-                  "Couldn't get the number of records for dataset {} and attempt {}",
-                  status.getDatasetKey(),
-                  status.getAttempt());
-              }
-            }
-          });
+      addNumberRecords(status);
 
       return status;
     } catch (Exception ex) {
       LOG.error("crawlId {}", crawlId, ex.getCause());
       throw new ServiceUnavailableException("Error communicating with ZooKeeper", ex);
     }
+  }
+
+  private void addNumberRecords(PipelineProcess status) {
+    // get number of records
+    status.getSteps().stream()
+      .filter(s -> s.getType().getExecutionOrder() == 1)
+      .max(Comparator.comparing(PipelineStep::getStarted))
+      .ifPresent(
+        s -> {
+          if (s.getType() == StepType.DWCA_TO_VERBATIM) {
+            try {
+              status.setNumberRecords(
+                OBJECT_MAPPER
+                  .readValue(s.getMessage(), PipelinesDwcaMessage.class)
+                  .getValidationReport()
+                  .getOccurrenceReport()
+                  .getCheckedRecords());
+            } catch (IOException e) {
+              LOG.warn(
+                "Couldn't get the number of records for dataset {} and attempt {}",
+                status.getDatasetKey(),
+                status.getAttempt());
+            }
+          } else if (s.getType() == StepType.XML_TO_VERBATIM) {
+            try {
+              status.setNumberRecords(
+                OBJECT_MAPPER
+                  .readValue(s.getMessage(), PipelinesXmlMessage.class)
+                  .getTotalRecordCount());
+            } catch (IOException e) {
+              LOG.warn(
+                "Couldn't get the number of records for dataset {} and attempt {}",
+                status.getDatasetKey(),
+                status.getAttempt());
+            }
+          } // abcd doesn't have count
+        });
   }
 
   /** Gets step info from ZK */
