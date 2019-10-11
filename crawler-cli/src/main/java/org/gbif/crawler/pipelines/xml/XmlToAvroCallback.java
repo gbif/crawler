@@ -42,7 +42,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class XmlToAvroCallback extends AbstractMessageCallback<PipelinesXmlMessage> {
 
   private static final Logger LOG = LoggerFactory.getLogger(XmlToAvroCallback.class);
-
+  private static final StepType STEP = StepType.XML_TO_VERBATIM;
   private static final String TAR_EXT = ".tar.xz";
 
   private final XmlToAvroConfiguration config;
@@ -74,7 +74,7 @@ public class XmlToAvroCallback extends AbstractMessageCallback<PipelinesXmlMessa
 
     try (MDCCloseable mdc1 = MDC.putCloseable("datasetId", message.getDatasetUuid().toString());
         MDCCloseable mdc2 = MDC.putCloseable("attempt", message.getAttempt().toString());
-        MDCCloseable mdc3 = MDC.putCloseable("step", StepType.XML_TO_VERBATIM.name())) {
+        MDCCloseable mdc3 = MDC.putCloseable("step", STEP.name())) {
       LOG.info("Message handler began - {}", message);
 
       if (message.getReason() != FinishReason.NORMAL) {
@@ -101,8 +101,8 @@ public class XmlToAvroCallback extends AbstractMessageCallback<PipelinesXmlMessa
           .incomingMessage(message)
           .outgoingMessage(new PipelinesVerbatimMessage(datasetId, attempt, config.interpretTypes, steps, endpointType))
           .curator(curator)
-          .zkRootElementPath(StepType.XML_TO_VERBATIM.getLabel())
-          .pipelinesStepName(StepType.XML_TO_VERBATIM)
+          .zkRootElementPath(STEP.getLabel())
+          .pipelinesStepName(STEP)
           .publisher(publisher)
           .runnable(runnable)
           .historyWsClient(historyWsClient)

@@ -38,6 +38,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class InterpretationCallback extends AbstractMessageCallback<PipelinesVerbatimMessage> {
 
   private static final Logger LOG = LoggerFactory.getLogger(InterpretationCallback.class);
+  private static final StepType STEP = StepType.VERBATIM_TO_INTERPRETED;
 
   private final InterpreterConfiguration config;
   private final MessagePublisher publisher;
@@ -63,7 +64,7 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
 
     try (MDCCloseable mdc1 = MDC.putCloseable("datasetId", datasetId.toString());
         MDCCloseable mdc2 = MDC.putCloseable("attempt", attempt.toString());
-        MDCCloseable mdc3 = MDC.putCloseable("step", StepType.VERBATIM_TO_INTERPRETED.name())) {
+        MDCCloseable mdc3 = MDC.putCloseable("step", STEP.name())) {
 
       if (!isMessageCorrect(message)) {
         LOG.info("Skip the message, cause the runner is different or it wasn't modified, exit from handler");
@@ -88,8 +89,8 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
           .incomingMessage(message)
           .outgoingMessage(new PipelinesInterpretedMessage(datasetId, attempt, steps, recordsNumber, repeatAttempt, message.getResetPrefix()))
           .curator(curator)
-          .zkRootElementPath(StepType.VERBATIM_TO_INTERPRETED.getLabel())
-          .pipelinesStepName(StepType.VERBATIM_TO_INTERPRETED)
+          .zkRootElementPath(STEP.getLabel())
+          .pipelinesStepName(STEP)
           .publisher(publisher)
           .runnable(runnable)
           .historyWsClient(historyWsClient)

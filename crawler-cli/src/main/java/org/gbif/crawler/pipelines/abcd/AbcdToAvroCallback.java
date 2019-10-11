@@ -33,6 +33,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class AbcdToAvroCallback extends AbstractMessageCallback<PipelinesAbcdMessage> {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbcdToAvroCallback.class);
+  private static final StepType STEP = StepType.ABCD_TO_VERBATIM;
 
   private final XmlToAvroConfiguration config;
   private final MessagePublisher publisher;
@@ -58,7 +59,7 @@ public class AbcdToAvroCallback extends AbstractMessageCallback<PipelinesAbcdMes
 
     try (MDCCloseable mdc1 = MDC.putCloseable("datasetId", datasetId.toString());
         MDCCloseable mdc2 = MDC.putCloseable("attempt", attempt.toString());
-        MDCCloseable mdc3 = MDC.putCloseable("step", StepType.ABCD_TO_VERBATIM.name())) {
+        MDCCloseable mdc3 = MDC.putCloseable("step", STEP.name())) {
 
       if (!message.isModified()) {
         LOG.info("Skip the message, cause it wasn't modified, exit from handler");
@@ -86,8 +87,8 @@ public class AbcdToAvroCallback extends AbstractMessageCallback<PipelinesAbcdMes
           .incomingMessage(message)
           .outgoingMessage(new PipelinesVerbatimMessage(datasetId, attempt, config.interpretTypes, steps, endpointType))
           .curator(curator)
-          .zkRootElementPath(StepType.ABCD_TO_VERBATIM.getLabel())
-          .pipelinesStepName(StepType.ABCD_TO_VERBATIM)
+          .zkRootElementPath(STEP.getLabel())
+          .pipelinesStepName(STEP)
           .publisher(publisher)
           .runnable(runnable)
           .historyWsClient(historyWsClient)

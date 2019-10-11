@@ -42,6 +42,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMessage> {
 
   private static final Logger LOG = LoggerFactory.getLogger(DwcaToAvroCallback.class);
+  private static final StepType STEP = StepType.DWCA_TO_VERBATIM;
 
   private final DwcaToAvroConfiguration config;
   private final MessagePublisher publisher;
@@ -72,7 +73,7 @@ public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMes
 
     try (MDCCloseable mdc1 = MDC.putCloseable("datasetId", datasetId.toString());
         MDCCloseable mdc2 = MDC.putCloseable("attempt", attempt.toString());
-        MDCCloseable mdc3 = MDC.putCloseable("step", StepType.DWCA_TO_VERBATIM.name())) {
+        MDCCloseable mdc3 = MDC.putCloseable("step", STEP.name())) {
 
       LOG.info("Message handler began - {}", message);
 
@@ -104,8 +105,8 @@ public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMes
           .incomingMessage(message)
           .outgoingMessage(new PipelinesVerbatimMessage(datasetId, attempt, config.interpretTypes, steps, endpointType, validationResult))
           .curator(curator)
-          .zkRootElementPath(StepType.DWCA_TO_VERBATIM.getLabel())
-          .pipelinesStepName(StepType.DWCA_TO_VERBATIM)
+          .zkRootElementPath(STEP.getLabel())
+          .pipelinesStepName(STEP)
           .publisher(publisher)
           .runnable(runnable)
           .historyWsClient(historyWsClient)

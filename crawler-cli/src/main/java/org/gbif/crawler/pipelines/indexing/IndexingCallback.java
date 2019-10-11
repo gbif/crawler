@@ -49,7 +49,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpretedMessage> {
 
   private static final Logger LOG = LoggerFactory.getLogger(IndexingCallback.class);
-
+  private static final StepType STEP = StepType.INTERPRETED_TO_INDEX;
   private static  final ObjectMapper MAPPER = new ObjectMapper();
 
   private final IndexingConfiguration config;
@@ -80,7 +80,7 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
 
     try (MDCCloseable mdc1 = MDC.putCloseable("datasetId", datasetId.toString());
         MDCCloseable mdc2 = MDC.putCloseable("attempt", attempt.toString());
-        MDCCloseable mdc3 = MDC.putCloseable("step", StepType.INTERPRETED_TO_INDEX.name())) {
+        MDCCloseable mdc3 = MDC.putCloseable("step", STEP.name())) {
 
       if (!isMessageCorrect(message)) {
         LOG.info("Skip the message, cause the runner is different or it wasn't modified, exit from handler");
@@ -97,8 +97,8 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
           .incomingMessage(message)
           .outgoingMessage(new PipelinesIndexedMessage(datasetId, attempt, steps))
           .curator(curator)
-          .zkRootElementPath(StepType.INTERPRETED_TO_INDEX.getLabel())
-          .pipelinesStepName(StepType.INTERPRETED_TO_INDEX)
+          .zkRootElementPath(STEP.getLabel())
+          .pipelinesStepName(STEP)
           .publisher(publisher)
           .runnable(runnable)
           .historyWsClient(historyWsClient)
@@ -117,6 +117,9 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
   private boolean isMessageCorrect(PipelinesInterpretedMessage message) {
     if (Strings.isNullOrEmpty(message.getRunner())) {
       throw new IllegalArgumentException("Runner can't be null or empty " + message.toString());
+    }
+    if (message.getOnlyForStep() != null && !message.getOnlyForStep().equalsIgnoreCase(STEP.name())) {
+      return false;
     }
     return config.processRunner.equals(message.getRunner());
   }
