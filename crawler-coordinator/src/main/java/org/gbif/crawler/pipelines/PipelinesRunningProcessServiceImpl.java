@@ -205,6 +205,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
       // ALL_STEPS - static set of all pipelines steps: DWCA_TO_AVRO, VERBATIM_TO_INTERPRETED and etc.
       getStepInfo(crawlId).stream().filter(s -> Objects.nonNull(s.getStarted())).forEach(status::addStep);
 
+      // get number of records
       status.getSteps().stream()
         .filter(s -> s.getType().getExecutionOrder() == 1)
         .max(Comparator.comparing(PipelineStep::getStarted))
