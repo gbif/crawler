@@ -205,7 +205,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
 
       // ALL_STEPS - static set of all pipelines steps: DWCA_TO_AVRO, VERBATIM_TO_INTERPRETED and etc.
       getStepInfo(crawlId).stream().filter(s -> Objects.nonNull(s.getStarted())).forEach(status::addStep);
-      addNumberRecords(status);
+      addNumberRecords(status, crawlId);
 
       return status;
     } catch (Exception ex) {
@@ -214,43 +214,42 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
     }
   }
 
-  private void addNumberRecords(PipelineProcess status) {
+  private void addNumberRecords(PipelineProcess status, String crawlId) {
     // get number of records
     status.getSteps().stream()
-      .filter(s -> s.getType().getExecutionOrder() == 1)
-      .max(Comparator.comparing(PipelineStep::getStarted))
-      .ifPresent(
-        s -> {
-          if (s.getType() == StepType.DWCA_TO_VERBATIM) {
-            try {
-              status.setNumberRecords(
-                OBJECT_MAPPER
-                  .readValue(s.getMessage(), PipelinesDwcaMessage.class)
-                  .getValidationReport()
-                  .getOccurrenceReport()
-                  .getCheckedRecords());
-            } catch (IOException ex) {
-              LOG.warn(
-                "Couldn't get the number of records for dataset {} and attempt {}",
-                status.getDatasetKey(),
-                status.getAttempt(),
-                ex);
-            }
-          } else if (s.getType() == StepType.XML_TO_VERBATIM) {
-            try {
-              status.setNumberRecords(
-                OBJECT_MAPPER
-                  .readValue(s.getMessage(), PipelinesXmlMessage.class)
-                  .getTotalRecordCount());
-            } catch (IOException ex) {
-              LOG.warn(
-                "Couldn't get the number of records for dataset {} and attempt {}",
-                status.getDatasetKey(),
-                status.getAttempt(),
-                ex);
-            }
-          } // abcd doesn't have count
-        });
+        .filter(s -> s.getType().getExecutionOrder() == 1)
+        .max(Comparator.comparing(PipelineStep::getStarted))
+        .ifPresent(
+            s -> {
+              try {
+                Optional<String> msg =
+                    getAsString(crawlId, Fn.MQ_MESSAGE.apply(s.getType().getLabel()));
+
+                if (!msg.isPresent()) {
+                  return;
+                }
+
+                if (s.getType() == StepType.DWCA_TO_VERBATIM) {
+                  status.setNumberRecords(
+                      OBJECT_MAPPER
+                          .readValue(msg.get(), PipelinesDwcaMessage.class)
+                          .getValidationReport()
+                          .getOccurrenceReport()
+                          .getCheckedRecords());
+                } else if (s.getType() == StepType.XML_TO_VERBATIM) {
+                  status.setNumberRecords(
+                      OBJECT_MAPPER
+                          .readValue(msg.get(), PipelinesXmlMessage.class)
+                          .getTotalRecordCount());
+                } // abcd doesn't have count
+              } catch (Exception ex) {
+                LOG.warn(
+                    "Couldn't get the number of records for dataset {} and attempt {}",
+                    status.getDatasetKey(),
+                    status.getAttempt(),
+                    ex);
+              }
+            });
   }
 
   /** Gets step info from ZK */
