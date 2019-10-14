@@ -1,26 +1,5 @@
 package org.gbif.crawler.pipelines;
 
-import java.io.IOException;
-import java.text.DecimalFormat;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
-import java.util.function.BiFunction;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 import org.gbif.api.exception.ServiceUnavailableException;
 import org.gbif.api.model.pipelines.PipelineProcess;
 import org.gbif.api.model.pipelines.PipelineStep;
@@ -31,6 +10,27 @@ import org.gbif.common.messaging.api.messages.PipelinesXmlMessage;
 import org.gbif.crawler.constants.CrawlerNodePaths;
 import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
 
+import java.text.DecimalFormat;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import javax.annotation.Nullable;
+
+import com.google.common.base.Charsets;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.apache.curator.framework.CuratorFramework;
 import org.codehaus.jackson.map.DeserializationConfig;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -47,14 +47,6 @@ import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Charsets;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
-import javax.annotation.Nullable;
-
 import static org.gbif.api.model.pipelines.PipelineStep.MetricInfo;
 import static org.gbif.api.model.pipelines.PipelineStep.Status;
 import static org.gbif.crawler.constants.PipelinesNodePaths.PIPELINES_ROOT;
@@ -68,7 +60,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
   private static final Logger LOG = LoggerFactory.getLogger(PipelinesRunningProcessServiceImpl.class);
 
   private static final ObjectMapper OBJECT_MAPPER =
-      new ObjectMapper().configure(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+      new ObjectMapper().disable(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES);
   private static final String FILTER_NAME = "org.gbif.pipelines.transforms.";
   private static final DecimalFormat DF = new DecimalFormat("0");
   private static final BiFunction<UUID, Integer, String> CRAWL_ID_GENERATOR =
