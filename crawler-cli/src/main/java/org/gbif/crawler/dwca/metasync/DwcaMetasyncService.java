@@ -146,10 +146,14 @@ public class DwcaMetasyncService extends DwcaService {
       LOG.info("Finished updating metadata from DwC-A for dataset [{}]", datasetKey);
 
       if (Platform.OCCURRENCE.equivalent(message.getPlatform())) {
-        // send success message
-        publisher.send(new DwcaMetasyncFinishedMessage(datasetKey, dataset.getType(), message.getSource(),
-                                                     message.getAttempt(), constituents, message.getValidationReport(),
-                                                     message.getPlatform()), true);
+        if (message.getValidationReport().isValid()) {
+          // send success message
+          publisher.send(new DwcaMetasyncFinishedMessage(datasetKey, dataset.getType(), message.getSource(),
+              message.getAttempt(), constituents, message.getValidationReport(),
+              message.getPlatform()), true);
+        } else {
+          LOG.warn("Metadata processed, but not sending completion message because the archive is invalid.");
+        }
       }
     }
 
