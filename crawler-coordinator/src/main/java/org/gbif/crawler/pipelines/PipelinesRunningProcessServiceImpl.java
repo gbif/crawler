@@ -1,18 +1,23 @@
 package org.gbif.crawler.pipelines;
 
-import java.io.IOException;
+import org.gbif.api.exception.ServiceUnavailableException;
+import org.gbif.api.model.pipelines.PipelineProcess;
+import org.gbif.api.model.pipelines.PipelineStep;
+import org.gbif.api.model.pipelines.StepRunner;
+import org.gbif.api.model.pipelines.StepType;
+import org.gbif.api.model.registry.Dataset;
+import org.gbif.api.service.registry.DatasetService;
+import org.gbif.common.messaging.api.messages.PipelinesDwcaMessage;
+import org.gbif.common.messaging.api.messages.PipelinesXmlMessage;
+import org.gbif.crawler.constants.CrawlerNodePaths;
+import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
+
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
@@ -20,18 +25,16 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.annotation.Nullable;
 
-import org.gbif.api.exception.ServiceUnavailableException;
-import org.gbif.api.model.pipelines.PipelineProcess;
-import org.gbif.api.model.pipelines.PipelineStep;
-import org.gbif.api.model.pipelines.StepRunner;
-import org.gbif.api.model.pipelines.StepType;
-import org.gbif.common.messaging.api.messages.PipelinesDwcaMessage;
-import org.gbif.common.messaging.api.messages.PipelinesXmlMessage;
-import org.gbif.crawler.constants.CrawlerNodePaths;
-import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
-
+import com.google.common.base.Charsets;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.apache.curator.framework.CuratorFramework;
+import org.codehaus.jackson.map.DeserializationConfig;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
@@ -46,14 +49,6 @@ import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Charsets;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
-import javax.annotation.Nullable;
-
 import static org.gbif.api.model.pipelines.PipelineStep.MetricInfo;
 import static org.gbif.api.model.pipelines.PipelineStep.Status;
 import static org.gbif.crawler.constants.PipelinesNodePaths.PIPELINES_ROOT;
@@ -66,7 +61,8 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
 
   private static final Logger LOG = LoggerFactory.getLogger(PipelinesRunningProcessServiceImpl.class);
 
-  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+  private static final ObjectMapper OBJECT_MAPPER =
+      new ObjectMapper().disable(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES);
   private static final String FILTER_NAME = "org.gbif.pipelines.transforms.";
   private static final DecimalFormat DF = new DecimalFormat("0");
   private static final BiFunction<UUID, Integer, String> CRAWL_ID_GENERATOR =
@@ -76,6 +72,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
   private final Executor executor;
   private final RestHighLevelClient client;
   private final String envPrefix;
+  private final DatasetService datasetService;
   private final LoadingCache<String, PipelineProcess> statusCache =
       CacheBuilder.newBuilder()
           .expireAfterWrite(2, TimeUnit.MINUTES)
@@ -93,10 +90,12 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
       CuratorFramework curator,
       Executor executor,
       RestHighLevelClient client,
+      DatasetService datasetService,
       @Named("pipelines.envPrefix") String envPrefix) {
     this.curator = checkNotNull(curator, "curator can't be null");
     this.executor = checkNotNull(executor, "executor can't be null");
     this.client = client;
+    this.datasetService = datasetService;
     this.envPrefix = envPrefix;
   }
 
@@ -205,7 +204,8 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
 
       // ALL_STEPS - static set of all pipelines steps: DWCA_TO_AVRO, VERBATIM_TO_INTERPRETED and etc.
       getStepInfo(crawlId).stream().filter(s -> Objects.nonNull(s.getStarted())).forEach(status::addStep);
-      addNumberRecords(status);
+      addNumberRecords(status, crawlId);
+      setDatasetTitle(status);
 
       return status;
     } catch (Exception ex) {
@@ -214,43 +214,49 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
     }
   }
 
-  private void addNumberRecords(PipelineProcess status) {
+  private void addNumberRecords(PipelineProcess status, String crawlId) {
     // get number of records
     status.getSteps().stream()
-      .filter(s -> s.getType().getExecutionOrder() == 1)
-      .max(Comparator.comparing(PipelineStep::getStarted))
-      .ifPresent(
-        s -> {
-          if (s.getType() == StepType.DWCA_TO_VERBATIM) {
-            try {
-              status.setNumberRecords(
-                OBJECT_MAPPER
-                  .readValue(s.getMessage(), PipelinesDwcaMessage.class)
-                  .getValidationReport()
-                  .getOccurrenceReport()
-                  .getCheckedRecords());
-            } catch (IOException ex) {
-              LOG.warn(
-                "Couldn't get the number of records for dataset {} and attempt {}",
-                status.getDatasetKey(),
-                status.getAttempt(),
-                ex);
-            }
-          } else if (s.getType() == StepType.XML_TO_VERBATIM) {
-            try {
-              status.setNumberRecords(
-                OBJECT_MAPPER
-                  .readValue(s.getMessage(), PipelinesXmlMessage.class)
-                  .getTotalRecordCount());
-            } catch (IOException ex) {
-              LOG.warn(
-                "Couldn't get the number of records for dataset {} and attempt {}",
-                status.getDatasetKey(),
-                status.getAttempt(),
-                ex);
-            }
-          } // abcd doesn't have count
-        });
+        .filter(s -> s.getType().getExecutionOrder() == 1)
+        .max(Comparator.comparing(PipelineStep::getStarted))
+        .ifPresent(
+            s -> {
+              try {
+                Optional<String> msg =
+                    getAsString(crawlId, Fn.MQ_MESSAGE.apply(s.getType().getLabel()));
+
+                if (!msg.isPresent()) {
+                  return;
+                }
+
+                if (s.getType() == StepType.DWCA_TO_VERBATIM) {
+                  status.setNumberRecords(
+                      OBJECT_MAPPER
+                          .readValue(msg.get(), PipelinesDwcaMessage.class)
+                          .getValidationReport()
+                          .getOccurrenceReport()
+                          .getCheckedRecords());
+                } else if (s.getType() == StepType.XML_TO_VERBATIM) {
+                  status.setNumberRecords(
+                      OBJECT_MAPPER
+                          .readValue(msg.get(), PipelinesXmlMessage.class)
+                          .getTotalRecordCount());
+                } // abcd doesn't have count
+              } catch (Exception ex) {
+                LOG.warn(
+                    "Couldn't get the number of records for dataset {} and attempt {}",
+                    status.getDatasetKey(),
+                    status.getAttempt(),
+                    ex);
+              }
+            });
+  }
+
+  private void setDatasetTitle(PipelineProcess process) {
+    if (process.getDatasetKey() != null) {
+      Dataset dataset = datasetService.get(process.getDatasetKey());
+      process.setDatasetTitle(dataset.getTitle());
+    }
   }
 
   /** Gets step info from ZK */

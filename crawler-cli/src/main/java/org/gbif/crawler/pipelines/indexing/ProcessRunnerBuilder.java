@@ -32,6 +32,7 @@ final class ProcessRunnerBuilder {
   private int sparkParallelism;
   private int sparkExecutorNumbers;
   private String sparkExecutorMemory;
+  private String sparkEventLogDir;
 
   ProcessRunnerBuilder config(IndexingConfiguration config) {
     this.config = Objects.requireNonNull(config);
@@ -55,6 +56,11 @@ final class ProcessRunnerBuilder {
 
   ProcessRunnerBuilder sparkExecutorMemory(String sparkExecutorMemory) {
     this.sparkExecutorMemory = sparkExecutorMemory;
+    return this;
+  }
+
+  ProcessRunnerBuilder sparkEventLogDir(String sparkEventLogDir) {
+    this.sparkEventLogDir = sparkEventLogDir;
     return this;
   }
 
@@ -100,6 +106,9 @@ final class ProcessRunnerBuilder {
         .add(Objects.requireNonNull(config.standaloneJarPath))
         .add(Objects.requireNonNull(config.standaloneMainClass))
         .add("--pipelineStep=INTERPRETED_TO_ES_INDEX");
+
+    Optional.ofNullable(sparkEventLogDir).ifPresent(sparkEventLogDir -> joiner.add("--conf spark.eventLog.enabled=true")
+      .add("--conf spark.eventLog.dir=" +  sparkEventLogDir));
 
     return buildCommon(joiner);
   }
