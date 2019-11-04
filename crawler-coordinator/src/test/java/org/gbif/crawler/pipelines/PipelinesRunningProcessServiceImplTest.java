@@ -3,6 +3,8 @@ package org.gbif.crawler.pipelines;
 import org.gbif.api.model.pipelines.PipelineProcess;
 import org.gbif.api.model.pipelines.PipelineStep;
 import org.gbif.api.model.pipelines.StepType;
+import org.gbif.api.model.registry.Dataset;
+import org.gbif.api.service.registry.DatasetService;
 import org.gbif.crawler.constants.PipelinesNodePaths;
 import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
 
@@ -28,6 +30,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentMatchers;
+import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
@@ -36,6 +41,8 @@ import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 public class PipelinesRunningProcessServiceImplTest {
 
   private static final String MESSAGE = "info";
+
+  @Mock private DatasetService datasetService;
 
   private static final BiConsumer<Set<PipelineProcess>, Set<String>> ASSERT_FN = (s, ids) -> {
     Consumer<PipelineStep> checkFn = step -> {
@@ -93,7 +100,7 @@ public class PipelinesRunningProcessServiceImplTest {
     curator.start();
     service =
         new PipelinesRunningProcessServiceImpl(
-            curator, Executors.newSingleThreadExecutor(), null, "test");
+            curator, Executors.newSingleThreadExecutor(), null, datasetService, "test");
   }
 
   @After
@@ -146,6 +153,7 @@ public class PipelinesRunningProcessServiceImplTest {
     for (String crawlId : crawlIds) {
       addStatusToZookeeper(crawlId);
     }
+    Mockito.when(datasetService.get(ArgumentMatchers.any())).thenReturn(new Dataset());
 
     // When
     Set<PipelineProcess> set = service.getPipelineProcesses();
@@ -167,6 +175,7 @@ public class PipelinesRunningProcessServiceImplTest {
     int attempt = 1;
     String crawlId = datasetKey.toString() + "_" + attempt;
     addStatusToZookeeper(crawlId);
+    Mockito.when(datasetService.get(datasetKey)).thenReturn(new Dataset());
 
     // When
     PipelineProcess status = service.getPipelineProcess(datasetKey, attempt);
