@@ -5,6 +5,8 @@ import org.gbif.api.model.pipelines.PipelineProcess;
 import org.gbif.api.model.pipelines.PipelineStep;
 import org.gbif.api.model.pipelines.StepRunner;
 import org.gbif.api.model.pipelines.StepType;
+import org.gbif.api.model.registry.Dataset;
+import org.gbif.api.service.registry.DatasetService;
 import org.gbif.common.messaging.api.messages.PipelinesDwcaMessage;
 import org.gbif.common.messaging.api.messages.PipelinesXmlMessage;
 import org.gbif.crawler.constants.CrawlerNodePaths;
@@ -70,6 +72,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
   private final Executor executor;
   private final RestHighLevelClient client;
   private final String envPrefix;
+  private final DatasetService datasetService;
   private final LoadingCache<String, PipelineProcess> statusCache =
       CacheBuilder.newBuilder()
           .expireAfterWrite(2, TimeUnit.MINUTES)
@@ -87,10 +90,12 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
       CuratorFramework curator,
       Executor executor,
       RestHighLevelClient client,
+      DatasetService datasetService,
       @Named("pipelines.envPrefix") String envPrefix) {
     this.curator = checkNotNull(curator, "curator can't be null");
     this.executor = checkNotNull(executor, "executor can't be null");
     this.client = client;
+    this.datasetService = datasetService;
     this.envPrefix = envPrefix;
   }
 
@@ -200,6 +205,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
       // ALL_STEPS - static set of all pipelines steps: DWCA_TO_AVRO, VERBATIM_TO_INTERPRETED and etc.
       getStepInfo(crawlId).stream().filter(s -> Objects.nonNull(s.getStarted())).forEach(status::addStep);
       addNumberRecords(status, crawlId);
+      setDatasetTitle(status);
 
       return status;
     } catch (Exception ex) {
@@ -244,6 +250,13 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
                     ex);
               }
             });
+  }
+
+  private void setDatasetTitle(PipelineProcess process) {
+    if (process.getDatasetKey() != null) {
+      Dataset dataset = datasetService.get(process.getDatasetKey());
+      process.setDatasetTitle(dataset.getTitle());
+    }
   }
 
   /** Gets step info from ZK */
