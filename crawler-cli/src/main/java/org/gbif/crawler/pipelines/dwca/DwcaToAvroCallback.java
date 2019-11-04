@@ -28,9 +28,6 @@ import org.slf4j.MDC.MDCCloseable;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
 
-import static org.gbif.api.vocabulary.DatasetType.CHECKLIST;
-import static org.gbif.api.vocabulary.DatasetType.OCCURRENCE;
-import static org.gbif.api.vocabulary.DatasetType.SAMPLING_EVENT;
 import static org.gbif.crawler.pipelines.HdfsUtils.buildOutputPath;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -123,8 +120,7 @@ public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMes
    * Only correct messages can be handled, by now is only OCCURRENCE type messages
    */
   private boolean isMessageCorrect(PipelinesDwcaMessage message) {
-    return (OCCURRENCE == message.getDatasetType() || SAMPLING_EVENT == message.getDatasetType() || CHECKLIST == message.getDatasetType())
-        && message.getValidationReport().isValid();
+    return message.getDatasetType() != null && message.getValidationReport().isValid();
   }
 
   /**
