@@ -202,40 +202,6 @@ public class DwcaToAvroCallbackTest {
   }
 
   @Test
-  public void testNonOccurrenceCase() throws IOException {
-    // State
-    DwcaToAvroConfiguration config = new DwcaToAvroConfiguration();
-    config.archiveRepository = INPUT_DATASET_FOLDER;
-    config.repositoryPath = hdfsUri;
-
-    DwcaToAvroCallback callback = new DwcaToAvroCallback(config, publisher, curator, historyWsClient);
-
-    UUID uuid = UUID.fromString(DATASET_UUID);
-    int attempt = 2;
-    String crawlId = DATASET_UUID + "_" + attempt;
-
-    OccurrenceValidationReport report = new OccurrenceValidationReport(1, 1, 0, 1, 0, true);
-    DwcaValidationReport reason = new DwcaValidationReport(uuid, report);
-    PipelinesDwcaMessage message =
-        new PipelinesDwcaMessage(uuid, DatasetType.METADATA, URI.create(DUMMY_URL), attempt, reason,
-            Collections.singleton(DWCA_TO_VERBATIM.name()), EndpointType.DWC_ARCHIVE, Platform.PIPELINES);
-
-    // When
-    callback.handleMessage(message);
-
-    // Should
-    Path path = new Path(hdfsUri + DATASET_UUID + "/2/verbatim.avro");
-    assertFalse(cluster.getFileSystem().exists(path));
-    assertFalse(ZookeeperUtils.checkExists(curator, getPipelinesInfoPath(crawlId, DWCA_TO_VERBATIM.getLabel())));
-    assertFalse(ZookeeperUtils.checkExists(curator, getPipelinesInfoPath(crawlId, Fn.SUCCESSFUL_MESSAGE.apply(DWCA_TO_VERBATIM.getLabel()))));
-    assertFalse(ZookeeperUtils.checkExists(curator, getPipelinesInfoPath(crawlId, Fn.MQ_CLASS_NAME.apply(DWCA_TO_VERBATIM.getLabel()))));
-    assertFalse(ZookeeperUtils.checkExists(curator, getPipelinesInfoPath(crawlId, Fn.MQ_MESSAGE.apply(DWCA_TO_VERBATIM.getLabel()))));
-    assertTrue(publisher.getMessages().isEmpty());
-
-    publisher.close();
-  }
-
-  @Test
   public void testInvalidReportStatus() throws IOException {
     // State
     DwcaToAvroConfiguration config = new DwcaToAvroConfiguration();
