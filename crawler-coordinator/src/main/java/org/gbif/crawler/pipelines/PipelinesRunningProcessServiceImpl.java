@@ -9,31 +9,32 @@ import org.gbif.api.model.registry.Dataset;
 import org.gbif.api.service.registry.DatasetService;
 import org.gbif.common.messaging.api.messages.PipelinesDwcaMessage;
 import org.gbif.common.messaging.api.messages.PipelinesXmlMessage;
-import org.gbif.crawler.constants.CrawlerNodePaths;
 import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
 
+import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.Executors;
 import java.util.function.BiFunction;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
 
-import com.google.common.base.Charsets;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
+import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.recipes.cache.PathChildrenCache;
+import org.apache.curator.framework.recipes.cache.PathChildrenCacheListener;
+import org.cache2k.Cache;
+import org.cache2k.Cache2kBuilder;
+import org.cache2k.CacheEntry;
 import org.codehaus.jackson.map.DeserializationConfig;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.elasticsearch.action.search.SearchRequest;
@@ -55,6 +56,9 @@ import static org.gbif.crawler.constants.PipelinesNodePaths.PIPELINES_ROOT;
 import static org.gbif.crawler.constants.PipelinesNodePaths.getPipelinesInfoPath;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent.Type.CHILD_ADDED;
+import static org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent.Type.CHILD_REMOVED;
+import static org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent.Type.CHILD_UPDATED;
 
 /** Pipelines monitoring service collects all necessary information from Zookeeper */
 public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProcessService {
@@ -67,36 +71,56 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
   private static final DecimalFormat DF = new DecimalFormat("0");
   private static final BiFunction<UUID, Integer, String> CRAWL_ID_GENERATOR =
     (datasetKey, attempt) -> datasetKey + "_" + attempt;
+  private static final UnaryOperator<String> RELATIVE_PIPELINES_PATH =
+      path -> !Strings.isNullOrEmpty(path) ? path.split(PIPELINES_ROOT + "/")[1] : null;
 
   private final CuratorFramework curator;
-  private final Executor executor;
+  private final PathChildrenCache pathChildrenCache;
   private final RestHighLevelClient client;
   private final String envPrefix;
   private final DatasetService datasetService;
-  private final LoadingCache<String, PipelineProcess> statusCache =
-      CacheBuilder.newBuilder()
-          .expireAfterWrite(2, TimeUnit.MINUTES)
-          .build(CacheLoader.from(this::loadRunningPipelineProcess));
+  private final Cache<String, PipelineProcess> processCache =
+      Cache2kBuilder.of(String.class, PipelineProcess.class)
+          .entryCapacity(Long.MAX_VALUE)
+          .suppressExceptions(false)
+//          .eternal(true)
+          .build();
 
   /**
    * Creates a CrawlerMetricsService. Responsible for interacting with a ZooKeeper instance in a
    * read-only fashion.
    *
    * @param curator to access ZooKeeper
-   * @param executor to run the thread pool
    */
   @Inject
   public PipelinesRunningProcessServiceImpl(
       CuratorFramework curator,
-      Executor executor,
+      PathChildrenCache pathChildrenCache,
       RestHighLevelClient client,
       DatasetService datasetService,
       @Named("pipelines.envPrefix") String envPrefix) {
     this.curator = checkNotNull(curator, "curator can't be null");
-    this.executor = checkNotNull(executor, "executor can't be null");
+    this.pathChildrenCache = pathChildrenCache;
+    addPathChildrenCacheListener();
     this.client = client;
     this.datasetService = datasetService;
     this.envPrefix = envPrefix;
+  }
+
+  private void addPathChildrenCacheListener() {
+    PathChildrenCacheListener listener =
+        (curatorClient, event) -> {
+          if (event.getData() != null) {
+            String path = RELATIVE_PIPELINES_PATH.apply(event.getData().getPath());
+            System.out.println("EVENT: " + event.getData());
+            if (event.getType() == CHILD_ADDED || event.getType() == CHILD_UPDATED) {
+              processCache.put(path, loadRunningPipelineProcess(path));
+            } else if (event.getType() == CHILD_REMOVED) {
+              processCache.remove(path);
+            }
+          }
+        };
+    pathChildrenCache.getListenable().addListener(listener, Executors.newFixedThreadPool(10));
   }
 
   @Override
@@ -106,56 +130,20 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
 
   @Override
   public Set<PipelineProcess> getPipelineProcesses(@Nullable UUID datasetKey) {
-    Set<PipelineProcess> set =
-      new TreeSet<>(
-        Comparator.comparing(PipelineProcess::getDatasetKey)
-          .thenComparing(PipelineProcess::getAttempt));
-    try {
-      String path = CrawlerNodePaths.buildPath(PIPELINES_ROOT);
-
-      if (!checkExists(path)) {
-        return Collections.emptySet();
-      }
-
-      // Reads all nodes in async mode
-      CompletableFuture[] futures =
-        curator.getChildren().forPath(path).stream()
-          .filter(node -> datasetKey == null || node.startsWith(datasetKey.toString()))
-          .map(
-            id ->
-              CompletableFuture.runAsync(
-                () -> {
-                  PipelineProcess process = getPipelineProcessByCrawlId(id);
-                  Optional.ofNullable(process).ifPresent(set::add);
-                },
-                executor))
-          .toArray(CompletableFuture[]::new);
-
-      // Waits all threads
-      CompletableFuture.allOf(futures).get();
-
-    } catch (InterruptedException ignored) {
-      Thread.currentThread().interrupt();
-    } catch (ExecutionException ex) {
-      LOG.warn("Caught exception trying to retrieve dataset", ex.getCause());
-    } catch (Exception ex) {
-      throw new ServiceUnavailableException("Error communicating with ZooKeeper", ex);
-    }
-
-    return set;
+    return StreamSupport.stream(processCache.entries().spliterator(), false)
+        .filter(node -> datasetKey == null || node.getKey().startsWith(datasetKey.toString()))
+        .map(CacheEntry::getValue)
+        .collect(
+            Collectors.toCollection(
+                () ->
+                    new TreeSet<>(
+                        Comparator.comparing(PipelineProcess::getDatasetKey)
+                            .thenComparing(PipelineProcess::getAttempt))));
   }
 
   @Override
   public PipelineProcess getPipelineProcess(UUID datasetKey, int attempt) {
-    return getPipelineProcessByCrawlId(CRAWL_ID_GENERATOR.apply(datasetKey, attempt));
-  }
-
-  private PipelineProcess getPipelineProcessByCrawlId(String crawlId) {
-    try {
-      return statusCache.get(crawlId);
-    } catch (ExecutionException e) {
-      return null;
-    }
+    return processCache.get(CRAWL_ID_GENERATOR.apply(datasetKey, attempt));
   }
 
   @Override
@@ -253,9 +241,11 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
   }
 
   private void setDatasetTitle(PipelineProcess process) {
-    if (process.getDatasetKey() != null) {
+    if (process != null && process.getDatasetKey() != null) {
       Dataset dataset = datasetService.get(process.getDatasetKey());
-      process.setDatasetTitle(dataset.getTitle());
+      if (dataset != null) {
+        process.setDatasetTitle(dataset.getTitle());
+      }
     }
   }
 
@@ -316,7 +306,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
     if (checkExists(infoPath)) {
       byte[] responseData = curator.getData().forPath(infoPath);
       if (responseData != null) {
-        return Optional.of(new String(responseData, Charsets.UTF_8));
+        return Optional.of(new String(responseData, StandardCharsets.UTF_8));
       }
     }
     return Optional.empty();

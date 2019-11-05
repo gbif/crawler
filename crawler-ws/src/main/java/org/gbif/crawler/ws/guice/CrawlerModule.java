@@ -3,6 +3,7 @@ package org.gbif.crawler.ws.guice;
 import org.gbif.api.service.crawler.DatasetProcessService;
 import org.gbif.api.service.registry.DatasetService;
 import org.gbif.crawler.DatasetProcessServiceImpl;
+import org.gbif.crawler.constants.CrawlerNodePaths;
 import org.gbif.crawler.pipelines.PipelinesRunningProcessService;
 import org.gbif.crawler.pipelines.PipelinesRunningProcessServiceImpl;
 import org.gbif.registry.ws.client.guice.RegistryWsClientModule;
@@ -18,10 +19,13 @@ import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.apache.http.HttpHost;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
+
+import static org.gbif.crawler.constants.PipelinesNodePaths.PIPELINES_ROOT;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -73,16 +77,15 @@ class CrawlerModule extends PrivateServiceModule {
     return client;
   }
 
-  /**
-   * Provides an Executor to use for various threading related things. This is shared between all requests.
-   *
-   * @param threadCount number of maximum threads to use
-   */
   @Provides
   @Singleton
-  public Executor provideExecutor(@Named("crawl.threadCount") int threadCount) {
-    checkArgument(threadCount > 0, "threadCount has to be greater than zero");
-    return Executors.newFixedThreadPool(threadCount);
+  @Inject
+  public PathChildrenCache providePathChildrenCachePipelines(CuratorFramework curator)
+      throws Exception {
+    PathChildrenCache cache =
+        new PathChildrenCache(curator, CrawlerNodePaths.buildPath(PIPELINES_ROOT), true);
+    cache.start(PathChildrenCache.StartMode.BUILD_INITIAL_CACHE);
+    return cache;
   }
 
   /**

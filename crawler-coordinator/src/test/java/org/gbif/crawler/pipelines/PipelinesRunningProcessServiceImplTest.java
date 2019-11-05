@@ -5,6 +5,7 @@ import org.gbif.api.model.pipelines.PipelineStep;
 import org.gbif.api.model.pipelines.StepType;
 import org.gbif.api.model.registry.Dataset;
 import org.gbif.api.service.registry.DatasetService;
+import org.gbif.crawler.constants.CrawlerNodePaths;
 import org.gbif.crawler.constants.PipelinesNodePaths;
 import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
 
@@ -23,6 +24,7 @@ import com.google.common.base.Charsets;
 import com.google.common.collect.Sets;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.apache.curator.retry.RetryOneTime;
 import org.apache.curator.test.TestingServer;
 import org.junit.After;
@@ -35,7 +37,10 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import static org.gbif.crawler.constants.PipelinesNodePaths.PIPELINES_ROOT;
+
 import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+import static java.time.format.DateTimeFormatter.parsedExcessDays;
 
 @RunWith(MockitoJUnitRunner.class)
 public class PipelinesRunningProcessServiceImplTest {
@@ -85,6 +90,7 @@ public class PipelinesRunningProcessServiceImplTest {
 
 
   private CuratorFramework curator;
+  private PathChildrenCache pathChildrenCache;
   private TestingServer server;
   private PipelinesRunningProcessServiceImpl service;
 
@@ -98,14 +104,24 @@ public class PipelinesRunningProcessServiceImplTest {
         .retryPolicy(new RetryOneTime(1))
         .build();
     curator.start();
+    // TODO: executors
+    pathChildrenCache =
+        new PathChildrenCache(
+            curator,
+            CrawlerNodePaths.buildPath(PIPELINES_ROOT),
+            true,
+            false,
+            Executors.newFixedThreadPool(10));
+    pathChildrenCache.start(PathChildrenCache.StartMode.BUILD_INITIAL_CACHE);
     service =
         new PipelinesRunningProcessServiceImpl(
-            curator, Executors.newSingleThreadExecutor(), null, datasetService, "test");
+            curator, pathChildrenCache, null, datasetService, "test");
   }
 
   @After
   public void tearDown() throws IOException {
     curator.close();
+    pathChildrenCache.close();
     server.stop();
   }
 
