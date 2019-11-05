@@ -253,9 +253,11 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
   }
 
   private void setDatasetTitle(PipelineProcess process) {
-    if (process.getDatasetKey() != null) {
+    if (process != null && process.getDatasetKey() != null) {
       Dataset dataset = datasetService.get(process.getDatasetKey());
-      process.setDatasetTitle(dataset.getTitle());
+      if (dataset != null) {
+        process.setDatasetTitle(dataset.getTitle());
+      }
     }
   }
 
