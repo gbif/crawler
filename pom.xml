@@ -93,6 +93,9 @@
     <avro.version>1.8.2</avro.version>
     <elasticsearch.client.version>5.6.15</elasticsearch.client.version>
     <log4j-api.version>2.3</log4j-api.version>
+
+    <!-- Embedded simple search -->
+    <lucene.version>7.3.0</lucene.version>
   </properties>
 
   <repositories>
@@ -534,6 +537,18 @@
         <groupId>org.apache.logging.log4j</groupId>
         <artifactId>log4j-api</artifactId>
         <version>${log4j-api.version}</version>
+      </dependency>
+
+      <!-- Embedded simple search -->
+      <dependency>
+        <groupId>org.apache.lucene</groupId>
+        <artifactId>lucene-core</artifactId>
+        <version>${lucene.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.lucene</groupId>
+        <artifactId>lucene-backward-codecs</artifactId>
+        <version>${lucene.version}</version>
       </dependency>
 
       <dependency>
