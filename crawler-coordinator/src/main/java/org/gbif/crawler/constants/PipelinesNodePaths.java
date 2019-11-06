@@ -7,7 +7,7 @@ import static java.lang.String.join;
 
 public class PipelinesNodePaths {
 
-  private static final String DELIMITER = "/";
+  public static final String DELIMITER = "/";
 
   private static final String OK = "successful";
   private static final String ERR = "error";

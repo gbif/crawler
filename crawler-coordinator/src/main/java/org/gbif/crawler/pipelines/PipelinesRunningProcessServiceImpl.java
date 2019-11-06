@@ -31,8 +31,7 @@ import javax.annotation.Nullable;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.recipes.cache.PathChildrenCache;
-import org.apache.curator.framework.recipes.cache.PathChildrenCacheListener;
+import org.apache.curator.framework.recipes.cache.*;
 import org.apache.curator.utils.ZKPaths;
 import org.cache2k.Cache;
 import org.cache2k.Cache2kBuilder;
@@ -54,14 +53,15 @@ import org.slf4j.LoggerFactory;
 
 import static org.gbif.api.model.pipelines.PipelineStep.MetricInfo;
 import static org.gbif.api.model.pipelines.PipelineStep.Status;
+import static org.gbif.crawler.constants.PipelinesNodePaths.DELIMITER;
 import static org.gbif.crawler.constants.PipelinesNodePaths.PIPELINES_ROOT;
 import static org.gbif.crawler.constants.PipelinesNodePaths.getPipelinesInfoPath;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent.Type.CHILD_ADDED;
-import static org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent.Type.CHILD_REMOVED;
-import static org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent.Type.CHILD_UPDATED;
-import static org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent.Type.INITIALIZED;
+import static org.apache.curator.framework.recipes.cache.TreeCacheEvent.Type.INITIALIZED;
+import static org.apache.curator.framework.recipes.cache.TreeCacheEvent.Type.NODE_ADDED;
+import static org.apache.curator.framework.recipes.cache.TreeCacheEvent.Type.NODE_REMOVED;
+import static org.apache.curator.framework.recipes.cache.TreeCacheEvent.Type.NODE_UPDATED;
 
 /** Pipelines monitoring service collects all necessary information from Zookeeper */
 public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProcessService {
@@ -105,44 +105,35 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
     this.client = client;
     this.datasetService = datasetService;
     this.envPrefix = envPrefix;
-    setupPathChildrenCache();
+    setupTreeCache();
   }
 
-  private void setupPathChildrenCache() throws Exception {
-    PathChildrenCache cache =
-        new PathChildrenCache(
-            curator, CrawlerNodePaths.buildPath(PIPELINES_ROOT), false, false, executorService);
-    cache.start(PathChildrenCache.StartMode.POST_INITIALIZED_EVENT);
+  private void setupTreeCache() throws Exception {
+    TreeCache cache = new TreeCache(curator, CrawlerNodePaths.buildPath(PIPELINES_ROOT));
+    cache.start();
 
     Consumer<String> addToCache =
         path -> {
-          String relativePath = ZKPaths.getNodeFromPath(path);
-          processCache.put(relativePath, loadRunningPipelineProcess(relativePath));
+          String[] paths =
+              path.substring(path.indexOf(PIPELINES_ROOT)).split(DELIMITER);
+          if (paths.length > 1) {
+            processCache.put(paths[1], loadRunningPipelineProcess(paths[1]));
+          }
         };
 
-    PathChildrenCacheListener listener =
+    TreeCacheListener listener =
         (curatorClient, event) -> {
-          if (event.getType() == CHILD_ADDED || event.getType() == CHILD_UPDATED) {
+          if (event.getType() == NODE_ADDED || event.getType() == NODE_UPDATED) {
             addToCache.accept(event.getData().getPath());
-          } else if (event.getType() == CHILD_REMOVED) {
+          } else if (event.getType() == NODE_REMOVED) {
             processCache.remove(ZKPaths.getNodeFromPath(event.getData().getPath()));
           } else if (event.getType() == INITIALIZED) {
-            LOG.info("Loading {} nodes from pipelines ZK", event.getInitialData().size());
-            event.getInitialData().forEach(data -> addToCache.accept(data.getPath()));
+            LOG.info("ZK TreeCache initialized for pipelines");
           }
         };
     cache.getListenable().addListener(listener, executorService);
 
-    Runtime.getRuntime()
-        .addShutdownHook(
-            new Thread(
-                () -> {
-                  try {
-                    cache.close();
-                  } catch (IOException e) {
-                    LOG.warn("Could not close PathChildrenCache for ZK pipelines", e);
-                  }
-                }));
+    Runtime.getRuntime().addShutdownHook(new Thread(cache::close));
   }
 
   @Override
@@ -152,7 +143,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
 
   @Override
   public Set<PipelineProcess> getPipelineProcesses(@Nullable UUID datasetKey) {
-    return StreamSupport.stream(processCache.entries().spliterator(), false)
+    return StreamSupport.stream(processCache.entries().spliterator(), true)
         .filter(node -> datasetKey == null || node.getKey().startsWith(datasetKey.toString()))
         .map(CacheEntry::getValue)
         .collect(

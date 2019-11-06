@@ -31,7 +31,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
@@ -41,20 +41,18 @@ public class PipelinesRunningProcessServiceImplTest {
 
   private static final String MESSAGE = "info";
 
-  @Mock private DatasetService datasetService;
-
   private static final BiConsumer<Set<PipelineProcess>, Set<String>> ASSERT_FN = (s, ids) -> {
     Consumer<PipelineStep> checkFn = step -> {
       Assert.assertTrue(Arrays.asList(StepType.values()).contains(step.getType()));
-//      Assert.assertNotNull(step.getStarted());
-//      Assert.assertNotNull(step.getFinished());
-//      Assert.assertEquals(PipelineStep.Status.COMPLETED, step.getState());
-//      Assert.assertEquals(MESSAGE, step.getMessage());
+      Assert.assertNotNull(step.getStarted());
+      Assert.assertNotNull(step.getFinished());
+      Assert.assertEquals(PipelineStep.Status.COMPLETED, step.getState());
+      Assert.assertEquals(MESSAGE, step.getMessage());
     };
 
     s.forEach(status -> {
       Assert.assertNotNull(status);
-      Assert.assertFalse(status.getSteps().isEmpty());
+      Assert.assertEquals(6, status.getSteps().size());
       Assert.assertTrue(ids.contains(status.getDatasetKey() + "_" + status.getAttempt()));
       status.getSteps().forEach(step -> {
 
@@ -101,11 +99,13 @@ public class PipelinesRunningProcessServiceImplTest {
     ExecutorService executorService = Executors.newFixedThreadPool(2);
     service =
         new PipelinesRunningProcessServiceImpl(
-            curator, executorService, null, datasetService, "test");
+            curator, executorService, null, Mockito.mock(DatasetService.class), "test");
   }
 
   @After
-  public void tearDown() throws IOException {
+  public void tearDown() throws IOException, InterruptedException {
+    // we wait for the ZK TreeCache to finish since it's executed async and needs curator to be open
+    Thread.sleep(200);
     curator.close();
     server.stop();
   }
@@ -154,6 +154,9 @@ public class PipelinesRunningProcessServiceImplTest {
       addStatusToZookeeper(crawlId);
     }
 
+    // we wait for the ZK TreeCache to respond to the events
+    Thread.sleep(300);
+
     // When
     Set<PipelineProcess> set = service.getPipelineProcesses();
 
@@ -175,6 +178,9 @@ public class PipelinesRunningProcessServiceImplTest {
     String crawlId = datasetKey.toString() + "_" + attempt;
     addStatusToZookeeper(crawlId);
 
+    // we wait for the ZK TreeCache to respond to the events
+    Thread.sleep(200);
+
     // When
     PipelineProcess status = service.getPipelineProcess(datasetKey, attempt);
 
@@ -192,6 +198,9 @@ public class PipelinesRunningProcessServiceImplTest {
     UUID datasetId = UUID.fromString("a731e3b1-bc81-4c1f-aad7-aba75ce3cf3b");
     String crawlId = "a731e3b1-bc81-4c1f-aad7-aba75ce3cf3b_1";
     addStatusToZookeeper(crawlId);
+
+    // we wait for the ZK TreeCache to respond to the events
+    Thread.sleep(200);
 
     // When
     Set<PipelineProcess> set = service.getPipelineProcesses(datasetId);
