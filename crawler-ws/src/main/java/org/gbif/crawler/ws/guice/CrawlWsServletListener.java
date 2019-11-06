@@ -3,7 +3,6 @@ package org.gbif.crawler.ws.guice;
 import org.gbif.ws.app.ConfUtils;
 import org.gbif.ws.server.guice.GbifServletListener;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.Executor;
@@ -14,7 +13,6 @@ import javax.servlet.ServletContextEvent;
 import com.google.common.collect.Lists;
 import com.google.inject.Module;
 import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 
 /**
  * The Crawler-Coordinator WS production module.

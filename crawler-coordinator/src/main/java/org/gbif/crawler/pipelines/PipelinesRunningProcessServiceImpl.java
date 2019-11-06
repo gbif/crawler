@@ -50,6 +50,7 @@ import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static org.gbif.api.model.pipelines.PipelineProcess.STEPS_COMPARATOR;
 import static org.gbif.api.model.pipelines.PipelineStep.MetricInfo;
 import static org.gbif.api.model.pipelines.PipelineStep.Status;
 import static org.gbif.crawler.constants.PipelinesNodePaths.DELIMITER;
@@ -112,25 +113,26 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
     cache.start();
 
     Function<String, Optional<String>> relativePath =
-        path -> {
-          String[] paths =
-              path.substring(path.indexOf(PIPELINES_ROOT)).split(DELIMITER);
-          if (paths.length > 1) {
-            return Optional.of(paths[1]);
-          }
-          return Optional.empty();
-        };
+      path -> {
+        String[] paths =
+          path.substring(path.indexOf(PIPELINES_ROOT)).split(DELIMITER);
+        if (paths.length > 1) {
+          return Optional.of(paths[1]);
+        }
+        return Optional.empty();
+      };
 
     TreeCacheListener listener =
         (curatorClient, event) -> {
           if (event.getType() == NODE_ADDED || event.getType() == NODE_UPDATED) {
             relativePath
                 .apply(event.getData().getPath())
-                .ifPresent(path -> processCache.put(path, loadRunningPipelineProcess(path)));
+                .ifPresent(
+                    path ->
+                        loadRunningPipelineProcess(path)
+                            .ifPresent(process -> processCache.put(path, process)));
           } else if (event.getType() == NODE_REMOVED) {
-            relativePath
-                .apply(event.getData().getPath())
-                .ifPresent(processCache::remove);
+            relativePath.apply(event.getData().getPath()).ifPresent(processCache::remove);
           } else if (event.getType() == INITIALIZED) {
             LOG.info("ZK TreeCache initialized for pipelines");
           }
@@ -190,7 +192,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
    *
    * @param crawlId path to dataset info
    */
-  private PipelineProcess loadRunningPipelineProcess(String crawlId) {
+  private Optional<PipelineProcess> loadRunningPipelineProcess(String crawlId) {
     checkNotNull(crawlId, "crawlId can't be null");
 
     try {
@@ -198,21 +200,29 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
 
       // Check if dataset is actually being processed right now
       if (!checkExists(getPipelinesInfoPath(crawlId))) {
-          return new PipelineProcess().setDatasetKey(UUID.fromString(ids[0])).setAttempt(Integer.parseInt(ids[1]));
+        return Optional.of(
+            new PipelineProcess()
+                .setDatasetKey(UUID.fromString(ids[0]))
+                .setAttempt(Integer.parseInt(ids[1])));
       }
       // Here we're trying to load all information from Zookeeper into the DatasetProcessStatus
       // object
-      PipelineProcess status =
+      PipelineProcess process =
           new PipelineProcess()
               .setDatasetKey(UUID.fromString(ids[0]))
               .setAttempt(Integer.parseInt(ids[1]));
 
       // ALL_STEPS - static set of all pipelines steps: DWCA_TO_AVRO, VERBATIM_TO_INTERPRETED and etc.
-      getStepInfo(crawlId).stream().filter(s -> s.getStarted() != null).forEach(status::addStep);
-      addNumberRecords(status, crawlId);
-      setDatasetTitle(status);
+      getStepInfo(crawlId).stream().filter(s -> s.getStarted() != null).forEach(process::addStep);
 
-      return status;
+      if (process.getSteps().isEmpty()) {
+        return Optional.empty();
+      }
+
+      addNumberRecords(process, crawlId);
+      setDatasetTitle(process);
+
+      return Optional.of(process);
     } catch (Exception ex) {
       LOG.error("crawlId {}", crawlId, ex.getCause());
       throw new ServiceUnavailableException("Error communicating with ZooKeeper", ex);
@@ -223,7 +233,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
     // get number of records
     status.getSteps().stream()
         .filter(s -> s.getType().getExecutionOrder() == 1)
-        .max(Comparator.comparing(PipelineStep::getStarted))
+        .max(STEPS_COMPARATOR)
         .ifPresent(
             s -> {
               try {
