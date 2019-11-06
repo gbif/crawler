@@ -12,7 +12,6 @@ import org.gbif.common.messaging.api.messages.PipelinesXmlMessage;
 import org.gbif.crawler.constants.CrawlerNodePaths;
 import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
@@ -22,7 +21,7 @@ import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.function.BiFunction;
-import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -31,8 +30,8 @@ import javax.annotation.Nullable;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.recipes.cache.*;
-import org.apache.curator.utils.ZKPaths;
+import org.apache.curator.framework.recipes.cache.TreeCache;
+import org.apache.curator.framework.recipes.cache.TreeCacheListener;
 import org.cache2k.Cache;
 import org.cache2k.Cache2kBuilder;
 import org.cache2k.CacheEntry;
@@ -112,21 +111,26 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
     TreeCache cache = new TreeCache(curator, CrawlerNodePaths.buildPath(PIPELINES_ROOT));
     cache.start();
 
-    Consumer<String> addToCache =
+    Function<String, Optional<String>> relativePath =
         path -> {
           String[] paths =
               path.substring(path.indexOf(PIPELINES_ROOT)).split(DELIMITER);
           if (paths.length > 1) {
-            processCache.put(paths[1], loadRunningPipelineProcess(paths[1]));
+            return Optional.of(paths[1]);
           }
+          return Optional.empty();
         };
 
     TreeCacheListener listener =
         (curatorClient, event) -> {
           if (event.getType() == NODE_ADDED || event.getType() == NODE_UPDATED) {
-            addToCache.accept(event.getData().getPath());
+            relativePath
+                .apply(event.getData().getPath())
+                .ifPresent(path -> processCache.put(path, loadRunningPipelineProcess(path)));
           } else if (event.getType() == NODE_REMOVED) {
-            processCache.remove(ZKPaths.getNodeFromPath(event.getData().getPath()));
+            relativePath
+                .apply(event.getData().getPath())
+                .ifPresent(processCache::remove);
           } else if (event.getType() == INITIALIZED) {
             LOG.info("ZK TreeCache initialized for pipelines");
           }
