@@ -9,8 +9,10 @@ import org.gbif.api.model.registry.Dataset;
 import org.gbif.api.service.registry.DatasetService;
 import org.gbif.common.messaging.api.messages.PipelinesDwcaMessage;
 import org.gbif.common.messaging.api.messages.PipelinesXmlMessage;
+import org.gbif.crawler.constants.CrawlerNodePaths;
 import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
@@ -52,6 +54,7 @@ import org.slf4j.LoggerFactory;
 
 import static org.gbif.api.model.pipelines.PipelineStep.MetricInfo;
 import static org.gbif.api.model.pipelines.PipelineStep.Status;
+import static org.gbif.crawler.constants.PipelinesNodePaths.PIPELINES_ROOT;
 import static org.gbif.crawler.constants.PipelinesNodePaths.getPipelinesInfoPath;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -73,7 +76,6 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
     (datasetKey, attempt) -> datasetKey + "_" + attempt;
 
   private final CuratorFramework curator;
-  private final PathChildrenCache pathChildrenCache;
   private final ExecutorService executorService;
   private final RestHighLevelClient client;
   private final String envPrefix;
@@ -94,21 +96,24 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
   @Inject
   public PipelinesRunningProcessServiceImpl(
       CuratorFramework curator,
-      PathChildrenCache pathChildrenCache,
       ExecutorService executorService,
       RestHighLevelClient client,
       DatasetService datasetService,
-      @Named("pipelines.envPrefix") String envPrefix) {
+      @Named("pipelines.envPrefix") String envPrefix) throws Exception {
     this.curator = checkNotNull(curator, "curator can't be null");
-    this.pathChildrenCache = pathChildrenCache;
     this.executorService = executorService;
-    addPathChildrenCacheListener();
     this.client = client;
     this.datasetService = datasetService;
     this.envPrefix = envPrefix;
+    setupPathChildrenCache();
   }
 
-  private void addPathChildrenCacheListener() {
+  private void setupPathChildrenCache() throws Exception {
+    PathChildrenCache cache =
+        new PathChildrenCache(
+            curator, CrawlerNodePaths.buildPath(PIPELINES_ROOT), false, false, executorService);
+    cache.start(PathChildrenCache.StartMode.POST_INITIALIZED_EVENT);
+
     Consumer<String> addToCache =
         path -> {
           String relativePath = ZKPaths.getNodeFromPath(path);
@@ -126,7 +131,18 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
             event.getInitialData().forEach(data -> addToCache.accept(data.getPath()));
           }
         };
-    pathChildrenCache.getListenable().addListener(listener, executorService);
+    cache.getListenable().addListener(listener, executorService);
+
+    Runtime.getRuntime()
+        .addShutdownHook(
+            new Thread(
+                () -> {
+                  try {
+                    cache.close();
+                  } catch (IOException e) {
+                    LOG.warn("Could not close PathChildrenCache for ZK pipelines", e);
+                  }
+                }));
   }
 
   @Override

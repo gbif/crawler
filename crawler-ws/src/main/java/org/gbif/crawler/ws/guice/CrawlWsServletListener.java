@@ -46,12 +46,5 @@ public class CrawlWsServletListener extends GbifServletListener {
 
     CuratorFramework curatorFramework = getInjector().getInstance(CuratorFramework.class);
     curatorFramework.close();
-
-    PathChildrenCache pathChildrenCachePipelines = getInjector().getInstance(PathChildrenCache.class);
-    try {
-      pathChildrenCachePipelines.close();
-    } catch (IOException e) {
-      throw new IllegalStateException("Could not close PathCacheListener", e);
-    }
   }
 }

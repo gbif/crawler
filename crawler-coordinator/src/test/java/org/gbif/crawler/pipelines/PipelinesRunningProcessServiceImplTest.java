@@ -4,7 +4,6 @@ import org.gbif.api.model.pipelines.PipelineProcess;
 import org.gbif.api.model.pipelines.PipelineStep;
 import org.gbif.api.model.pipelines.StepType;
 import org.gbif.api.service.registry.DatasetService;
-import org.gbif.crawler.constants.CrawlerNodePaths;
 import org.gbif.crawler.constants.PipelinesNodePaths;
 import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
 
@@ -34,8 +33,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import static org.gbif.crawler.constants.PipelinesNodePaths.PIPELINES_ROOT;
 
 import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
@@ -102,18 +99,13 @@ public class PipelinesRunningProcessServiceImplTest {
             .build();
     curator.start();
     ExecutorService executorService = Executors.newFixedThreadPool(2);
-    pathChildrenCache =
-        new PathChildrenCache(
-            curator, CrawlerNodePaths.buildPath(PIPELINES_ROOT), false, false, executorService);
-    pathChildrenCache.start(PathChildrenCache.StartMode.NORMAL);
     service =
         new PipelinesRunningProcessServiceImpl(
-            curator, pathChildrenCache, executorService, null, datasetService, "test");
+            curator, executorService, null, datasetService, "test");
   }
 
   @After
   public void tearDown() throws IOException {
-    pathChildrenCache.close();
     curator.close();
     server.stop();
   }

@@ -50,7 +50,6 @@ class CrawlerModule extends PrivateServiceModule {
     expose(ExecutorService.class);
     expose(Executor.class);
     expose(CuratorFramework.class);
-    expose(PathChildrenCache.class);
     expose(RestHighLevelClient.class);
     expose(DatasetService.class);
 
@@ -78,18 +77,6 @@ class CrawlerModule extends PrivateServiceModule {
         .build();
     client.start();
     return client;
-  }
-
-  @Provides
-  @Singleton
-  @Inject
-  public PathChildrenCache providePathChildrenCachePipelines(
-      CuratorFramework curator, ExecutorService executorService) throws Exception {
-    PathChildrenCache cache =
-        new PathChildrenCache(
-            curator, CrawlerNodePaths.buildPath(PIPELINES_ROOT), false, false, executorService);
-    cache.start(PathChildrenCache.StartMode.POST_INITIALIZED_EVENT);
-    return cache;
   }
 
   /**
