@@ -48,6 +48,7 @@ class CrawlerModule extends PrivateServiceModule {
     expose(DatasetProcessService.class);
     expose(PipelinesRunningProcessService.class);
     expose(ExecutorService.class);
+    expose(Executor.class);
     expose(CuratorFramework.class);
     expose(PathChildrenCache.class);
     expose(RestHighLevelClient.class);
@@ -101,6 +102,16 @@ class CrawlerModule extends PrivateServiceModule {
   public ExecutorService provideExecutorService(@Named("crawl.threadCount") int threadCount) {
     checkArgument(threadCount > 0, "threadCount has to be greater than zero");
     return Executors.newFixedThreadPool(threadCount);
+  }
+
+  /**
+   * Provides an Executor to use for various threading related things. This is shared between all requests.
+   */
+  @Provides
+  @Singleton
+  @Inject
+  public Executor provideExecutor(ExecutorService executorService) {
+    return executorService;
   }
 
   /**
