@@ -18,20 +18,20 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.*;
-import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorService;
 import java.util.function.BiFunction;
-import java.util.function.UnaryOperator;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
 
-import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheListener;
+import org.apache.curator.utils.ZKPaths;
 import org.cache2k.Cache;
 import org.cache2k.Cache2kBuilder;
 import org.cache2k.CacheEntry;
@@ -52,13 +52,13 @@ import org.slf4j.LoggerFactory;
 
 import static org.gbif.api.model.pipelines.PipelineStep.MetricInfo;
 import static org.gbif.api.model.pipelines.PipelineStep.Status;
-import static org.gbif.crawler.constants.PipelinesNodePaths.PIPELINES_ROOT;
 import static org.gbif.crawler.constants.PipelinesNodePaths.getPipelinesInfoPath;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent.Type.CHILD_ADDED;
 import static org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent.Type.CHILD_REMOVED;
 import static org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent.Type.CHILD_UPDATED;
+import static org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent.Type.INITIALIZED;
 
 /** Pipelines monitoring service collects all necessary information from Zookeeper */
 public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProcessService {
@@ -71,11 +71,10 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
   private static final DecimalFormat DF = new DecimalFormat("0");
   private static final BiFunction<UUID, Integer, String> CRAWL_ID_GENERATOR =
     (datasetKey, attempt) -> datasetKey + "_" + attempt;
-  private static final UnaryOperator<String> RELATIVE_PIPELINES_PATH =
-      path -> !Strings.isNullOrEmpty(path) ? path.split(PIPELINES_ROOT + "/")[1] : null;
 
   private final CuratorFramework curator;
   private final PathChildrenCache pathChildrenCache;
+  private final ExecutorService executorService;
   private final RestHighLevelClient client;
   private final String envPrefix;
   private final DatasetService datasetService;
@@ -83,7 +82,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
       Cache2kBuilder.of(String.class, PipelineProcess.class)
           .entryCapacity(Long.MAX_VALUE)
           .suppressExceptions(false)
-//          .eternal(true)
+          .eternal(true)
           .build();
 
   /**
@@ -96,11 +95,13 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
   public PipelinesRunningProcessServiceImpl(
       CuratorFramework curator,
       PathChildrenCache pathChildrenCache,
+      ExecutorService executorService,
       RestHighLevelClient client,
       DatasetService datasetService,
       @Named("pipelines.envPrefix") String envPrefix) {
     this.curator = checkNotNull(curator, "curator can't be null");
     this.pathChildrenCache = pathChildrenCache;
+    this.executorService = executorService;
     addPathChildrenCacheListener();
     this.client = client;
     this.datasetService = datasetService;
@@ -108,19 +109,23 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
   }
 
   private void addPathChildrenCacheListener() {
+    Consumer<String> addToCache =
+        path -> {
+          String relativePath = ZKPaths.getNodeFromPath(path);
+          processCache.put(relativePath, loadRunningPipelineProcess(relativePath));
+        };
+
     PathChildrenCacheListener listener =
         (curatorClient, event) -> {
-          if (event.getData() != null) {
-            String path = RELATIVE_PIPELINES_PATH.apply(event.getData().getPath());
-            System.out.println("EVENT: " + event.getData());
-            if (event.getType() == CHILD_ADDED || event.getType() == CHILD_UPDATED) {
-              processCache.put(path, loadRunningPipelineProcess(path));
-            } else if (event.getType() == CHILD_REMOVED) {
-              processCache.remove(path);
-            }
+          if (event.getType() == CHILD_ADDED || event.getType() == CHILD_UPDATED) {
+            addToCache.accept(event.getData().getPath());
+          } else if (event.getType() == CHILD_REMOVED) {
+            processCache.remove(ZKPaths.getNodeFromPath(event.getData().getPath()));
+          } else if (event.getType() == INITIALIZED) {
+            event.getInitialData().forEach(data -> addToCache.accept(data.getPath()));
           }
         };
-    pathChildrenCache.getListenable().addListener(listener, Executors.newFixedThreadPool(10));
+    pathChildrenCache.getListenable().addListener(listener, executorService);
   }
 
   @Override
@@ -191,7 +196,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
               .setAttempt(Integer.parseInt(ids[1]));
 
       // ALL_STEPS - static set of all pipelines steps: DWCA_TO_AVRO, VERBATIM_TO_INTERPRETED and etc.
-      getStepInfo(crawlId).stream().filter(s -> Objects.nonNull(s.getStarted())).forEach(status::addStep);
+      getStepInfo(crawlId).stream().filter(s -> s.getStarted() != null).forEach(status::addStep);
       addNumberRecords(status, crawlId);
       setDatasetTitle(status);
 
@@ -257,14 +262,21 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
               PipelineStep step = new PipelineStep().setType(stepType);
 
               try {
-                Optional<LocalDateTime> startDateOpt = getAsDate(crawlId, Fn.START_DATE.apply(stepType.getLabel()));
-                Optional<LocalDateTime> endDateOpt = getAsDate(crawlId, Fn.END_DATE.apply(stepType.getLabel()));
-                Optional<Boolean> isErrorOpt = getAsBoolean(crawlId, Fn.ERROR_AVAILABILITY.apply(stepType.getLabel()));
-                Optional<String> errorMessageOpt = getAsString(crawlId, Fn.ERROR_MESSAGE.apply(stepType.getLabel()));
-                Optional<Boolean> isSuccessful = getAsBoolean(crawlId, Fn.SUCCESSFUL_AVAILABILITY.apply(stepType.getLabel()));
-                Optional<String> successfulMessageOpt = getAsString(crawlId, Fn.SUCCESSFUL_MESSAGE.apply(stepType.getLabel()));
+                Optional<LocalDateTime> startDateOpt =
+                    getAsDate(crawlId, Fn.START_DATE.apply(stepType.getLabel()));
+                Optional<LocalDateTime> endDateOpt =
+                    getAsDate(crawlId, Fn.END_DATE.apply(stepType.getLabel()));
+                Optional<Boolean> isErrorOpt =
+                    getAsBoolean(crawlId, Fn.ERROR_AVAILABILITY.apply(stepType.getLabel()));
+                Optional<String> errorMessageOpt =
+                    getAsString(crawlId, Fn.ERROR_MESSAGE.apply(stepType.getLabel()));
+                Optional<Boolean> isSuccessful =
+                    getAsBoolean(crawlId, Fn.SUCCESSFUL_AVAILABILITY.apply(stepType.getLabel()));
+                Optional<String> successfulMessageOpt =
+                    getAsString(crawlId, Fn.SUCCESSFUL_MESSAGE.apply(stepType.getLabel()));
 
-                getAsString(crawlId, Fn.RUNNER.apply(stepType.getLabel())).ifPresent(r -> step.setRunner(StepRunner.valueOf(r)));
+                getAsString(crawlId, Fn.RUNNER.apply(stepType.getLabel()))
+                    .ifPresent(r -> step.setRunner(StepRunner.valueOf(r)));
 
                 // dates
                 step.setStarted(startDateOpt.orElse(endDateOpt.orElse(null)));

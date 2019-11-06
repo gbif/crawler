@@ -12,6 +12,7 @@ import org.gbif.ws.client.guice.AnonymousAuthModule;
 
 import java.util.Properties;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import com.google.inject.*;
@@ -80,12 +81,25 @@ class CrawlerModule extends PrivateServiceModule {
   @Provides
   @Singleton
   @Inject
-  public PathChildrenCache providePathChildrenCachePipelines(CuratorFramework curator)
-      throws Exception {
+  public PathChildrenCache providePathChildrenCachePipelines(
+      CuratorFramework curator, ExecutorService executorService) throws Exception {
     PathChildrenCache cache =
-        new PathChildrenCache(curator, CrawlerNodePaths.buildPath(PIPELINES_ROOT), true);
-    cache.start(PathChildrenCache.StartMode.BUILD_INITIAL_CACHE);
+        new PathChildrenCache(
+            curator, CrawlerNodePaths.buildPath(PIPELINES_ROOT), false, false, executorService);
+    cache.start(PathChildrenCache.StartMode.POST_INITIALIZED_EVENT);
     return cache;
+  }
+
+  /**
+   * Provides an Executor to use for various threading related things. This is shared between all requests.
+   *
+   * @param threadCount number of maximum threads to use
+   */
+  @Provides
+  @Singleton
+  public ExecutorService provideExecutorService(@Named("crawl.threadCount") int threadCount) {
+    checkArgument(threadCount > 0, "threadCount has to be greater than zero");
+    return Executors.newFixedThreadPool(threadCount);
   }
 
   /**
