@@ -122,6 +122,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
           } else if (event.getType() == CHILD_REMOVED) {
             processCache.remove(ZKPaths.getNodeFromPath(event.getData().getPath()));
           } else if (event.getType() == INITIALIZED) {
+            LOG.info("Loading {} nodes from pipelines ZK", event.getInitialData().size());
             event.getInitialData().forEach(data -> addToCache.accept(data.getPath()));
           }
         };
