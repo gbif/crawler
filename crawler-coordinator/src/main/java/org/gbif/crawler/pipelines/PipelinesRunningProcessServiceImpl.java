@@ -10,6 +10,7 @@ import org.gbif.api.service.registry.DatasetService;
 import org.gbif.common.messaging.api.messages.PipelinesDwcaMessage;
 import org.gbif.common.messaging.api.messages.PipelinesXmlMessage;
 import org.gbif.crawler.constants.CrawlerNodePaths;
+import org.gbif.crawler.constants.PipelinesNodePaths;
 import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
 
 import java.nio.charset.StandardCharsets;
@@ -113,18 +114,19 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
     cache.start();
 
     Function<String, Optional<String>> relativePath =
-      path -> {
-        String[] paths =
-          path.substring(path.indexOf(PIPELINES_ROOT)).split(DELIMITER);
-        if (paths.length > 1) {
-          return Optional.of(paths[1]);
-        }
-        return Optional.empty();
-      };
+        path -> {
+          String[] paths = path.substring(path.indexOf(PIPELINES_ROOT)).split(DELIMITER);
+          if (paths.length > 1) {
+            return Optional.of(paths[1]);
+          }
+          return Optional.empty();
+        };
 
     TreeCacheListener listener =
         (curatorClient, event) -> {
-          if (event.getType() == NODE_ADDED || event.getType() == NODE_UPDATED) {
+          // we only add in the cache the events that update the start date of a step
+          if ((event.getType() == NODE_ADDED || event.getType() == NODE_UPDATED)
+              && event.getData().getPath().contains(PipelinesNodePaths.START)) {
             relativePath
                 .apply(event.getData().getPath())
                 .ifPresent(
