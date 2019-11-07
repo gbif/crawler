@@ -3,6 +3,7 @@ package org.gbif.crawler.ws.guice;
 import org.gbif.api.service.crawler.DatasetProcessService;
 import org.gbif.api.service.registry.DatasetService;
 import org.gbif.crawler.DatasetProcessServiceImpl;
+import org.gbif.crawler.constants.CrawlerNodePaths;
 import org.gbif.crawler.pipelines.PipelinesRunningProcessService;
 import org.gbif.crawler.pipelines.PipelinesRunningProcessServiceImpl;
 import org.gbif.registry.ws.client.guice.RegistryWsClientModule;
@@ -11,6 +12,7 @@ import org.gbif.ws.client.guice.AnonymousAuthModule;
 
 import java.util.Properties;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import com.google.inject.*;
@@ -18,10 +20,13 @@ import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.apache.http.HttpHost;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
+
+import static org.gbif.crawler.constants.PipelinesNodePaths.PIPELINES_ROOT;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -42,6 +47,7 @@ class CrawlerModule extends PrivateServiceModule {
     bind(PipelinesRunningProcessService.class).to(PipelinesRunningProcessServiceImpl.class).in(Scopes.SINGLETON);
     expose(DatasetProcessService.class);
     expose(PipelinesRunningProcessService.class);
+    expose(ExecutorService.class);
     expose(Executor.class);
     expose(CuratorFramework.class);
     expose(RestHighLevelClient.class);
@@ -80,9 +86,19 @@ class CrawlerModule extends PrivateServiceModule {
    */
   @Provides
   @Singleton
-  public Executor provideExecutor(@Named("crawl.threadCount") int threadCount) {
+  public ExecutorService provideExecutorService(@Named("crawl.threadCount") int threadCount) {
     checkArgument(threadCount > 0, "threadCount has to be greater than zero");
     return Executors.newFixedThreadPool(threadCount);
+  }
+
+  /**
+   * Provides an Executor to use for various threading related things. This is shared between all requests.
+   */
+  @Provides
+  @Singleton
+  @Inject
+  public Executor provideExecutor(ExecutorService executorService) {
+    return executorService;
   }
 
   /**

@@ -4,6 +4,7 @@ import org.gbif.api.model.pipelines.PipelineProcess;
 import org.gbif.crawler.pipelines.PipelinesRunningProcessService;
 import org.gbif.ws.util.ExtraMediaTypes;
 
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import javax.ws.rs.*;
@@ -17,6 +18,8 @@ import com.google.inject.Inject;
 @Produces({MediaType.APPLICATION_JSON, ExtraMediaTypes.APPLICATION_JAVASCRIPT})
 @Path("pipelines/process/running")
 public class PipelinesRunningProcessResource {
+
+  private static final int MAX_PAGE_SIZE = 100;
 
   private final PipelinesRunningProcessService service;
 
@@ -39,11 +42,21 @@ public class PipelinesRunningProcessResource {
    * @param datasetKey typical dataset UUID
    */
   @GET
+  @Path("search")
+  public List<PipelineProcess> searchByDatasetTitle(@QueryParam("datasetTile") String datasetTitleQ, @QueryParam("page") int pageNumber, @QueryParam("size") int pageSize) {
+    return service.searchByDatasetTitle(datasetTitleQ, pageNumber, Math.min(pageSize, MAX_PAGE_SIZE));
+  }
+
+  /**
+   * Returns information about specific dataset by datasetKey
+   *
+   * @param datasetKey typical dataset UUID
+   */
+  @GET
   @Path("{datasetKey}")
   public Set<PipelineProcess> getPipelinesProcessesByDatasetKey(@PathParam("datasetKey") UUID datasetKey) {
     return service.getPipelineProcesses(datasetKey);
   }
-
 
   /**
    * Returns information about specific running process.

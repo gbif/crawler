@@ -2,6 +2,7 @@ package org.gbif.crawler.pipelines;
 
 import org.gbif.api.model.pipelines.PipelineProcess;
 
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -20,5 +21,7 @@ public interface PipelinesRunningProcessService {
   void deletePipelineProcess(UUID datasetKey, int attempt);
 
   void deleteAllPipelineProcess();
+
+  List<PipelineProcess> searchByDatasetTitle(String datasetTitleQ, int pageNumber, int pageSize);
 
 }
