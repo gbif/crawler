@@ -139,7 +139,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
             }
 
             if (!startCrawlEvent.test(event.getData().getPath())
-                && curator.checkExists().forPath(crawlIdPathOpt.get()) == null) {
+                && curator.checkExists().forPath(CrawlerNodePaths.buildPath(crawlIdPathOpt.get())) == null) {
               // if it's an event which is setting the final state of the crawl we check if the node
               // was deleted already
               return;
