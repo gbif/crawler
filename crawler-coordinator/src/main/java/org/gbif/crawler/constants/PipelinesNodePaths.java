@@ -12,15 +12,14 @@ public class PipelinesNodePaths {
   private static final String OK = "successful";
   private static final String ERR = "error";
   private static final String MQ = "mq";
-  private static final String START = "startDate";
-  private static final String END = "endDate";
   private static final String RUNNER_TYPE = "runner";
   private static final String MESSAGE = "message";
   private static final String CLASS_NAME = "className";
   private static final String DONE = "availability";
 
   public static final String PIPELINES_ROOT = "pipelines";
-
+  public static final String START = "startDate";
+  public static final String END = "endDate";
   public static final String SIZE = "size";
 
   public static class Fn {
