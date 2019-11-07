@@ -124,9 +124,10 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
 
     TreeCacheListener listener =
         (curatorClient, event) -> {
-          // we only add in the cache the events that update the start date of a step
+          // we only add in the cache the events that update the start or end date of a step
           if ((event.getType() == NODE_ADDED || event.getType() == NODE_UPDATED)
-              && event.getData().getPath().contains(PipelinesNodePaths.START)) {
+              && (event.getData().getPath().contains(PipelinesNodePaths.START)
+                  || event.getData().getPath().contains(PipelinesNodePaths.END))) {
             relativePath
                 .apply(event.getData().getPath())
                 .ifPresent(
