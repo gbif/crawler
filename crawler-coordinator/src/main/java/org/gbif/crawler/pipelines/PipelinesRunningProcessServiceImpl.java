@@ -125,8 +125,10 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
         (curatorClient, event) -> {
           if ((event.getType() == NODE_ADDED || event.getType() == NODE_UPDATED)) {
             Optional<String> crawlIdPathOpt = crawlIdPath.apply(event.getData().getPath());
-            // we only add the process when a start event happens to avoid concurrency issues
-            if (crawlIdPathOpt.isPresent() && event.getData().getPath().contains(START)) {
+            // we only add the process when a start or end event happens to avoid concurrency issues
+            if (crawlIdPathOpt.isPresent()
+                && (event.getData().getPath().contains(START)
+                    || event.getData().getPath().contains(END))) {
               // adding to the cache
               loadRunningPipelineProcess(crawlIdPathOpt.get())
                   .ifPresent(process -> processCache.put(crawlIdPathOpt.get(), process));
