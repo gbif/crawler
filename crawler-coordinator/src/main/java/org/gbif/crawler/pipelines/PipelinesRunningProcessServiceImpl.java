@@ -125,29 +125,16 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
           return Optional.empty();
         };
 
-    Predicate<String> startCrawlEvent =
-      path -> path.contains(START) || path.contains(MQ) || path.contains(RUNNER_TYPE);
-
     TreeCacheListener listener =
         (curatorClient, event) -> {
           if ((event.getType() == NODE_ADDED || event.getType() == NODE_UPDATED)) {
             Optional<String> crawlIdPathOpt = crawlIdPath.apply(event.getData().getPath());
-
-            if (!crawlIdPathOpt.isPresent()) {
-              // it's not a crawlId path
-              return;
+            // we only add the process when a start event happens to avoid concurrency issues
+            if (crawlIdPathOpt.isPresent() && event.getData().getPath().contains(START)) {
+              // adding to the cache
+              loadRunningPipelineProcess(crawlIdPathOpt.get())
+                  .ifPresent(process -> processCache.put(crawlIdPathOpt.get(), process));
             }
-
-            if (!startCrawlEvent.test(event.getData().getPath())
-                && curator.checkExists().forPath(CrawlerNodePaths.buildPath(crawlIdPathOpt.get())) == null) {
-              // if it's an event which is setting the final state of the crawl we check if the node
-              // was deleted already
-              return;
-            }
-
-            // adding to the cache
-            loadRunningPipelineProcess(crawlIdPathOpt.get())
-                .ifPresent(process -> processCache.put(crawlIdPathOpt.get(), process));
           } else if (event.getType() == NODE_REMOVED) {
             crawlIdPath.apply(event.getData().getPath()).ifPresent(processCache::remove);
           } else if (event.getType() == INITIALIZED) {
