@@ -114,6 +114,11 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
 
     Function<String, Optional<String>> crawlIdPath =
         path -> {
+          if (path.contains("lock")) {
+            // ignoring lock events
+            return Optional.empty();
+          }
+
           String[] paths = path.substring(path.indexOf(PIPELINES_ROOT)).split(DELIMITER);
           if (paths.length > 1) {
             return Optional.of(paths[1]);
@@ -126,10 +131,11 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
           if ((event.getType() == NODE_ADDED || event.getType() == NODE_UPDATED)) {
             Optional<String> crawlIdPathOpt = crawlIdPath.apply(event.getData().getPath());
             // we only add the process when a start or end event happens to avoid concurrency issues
-            if (crawlIdPathOpt.isPresent()
-                && (event.getData().getPath().contains(START)
-                    || event.getData().getPath().contains(END))) {
+//            if (crawlIdPathOpt.isPresent()
+//                && (event.getData().getPath().contains(START)
+//                    || event.getData().getPath().contains(END))) {
               // adding to the cache
+            if (crawlIdPathOpt.isPresent()) {
               loadRunningPipelineProcess(crawlIdPathOpt.get())
                   .ifPresent(process -> processCache.put(crawlIdPathOpt.get(), process));
             }

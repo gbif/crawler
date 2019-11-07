@@ -40,7 +40,7 @@ class CrawlerModule extends PrivateServiceModule {
   @Override
   protected void configureService() {
     bind(DatasetProcessService.class).to(DatasetProcessServiceImpl.class).in(Scopes.SINGLETON);
-    bind(PipelinesRunningProcessService.class).to(PipelinesRunningProcessServiceImpl.class).in(Scopes.SINGLETON);
+    bind(PipelinesRunningProcessService.class).to(PipelinesRunningProcessServiceImpl.class).asEagerSingleton();
     expose(DatasetProcessService.class);
     expose(PipelinesRunningProcessService.class);
     expose(ExecutorService.class);
