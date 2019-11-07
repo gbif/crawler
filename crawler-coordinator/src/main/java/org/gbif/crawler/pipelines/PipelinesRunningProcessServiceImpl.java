@@ -12,9 +12,8 @@ import org.gbif.common.messaging.api.messages.PipelinesXmlMessage;
 import org.gbif.crawler.constants.CrawlerNodePaths;
 import org.gbif.crawler.constants.PipelinesNodePaths;
 import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
-import org.gbif.crawler.pipelines.search.SimpleSearchIndex;
+import org.gbif.crawler.pipelines.search.PipelinesRunningProcessSearchService;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
@@ -90,7 +89,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
           .suppressExceptions(false)
           .eternal(true)
           .build();
-  private final SimpleSearchIndex datasetSimpleSearchIndex;
+  private final PipelinesRunningProcessSearchService searchService;
 
   /**
    * Creates a CrawlerMetricsService. Responsible for interacting with a ZooKeeper instance in a
@@ -110,11 +109,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
     this.client = client;
     this.datasetService = datasetService;
     this.envPrefix = envPrefix;
-    try {
-      datasetSimpleSearchIndex = SimpleSearchIndex.create(Files.createTempDir().toPath());
-    } catch (IOException ex) {
-      throw new IllegalStateException(ex);
-    }
+    this.searchService = new PipelinesRunningProcessSearchService(Files.createTempDir().getPath());
     setupTreeCache();
   }
 
@@ -144,12 +139,11 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
                         loadRunningPipelineProcess(path)
                             .ifPresent(process -> {
                               processCache.put(path, process);
-                              addToIndex(process);
+                              searchService.index(process);
                             }));
           } else if (event.getType() == NODE_REMOVED) {
             relativePath.apply(event.getData().getPath()).ifPresent(nodePath -> {
-              PipelineProcess  pipelineProcess = processCache.get(nodePath);
-              removeFromIndex(pipelineProcess);
+              searchService.delete(processCache.get(nodePath));
               processCache.remove(nodePath);
 
             });
@@ -160,25 +154,6 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
     cache.getListenable().addListener(listener, executorService);
 
     Runtime.getRuntime().addShutdownHook(new Thread(cache::close));
-  }
-
-  private void addToIndex(PipelineProcess pipelineProcess) {
-    try {
-      Map<String, String> doc = new HashMap<>();
-      doc.put("key", Long.toString(pipelineProcess.getKey()));
-      doc.put("datasetTitle", pipelineProcess.getDatasetTitle());
-      datasetSimpleSearchIndex.index(doc);
-    } catch (Exception ex) {
-      LOG.error("PipelineProcess {}  can't be added to search index", pipelineProcess, ex);
-    }
-  }
-
-  private void removeFromIndex(PipelineProcess pipelineProcess) {
-    try {
-      datasetSimpleSearchIndex.delete("key", Long.toString(pipelineProcess.getKey()));
-    } catch (Exception ex) {
-      LOG.error("PipelineProcess {}  can't be removed from the search index", pipelineProcess, ex);
-    }
   }
 
 
@@ -202,19 +177,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
 
   @Override
   public List<PipelineProcess> searchByDatasetTitle(String datasetTitleQ, int pageNumber, int pageSize) {
-    try {
-      return datasetSimpleSearchIndex.search("datasetTitle", datasetTitleQ, pageNumber, pageSize).getResults().stream()
-        .map(doc -> {
-          long processKey = Long.parseLong(doc.get("key"));
-          return StreamSupport.stream(processCache.entries().spliterator(), false)
-                  .map(CacheEntry::getValue)
-                  .filter(pipelineProcess -> pipelineProcess.getKey() == processKey)
-                  .collect(Collectors.toList());
-     }).flatMap(List::stream).collect(Collectors.toList());
-    } catch (Exception ex) {
-      LOG.error("Error searching for dataset {}", datasetTitleQ, ex);
-      return Collections.emptyList();
-    }
+    return searchService.searchByDatasetTitle(datasetTitleQ, pageNumber, pageSize, processCache);
   }
 
   @Override
