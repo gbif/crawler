@@ -23,6 +23,7 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -54,9 +55,7 @@ import org.slf4j.LoggerFactory;
 import static org.gbif.api.model.pipelines.PipelineProcess.STEPS_COMPARATOR;
 import static org.gbif.api.model.pipelines.PipelineStep.MetricInfo;
 import static org.gbif.api.model.pipelines.PipelineStep.Status;
-import static org.gbif.crawler.constants.PipelinesNodePaths.DELIMITER;
-import static org.gbif.crawler.constants.PipelinesNodePaths.PIPELINES_ROOT;
-import static org.gbif.crawler.constants.PipelinesNodePaths.getPipelinesInfoPath;
+import static org.gbif.crawler.constants.PipelinesNodePaths.*;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.apache.curator.framework.recipes.cache.TreeCacheEvent.Type.INITIALIZED;
@@ -110,10 +109,14 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
   }
 
   private void setupTreeCache() throws Exception {
-    TreeCache cache = new TreeCache(curator, CrawlerNodePaths.buildPath(PIPELINES_ROOT));
+    TreeCache cache =
+        TreeCache.newBuilder(curator, CrawlerNodePaths.buildPath(PIPELINES_ROOT))
+            .setCacheData(false)
+            .setExecutor(executorService)
+            .build();
     cache.start();
 
-    Function<String, Optional<String>> relativePath =
+    Function<String, Optional<String>> crawlIdPath =
         path -> {
           String[] paths = path.substring(path.indexOf(PIPELINES_ROOT)).split(DELIMITER);
           if (paths.length > 1) {
@@ -122,20 +125,31 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
           return Optional.empty();
         };
 
+    Predicate<String> startCrawlEvent =
+      path -> path.contains(START) || path.contains(MQ) || path.contains(RUNNER_TYPE);
+
     TreeCacheListener listener =
         (curatorClient, event) -> {
-          // we only add in the cache the events that update the start or end date of a step
-          if ((event.getType() == NODE_ADDED || event.getType() == NODE_UPDATED)
-              && (event.getData().getPath().contains(PipelinesNodePaths.START)
-                  || event.getData().getPath().contains(PipelinesNodePaths.END))) {
-            relativePath
-                .apply(event.getData().getPath())
-                .ifPresent(
-                    path ->
-                        loadRunningPipelineProcess(path)
-                            .ifPresent(process -> processCache.put(path, process)));
+          if ((event.getType() == NODE_ADDED || event.getType() == NODE_UPDATED)) {
+            Optional<String> crawlIdPathOpt = crawlIdPath.apply(event.getData().getPath());
+
+            if (!crawlIdPathOpt.isPresent()) {
+              // it's not a crawlId path
+              return;
+            }
+
+            if (!startCrawlEvent.test(event.getData().getPath())
+                && curator.checkExists().forPath(crawlIdPathOpt.get()) == null) {
+              // if it's an event which is setting the final state of the crawl we check if the node
+              // was deleted already
+              return;
+            }
+
+            // adding to the cache
+            loadRunningPipelineProcess(crawlIdPathOpt.get())
+                .ifPresent(process -> processCache.put(crawlIdPathOpt.get(), process));
           } else if (event.getType() == NODE_REMOVED) {
-            relativePath.apply(event.getData().getPath()).ifPresent(processCache::remove);
+            crawlIdPath.apply(event.getData().getPath()).ifPresent(processCache::remove);
           } else if (event.getType() == INITIALIZED) {
             LOG.info("ZK TreeCache initialized for pipelines");
           }

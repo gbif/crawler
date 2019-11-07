@@ -3,7 +3,6 @@ package org.gbif.crawler.ws.guice;
 import org.gbif.api.service.crawler.DatasetProcessService;
 import org.gbif.api.service.registry.DatasetService;
 import org.gbif.crawler.DatasetProcessServiceImpl;
-import org.gbif.crawler.constants.CrawlerNodePaths;
 import org.gbif.crawler.pipelines.PipelinesRunningProcessService;
 import org.gbif.crawler.pipelines.PipelinesRunningProcessServiceImpl;
 import org.gbif.registry.ws.client.guice.RegistryWsClientModule;
@@ -20,13 +19,10 @@ import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
-import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.apache.http.HttpHost;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
-
-import static org.gbif.crawler.constants.PipelinesNodePaths.PIPELINES_ROOT;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
