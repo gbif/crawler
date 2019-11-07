@@ -109,11 +109,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
   }
 
   private void setupTreeCache() throws Exception {
-    TreeCache cache =
-        TreeCache.newBuilder(curator, CrawlerNodePaths.buildPath(PIPELINES_ROOT))
-            .setCacheData(false)
-            .setExecutor(executorService)
-            .build();
+    TreeCache cache = new TreeCache(curator, CrawlerNodePaths.buildPath(PIPELINES_ROOT));
     cache.start();
 
     Function<String, Optional<String>> crawlIdPath =
