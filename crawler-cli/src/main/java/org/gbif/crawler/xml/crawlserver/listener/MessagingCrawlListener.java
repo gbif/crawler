@@ -113,7 +113,7 @@ public class MessagingCrawlListener<CTX extends CrawlContext> implements CrawlLi
 
   @Override
   public void finishCrawlAbnormally() {
-    finishCrawl(FinishReason.NORMAL);
+    finishCrawl(FinishReason.ABORT);
   }
 
   private void finishCrawl(FinishReason reason) {
