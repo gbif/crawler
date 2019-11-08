@@ -44,7 +44,7 @@
 
     <dwc-api.version>1.20</dwc-api.version>
     <dwca-io.version>2.6</dwca-io.version>
-    <gbif-api.version>0.96</gbif-api.version>
+    <gbif-api.version>0.97-SNAPSHOT</gbif-api.version>
     <gbif-cli.version>0.13</gbif-cli.version>
     <gbif-common-service.version>0.17</gbif-common-service.version>
     <gbif-common-ws.version>0.43</gbif-common-ws.version>
@@ -93,6 +93,7 @@
     <avro.version>1.8.2</avro.version>
     <elasticsearch.client.version>5.6.15</elasticsearch.client.version>
     <log4j-api.version>2.3</log4j-api.version>
+    <cache2k-version>1.2.4.Final</cache2k-version>
   </properties>
 
   <repositories>
@@ -564,6 +565,17 @@
         <artifactId>jul-to-slf4j</artifactId>
         <version>${slf4j.version}</version>
         <scope>runtime</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>org.cache2k</groupId>
+        <artifactId>cache2k-api</artifactId>
+        <version>${cache2k-version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.cache2k</groupId>
+        <artifactId>cache2k-core</artifactId>
+        <version>${cache2k-version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

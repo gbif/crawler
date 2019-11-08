@@ -3,7 +3,6 @@ package org.gbif.crawler.pipelines;
 import org.gbif.api.model.pipelines.PipelineProcess;
 import org.gbif.api.model.pipelines.PipelineStep;
 import org.gbif.api.model.pipelines.StepType;
-import org.gbif.api.model.registry.Dataset;
 import org.gbif.api.service.registry.DatasetService;
 import org.gbif.crawler.constants.PipelinesNodePaths;
 import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
@@ -15,7 +14,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -23,6 +24,7 @@ import com.google.common.base.Charsets;
 import com.google.common.collect.Sets;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.apache.curator.retry.RetryOneTime;
 import org.apache.curator.test.TestingServer;
 import org.junit.After;
@@ -30,8 +32,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentMatchers;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -41,8 +41,6 @@ import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 public class PipelinesRunningProcessServiceImplTest {
 
   private static final String MESSAGE = "info";
-
-  @Mock private DatasetService datasetService;
 
   private static final BiConsumer<Set<PipelineProcess>, Set<String>> ASSERT_FN = (s, ids) -> {
     Consumer<PipelineStep> checkFn = step -> {
@@ -85,26 +83,29 @@ public class PipelinesRunningProcessServiceImplTest {
 
 
   private CuratorFramework curator;
+  private PathChildrenCache pathChildrenCache;
   private TestingServer server;
   private PipelinesRunningProcessServiceImpl service;
-
 
   @Before
   public void setup() throws Exception {
     server = new TestingServer();
-    curator = CuratorFrameworkFactory.builder()
-        .connectString(server.getConnectString())
-        .namespace("crawler")
-        .retryPolicy(new RetryOneTime(1))
-        .build();
+    curator =
+        CuratorFrameworkFactory.builder()
+            .connectString(server.getConnectString())
+            .namespace("crawler")
+            .retryPolicy(new RetryOneTime(1))
+            .build();
     curator.start();
     service =
         new PipelinesRunningProcessServiceImpl(
-            curator, Executors.newSingleThreadExecutor(), null, datasetService, "test");
+            curator, null, Mockito.mock(DatasetService.class), "test");
   }
 
   @After
-  public void tearDown() throws IOException {
+  public void tearDown() throws IOException, InterruptedException {
+    // we wait for the ZK TreeCache to finish since it's executed async and needs curator to be open
+    TimeUnit.MILLISECONDS.sleep(250);
     curator.close();
     server.stop();
   }
@@ -128,8 +129,7 @@ public class PipelinesRunningProcessServiceImplTest {
     PipelineProcess status = service.getPipelineProcess(datasetKey, attempt);
 
     // Should
-    Assert.assertNotNull(status);
-    Assert.assertEquals(0, status.getSteps().size());
+    Assert.assertNull(status);
   }
 
   @Test
@@ -153,7 +153,9 @@ public class PipelinesRunningProcessServiceImplTest {
     for (String crawlId : crawlIds) {
       addStatusToZookeeper(crawlId);
     }
-    Mockito.when(datasetService.get(ArgumentMatchers.any())).thenReturn(new Dataset());
+
+    // we wait for the ZK TreeCache to respond to the events
+    TimeUnit.MILLISECONDS.sleep(500);
 
     // When
     Set<PipelineProcess> set = service.getPipelineProcesses();
@@ -175,7 +177,9 @@ public class PipelinesRunningProcessServiceImplTest {
     int attempt = 1;
     String crawlId = datasetKey.toString() + "_" + attempt;
     addStatusToZookeeper(crawlId);
-    Mockito.when(datasetService.get(datasetKey)).thenReturn(new Dataset());
+
+    // we wait for the ZK TreeCache to respond to the events
+    TimeUnit.MILLISECONDS.sleep(200);
 
     // When
     PipelineProcess status = service.getPipelineProcess(datasetKey, attempt);
@@ -194,6 +198,9 @@ public class PipelinesRunningProcessServiceImplTest {
     UUID datasetId = UUID.fromString("a731e3b1-bc81-4c1f-aad7-aba75ce3cf3b");
     String crawlId = "a731e3b1-bc81-4c1f-aad7-aba75ce3cf3b_1";
     addStatusToZookeeper(crawlId);
+
+    // we wait for the ZK TreeCache to respond to the events
+    TimeUnit.MILLISECONDS.sleep(200);
 
     // When
     Set<PipelineProcess> set = service.getPipelineProcesses(datasetId);
