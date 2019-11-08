@@ -123,6 +123,8 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
             return Optional.empty();
           }
 
+          LOG.info("ZK EVENT FOR PATH: {}", path);
+
           String[] paths = path.substring(path.indexOf(PIPELINES_ROOT)).split(DELIMITER);
           if (paths.length > 1) {
             return Optional.of(paths[1]);
