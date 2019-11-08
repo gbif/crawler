@@ -176,7 +176,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
   }
 
   @Override
-  public List<PipelineProcess> searchByDatasetTitle(String datasetTitleQ, int pageNumber, int pageSize) {
+  public PipelinesRunningProcessSearchService.PipelineProcessSearchResult searchByDatasetTitle(String datasetTitleQ, int pageNumber, int pageSize) {
     return searchService.searchByDatasetTitle(datasetTitleQ, pageNumber, pageSize, processCache);
   }
 

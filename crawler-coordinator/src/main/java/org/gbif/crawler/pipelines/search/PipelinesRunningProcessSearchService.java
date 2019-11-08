@@ -57,16 +57,17 @@ public class PipelinesRunningProcessSearchService implements Closeable  {
     return pipelineProcess;
   }
 
-  private List<PipelineProcess> fromCache(SimpleSearchIndex.SearchResult searchResult, Cache<String, PipelineProcess> dataCache) {
-    return searchResult.getResults().stream()
-      .map(doc -> {
-        //An instance is created, relies on the equals method of PipelineProcess which only takes into account the datasetKey and the attempt
-         PipelineProcess pipelineProcessFound = fromDocKey(doc.get(KEY_FIELD));
-        return StreamSupport.stream(dataCache.entries().spliterator(), false)
-          .map(CacheEntry::getValue)
-          .filter(pipelineProcess -> pipelineProcess.equals(pipelineProcessFound))
-          .collect(Collectors.toList());
-      }).flatMap(List::stream).collect(Collectors.toList());
+  private PipelineProcessSearchResult fromCache(SimpleSearchIndex.SearchResult searchResult, Cache<String, PipelineProcess> dataCache) {
+    List<PipelineProcess> results = searchResult.getResults().stream()
+                                      .map(doc -> {
+                                        //An instance is created, relies on the equals method of PipelineProcess which only takes into account the datasetKey and the attempt
+                                         PipelineProcess pipelineProcessFound = fromDocKey(doc.get(KEY_FIELD));
+                                        return StreamSupport.stream(dataCache.entries().spliterator(), false)
+                                          .map(CacheEntry::getValue)
+                                          .filter(pipelineProcess -> pipelineProcess.equals(pipelineProcessFound))
+                                          .collect(Collectors.toList());
+                                      }).flatMap(List::stream).collect(Collectors.toList());
+    return new PipelineProcessSearchResult(searchResult.getTotalHits(), results);
   }
 
   /** Adds a {@link PipelineProcess} to the search index.*/
@@ -93,7 +94,7 @@ public class PipelinesRunningProcessSearchService implements Closeable  {
   }
 
   /** Pageable search by dataset title */
-  public List<PipelineProcess> searchByDatasetTitle(String datasetTitleQ, int pageNumber, int pageSize, Cache<String, PipelineProcess> dataCache) {
+  public PipelineProcessSearchResult searchByDatasetTitle(String datasetTitleQ, int pageNumber, int pageSize, Cache<String, PipelineProcess> dataCache) {
     try {
       return fromCache(datasetSimpleSearchIndex.search(DATASET_TITLE_FIELD, Objects.isNull(datasetTitleQ)? "" : datasetTitleQ.trim(), pageNumber, Math.min(MAX_PAGE_SIZE, pageSize)), dataCache);
     } catch (IOException ex) {
@@ -105,6 +106,31 @@ public class PipelinesRunningProcessSearchService implements Closeable  {
   @Override
   public void close() {
     datasetSimpleSearchIndex.close();
+  }
+
+  /**
+   * Search results.
+   */
+  public static final class PipelineProcessSearchResult {
+
+    private final long totalHits;
+
+    private final List<PipelineProcess> results;
+
+    PipelineProcessSearchResult(long totalHits, List<PipelineProcess> results) {
+      this.totalHits = totalHits;
+      this.results = results;
+    }
+
+    /**@return the total/global number of results*/
+    public long getTotalHits() {
+      return totalHits;
+    }
+
+    /**@return PipelineProcess search results*/
+    public List<PipelineProcess> getResults() {
+      return results;
+    }
   }
 
 }

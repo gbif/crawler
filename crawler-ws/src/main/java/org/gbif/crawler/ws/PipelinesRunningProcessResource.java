@@ -2,6 +2,7 @@ package org.gbif.crawler.ws;
 
 import org.gbif.api.model.pipelines.PipelineProcess;
 import org.gbif.crawler.pipelines.PipelinesRunningProcessService;
+import org.gbif.crawler.pipelines.search.PipelinesRunningProcessSearchService;
 import org.gbif.ws.util.ExtraMediaTypes;
 
 import java.util.List;
@@ -43,7 +44,7 @@ public class PipelinesRunningProcessResource {
    */
   @GET
   @Path("search")
-  public List<PipelineProcess> searchByDatasetTitle(@QueryParam("datasetTile") String datasetTitleQ, @QueryParam("page") int pageNumber, @QueryParam("size") int pageSize) {
+  public PipelinesRunningProcessSearchService.PipelineProcessSearchResult searchByDatasetTitle(@QueryParam("datasetTile") String datasetTitleQ, @QueryParam("page") int pageNumber, @QueryParam("size") int pageSize) {
     return service.searchByDatasetTitle(datasetTitleQ, pageNumber, Math.min(pageSize, MAX_PAGE_SIZE));
   }
 

@@ -2,7 +2,6 @@ package org.gbif.crawler.pipelines.search;
 
 import org.gbif.api.model.pipelines.PipelineProcess;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -52,9 +51,9 @@ public class PipelinesRunningProcessSearchServiceTest {
 
     searchService.index(pipelineProcess);
 
-    List<PipelineProcess>  pipelineProcesses = searchService.searchByDatasetTitle("ponta*", 1, 10, dataCache);
+    PipelinesRunningProcessSearchService.PipelineProcessSearchResult  searchResult = searchService.searchByDatasetTitle("ponta*", 1, 10, dataCache);
 
-    Assert.assertEquals(1, pipelineProcesses.size());
-    Assert.assertEquals(pipelineProcess.getDatasetTitle(), pipelineProcesses.get(0).getDatasetTitle());
+    Assert.assertEquals(1, searchResult.getTotalHits());
+    Assert.assertEquals(pipelineProcess.getDatasetTitle(), searchResult.getResults().get(0).getDatasetTitle());
   }
 }

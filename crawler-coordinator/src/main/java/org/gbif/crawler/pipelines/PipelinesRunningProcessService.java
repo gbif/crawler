@@ -1,6 +1,7 @@
 package org.gbif.crawler.pipelines;
 
 import org.gbif.api.model.pipelines.PipelineProcess;
+import org.gbif.crawler.pipelines.search.PipelinesRunningProcessSearchService;
 
 import java.util.List;
 import java.util.Set;
@@ -22,6 +23,6 @@ public interface PipelinesRunningProcessService {
 
   void deleteAllPipelineProcess();
 
-  List<PipelineProcess> searchByDatasetTitle(String datasetTitleQ, int pageNumber, int pageSize);
+  PipelinesRunningProcessSearchService.PipelineProcessSearchResult searchByDatasetTitle(String datasetTitleQ, int pageNumber, int pageSize);
 
 }
