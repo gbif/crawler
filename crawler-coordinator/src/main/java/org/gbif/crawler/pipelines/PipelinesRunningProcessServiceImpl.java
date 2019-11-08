@@ -21,6 +21,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -111,7 +112,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
   private void setupTreeCache() throws Exception {
     TreeCache cache =
         TreeCache.newBuilder(curator, CrawlerNodePaths.buildPath(PIPELINES_ROOT))
-            .setExecutor(executorService)
+            .setExecutor(Executors.newFixedThreadPool(1))
             .setCacheData(false)
             .build();
     cache.start();
