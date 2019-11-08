@@ -123,8 +123,6 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
             return Optional.empty();
           }
 
-          LOG.info("ZK EVENT FOR PATH: {}", path);
-
           String[] paths = path.substring(path.indexOf(PIPELINES_ROOT)).split(DELIMITER);
           if (paths.length > 1) {
             return Optional.of(paths[1]);
@@ -134,6 +132,10 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
 
     TreeCacheListener listener =
         (curatorClient, event) -> {
+          LOG.info(
+              "ZK EVENT FOR TYPE {} AND PATH: {}",
+              event.getType(),
+              event.getData() != null ? event.getData().getPath() : "");
           if ((event.getType() == NODE_ADDED || event.getType() == NODE_UPDATED)) {
             Optional<String> crawlIdPathOpt = crawlIdPath.apply(event.getData().getPath());
             // we only add the process when a start or end event happens to avoid concurrency issues
