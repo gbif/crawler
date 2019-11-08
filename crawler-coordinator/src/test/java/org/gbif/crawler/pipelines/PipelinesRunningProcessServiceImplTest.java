@@ -16,6 +16,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -105,7 +106,7 @@ public class PipelinesRunningProcessServiceImplTest {
   @After
   public void tearDown() throws IOException, InterruptedException {
     // we wait for the ZK TreeCache to finish since it's executed async and needs curator to be open
-    Thread.sleep(200);
+    TimeUnit.MILLISECONDS.sleep(250);
     curator.close();
     server.stop();
   }
@@ -155,7 +156,7 @@ public class PipelinesRunningProcessServiceImplTest {
     }
 
     // we wait for the ZK TreeCache to respond to the events
-    Thread.sleep(400);
+    TimeUnit.MILLISECONDS.sleep(500);
 
     // When
     Set<PipelineProcess> set = service.getPipelineProcesses();
@@ -179,7 +180,7 @@ public class PipelinesRunningProcessServiceImplTest {
     addStatusToZookeeper(crawlId);
 
     // we wait for the ZK TreeCache to respond to the events
-    Thread.sleep(200);
+    TimeUnit.MILLISECONDS.sleep(200);
 
     // When
     PipelineProcess status = service.getPipelineProcess(datasetKey, attempt);
@@ -200,7 +201,7 @@ public class PipelinesRunningProcessServiceImplTest {
     addStatusToZookeeper(crawlId);
 
     // we wait for the ZK TreeCache to respond to the events
-    Thread.sleep(200);
+    TimeUnit.MILLISECONDS.sleep(200);
 
     // When
     Set<PipelineProcess> set = service.getPipelineProcesses(datasetId);
