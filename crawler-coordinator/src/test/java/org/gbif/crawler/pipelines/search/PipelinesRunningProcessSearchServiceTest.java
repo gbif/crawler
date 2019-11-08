@@ -9,8 +9,6 @@ import java.util.Objects;
 import java.util.UUID;
 
 import com.google.common.io.Files;
-import org.cache2k.Cache;
-import org.cache2k.Cache2kBuilder;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -23,18 +21,8 @@ public class PipelinesRunningProcessSearchServiceTest {
 
   private PipelinesRunningProcessSearchService searchService;
 
-  private Cache<String,PipelineProcess> dataCache;
 
-  /**
-   * Initializes the cache and test data.
-   */
-  @Before
-  public void init() {
-    dataCache = Cache2kBuilder.of(String.class, PipelineProcess.class)
-                .entryCapacity(2)
-                .suppressExceptions(false)
-                .eternal(true)
-                .build();
+  private static PipelineProcess getTestPipelineProcess() {
     UUID datasetKey = UUID.randomUUID();
     String datasetTitle = "Pontaurus";
     int attemptId = 1;
@@ -46,7 +34,14 @@ public class PipelinesRunningProcessSearchServiceTest {
     step.setType(StepType.HDFS_VIEW);
     step.setState(PipelineStep.Status.RUNNING);
     pipelineProcess.setSteps(Collections.singleton(step));
-    dataCache.put("1", pipelineProcess);
+    return pipelineProcess;
+  }
+
+  /**
+   * Initializes the cache and test data.
+   */
+  @Before
+  public void init() {
     searchService = new PipelinesRunningProcessSearchService(Files.createTempDir().getPath());
   }
 
@@ -65,11 +60,11 @@ public class PipelinesRunningProcessSearchServiceTest {
    */
   @Test
   public void indexAndSearchTest() {
-    PipelineProcess pipelineProcess = dataCache.get("1");
+    PipelineProcess pipelineProcess = getTestPipelineProcess();
 
     searchService.index(pipelineProcess);
 
-    PipelinesRunningProcessSearchService.PipelineProcessSearchResult  searchResult = searchService.searchByDatasetTitle("ponta*", 1, 10, dataCache);
+    PipelinesRunningProcessSearchService.PipelineProcessSearchResult  searchResult = searchService.searchByDatasetTitle("ponta*", 1, 10);
 
     Assert.assertEquals(1, searchResult.getTotalHits());
     Assert.assertEquals(pipelineProcess.getDatasetTitle(), searchResult.getResults().get(0).getDatasetTitle());
@@ -80,28 +75,33 @@ public class PipelinesRunningProcessSearchServiceTest {
    */
   @Test
   public void stepStatusSearchTest() {
-    PipelineProcess pipelineProcess = dataCache.get("1");
+    PipelineProcess pipelineProcess = getTestPipelineProcess();
 
     searchService.index(pipelineProcess);
 
     PipelinesRunningProcessSearchService.PipelineProcessSearchResult searchResult = searchService.searchByStepStatus(StepType.HDFS_VIEW,
                                                                                                                       PipelineStep.Status.RUNNING,
-                                                                                                                      1, 10, dataCache);
+                                                                                                                      1, 10);
 
     Assert.assertEquals(1, searchResult.getTotalHits());
     Assert.assertEquals(pipelineProcess.getDatasetTitle(), searchResult.getResults().get(0).getDatasetTitle());
 
 
-    searchResult = searchService.searchByStatus(PipelineStep.Status.RUNNING,1, 10, dataCache);
+    searchResult = searchService.searchByStatus(PipelineStep.Status.RUNNING,1, 10);
 
 
     Assert.assertEquals(1, searchResult.getTotalHits());
     Assert.assertEquals(pipelineProcess.getDatasetTitle(), searchResult.getResults().get(0).getDatasetTitle());
 
 
-    searchResult = searchService.searchByStatus(PipelineStep.Status.COMPLETED,1, 10, dataCache);
+    searchResult = searchService.searchByStatus(PipelineStep.Status.COMPLETED,1, 10);
+    Assert.assertEquals(0, searchResult.getTotalHits());
 
 
+    searchResult = searchService.searchByStep(StepType.HDFS_VIEW,1, 10);
+    Assert.assertEquals(1, searchResult.getTotalHits());
+
+    searchResult = searchService.searchByStep(StepType.INTERPRETED_TO_INDEX,1, 10);
     Assert.assertEquals(0, searchResult.getTotalHits());
   }
 }
