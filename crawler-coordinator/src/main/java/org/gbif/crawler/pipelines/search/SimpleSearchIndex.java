@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -25,8 +26,11 @@ import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
+import org.apache.lucene.search.BooleanClause;
+import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.search.TopScoreDocCollector;
 import org.apache.lucene.store.Directory;
@@ -101,10 +105,10 @@ public class SimpleSearchIndex implements Closeable {
   }
 
   /** Adds a document to the  index. Duplication of content is not checked bu this index.*/
-  public void index(Map<String,String> doc) throws IOException {
+  public long index(Map<String,String> doc) throws IOException {
     Document document = new Document();
     doc.forEach((k,v) -> document.add(new TextField(k, v, Field.Store.YES)));
-    indexWriter.addDocument(document);
+    return indexWriter.addDocument(document);
   }
 
   /** Gets a document by its Lucene docId. This method must be used for search results only since ids can change after each commit.*/
@@ -135,6 +139,22 @@ public class SimpleSearchIndex implements Closeable {
     return indexWriter.updateDocument(new Term(field, value), doc.entrySet().stream()
                                                                 .map(e -> new TextField(e.getKey(), e.getValue(), Field.Store.YES))
                                                                 .collect(Collectors.toList()));
+  }
+
+  /**
+   * Upsert documents by using a field and a exact match against that field.
+   * @param field to be used to find documents
+   * @param value to be used as exact match
+   * @param doc documents of fields to be updated
+   * @return number of updated documents
+   * @throws IOException
+   */
+  public long upsert(String field, String value, Map<String,String> doc) throws IOException {
+    SearchResult searchResult = termSearch(field, value.toLowerCase(), 1, 1);
+    if (searchResult.getTotalHits() > 0) {
+      return update(field, value, doc);
+    }
+    return index(doc);
   }
 
   /**Converts a Lucene {@link Document} into a Map<String,String>.*/
@@ -168,20 +188,12 @@ public class SimpleSearchIndex implements Closeable {
   }
 
   /**
-   * Performs a pageable search on a field value.
-   * @param fieldName to be used for the search
-   * @param q term query
-   * @param pageNumber page number, it must be controlled by the user.
-   * @param pageSize maximum number of results to return
-   * @return a {@link SearchResult}, a SearchResults.result empty if no results.
-   * @throws IOException in case lof low-level errors.
+   * Utility method to convert results into a pageable search.
    */
-  public SearchResult search(String fieldName, String q, int pageNumber, int pageSize) throws IOException {
-
-
+  private SearchResult doSearch(Query query, int pageNumber, int pageSize) throws IOException {
     TopScoreDocCollector collector = TopScoreDocCollector.create(MAX_RESULTS);
 
-    getIndexSearcher().search(toQuery(fieldName, q), collector);
+    getIndexSearcher().search(query, collector);
 
     TopDocs topDocs = collector.topDocs((pageNumber - 1) * pageSize, pageSize);
 
@@ -197,6 +209,46 @@ public class SimpleSearchIndex implements Closeable {
       return SearchResult.of(topDocs.totalHits, results);
     }
     return  SearchResult.empty();
+  }
+  /**
+   * Performs a pageable search on a field value.
+   * @param fieldName to be used for the search
+   * @param q term query
+   * @param pageNumber page number, it must be controlled by the user.
+   * @param pageSize maximum number of results to return
+   * @return a {@link SearchResult}, a SearchResults.result empty if no results.
+   * @throws IOException in case lof low-level errors.
+   */
+  public SearchResult search(String fieldName, String q, int pageNumber, int pageSize) throws IOException {
+    return doSearch(toQuery(fieldName,q), pageNumber, pageSize);
+  }
+
+
+  /**
+   * Performs a pageable exact term search on a field value.
+   * @param fieldName to be used for the search
+   * @param q term query
+   * @param pageNumber page number, it must be controlled by the user.
+   * @param pageSize maximum number of results to return
+   * @return a {@link SearchResult}, a SearchResults.result empty if no results.
+   * @throws IOException in case lof low-level errors.
+   */
+  public SearchResult termSearch(String fieldName, String term, int pageNumber, int pageSize) throws IOException {
+    return doSearch(new TermQuery(new Term(fieldName, term)), pageNumber, pageSize);
+  }
+
+  /**
+   * Performs a pageable exact multi-term search on a field value.
+   * @param terms pair of field and terms to be searched
+   * @param pageNumber page number, it must be controlled by the user.
+   * @param pageSize maximum number of results to return
+   * @return a {@link SearchResult}, a SearchResults.result empty if no results.
+   * @throws IOException in case lof low-level errors.
+   */
+  public SearchResult multiTermSearch(Map<String,String> terms, int pageNumber, int pageSize) throws IOException {
+    BooleanQuery.Builder queryBuilder = new BooleanQuery.Builder().setMinimumNumberShouldMatch(1);
+    terms.forEach( (k, v) -> queryBuilder.add(new BooleanClause(new TermQuery(new Term(k, v)), BooleanClause.Occur.SHOULD)));
+    return doSearch(queryBuilder.build(), pageNumber, pageSize);
   }
 
   /**Close all used resources*/
