@@ -10,7 +10,6 @@ import org.gbif.api.service.registry.DatasetService;
 import org.gbif.common.messaging.api.messages.PipelinesDwcaMessage;
 import org.gbif.common.messaging.api.messages.PipelinesXmlMessage;
 import org.gbif.crawler.constants.CrawlerNodePaths;
-import org.gbif.crawler.constants.PipelinesNodePaths;
 import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
 
 import java.nio.charset.StandardCharsets;
@@ -20,11 +19,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -56,7 +52,9 @@ import org.slf4j.LoggerFactory;
 import static org.gbif.api.model.pipelines.PipelineProcess.STEPS_COMPARATOR;
 import static org.gbif.api.model.pipelines.PipelineStep.MetricInfo;
 import static org.gbif.api.model.pipelines.PipelineStep.Status;
-import static org.gbif.crawler.constants.PipelinesNodePaths.*;
+import static org.gbif.crawler.constants.PipelinesNodePaths.DELIMITER;
+import static org.gbif.crawler.constants.PipelinesNodePaths.PIPELINES_ROOT;
+import static org.gbif.crawler.constants.PipelinesNodePaths.getPipelinesInfoPath;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.apache.curator.framework.recipes.cache.TreeCacheEvent.Type.INITIALIZED;
@@ -77,7 +75,6 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
     (datasetKey, attempt) -> datasetKey + "_" + attempt;
 
   private final CuratorFramework curator;
-  private final ExecutorService executorService;
   private final RestHighLevelClient client;
   private final String envPrefix;
   private final DatasetService datasetService;
@@ -97,12 +94,10 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
   @Inject
   public PipelinesRunningProcessServiceImpl(
       CuratorFramework curator,
-      ExecutorService executorService,
       RestHighLevelClient client,
       DatasetService datasetService,
       @Named("pipelines.envPrefix") String envPrefix) throws Exception {
     this.curator = checkNotNull(curator, "curator can't be null");
-    this.executorService = executorService;
     this.client = client;
     this.datasetService = datasetService;
     this.envPrefix = envPrefix;
@@ -132,17 +127,13 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
 
     TreeCacheListener listener =
         (curatorClient, event) -> {
-          LOG.info(
-              "ZK EVENT FOR TYPE {} AND PATH: {}",
-              event.getType(),
-              event.getData() != null ? event.getData().getPath() : "");
           if ((event.getType() == NODE_ADDED || event.getType() == NODE_UPDATED)) {
-            Optional<String> crawlIdPathOpt = crawlIdPath.apply(event.getData().getPath());
-            if (crawlIdPathOpt.isPresent()) {
-              // adding to the cache
-              loadRunningPipelineProcess(crawlIdPathOpt.get())
-                  .ifPresent(process -> processCache.put(crawlIdPathOpt.get(), process));
-            }
+            crawlIdPath
+                .apply(event.getData().getPath())
+                .ifPresent(
+                    path ->
+                        loadRunningPipelineProcess(path)
+                            .ifPresent(process -> processCache.put(path, process)));
           } else if (event.getType() == NODE_REMOVED) {
             crawlIdPath.apply(event.getData().getPath()).ifPresent(processCache::remove);
           } else if (event.getType() == INITIALIZED) {

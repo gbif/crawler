@@ -11,7 +11,6 @@ import org.gbif.ws.client.guice.AnonymousAuthModule;
 
 import java.util.Properties;
 import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import com.google.inject.*;
@@ -40,10 +39,10 @@ class CrawlerModule extends PrivateServiceModule {
   @Override
   protected void configureService() {
     bind(DatasetProcessService.class).to(DatasetProcessServiceImpl.class).in(Scopes.SINGLETON);
+    // it has to be an eager singleton to load the ZK cache
     bind(PipelinesRunningProcessService.class).to(PipelinesRunningProcessServiceImpl.class).asEagerSingleton();
     expose(DatasetProcessService.class);
     expose(PipelinesRunningProcessService.class);
-    expose(ExecutorService.class);
     expose(Executor.class);
     expose(CuratorFramework.class);
     expose(RestHighLevelClient.class);
@@ -82,19 +81,9 @@ class CrawlerModule extends PrivateServiceModule {
    */
   @Provides
   @Singleton
-  public ExecutorService provideExecutorService(@Named("crawl.threadCount") int threadCount) {
+  public Executor provideExecutor(@Named("crawl.threadCount") int threadCount) {
     checkArgument(threadCount > 0, "threadCount has to be greater than zero");
     return Executors.newFixedThreadPool(threadCount);
-  }
-
-  /**
-   * Provides an Executor to use for various threading related things. This is shared between all requests.
-   */
-  @Provides
-  @Singleton
-  @Inject
-  public Executor provideExecutor(ExecutorService executorService) {
-    return executorService;
   }
 
   /**

@@ -97,10 +97,9 @@ public class PipelinesRunningProcessServiceImplTest {
             .retryPolicy(new RetryOneTime(1))
             .build();
     curator.start();
-    ExecutorService executorService = Executors.newFixedThreadPool(2);
     service =
         new PipelinesRunningProcessServiceImpl(
-            curator, executorService, null, Mockito.mock(DatasetService.class), "test");
+            curator, null, Mockito.mock(DatasetService.class), "test");
   }
 
   @After
