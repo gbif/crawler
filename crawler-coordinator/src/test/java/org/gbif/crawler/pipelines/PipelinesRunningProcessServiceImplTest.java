@@ -155,7 +155,7 @@ public class PipelinesRunningProcessServiceImplTest {
     }
 
     // we wait for the ZK TreeCache to respond to the events
-    Thread.sleep(300);
+    Thread.sleep(400);
 
     // When
     Set<PipelineProcess> set = service.getPipelineProcesses();
