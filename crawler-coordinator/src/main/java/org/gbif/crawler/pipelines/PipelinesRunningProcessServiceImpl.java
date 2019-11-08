@@ -149,7 +149,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
             LOG.info("ZK TreeCache initialized for pipelines");
           }
         };
-    cache.getListenable().addListener(listener, executorService);
+    cache.getListenable().addListener(listener);
 
     Runtime.getRuntime().addShutdownHook(new Thread(cache::close));
   }
