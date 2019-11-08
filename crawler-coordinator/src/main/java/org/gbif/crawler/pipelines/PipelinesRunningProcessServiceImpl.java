@@ -112,7 +112,6 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
   private void setupTreeCache() throws Exception {
     TreeCache cache =
         TreeCache.newBuilder(curator, CrawlerNodePaths.buildPath(PIPELINES_ROOT))
-            .setExecutor(Executors.newFixedThreadPool(1))
             .setCacheData(false)
             .build();
     cache.start();
