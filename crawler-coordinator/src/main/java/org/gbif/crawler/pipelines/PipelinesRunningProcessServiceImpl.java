@@ -10,9 +10,7 @@ import org.gbif.api.service.registry.DatasetService;
 import org.gbif.common.messaging.api.messages.PipelinesDwcaMessage;
 import org.gbif.common.messaging.api.messages.PipelinesXmlMessage;
 import org.gbif.crawler.constants.CrawlerNodePaths;
-import org.gbif.crawler.constants.PipelinesNodePaths;
 import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
-import org.gbif.crawler.pipelines.search.PipelinesRunningProcessSearchService;
 
 import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
@@ -21,7 +19,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -29,7 +26,6 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
 
-import com.google.common.io.Files;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.curator.framework.CuratorFramework;
@@ -79,7 +75,6 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
     (datasetKey, attempt) -> datasetKey + "_" + attempt;
 
   private final CuratorFramework curator;
-  private final ExecutorService executorService;
   private final RestHighLevelClient client;
   private final String envPrefix;
   private final DatasetService datasetService;
@@ -89,7 +84,6 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
           .suppressExceptions(false)
           .eternal(true)
           .build();
-  private final PipelinesRunningProcessSearchService searchService;
 
   /**
    * Creates a CrawlerMetricsService. Responsible for interacting with a ZooKeeper instance in a
@@ -100,25 +94,30 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
   @Inject
   public PipelinesRunningProcessServiceImpl(
       CuratorFramework curator,
-      ExecutorService executorService,
       RestHighLevelClient client,
       DatasetService datasetService,
       @Named("pipelines.envPrefix") String envPrefix) throws Exception {
     this.curator = checkNotNull(curator, "curator can't be null");
-    this.executorService = executorService;
     this.client = client;
     this.datasetService = datasetService;
     this.envPrefix = envPrefix;
-    this.searchService = new PipelinesRunningProcessSearchService(Files.createTempDir().getPath());
     setupTreeCache();
   }
 
   private void setupTreeCache() throws Exception {
-    TreeCache cache = new TreeCache(curator, CrawlerNodePaths.buildPath(PIPELINES_ROOT));
+    TreeCache cache =
+        TreeCache.newBuilder(curator, CrawlerNodePaths.buildPath(PIPELINES_ROOT))
+            .setCacheData(false)
+            .build();
     cache.start();
 
-    Function<String, Optional<String>> relativePath =
+    Function<String, Optional<String>> crawlIdPath =
         path -> {
+          if (path.contains("lock")) {
+            // ignoring lock events
+            return Optional.empty();
+          }
+
           String[] paths = path.substring(path.indexOf(PIPELINES_ROOT)).split(DELIMITER);
           if (paths.length > 1) {
             return Optional.of(paths[1]);
@@ -128,34 +127,23 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
 
     TreeCacheListener listener =
         (curatorClient, event) -> {
-          // we only add in the cache the events that update the start or end date of a step
-          if ((event.getType() == NODE_ADDED || event.getType() == NODE_UPDATED)
-              && (event.getData().getPath().contains(PipelinesNodePaths.START)
-                  || event.getData().getPath().contains(PipelinesNodePaths.END))) {
-            relativePath
+          if ((event.getType() == NODE_ADDED || event.getType() == NODE_UPDATED)) {
+            crawlIdPath
                 .apply(event.getData().getPath())
                 .ifPresent(
                     path ->
                         loadRunningPipelineProcess(path)
-                            .ifPresent(process -> {
-                              processCache.put(path, process);
-                              searchService.index(process);
-                            }));
+                            .ifPresent(process -> processCache.put(path, process)));
           } else if (event.getType() == NODE_REMOVED) {
-            relativePath.apply(event.getData().getPath()).ifPresent(nodePath -> {
-              searchService.delete(processCache.get(nodePath));
-              processCache.remove(nodePath);
-
-            });
+            crawlIdPath.apply(event.getData().getPath()).ifPresent(processCache::remove);
           } else if (event.getType() == INITIALIZED) {
             LOG.info("ZK TreeCache initialized for pipelines");
           }
         };
-    cache.getListenable().addListener(listener, executorService);
+    cache.getListenable().addListener(listener);
 
     Runtime.getRuntime().addShutdownHook(new Thread(cache::close));
   }
-
 
   @Override
   public Set<PipelineProcess> getPipelineProcesses() {
@@ -173,11 +161,6 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
                     new TreeSet<>(
                         Comparator.comparing(PipelineProcess::getDatasetKey)
                             .thenComparing(PipelineProcess::getAttempt))));
-  }
-
-  @Override
-  public PipelinesRunningProcessSearchService.PipelineProcessSearchResult searchByDatasetTitle(String datasetTitleQ, int pageNumber, int pageSize) {
-    return searchService.searchByDatasetTitle(datasetTitleQ, pageNumber, pageSize);
   }
 
   @Override

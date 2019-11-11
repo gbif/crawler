@@ -14,8 +14,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -96,16 +95,15 @@ public class PipelinesRunningProcessServiceImplTest {
             .retryPolicy(new RetryOneTime(1))
             .build();
     curator.start();
-    ExecutorService executorService = Executors.newFixedThreadPool(2);
     service =
         new PipelinesRunningProcessServiceImpl(
-            curator, executorService, null, Mockito.mock(DatasetService.class), "test");
+            curator, null, Mockito.mock(DatasetService.class), "test");
   }
 
   @After
   public void tearDown() throws IOException, InterruptedException {
     // we wait for the ZK TreeCache to finish since it's executed async and needs curator to be open
-    Thread.sleep(200);
+    TimeUnit.MILLISECONDS.sleep(250);
     curator.close();
     server.stop();
   }
@@ -155,7 +153,7 @@ public class PipelinesRunningProcessServiceImplTest {
     }
 
     // we wait for the ZK TreeCache to respond to the events
-    Thread.sleep(300);
+    TimeUnit.MILLISECONDS.sleep(550);
 
     // When
     Set<PipelineProcess> set = service.getPipelineProcesses();
@@ -179,7 +177,7 @@ public class PipelinesRunningProcessServiceImplTest {
     addStatusToZookeeper(crawlId);
 
     // we wait for the ZK TreeCache to respond to the events
-    Thread.sleep(200);
+    TimeUnit.MILLISECONDS.sleep(200);
 
     // When
     PipelineProcess status = service.getPipelineProcess(datasetKey, attempt);
@@ -200,7 +198,7 @@ public class PipelinesRunningProcessServiceImplTest {
     addStatusToZookeeper(crawlId);
 
     // we wait for the ZK TreeCache to respond to the events
-    Thread.sleep(200);
+    TimeUnit.MILLISECONDS.sleep(200);
 
     // When
     Set<PipelineProcess> set = service.getPipelineProcesses(datasetId);
