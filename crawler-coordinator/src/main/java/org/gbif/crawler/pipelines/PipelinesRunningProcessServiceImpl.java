@@ -11,7 +11,9 @@ import org.gbif.common.messaging.api.messages.PipelinesDwcaMessage;
 import org.gbif.common.messaging.api.messages.PipelinesXmlMessage;
 import org.gbif.crawler.constants.CrawlerNodePaths;
 import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
+import org.gbif.crawler.pipelines.search.PipelinesRunningProcessSearchService;
 
+import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
@@ -23,17 +25,15 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
 
+import com.google.common.base.Strings;
+import com.google.common.io.Files;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.TreeCache;
 import org.apache.curator.framework.recipes.cache.TreeCacheListener;
-import org.cache2k.Cache;
-import org.cache2k.Cache2kBuilder;
-import org.cache2k.CacheEntry;
 import org.codehaus.jackson.map.DeserializationConfig;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.elasticsearch.action.search.SearchRequest;
@@ -55,6 +55,7 @@ import static org.gbif.api.model.pipelines.PipelineStep.Status;
 import static org.gbif.crawler.constants.PipelinesNodePaths.DELIMITER;
 import static org.gbif.crawler.constants.PipelinesNodePaths.PIPELINES_ROOT;
 import static org.gbif.crawler.constants.PipelinesNodePaths.getPipelinesInfoPath;
+import static org.gbif.crawler.pipelines.search.PipelinesRunningProcessSearchService.MAX_PAGE_SIZE;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.apache.curator.framework.recipes.cache.TreeCacheEvent.Type.INITIALIZED;
@@ -78,12 +79,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
   private final RestHighLevelClient client;
   private final String envPrefix;
   private final DatasetService datasetService;
-  private final Cache<String, PipelineProcess> processCache =
-      Cache2kBuilder.of(String.class, PipelineProcess.class)
-          .entryCapacity(Long.MAX_VALUE)
-          .suppressExceptions(false)
-          .eternal(true)
-          .build();
+  private final PipelinesRunningProcessSearchService searchService;
 
   /**
    * Creates a CrawlerMetricsService. Responsible for interacting with a ZooKeeper instance in a
@@ -101,6 +97,9 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
     this.client = client;
     this.datasetService = datasetService;
     this.envPrefix = envPrefix;
+    File tmpDir = Files.createTempDir();
+    tmpDir.deleteOnExit();
+    this.searchService = new PipelinesRunningProcessSearchService(tmpDir.getPath());
     setupTreeCache();
   }
 
@@ -130,12 +129,10 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
           if ((event.getType() == NODE_ADDED || event.getType() == NODE_UPDATED)) {
             crawlIdPath
                 .apply(event.getData().getPath())
-                .ifPresent(
-                    path ->
-                        loadRunningPipelineProcess(path)
-                            .ifPresent(process -> processCache.put(path, process)));
+                .flatMap(this::loadRunningPipelineProcess)
+                .ifPresent(searchService::index);
           } else if (event.getType() == NODE_REMOVED) {
-            crawlIdPath.apply(event.getData().getPath()).ifPresent(processCache::remove);
+            crawlIdPath.apply(event.getData().getPath()).ifPresent(searchService::delete);
           } else if (event.getType() == INITIALIZED) {
             LOG.info("ZK TreeCache initialized for pipelines");
           }
@@ -147,25 +144,24 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
 
   @Override
   public Set<PipelineProcess> getPipelineProcesses() {
-    return getPipelineProcesses(null);
+    return new HashSet<>(searchService.listAll(1, MAX_PAGE_SIZE).getResults());
   }
 
   @Override
-  public Set<PipelineProcess> getPipelineProcesses(@Nullable UUID datasetKey) {
-    return StreamSupport.stream(processCache.entries().spliterator(), true)
-        .filter(node -> datasetKey == null || node.getKey().startsWith(datasetKey.toString()))
-        .map(CacheEntry::getValue)
-        .collect(
-            Collectors.toCollection(
-                () ->
-                    new TreeSet<>(
-                        Comparator.comparing(PipelineProcess::getDatasetKey)
-                            .thenComparing(PipelineProcess::getAttempt))));
+  public Set<PipelineProcess> getPipelineProcesses(UUID datasetKey) {
+    Objects.requireNonNull(datasetKey);
+    return new HashSet<>(
+        searchService.searchByDatasetKey(datasetKey.toString(), 1, MAX_PAGE_SIZE).getResults());
   }
 
   @Override
   public PipelineProcess getPipelineProcess(UUID datasetKey, int attempt) {
-    return processCache.get(CRAWL_ID_GENERATOR.apply(datasetKey, attempt));
+    List<PipelineProcess> processes = searchService
+      .searchByDatasetKeyAndAttempt(
+        datasetKey.toString(), attempt, 1, MAX_PAGE_SIZE)
+      .getResults();
+
+    return processes != null && !processes.isEmpty() ? processes.get(0) : null;
   }
 
   @Override
@@ -177,6 +173,28 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
   @Override
   public void deleteAllPipelineProcess() {
     deleteZkPipelinesNode(null);
+  }
+
+  @Override
+  public PipelinesRunningProcessSearchService.PipelineProcessSearchResult search(
+      @Nullable String datasetTitle,
+      @Nullable Status stepStatus,
+      @Nullable StepType stepType,
+      int pageNumber,
+      int pageSize) {
+    if (!Strings.isNullOrEmpty(datasetTitle)) {
+      return searchService.searchByDatasetTitle(datasetTitle, pageNumber, pageSize);
+    }
+
+    if (stepStatus != null && stepType != null) {
+      return searchService.searchByStepStatus(stepType, stepStatus, pageNumber, pageSize);
+    } else if (stepStatus != null) {
+      return searchService.searchByStatus(stepStatus, pageNumber, pageSize);
+    } else if (stepType != null) {
+      return searchService.searchByStep(stepType, pageNumber, pageSize);
+    }
+
+    return searchService.listAll(pageNumber, pageSize);
   }
 
   private void deleteZkPipelinesNode(String crawlId) {
@@ -208,8 +226,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
                 .setDatasetKey(UUID.fromString(ids[0]))
                 .setAttempt(Integer.parseInt(ids[1])));
       }
-      // Here we're trying to load all information from Zookeeper into the DatasetProcessStatus
-      // object
+      // Here we're trying to load all information from Zookeeper into a PipelineProcess object
       PipelineProcess process =
           new PipelineProcess()
               .setDatasetKey(UUID.fromString(ids[0]))

@@ -1,11 +1,13 @@
 package org.gbif.crawler.pipelines;
 
 import org.gbif.api.model.pipelines.PipelineProcess;
+import org.gbif.api.model.pipelines.PipelineStep;
+import org.gbif.api.model.pipelines.StepType;
 import org.gbif.crawler.pipelines.search.PipelinesRunningProcessSearchService;
 
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import javax.annotation.Nullable;
 
 /**
  * The public interface of the Pipelines monitoring service that provides information about the
@@ -23,6 +25,10 @@ public interface PipelinesRunningProcessService {
 
   void deleteAllPipelineProcess();
 
-  PipelinesRunningProcessSearchService.PipelineProcessSearchResult searchByDatasetTitle(String datasetTitleQ, int pageNumber, int pageSize);
-
+  PipelinesRunningProcessSearchService.PipelineProcessSearchResult search(
+      @Nullable String datasetTitle,
+      @Nullable PipelineStep.Status stepStatus,
+      @Nullable StepType stepType,
+      int pageNumber,
+      int pageSize);
 }

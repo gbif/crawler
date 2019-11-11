@@ -101,7 +101,7 @@ public class PipelinesRunningProcessServiceImplTest {
   @After
   public void tearDown() throws IOException, InterruptedException {
     // we wait for the ZK TreeCache to finish since it's executed async and needs curator to be open
-    TimeUnit.MILLISECONDS.sleep(300);
+    TimeUnit.MILLISECONDS.sleep(500);
     curator.close();
     server.stop();
   }
@@ -151,7 +151,7 @@ public class PipelinesRunningProcessServiceImplTest {
     }
 
     // we wait for the ZK TreeCache to respond to the events
-    TimeUnit.MILLISECONDS.sleep(700);
+    TimeUnit.MILLISECONDS.sleep(2000);
 
     // When
     Set<PipelineProcess> set = service.getPipelineProcesses();
@@ -164,6 +164,8 @@ public class PipelinesRunningProcessServiceImplTest {
     for (String crawlId : crawlIds) {
       deleteMonitoringById(crawlId);
     }
+
+    TimeUnit.MILLISECONDS.sleep(1500);
   }
 
   @Test
@@ -175,7 +177,7 @@ public class PipelinesRunningProcessServiceImplTest {
     addStatusToZookeeper(crawlId);
 
     // we wait for the ZK TreeCache to respond to the events
-    TimeUnit.MILLISECONDS.sleep(200);
+    TimeUnit.MILLISECONDS.sleep(400);
 
     // When
     PipelineProcess status = service.getPipelineProcess(datasetKey, attempt);

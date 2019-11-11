@@ -1,13 +1,15 @@
 package org.gbif.crawler.ws;
 
 import org.gbif.api.model.pipelines.PipelineProcess;
+import org.gbif.api.model.pipelines.PipelineStep;
+import org.gbif.api.model.pipelines.StepType;
 import org.gbif.crawler.pipelines.PipelinesRunningProcessService;
 import org.gbif.crawler.pipelines.search.PipelinesRunningProcessSearchService;
 import org.gbif.ws.util.ExtraMediaTypes;
 
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import javax.annotation.Nullable;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 
@@ -20,7 +22,7 @@ import com.google.inject.Inject;
 @Path("pipelines/process/running")
 public class PipelinesRunningProcessResource {
 
-  private static final int MAX_PAGE_SIZE = 100;
+  private static final int DEFAULT_PAGE_SIZE = 10;
 
   private final PipelinesRunningProcessService service;
 
@@ -37,15 +39,21 @@ public class PipelinesRunningProcessResource {
     return service.getPipelineProcesses();
   }
 
-  /**
-   * Returns information about specific dataset by datasetKey
-   *
-   * @param datasetKey typical dataset UUID
-   */
+  /** Searchs for the received parameters. */
   @GET
   @Path("search")
-  public PipelinesRunningProcessSearchService.PipelineProcessSearchResult searchByDatasetTitle(@QueryParam("datasetTile") String datasetTitleQ, @QueryParam("page") int pageNumber, @QueryParam("size") int pageSize) {
-    return service.searchByDatasetTitle(datasetTitleQ, pageNumber, Math.min(pageSize, MAX_PAGE_SIZE));
+  public PipelinesRunningProcessSearchService.PipelineProcessSearchResult search(
+      @QueryParam("datasetTile") String datasetTitle,
+      @QueryParam("status") PipelineStep.Status stepStatus,
+      @QueryParam("step") StepType stepType,
+      @Nullable @QueryParam("page") Integer pageNumber,
+      @Nullable @QueryParam("size") Integer pageSize) {
+    return service.search(
+        datasetTitle,
+        stepStatus,
+        stepType,
+        pageNumber != null ? pageNumber : 1,
+        pageSize != null ? pageSize : DEFAULT_PAGE_SIZE);
   }
 
   /**

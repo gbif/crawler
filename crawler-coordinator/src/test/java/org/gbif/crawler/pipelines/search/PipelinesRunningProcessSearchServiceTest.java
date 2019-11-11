@@ -56,6 +56,22 @@ public class PipelinesRunningProcessSearchServiceTest {
   }
 
   /**
+   * Adds a document a search for all.
+   */
+  @Test
+  public void indexAndSearchAllTest() {
+    PipelineProcess pipelineProcess = getTestPipelineProcess();
+
+    searchService.index(pipelineProcess);
+
+    PipelinesRunningProcessSearchService.PipelineProcessSearchResult  searchAllResult = searchService.listAll(1, 10);
+
+    Assert.assertEquals(1, searchAllResult.getTotalHits());
+    Assert.assertEquals(pipelineProcess.getDatasetTitle(), searchAllResult.getResults().get(0).getDatasetTitle());
+  }
+
+
+  /**
    * Adds a document a search for it by dataset title.
    */
   @Test
@@ -81,7 +97,7 @@ public class PipelinesRunningProcessSearchServiceTest {
 
     PipelinesRunningProcessSearchService.PipelineProcessSearchResult searchResult = searchService.searchByStepStatus(StepType.HDFS_VIEW,
                                                                                                                       PipelineStep.Status.RUNNING,
-                                                                                                                      1, 10);
+                                                                                                                          1, 10);
 
     Assert.assertEquals(1, searchResult.getTotalHits());
     Assert.assertEquals(pipelineProcess.getDatasetTitle(), searchResult.getResults().get(0).getDatasetTitle());
