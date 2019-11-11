@@ -81,7 +81,6 @@ public class PipelinesRunningProcessServiceImplTest {
 
 
   private CuratorFramework curator;
-  private PathChildrenCache pathChildrenCache;
   private TestingServer server;
   private PipelinesRunningProcessServiceImpl service;
 
