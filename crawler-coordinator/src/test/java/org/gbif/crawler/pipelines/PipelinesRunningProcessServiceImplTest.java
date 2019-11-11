@@ -151,7 +151,7 @@ public class PipelinesRunningProcessServiceImplTest {
     }
 
     // we wait for the ZK TreeCache to respond to the events
-    TimeUnit.MILLISECONDS.sleep(2000);
+    TimeUnit.MILLISECONDS.sleep(2500);
 
     // When
     Set<PipelineProcess> set = service.getPipelineProcesses();
@@ -165,7 +165,7 @@ public class PipelinesRunningProcessServiceImplTest {
       deleteMonitoringById(crawlId);
     }
 
-    TimeUnit.MILLISECONDS.sleep(1500);
+    TimeUnit.MILLISECONDS.sleep(2000);
   }
 
   @Test
@@ -177,7 +177,7 @@ public class PipelinesRunningProcessServiceImplTest {
     addStatusToZookeeper(crawlId);
 
     // we wait for the ZK TreeCache to respond to the events
-    TimeUnit.MILLISECONDS.sleep(400);
+    TimeUnit.MILLISECONDS.sleep(700);
 
     // When
     PipelineProcess status = service.getPipelineProcess(datasetKey, attempt);
@@ -188,6 +188,8 @@ public class PipelinesRunningProcessServiceImplTest {
 
     // Postprocess
     deleteMonitoringById(crawlId);
+
+    TimeUnit.MILLISECONDS.sleep(500);
   }
 
   @Test
