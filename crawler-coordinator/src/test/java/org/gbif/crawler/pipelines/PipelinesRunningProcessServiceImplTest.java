@@ -22,7 +22,6 @@ import com.google.common.base.Charsets;
 import com.google.common.collect.Sets;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
-import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.apache.curator.retry.RetryOneTime;
 import org.apache.curator.test.TestingServer;
 import org.junit.After;
@@ -81,7 +80,6 @@ public class PipelinesRunningProcessServiceImplTest {
 
 
   private CuratorFramework curator;
-  private PathChildrenCache pathChildrenCache;
   private TestingServer server;
   private PipelinesRunningProcessServiceImpl service;
 
@@ -103,7 +101,7 @@ public class PipelinesRunningProcessServiceImplTest {
   @After
   public void tearDown() throws IOException, InterruptedException {
     // we wait for the ZK TreeCache to finish since it's executed async and needs curator to be open
-    TimeUnit.MILLISECONDS.sleep(250);
+    TimeUnit.MILLISECONDS.sleep(300);
     curator.close();
     server.stop();
   }
@@ -153,7 +151,7 @@ public class PipelinesRunningProcessServiceImplTest {
     }
 
     // we wait for the ZK TreeCache to respond to the events
-    TimeUnit.MILLISECONDS.sleep(550);
+    TimeUnit.MILLISECONDS.sleep(700);
 
     // When
     Set<PipelineProcess> set = service.getPipelineProcesses();
