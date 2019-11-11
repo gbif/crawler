@@ -14,8 +14,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -155,7 +153,7 @@ public class PipelinesRunningProcessServiceImplTest {
     }
 
     // we wait for the ZK TreeCache to respond to the events
-    TimeUnit.MILLISECONDS.sleep(500);
+    TimeUnit.MILLISECONDS.sleep(550);
 
     // When
     Set<PipelineProcess> set = service.getPipelineProcesses();
