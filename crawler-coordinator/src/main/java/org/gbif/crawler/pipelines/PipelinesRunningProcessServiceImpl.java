@@ -54,6 +54,7 @@ import static org.gbif.api.model.pipelines.PipelineStep.MetricInfo;
 import static org.gbif.api.model.pipelines.PipelineStep.Status;
 import static org.gbif.crawler.constants.PipelinesNodePaths.DELIMITER;
 import static org.gbif.crawler.constants.PipelinesNodePaths.PIPELINES_ROOT;
+import static org.gbif.crawler.constants.PipelinesNodePaths.SIZE;
 import static org.gbif.crawler.constants.PipelinesNodePaths.getPipelinesInfoPath;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -127,7 +128,9 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
 
     TreeCacheListener listener =
         (curatorClient, event) -> {
-          if ((event.getType() == NODE_ADDED || event.getType() == NODE_UPDATED)) {
+          // we ignore the changes in the size node when adding or updating
+          if ((event.getType() == NODE_ADDED || event.getType() == NODE_UPDATED)
+              && !event.getData().getPath().contains(SIZE)) {
             crawlIdPath
                 .apply(event.getData().getPath())
                 .ifPresent(
@@ -203,10 +206,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
 
       // Check if dataset is actually being processed right now
       if (!checkExists(getPipelinesInfoPath(crawlId))) {
-        return Optional.of(
-            new PipelineProcess()
-                .setDatasetKey(UUID.fromString(ids[0]))
-                .setAttempt(Integer.parseInt(ids[1])));
+        return Optional.empty();
       }
       // Here we're trying to load all information from Zookeeper into the DatasetProcessStatus
       // object
