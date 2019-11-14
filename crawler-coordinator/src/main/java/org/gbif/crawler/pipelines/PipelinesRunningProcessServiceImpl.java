@@ -129,14 +129,20 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
     TreeCacheListener listener =
         (curatorClient, event) -> {
           // we ignore the changes in the size node when adding or updating
-          if ((event.getType() == NODE_ADDED || event.getType() == NODE_UPDATED)
-              && !event.getData().getPath().contains(SIZE)) {
+          if (event.getType() == NODE_ADDED && !event.getData().getPath().contains(SIZE)) {
             crawlIdPath
                 .apply(event.getData().getPath())
                 .ifPresent(
                     path ->
                         loadRunningPipelineProcess(path)
                             .ifPresent(process -> processCache.put(path, process)));
+          } else if (event.getType() == NODE_UPDATED && !event.getData().getPath().contains(SIZE)) {
+            crawlIdPath
+                .apply(event.getData().getPath())
+                .ifPresent(
+                    path ->
+                        loadRunningPipelineProcess(path)
+                            .ifPresent(process -> processCache.replace(path, process)));
           } else if (event.getType() == NODE_REMOVED) {
             crawlIdPath.apply(event.getData().getPath()).ifPresent(processCache::remove);
           } else if (event.getType() == INITIALIZED) {
