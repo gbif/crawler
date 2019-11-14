@@ -328,9 +328,11 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
 
               } catch (Exception ex) {
                 LOG.error(ex.getMessage(), ex);
+                return null;
               }
               return step;
             })
+        .filter(Objects::nonNull)
         .collect(Collectors.toSet());
   }
 
