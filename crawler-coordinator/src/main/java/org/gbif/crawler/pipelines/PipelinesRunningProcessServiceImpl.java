@@ -156,7 +156,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
             new Thread(
                 () -> {
                   cache.close();
-                  processCache.close();
+                  processCache.clearAndClose();
                 }));
   }
 
