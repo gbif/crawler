@@ -37,7 +37,8 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.gbif.api.model.pipelines.PipelineProcess.STEPS_COMPARATOR;
+import static org.gbif.api.model.pipelines.PipelineProcess.PIPELINE_PROCESS_BY_LATEST_STEP_DESC;
+import static org.gbif.api.model.pipelines.PipelineStep.STEPS_BY_START_AND_FINISH_ASC;
 import static org.gbif.api.model.pipelines.PipelineStep.Status;
 import static org.gbif.crawler.constants.PipelinesNodePaths.DELIMITER;
 import static org.gbif.crawler.constants.PipelinesNodePaths.PIPELINES_ROOT;
@@ -150,12 +151,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
     return StreamSupport.stream(processCache.entries().spliterator(), true)
         .filter(node -> datasetKey == null || node.getKey().startsWith(datasetKey.toString()))
         .map(CacheEntry::getValue)
-        .collect(
-            Collectors.toCollection(
-                () ->
-                    new TreeSet<>(
-                        Comparator.comparing(PipelineProcess::getDatasetKey)
-                            .thenComparing(PipelineProcess::getAttempt))));
+        .collect(Collectors.toCollection(() -> new TreeSet<>(PIPELINE_PROCESS_BY_LATEST_STEP_DESC)));
   }
 
   @Override
@@ -228,7 +224,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
     // get number of records
     status.getSteps().stream()
         .filter(s -> s.getType().getExecutionOrder() == 1)
-        .max(STEPS_COMPARATOR)
+        .max(STEPS_BY_START_AND_FINISH_ASC)
         .ifPresent(
             s -> {
               try {
