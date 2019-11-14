@@ -151,7 +151,13 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
         };
     cache.getListenable().addListener(listener);
 
-    Runtime.getRuntime().addShutdownHook(new Thread(cache::close));
+    Runtime.getRuntime()
+        .addShutdownHook(
+            new Thread(
+                () -> {
+                  cache.close();
+                  processCache.close();
+                }));
   }
 
   @Override
