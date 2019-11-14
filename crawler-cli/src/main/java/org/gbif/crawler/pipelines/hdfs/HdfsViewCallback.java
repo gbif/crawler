@@ -1,11 +1,10 @@
 package org.gbif.crawler.pipelines.hdfs;
 
-import java.io.IOException;
-
 import org.gbif.api.model.pipelines.StepRunner;
 import org.gbif.api.model.pipelines.StepType;
 import org.gbif.common.messaging.AbstractMessageCallback;
 import org.gbif.common.messaging.api.MessagePublisher;
+import org.gbif.common.messaging.api.messages.PipelinesHdfsViewBuiltMessage;
 import org.gbif.common.messaging.api.messages.PipelinesInterpretedMessage;
 import org.gbif.crawler.pipelines.HdfsUtils;
 import org.gbif.crawler.pipelines.PipelineCallback;
@@ -14,13 +13,16 @@ import org.gbif.crawler.pipelines.indexing.IndexingConfiguration;
 import org.gbif.pipelines.common.PipelinesVariables.Metrics;
 import org.gbif.registry.ws.client.pipelines.PipelinesHistoryWsClient;
 
+import java.io.IOException;
+import java.util.Set;
+import java.util.UUID;
+
+import com.google.common.base.Strings;
 import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.slf4j.MDC.MDCCloseable;
-
-import com.google.common.base.Strings;
 
 import static org.gbif.pipelines.common.PipelinesVariables.Pipeline.Interpretation.DIRECTORY_NAME;
 
@@ -53,8 +55,11 @@ public class HdfsViewCallback extends AbstractMessageCallback<PipelinesInterpret
   @Override
   public void handleMessage(PipelinesInterpretedMessage message) {
 
-    try (MDCCloseable mdc1 = MDC.putCloseable("datasetId", message.getDatasetUuid().toString());
-        MDCCloseable mdc2 = MDC.putCloseable("attempt", message.getAttempt().toString());
+    UUID datasetId = message.getDatasetUuid();
+    Integer attempt = message.getAttempt();
+
+    try (MDCCloseable mdc1 = MDC.putCloseable("datasetId", datasetId.toString());
+        MDCCloseable mdc2 = MDC.putCloseable("attempt", attempt.toString());
         MDCCloseable mdc3 = MDC.putCloseable("step", STEP.name())) {
 
       if (!isMessageCorrect(message)) {
@@ -64,11 +69,13 @@ public class HdfsViewCallback extends AbstractMessageCallback<PipelinesInterpret
 
       LOG.info("Message handler began - {}", message);
 
+      Set<String> steps = message.getPipelineSteps();
       Runnable runnable = createRunnable(message);
 
       // Message callback handler, updates zookeeper info, runs process logic and sends next MQ message
       PipelineCallback.create()
           .incomingMessage(message)
+          .outgoingMessage(new PipelinesHdfsViewBuiltMessage(datasetId, attempt, steps))
           .curator(curator)
           .zkRootElementPath(STEP.getLabel())
           .pipelinesStepName(STEP)

@@ -19,9 +19,6 @@ import com.google.inject.name.Names;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.ExponentialBackoffRetry;
-import org.apache.http.HttpHost;
-import org.elasticsearch.client.RestClient;
-import org.elasticsearch.client.RestHighLevelClient;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -45,7 +42,6 @@ class CrawlerModule extends PrivateServiceModule {
     expose(PipelinesRunningProcessService.class);
     expose(Executor.class);
     expose(CuratorFramework.class);
-    expose(RestHighLevelClient.class);
     expose(DatasetService.class);
 
     expose(String.class).annotatedWith(Names.named("overcrawledReportFilePath"));
@@ -84,17 +80,6 @@ class CrawlerModule extends PrivateServiceModule {
   public Executor provideExecutor(@Named("crawl.threadCount") int threadCount) {
     checkArgument(threadCount > 0, "threadCount has to be greater than zero");
     return Executors.newFixedThreadPool(threadCount);
-  }
-
-  /**
-   * Provides an RestHighLevelClient to use for Elasticsearch queries. This is shared between all requests.
-   *
-   * @param esUrl url to Elasticsearch instance
-   */
-  @Provides
-  @Singleton
-  public RestHighLevelClient provideEsRestClient(@Named("pipelines.esUrl") String esUrl) {
-    return new RestHighLevelClient(RestClient.builder(HttpHost.create(esUrl)).build());
   }
 
   /**
