@@ -7,20 +7,17 @@ import static java.lang.String.join;
 
 public class PipelinesNodePaths {
 
-  private static final String DELIMITER = "/";
-
-  private static final String OK = "successful";
-  private static final String ERR = "error";
-  private static final String MQ = "mq";
-  private static final String START = "startDate";
-  private static final String END = "endDate";
-  private static final String RUNNER_TYPE = "runner";
-  private static final String MESSAGE = "message";
-  private static final String CLASS_NAME = "className";
-  private static final String DONE = "availability";
-
+  public static final String DELIMITER = "/";
   public static final String PIPELINES_ROOT = "pipelines";
-
+  public static final String OK = "successful";
+  public static final String ERR = "error";
+  public static final String MQ = "mq";
+  public static final String RUNNER_TYPE = "runner";
+  public static final String MESSAGE = "message";
+  public static final String CLASS_NAME = "className";
+  public static final String DONE = "availability";
+  public static final String START = "startDate";
+  public static final String END = "endDate";
   public static final String SIZE = "size";
 
   public static class Fn {

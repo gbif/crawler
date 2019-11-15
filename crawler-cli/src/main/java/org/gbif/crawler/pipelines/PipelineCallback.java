@@ -3,7 +3,6 @@ package org.gbif.crawler.pipelines;
 import java.util.Optional;
 import java.util.Set;
 
-import org.gbif.api.model.pipelines.PipelineProcess;
 import org.gbif.api.model.pipelines.PipelineStep;
 import org.gbif.api.model.pipelines.StepRunner;
 import org.gbif.api.model.pipelines.StepType;

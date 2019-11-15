@@ -9,17 +9,8 @@ import org.gbif.api.service.crawler.DatasetProcessService;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.CompletionService;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorCompletionService;
-import java.util.concurrent.Future;
+import java.util.*;
+import java.util.concurrent.*;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Optional;
@@ -36,35 +27,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.gbif.crawler.constants.CrawlerNodePaths.CRAWL_CONTEXT;
-import static org.gbif.crawler.constants.CrawlerNodePaths.CRAWL_INFO;
-import static org.gbif.crawler.constants.CrawlerNodePaths.DECLARED_COUNT;
-import static org.gbif.crawler.constants.CrawlerNodePaths.DWCA_CRAWL;
-import static org.gbif.crawler.constants.CrawlerNodePaths.FINISHED_CRAWLING;
-import static org.gbif.crawler.constants.CrawlerNodePaths.FINISHED_REASON;
-import static org.gbif.crawler.constants.CrawlerNodePaths.FRAGMENTS_EMITTED;
-import static org.gbif.crawler.constants.CrawlerNodePaths.FRAGMENTS_PROCESSED;
-import static org.gbif.crawler.constants.CrawlerNodePaths.FRAGMENTS_RECEIVED;
-import static org.gbif.crawler.constants.CrawlerNodePaths.INTERPRETED_OCCURRENCES_PERSISTED_ERROR;
-import static org.gbif.crawler.constants.CrawlerNodePaths.INTERPRETED_OCCURRENCES_PERSISTED_SUCCESSFUL;
-import static org.gbif.crawler.constants.CrawlerNodePaths.PAGES_CRAWLED;
-import static org.gbif.crawler.constants.CrawlerNodePaths.PAGES_FRAGMENTED_ERROR;
-import static org.gbif.crawler.constants.CrawlerNodePaths.PAGES_FRAGMENTED_SUCCESSFUL;
-import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_CHECKLIST;
-import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_OCCURRENCE;
-import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_SAMPLE;
-import static org.gbif.crawler.constants.CrawlerNodePaths.QUEUED_CRAWLS;
-import static org.gbif.crawler.constants.CrawlerNodePaths.RAW_OCCURRENCES_PERSISTED_ERROR;
-import static org.gbif.crawler.constants.CrawlerNodePaths.RAW_OCCURRENCES_PERSISTED_NEW;
-import static org.gbif.crawler.constants.CrawlerNodePaths.RAW_OCCURRENCES_PERSISTED_UNCHANGED;
-import static org.gbif.crawler.constants.CrawlerNodePaths.RAW_OCCURRENCES_PERSISTED_UPDATED;
-import static org.gbif.crawler.constants.CrawlerNodePaths.RUNNING_CRAWLS;
-import static org.gbif.crawler.constants.CrawlerNodePaths.STARTED_CRAWLING;
-import static org.gbif.crawler.constants.CrawlerNodePaths.VERBATIM_OCCURRENCES_PERSISTED_ERROR;
-import static org.gbif.crawler.constants.CrawlerNodePaths.VERBATIM_OCCURRENCES_PERSISTED_SUCCESSFUL;
-import static org.gbif.crawler.constants.CrawlerNodePaths.XML_CRAWL;
-import static org.gbif.crawler.constants.CrawlerNodePaths.buildPath;
-import static org.gbif.crawler.constants.CrawlerNodePaths.getCrawlInfoPath;
+import static org.gbif.crawler.constants.CrawlerNodePaths.*;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
