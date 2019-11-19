@@ -29,7 +29,6 @@ import javax.annotation.Nullable;
 import com.google.common.base.Strings;
 import com.google.common.io.Files;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.TreeCache;
 import org.apache.curator.framework.recipes.cache.TreeCacheListener;
@@ -63,14 +62,10 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
 
   private static final ObjectMapper OBJECT_MAPPER =
       new ObjectMapper().disable(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES);
-  private static final String FILTER_NAME = "org.gbif.pipelines.transforms.";
-  private static final DecimalFormat DF = new DecimalFormat("0");
   private static final BiFunction<UUID, Integer, String> CRAWL_ID_GENERATOR =
       (datasetKey, attempt) -> datasetKey + "_" + attempt;
 
   private final CuratorFramework curator;
-  private final RestHighLevelClient client;
-  private final String envPrefix;
   private final DatasetService datasetService;
   private final PipelinesRunningProcessSearchService searchService;
   private final Cache<String, PipelineProcess> processCache =
@@ -89,13 +84,10 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
   @Inject
   public PipelinesRunningProcessServiceImpl(
       CuratorFramework curator,
-      RestHighLevelClient client,
-      DatasetService datasetService,
-      @Named("pipelines.envPrefix") String envPrefix) throws Exception {
+      DatasetService datasetService)
+      throws Exception {
     this.curator = checkNotNull(curator, "curator can't be null");
-    this.client = client;
     this.datasetService = datasetService;
-    this.envPrefix = envPrefix;
     File tmpDir = Files.createTempDir();
     tmpDir.deleteOnExit();
     this.searchService = new PipelinesRunningProcessSearchService(tmpDir.getPath());
@@ -126,20 +118,51 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
 
     TreeCacheListener listener =
         (curatorClient, event) -> {
-          if ((event.getType() == NODE_ADDED || event.getType() == NODE_UPDATED)) {
+          // we ignore the changes in the size node when adding or updating
+          if (event.getType() == NODE_ADDED && !event.getData().getPath().contains(SIZE)) {
             crawlIdPath
                 .apply(event.getData().getPath())
-                .flatMap(this::loadRunningPipelineProcess)
-                .ifPresent(searchService::index);
+                .ifPresent(
+                    path ->
+                        loadRunningPipelineProcess(path)
+                            .ifPresent(
+                                process -> {
+                                  processCache.put(path, process);
+                                  searchService.index(process);
+                                }));
+          } else if (event.getType() == NODE_UPDATED && !event.getData().getPath().contains(SIZE)) {
+            crawlIdPath
+                .apply(event.getData().getPath())
+                .ifPresent(
+                    path ->
+                        loadRunningPipelineProcess(path)
+                            .ifPresent(
+                                process -> {
+                                  processCache.put(path, process);
+                                  searchService.index(process);
+                                }));
           } else if (event.getType() == NODE_REMOVED) {
-            crawlIdPath.apply(event.getData().getPath()).ifPresent(searchService::delete);
+            crawlIdPath
+                .apply(event.getData().getPath())
+                .ifPresent(
+                    path -> {
+                      processCache.remove(path);
+                      searchService.delete(path);
+                    });
           } else if (event.getType() == INITIALIZED) {
             LOG.info("ZK TreeCache initialized for pipelines");
           }
         };
     cache.getListenable().addListener(listener);
 
-    Runtime.getRuntime().addShutdownHook(new Thread(cache::close));
+    Runtime.getRuntime()
+      .addShutdownHook(
+        new Thread(
+          () -> {
+            cache.close();
+            processCache.clearAndClose();
+            searchService.close();
+          }));
   }
 
   @Override
@@ -244,10 +267,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
 
       // Check if dataset is actually being processed right now
       if (!checkExists(getPipelinesInfoPath(crawlId))) {
-        return Optional.of(
-            new PipelineProcess()
-                .setDatasetKey(UUID.fromString(ids[0]))
-                .setAttempt(Integer.parseInt(ids[1])));
+       return Optional.empty();
       }
       // Here we're trying to load all information from Zookeeper into a PipelineProcess object
       PipelineProcess process =
@@ -358,14 +378,13 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
                   step.setState(Status.RUNNING);
                 }
 
-                // Gets metrics info fro ELK
-                getMetricInfo(crawlId, step).forEach(step::addMetricInfo);
-
               } catch (Exception ex) {
                 LOG.error(ex.getMessage(), ex);
+                return null;
               }
               return step;
             })
+        .filter(Objects::nonNull)
         .collect(Collectors.toSet());
   }
 

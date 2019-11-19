@@ -45,7 +45,6 @@ class CrawlerModule extends PrivateServiceModule {
     expose(DatasetService.class);
 
     expose(String.class).annotatedWith(Names.named("overcrawledReportFilePath"));
-    expose(String.class).annotatedWith(Names.named("pipelines.envPrefix"));
   }
 
   CrawlerModule(Properties properties) {

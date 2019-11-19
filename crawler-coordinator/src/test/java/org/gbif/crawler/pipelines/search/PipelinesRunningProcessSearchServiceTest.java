@@ -80,29 +80,24 @@ public class PipelinesRunningProcessSearchServiceTest {
 
     searchService.index(pipelineProcess);
 
-    PipelinesRunningProcessSearchService.PipelineProcessSearchResult searchResult = searchService.searchByStepStatus(StepType.HDFS_VIEW,
-                                                                                                                      PipelineStep.Status.RUNNING,
-                                                                                                                          1, 10);
+    List<String> hits =
+        searchService.searchByStepStatus(StepType.HDFS_VIEW, PipelineStep.Status.RUNNING, 1, 10);
 
-    Assert.assertEquals(1, searchResult.getTotalHits());
-    Assert.assertEquals(pipelineProcess.getDatasetTitle(), searchResult.getResults().get(0).getDatasetTitle());
+    Assert.assertEquals(1, hits.size());
+    Assert.assertTrue(hits.get(0).startsWith(pipelineProcess.getDatasetKey().toString()));
 
+    hits = searchService.searchByStatus(PipelineStep.Status.RUNNING,1, 10);
 
-    searchResult = searchService.searchByStatus(PipelineStep.Status.RUNNING,1, 10);
+    Assert.assertEquals(1, hits.size());
+    Assert.assertTrue(hits.get(0).startsWith(pipelineProcess.getDatasetKey().toString()));
 
+    hits = searchService.searchByStatus(PipelineStep.Status.COMPLETED,1, 10);
+    Assert.assertEquals(0, hits.size());
 
-    Assert.assertEquals(1, searchResult.getTotalHits());
-    Assert.assertEquals(pipelineProcess.getDatasetTitle(), searchResult.getResults().get(0).getDatasetTitle());
+    hits = searchService.searchByStep(StepType.HDFS_VIEW,1, 10);
+    Assert.assertEquals(1, hits.size());
 
-
-    searchResult = searchService.searchByStatus(PipelineStep.Status.COMPLETED,1, 10);
-    Assert.assertEquals(0, searchResult.getTotalHits());
-
-
-    searchResult = searchService.searchByStep(StepType.HDFS_VIEW,1, 10);
-    Assert.assertEquals(1, searchResult.getTotalHits());
-
-    searchResult = searchService.searchByStep(StepType.INTERPRETED_TO_INDEX,1, 10);
-    Assert.assertEquals(0, searchResult.getTotalHits());
+    hits = searchService.searchByStep(StepType.INTERPRETED_TO_INDEX,1, 10);
+    Assert.assertEquals(0, hits.size());
   }
 }
