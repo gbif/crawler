@@ -20,6 +20,7 @@ import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
 import org.gbif.registry.ws.client.pipelines.PipelinesHistoryWsClient;
 
 import org.apache.curator.framework.CuratorFramework;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -34,6 +35,8 @@ import static org.gbif.crawler.constants.PipelinesNodePaths.getPipelinesInfoPath
 public class PipelineCallback {
 
   private static final Logger LOG = LoggerFactory.getLogger(PipelineCallback.class);
+
+  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
   private final Builder b;
 
@@ -233,7 +236,7 @@ public class PipelineCallback {
       // add step to the process
       PipelineStep step =
           new PipelineStep()
-              .setMessage(b.incomingMessage.toString())
+              .setMessage(OBJECT_MAPPER.writeValueAsString(b.incomingMessage))
               .setType(b.pipelinesStepName)
               .setState(PipelineStep.Status.RUNNING)
               .setRunner(StepRunner.valueOf(getRunner(b.incomingMessage)));
