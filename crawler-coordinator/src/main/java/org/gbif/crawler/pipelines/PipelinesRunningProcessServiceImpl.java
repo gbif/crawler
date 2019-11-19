@@ -79,8 +79,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
   @Inject
   public PipelinesRunningProcessServiceImpl(
       CuratorFramework curator,
-      DatasetService datasetService,
-      @Named("pipelines.envPrefix") String envPrefix) throws Exception {
+      DatasetService datasetService) throws Exception {
     this.curator = checkNotNull(curator, "curator can't be null");
     this.datasetService = datasetService;
     setupTreeCache();
