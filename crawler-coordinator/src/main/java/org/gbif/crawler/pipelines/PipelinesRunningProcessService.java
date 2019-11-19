@@ -3,7 +3,6 @@ package org.gbif.crawler.pipelines;
 import org.gbif.api.model.pipelines.PipelineProcess;
 import org.gbif.api.model.pipelines.PipelineStep;
 import org.gbif.api.model.pipelines.StepType;
-import org.gbif.crawler.pipelines.search.PipelinesRunningProcessSearchService;
 
 import java.util.Set;
 import java.util.UUID;
@@ -25,7 +24,7 @@ public interface PipelinesRunningProcessService {
 
   void deleteAllPipelineProcess();
 
-  PipelinesRunningProcessSearchService.PipelineProcessSearchResult search(
+  PipelinesRunningProcessServiceImpl.PipelineProcessSearchResult search(
       @Nullable String datasetTitle,
       @Nullable PipelineStep.Status stepStatus,
       @Nullable StepType stepType,

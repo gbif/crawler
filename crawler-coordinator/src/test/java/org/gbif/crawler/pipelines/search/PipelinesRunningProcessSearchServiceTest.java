@@ -5,6 +5,7 @@ import org.gbif.api.model.pipelines.PipelineStep;
 import org.gbif.api.model.pipelines.StepType;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -56,22 +57,6 @@ public class PipelinesRunningProcessSearchServiceTest {
   }
 
   /**
-   * Adds a document a search for all.
-   */
-  @Test
-  public void indexAndSearchAllTest() {
-    PipelineProcess pipelineProcess = getTestPipelineProcess();
-
-    searchService.index(pipelineProcess);
-
-    PipelinesRunningProcessSearchService.PipelineProcessSearchResult  searchAllResult = searchService.listAll(1, 10);
-
-    Assert.assertEquals(1, searchAllResult.getTotalHits());
-    Assert.assertEquals(pipelineProcess.getDatasetTitle(), searchAllResult.getResults().get(0).getDatasetTitle());
-  }
-
-
-  /**
    * Adds a document a search for it by dataset title.
    */
   @Test
@@ -80,10 +65,10 @@ public class PipelinesRunningProcessSearchServiceTest {
 
     searchService.index(pipelineProcess);
 
-    PipelinesRunningProcessSearchService.PipelineProcessSearchResult  searchResult = searchService.searchByDatasetTitle("ponta*", 1, 10);
+    List<String> hits = searchService.searchByDatasetTitle("ponta*", 1, 10);
 
-    Assert.assertEquals(1, searchResult.getTotalHits());
-    Assert.assertEquals(pipelineProcess.getDatasetTitle(), searchResult.getResults().get(0).getDatasetTitle());
+    Assert.assertEquals(1, hits.size());
+    Assert.assertTrue(hits.get(0).startsWith(pipelineProcess.getDatasetKey().toString()));
   }
 
   /**

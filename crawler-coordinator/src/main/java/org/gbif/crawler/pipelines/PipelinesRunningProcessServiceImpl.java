@@ -15,8 +15,6 @@ import org.gbif.crawler.pipelines.search.PipelinesRunningProcessSearchService;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
-import java.text.DecimalFormat;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -25,6 +23,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
 
 import com.google.common.base.Strings;
@@ -34,28 +33,21 @@ import com.google.inject.name.Named;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.TreeCache;
 import org.apache.curator.framework.recipes.cache.TreeCacheListener;
+import org.cache2k.Cache;
+import org.cache2k.Cache2kBuilder;
+import org.cache2k.CacheEntry;
 import org.codehaus.jackson.map.DeserializationConfig;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.aggregations.AggregationBuilders;
-import org.elasticsearch.search.aggregations.Aggregations;
-import org.elasticsearch.search.aggregations.bucket.terms.ParsedStringTerms;
-import org.elasticsearch.search.aggregations.metrics.max.ParsedMax;
-import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.gbif.api.model.pipelines.PipelineProcess.STEPS_COMPARATOR;
-import static org.gbif.api.model.pipelines.PipelineStep.MetricInfo;
+import static org.gbif.api.model.pipelines.PipelineProcess.PIPELINE_PROCESS_BY_LATEST_STEP_ASC;
+import static org.gbif.api.model.pipelines.PipelineStep.STEPS_BY_START_AND_FINISH_ASC;
 import static org.gbif.api.model.pipelines.PipelineStep.Status;
 import static org.gbif.crawler.constants.PipelinesNodePaths.DELIMITER;
 import static org.gbif.crawler.constants.PipelinesNodePaths.PIPELINES_ROOT;
+import static org.gbif.crawler.constants.PipelinesNodePaths.SIZE;
 import static org.gbif.crawler.constants.PipelinesNodePaths.getPipelinesInfoPath;
-import static org.gbif.crawler.pipelines.search.PipelinesRunningProcessSearchService.MAX_PAGE_SIZE;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.apache.curator.framework.recipes.cache.TreeCacheEvent.Type.INITIALIZED;
@@ -66,20 +58,27 @@ import static org.apache.curator.framework.recipes.cache.TreeCacheEvent.Type.NOD
 /** Pipelines monitoring service collects all necessary information from Zookeeper */
 public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProcessService {
 
-  private static final Logger LOG = LoggerFactory.getLogger(PipelinesRunningProcessServiceImpl.class);
+  private static final Logger LOG =
+      LoggerFactory.getLogger(PipelinesRunningProcessServiceImpl.class);
 
   private static final ObjectMapper OBJECT_MAPPER =
       new ObjectMapper().disable(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES);
   private static final String FILTER_NAME = "org.gbif.pipelines.transforms.";
   private static final DecimalFormat DF = new DecimalFormat("0");
   private static final BiFunction<UUID, Integer, String> CRAWL_ID_GENERATOR =
-    (datasetKey, attempt) -> datasetKey + "_" + attempt;
+      (datasetKey, attempt) -> datasetKey + "_" + attempt;
 
   private final CuratorFramework curator;
   private final RestHighLevelClient client;
   private final String envPrefix;
   private final DatasetService datasetService;
   private final PipelinesRunningProcessSearchService searchService;
+  private final Cache<String, PipelineProcess> processCache =
+      Cache2kBuilder.of(String.class, PipelineProcess.class)
+          .entryCapacity(Long.MAX_VALUE)
+          .suppressExceptions(false)
+          .eternal(true)
+          .build();
 
   /**
    * Creates a CrawlerMetricsService. Responsible for interacting with a ZooKeeper instance in a
@@ -100,6 +99,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
     File tmpDir = Files.createTempDir();
     tmpDir.deleteOnExit();
     this.searchService = new PipelinesRunningProcessSearchService(tmpDir.getPath());
+    Runtime.getRuntime().addShutdownHook(new Thread(searchService::close));
     setupTreeCache();
   }
 
@@ -144,24 +144,22 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
 
   @Override
   public Set<PipelineProcess> getPipelineProcesses() {
-    return new HashSet<>(searchService.listAll(1, MAX_PAGE_SIZE).getResults());
+    return getPipelineProcesses(null);
   }
 
   @Override
   public Set<PipelineProcess> getPipelineProcesses(UUID datasetKey) {
-    Objects.requireNonNull(datasetKey);
-    return new HashSet<>(
-        searchService.searchByDatasetKey(datasetKey.toString(), 1, MAX_PAGE_SIZE).getResults());
+    return StreamSupport.stream(processCache.entries().spliterator(), true)
+        .filter(node -> datasetKey == null || node.getKey().startsWith(datasetKey.toString()))
+        .map(CacheEntry::getValue)
+        .collect(
+            Collectors.toCollection(
+                () -> new TreeSet<>(PIPELINE_PROCESS_BY_LATEST_STEP_ASC.reversed())));
   }
 
   @Override
   public PipelineProcess getPipelineProcess(UUID datasetKey, int attempt) {
-    List<PipelineProcess> processes = searchService
-      .searchByDatasetKeyAndAttempt(
-        datasetKey.toString(), attempt, 1, MAX_PAGE_SIZE)
-      .getResults();
-
-    return processes != null && !processes.isEmpty() ? processes.get(0) : null;
+    return processCache.get(CRAWL_ID_GENERATOR.apply(datasetKey, attempt));
   }
 
   @Override
@@ -176,25 +174,50 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
   }
 
   @Override
-  public PipelinesRunningProcessSearchService.PipelineProcessSearchResult search(
+  public PipelineProcessSearchResult search(
       @Nullable String datasetTitle,
       @Nullable Status stepStatus,
       @Nullable StepType stepType,
       int pageNumber,
       int pageSize) {
+
+    Function<List<String>, PipelineProcessSearchResult> hitsToResult =
+        hits -> {
+          Set<PipelineProcess> processes =
+              hits.stream().map(processCache::get).collect(Collectors.toSet());
+
+          return new PipelineProcessSearchResult(processes.size(), processes);
+        };
+
     if (!Strings.isNullOrEmpty(datasetTitle)) {
-      return searchService.searchByDatasetTitle(datasetTitle, pageNumber, pageSize);
+      return hitsToResult.apply(
+          searchService.searchByDatasetTitle(datasetTitle, pageNumber, pageSize));
     }
 
     if (stepStatus != null && stepType != null) {
-      return searchService.searchByStepStatus(stepType, stepStatus, pageNumber, pageSize);
-    } else if (stepStatus != null) {
-      return searchService.searchByStatus(stepStatus, pageNumber, pageSize);
-    } else if (stepType != null) {
-      return searchService.searchByStep(stepType, pageNumber, pageSize);
+      return hitsToResult.apply(
+          searchService.searchByStepStatus(stepType, stepStatus, pageNumber, pageSize));
     }
 
-    return searchService.listAll(pageNumber, pageSize);
+    if (stepStatus != null) {
+      return hitsToResult.apply(searchService.searchByStatus(stepStatus, pageNumber, pageSize));
+    }
+
+    if (stepType != null) {
+      return hitsToResult.apply(searchService.searchByStep(stepType, pageNumber, pageSize));
+    }
+
+    // if there's no params get all processes
+    Set<PipelineProcess> allProcesses =
+        StreamSupport.stream(processCache.entries().spliterator(), true)
+            .skip(pageNumber)
+            .limit(pageSize)
+            .map(CacheEntry::getValue)
+            .collect(
+                Collectors.toCollection(
+                    () -> new TreeSet<>(PIPELINE_PROCESS_BY_LATEST_STEP_ASC.reversed())));
+
+    return new PipelineProcessSearchResult(allProcesses.size(), allProcesses);
   }
 
   private void deleteZkPipelinesNode(String crawlId) {
@@ -232,7 +255,8 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
               .setDatasetKey(UUID.fromString(ids[0]))
               .setAttempt(Integer.parseInt(ids[1]));
 
-      // ALL_STEPS - static set of all pipelines steps: DWCA_TO_AVRO, VERBATIM_TO_INTERPRETED and etc.
+      // ALL_STEPS - static set of all pipelines steps: DWCA_TO_AVRO, VERBATIM_TO_INTERPRETED and
+      // etc.
       getStepInfo(crawlId).stream().filter(s -> s.getStarted() != null).forEach(process::addStep);
 
       if (process.getSteps().isEmpty()) {
@@ -253,7 +277,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
     // get number of records
     status.getSteps().stream()
         .filter(s -> s.getType().getExecutionOrder() == 1)
-        .max(STEPS_COMPARATOR)
+        .max(STEPS_BY_START_AND_FINISH_ASC)
         .ifPresent(
             s -> {
               try {
@@ -388,101 +412,26 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
     }
   }
 
-  /**
-   * Gets metrics info from ELK
-   */
-  private Set<MetricInfo> getMetricInfo(String crawlId, PipelineStep step) {
-    if (client != null) {
-      try {
-        SearchResponse search = client.search(getEsMetricQuery(crawlId, step));
+  /** Search results. */
+  public static final class PipelineProcessSearchResult {
 
-        Aggregations aggregations = search.getAggregations();
-        if (aggregations == null) {
-          return Collections.emptySet();
-        }
+    private final long totalHits;
 
-        ParsedStringTerms uniqueName = aggregations.get("unique_name");
-        if (uniqueName == null) {
-          return Collections.emptySet();
-        }
+    private final Set<PipelineProcess> results;
 
-        return uniqueName.getBuckets().stream().map(x -> {
-          String keyAsString = x.getKeyAsString();
-          String keyFormatted = keyAsString.substring(keyAsString.indexOf(FILTER_NAME) + FILTER_NAME.length());
-
-          ParsedMax value = x.getAggregations().get("max_value");
-          double valueDouble = value.getValue();
-          String valueFormatted = DF.format(valueDouble);
-
-          return new MetricInfo(keyFormatted, valueFormatted);
-        }).collect(Collectors.toSet());
-
-      } catch (Exception ex) {
-        LOG.error(ex.getMessage(), ex);
-      }
+    PipelineProcessSearchResult(long totalHits, Set<PipelineProcess> results) {
+      this.totalHits = totalHits;
+      this.results = results;
     }
-    return Collections.emptySet();
-  }
 
-  /**
-   * ES query like:
-   *
-   * <pre>{@code
-   * {
-   *   "size": 0,
-   *   "aggs": {
-   *     "unique_name": {
-   *       "terms": {"field": "name.keyword"},
-   *       "aggs": {
-   *         "max_value": {
-   *           "max": {"field": "value"}
-   *         }
-   *       }
-   *     }
-   *   },
-   *   "query": {
-   *     "bool": {
-   *       "must": [
-   *         {"match": {"datasetId": "7a25f7aa-03fb-4322-aaeb-66719e1a9527"}},
-   *         {"match": {"attempt": "52"}},
-   *         {"match": {"type": "GAUGE"}},
-   *         {"match_phrase_prefix": { "name": "driver.PipelinesOptionsFactory"}}
-   *       ]
-   *     }
-   *   }
-   * }
-   *
-   * }</pre>
-   */
-  private SearchRequest getEsMetricQuery(String crawlId, PipelineStep step) {
+    /** @return the total/global number of results */
+    public long getTotalHits() {
+      return totalHits;
+    }
 
-    String[] ids = crawlId.split("_");
-    String year = String.valueOf(LocalDate.now().getYear());
-
-    // ES query
-    SearchRequest searchRequest = new SearchRequest(envPrefix + "-pipeline-metric-" + year + ".*");
-    SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-
-    // Must
-    BoolQueryBuilder booleanQuery = QueryBuilders.boolQuery();
-    booleanQuery.must(QueryBuilders.matchQuery("datasetId", ids[0]));
-    booleanQuery.must(QueryBuilders.matchQuery("attempt", ids[1]));
-    booleanQuery.must(QueryBuilders.matchQuery("step", step.getType().name()));
-    booleanQuery.must(QueryBuilders.rangeQuery("@timestamp").gte(step.getStarted()));
-    booleanQuery.must(QueryBuilders.matchQuery("type", "GAUGE"));
-    booleanQuery.must(
-        QueryBuilders.matchPhrasePrefixQuery("name", "driver.PipelinesOptionsFactory"));
-    searchSourceBuilder.query(booleanQuery);
-
-    // Aggr
-    searchSourceBuilder.aggregation(
-        AggregationBuilders.terms("unique_name")
-            .field("name.keyword")
-            .subAggregation(AggregationBuilders.max("max_value").field("value")));
-
-    searchSourceBuilder.size(0);
-    searchRequest.source(searchSourceBuilder);
-
-    return searchRequest;
+    /** @return PipelineProcess search results */
+    public Set<PipelineProcess> getResults() {
+      return results;
+    }
   }
 }

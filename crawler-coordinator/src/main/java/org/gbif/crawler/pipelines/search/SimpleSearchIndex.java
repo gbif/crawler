@@ -125,29 +125,9 @@ public class SimpleSearchIndex implements Closeable {
                                                                 .collect(Collectors.toList()));
   }
 
-  /**
-   * Upsert documents by using a field and a exact match against that field.
-   * @param field to be used to find documents
-   * @param value to be used as exact match
-   * @param doc documents of fields to be updated
-   * @return number of updated documents
-   * @throws IOException
-   */
-  public long upsert(String field, String value, Map<String,String> doc) throws IOException {
-    SearchResult searchResult = termSearch(field, value.toLowerCase(), 1, 1);
-    if (searchResult.getTotalHits() > 0) {
-      return update(field, value, doc);
-    }
-    return index(doc);
-  }
-
   /**Converts a Lucene {@link Document} into a Map<String,String>.*/
   private static Map<String,String> docToMap(Document document) {
     return document.getFields().stream().collect(Collectors.toMap(IndexableField::name, IndexableField::stringValue));
-  }
-
-  public SearchResult listAll(int pageNumber, int pageSize) throws IOException {
-    return doSearch(new MatchAllDocsQuery(), pageNumber, pageSize);
   }
 
   /**
@@ -215,7 +195,6 @@ public class SimpleSearchIndex implements Closeable {
   /**
    * Performs a pageable exact term search on a field value.
    * @param fieldName to be used for the search
-   * @param q term query
    * @param pageNumber page number, it must be controlled by the user.
    * @param pageSize maximum number of results to return
    * @return a {@link SearchResult}, a SearchResults.result empty if no results.
@@ -256,7 +235,7 @@ public class SimpleSearchIndex implements Closeable {
   /**
    * Wraps the search results.
    */
-  public static class SearchResult {
+  static class SearchResult {
 
     private final long totalHits;
 
@@ -268,12 +247,12 @@ public class SimpleSearchIndex implements Closeable {
     }
 
     /** @return a empty result with empty list of results and 0 totalHits.*/
-    private static SearchResult empty() {
+    static SearchResult empty() {
       return new SearchResult(0, new ArrayList<>());
     }
 
     /** Factory method.*/
-    private static SearchResult of(long totalHits, List<Map<String,String>> results) {
+    static SearchResult of(long totalHits, List<Map<String,String>> results) {
       return new SearchResult(totalHits, results);
     }
 

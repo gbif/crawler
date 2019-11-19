@@ -4,7 +4,7 @@ import org.gbif.api.model.pipelines.PipelineProcess;
 import org.gbif.api.model.pipelines.PipelineStep;
 import org.gbif.api.model.pipelines.StepType;
 import org.gbif.crawler.pipelines.PipelinesRunningProcessService;
-import org.gbif.crawler.pipelines.search.PipelinesRunningProcessSearchService;
+import org.gbif.crawler.pipelines.PipelinesRunningProcessServiceImpl;
 import org.gbif.ws.util.ExtraMediaTypes;
 
 import java.util.Set;
@@ -42,7 +42,7 @@ public class PipelinesRunningProcessResource {
   /** Searchs for the received parameters. */
   @GET
   @Path("search")
-  public PipelinesRunningProcessSearchService.PipelineProcessSearchResult search(
+  public PipelinesRunningProcessServiceImpl.PipelineProcessSearchResult search(
       @QueryParam("datasetTile") String datasetTitle,
       @QueryParam("status") PipelineStep.Status stepStatus,
       @QueryParam("step") StepType stepType,
