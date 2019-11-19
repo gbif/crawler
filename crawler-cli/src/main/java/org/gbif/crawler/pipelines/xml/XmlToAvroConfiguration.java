@@ -98,7 +98,6 @@ public class XmlToAvroConfiguration {
         .add("fileName", fileName)
         .add("syncInterval", avroConfig.syncInterval)
         .add("compressionCodec", avroConfig.compressionType)
-        .add("codecFactory", avroConfig.getCodec())
         .add("hdfsSiteConfig", hdfsSiteConfig)
         .add("interpretTypes", interpretTypes.toString())
         .add("metaFileName", metaFileName)

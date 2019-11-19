@@ -94,8 +94,7 @@ public class PipelinesRunningProcessServiceImplTest {
             .build();
     curator.start();
     service =
-        new PipelinesRunningProcessServiceImpl(
-            curator, null, Mockito.mock(DatasetService.class), "test");
+        new PipelinesRunningProcessServiceImpl(curator, Mockito.mock(DatasetService.class));
   }
 
   @After

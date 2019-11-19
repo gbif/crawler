@@ -19,6 +19,7 @@ import org.gbif.converters.DwcaToAvroConverter;
 import org.gbif.crawler.pipelines.PipelineCallback;
 import org.gbif.registry.ws.client.pipelines.PipelinesHistoryWsClient;
 
+import org.apache.avro.file.CodecFactory;
 import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -149,7 +150,7 @@ public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMes
 
       // Run main conversion process
       DwcaToAvroConverter.create()
-          .codecFactory(config.avroConfig.getCodec())
+          .codecFactory(CodecFactory.fromString(config.avroConfig.compressionType))
           .syncInterval(config.avroConfig.syncInterval)
           .hdfsSiteConfig(config.hdfsSiteConfig)
           .inputPath(inputPath)
