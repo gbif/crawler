@@ -7,6 +7,7 @@ import org.gbif.crawler.pipelines.PipelinesRunningProcessService;
 import org.gbif.crawler.pipelines.PipelinesRunningProcessServiceImpl;
 import org.gbif.ws.util.ExtraMediaTypes;
 
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import javax.annotation.Nullable;
@@ -44,15 +45,17 @@ public class PipelinesRunningProcessResource {
   @Path("search")
   public PipelinesRunningProcessServiceImpl.PipelineProcessSearchResult search(
       @QueryParam("datasetTile") String datasetTitle,
-      @QueryParam("status") PipelineStep.Status stepStatus,
-      @QueryParam("step") StepType stepType,
+      @QueryParam("datasetKey") UUID datasetKey,
+      @QueryParam("status") List<PipelineStep.Status> statuses,
+      @QueryParam("step") List<StepType> stepTypes,
       @Nullable @QueryParam("page") Integer pageNumber,
       @Nullable @QueryParam("size") Integer pageSize) {
     return service.search(
         datasetTitle,
-        stepStatus,
-        stepType,
-        pageNumber != null ? pageNumber : 1,
+        datasetKey,
+        statuses,
+        stepTypes,
+        pageNumber != null ? pageNumber : 0,
         pageSize != null ? pageSize : DEFAULT_PAGE_SIZE);
   }
 

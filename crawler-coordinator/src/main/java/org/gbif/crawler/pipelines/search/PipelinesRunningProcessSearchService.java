@@ -1,25 +1,26 @@
 package org.gbif.crawler.pipelines.search;
 
 import org.gbif.api.model.pipelines.PipelineProcess;
-import org.gbif.api.model.pipelines.PipelineStep;
-import org.gbif.api.model.pipelines.StepType;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
+
+import com.google.common.base.Strings;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.document.StringField;
+import org.apache.lucene.document.TextField;
 
 /** Simple embedded search service to retrieve pipeline processes by dataset title. */
 public class PipelinesRunningProcessSearchService implements Closeable {
 
   private static final String KEY_FIELD = "key";
   private static final String DATASET_TITLE_FIELD = "datasetTitle";
+  private static final String DATASET_KEY_FIELD = "datasetKey";
   private static final String STATUS_FIELD = "status";
   private static final String STEP_FIELD = "step";
-  private static final String STEP_STATUS_FIELD_POST = "_step_status";
 
   private final SimpleSearchIndex datasetSimpleSearchIndex;
 
@@ -38,45 +39,19 @@ public class PipelinesRunningProcessSearchService implements Closeable {
     }
   }
 
-  private static String getKey(PipelineProcess pipelineProcess) {
-    return pipelineProcess.getDatasetKey().toString() + '_' + pipelineProcess.getAttempt();
-  }
-
-  private static String toStepStatusField(StepType stepType) {
-    return stepType.name() + STEP_STATUS_FIELD_POST;
-  }
-
-  private static List<String> fromSearchResult(SimpleSearchIndex.SearchResult searchResult) {
-    return searchResult.getResults().stream()
-        .map(m -> m.get(KEY_FIELD))
-        .collect(Collectors.toList());
-  }
-
   /** Adds a {@link PipelineProcess} to the search index. */
   public void index(PipelineProcess pipelineProcess) {
     try {
-      Map<String, String> doc = new HashMap<>();
-      String key = getKey(pipelineProcess);
-      doc.put(KEY_FIELD, key);
+      datasetSimpleSearchIndex.index(createDocument(pipelineProcess));
+    } catch (IOException ex) {
+      throw new IllegalStateException(ex);
+    }
+  }
 
-      if (pipelineProcess.getDatasetTitle() != null) {
-        doc.put(DATASET_TITLE_FIELD, pipelineProcess.getDatasetTitle());
-      }
-
-      if (Objects.nonNull(pipelineProcess.getSteps())) {
-        pipelineProcess
-            .getSteps()
-            .forEach(
-                step -> {
-                  if (step.getState() != null) {
-                    doc.put(STATUS_FIELD, step.getState().name());
-                    doc.put(toStepStatusField(step.getType()), step.getState().name());
-                  }
-                  doc.put(STEP_FIELD, step.getType().name());
-                });
-      }
-
-      datasetSimpleSearchIndex.index(doc);
+  public void update(PipelineProcess pipelineProcess) {
+    try {
+      datasetSimpleSearchIndex.update(
+          KEY_FIELD, getKey(pipelineProcess), createDocument(pipelineProcess).getFields());
     } catch (IOException ex) {
       throw new IllegalStateException(ex);
     }
@@ -91,90 +66,75 @@ public class PipelinesRunningProcessSearchService implements Closeable {
     }
   }
 
-  /** Pageable search by dataset title */
-  public List<String> searchByDatasetKey(String datasetKeyQ, int pageNumber, int pageSize) {
-    try {
-      return fromSearchResult(
-          datasetSimpleSearchIndex.search(
-              KEY_FIELD,
-              Objects.isNull(datasetKeyQ) ? "" : datasetKeyQ.trim() + "_*",
-              pageNumber,
-              Math.min(MAX_PAGE_SIZE, pageSize)));
-    } catch (IOException ex) {
-      throw new IllegalStateException(ex);
-    }
-  }
-
-  /** Pageable search by dataset title */
-  public List<String> searchByDatasetKeyAndAttempt(
-      String datasetKeyQ, int attempt, int pageNumber, int pageSize) {
-    try {
-      return fromSearchResult(
-          datasetSimpleSearchIndex.search(
-              KEY_FIELD,
-              Objects.requireNonNull(datasetKeyQ).trim() + "_" + attempt,
-              pageNumber,
-              Math.min(MAX_PAGE_SIZE, pageSize)));
-    } catch (IOException ex) {
-      throw new IllegalStateException(ex);
-    }
-  }
-
-  /** Pageable search by dataset title */
-  public List<String> searchByDatasetTitle(String datasetTitleQ, int pageNumber, int pageSize) {
-    try {
-      return fromSearchResult(
-          datasetSimpleSearchIndex.search(
-              DATASET_TITLE_FIELD,
-              Objects.isNull(datasetTitleQ) ? "" : datasetTitleQ.trim(),
-              pageNumber,
-              Math.min(MAX_PAGE_SIZE, pageSize)));
-    } catch (IOException ex) {
-      throw new IllegalStateException(ex);
-    }
-  }
-
   /** Pageable search by step status */
-  public List<String> searchByStepStatus(
-      StepType stepType, PipelineStep.Status status, int pageNumber, int pageSize) {
+  public List<String> search(
+      SearchParams searchParams, int pageNumber, int pageSize) {
+
+    Map<String, String> searchQueries =
+        searchParams
+            .getDatasetTitle()
+            .map(title -> Collections.singletonMap(DATASET_TITLE_FIELD, title.trim() + "*"))
+            .orElse(new HashMap<>());
+
+    Map<String, String> termQueries = new HashMap<>();
+    searchParams
+        .getDatasetKey()
+        .ifPresent(key -> termQueries.put(DATASET_KEY_FIELD, key.toString()));
+
+    searchParams.getStepTypes().forEach(t -> termQueries.put(STEP_FIELD, t.name()));
+    searchParams.getStatuses().forEach(s -> termQueries.put(STATUS_FIELD, s.name()));
+
     try {
       return fromSearchResult(
-          datasetSimpleSearchIndex.termSearch(
-              toStepStatusField(stepType),
-              status.name().toLowerCase(),
-              pageNumber,
-              Math.min(MAX_PAGE_SIZE, pageSize)));
+          datasetSimpleSearchIndex.multiTermSearch(
+              termQueries, searchQueries, pageNumber, Math.min(MAX_PAGE_SIZE, pageSize)));
     } catch (IOException ex) {
       throw new IllegalStateException(ex);
     }
   }
 
-  /** Pageable search by step status: i.e. if any step matches the status */
-  public List<String> searchByStatus(PipelineStep.Status status, int pageNumber, int pageSize) {
-    try {
-      return fromSearchResult(
-          datasetSimpleSearchIndex.termSearch(
-              STATUS_FIELD,
-              status.name().toLowerCase(),
-              pageNumber,
-              Math.min(MAX_PAGE_SIZE, pageSize)));
-    } catch (IOException ex) {
-      throw new IllegalStateException(ex);
-    }
+  private static String getKey(PipelineProcess pipelineProcess) {
+    return pipelineProcess.getDatasetKey().toString() + '_' + pipelineProcess.getAttempt();
   }
 
-  /** Pageable search by step status: i.e. if any step matches the status */
-  public List<String> searchByStep(StepType stepType, int pageNumber, int pageSize) {
-    try {
-      return fromSearchResult(
-          datasetSimpleSearchIndex.termSearch(
-              STEP_FIELD,
-              stepType.name().toLowerCase(),
-              pageNumber,
-              Math.min(MAX_PAGE_SIZE, pageSize)));
-    } catch (IOException ex) {
-      throw new IllegalStateException(ex);
+  private static List<String> fromSearchResult(SimpleSearchIndex.SearchResult searchResult) {
+    return searchResult.getResults().stream()
+        .map(m -> m.get(KEY_FIELD))
+        .collect(Collectors.toList());
+  }
+
+  private Document createDocument(PipelineProcess pipelineProcess) {
+    Document doc = new Document();
+
+    // add key
+    doc.add(new StringField(KEY_FIELD, getKey(pipelineProcess), Field.Store.YES));
+
+    if (pipelineProcess.getDatasetKey() != null) {
+      doc.add(
+          new StringField(
+              DATASET_KEY_FIELD, pipelineProcess.getDatasetKey().toString(), Field.Store.NO));
     }
+
+    if (!Strings.isNullOrEmpty(pipelineProcess.getDatasetTitle())) {
+      doc.add(
+          new TextField(DATASET_TITLE_FIELD, pipelineProcess.getDatasetTitle(), Field.Store.NO));
+    }
+
+    if (Objects.nonNull(pipelineProcess.getSteps())) {
+      pipelineProcess
+          .getSteps()
+          .forEach(
+              step -> {
+                if (step.getState() != null) {
+                  doc.add(new StringField(STATUS_FIELD, step.getState().name(), Field.Store.NO));
+                }
+                if (step.getType() != null) {
+                  doc.add(new StringField(STEP_FIELD, step.getType().name(), Field.Store.NO));
+                }
+              });
+    }
+
+    return doc;
   }
 
   @Override

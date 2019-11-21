@@ -8,11 +8,11 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.naming.directory.SearchResult;
+
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
-import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.*;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
@@ -89,9 +89,7 @@ public class SimpleSearchIndex implements Closeable {
   }
 
   /** Adds a document to the  index. Duplication of content is not checked bu this index.*/
-  public long index(Map<String,String> doc) throws IOException {
-    Document document = new Document();
-    doc.forEach((k,v) -> document.add(new TextField(k, v, Field.Store.YES)));
+  public long index(Document document) throws IOException {
     return indexWriter.addDocument(document);
   }
 
@@ -115,31 +113,17 @@ public class SimpleSearchIndex implements Closeable {
    * Updates documents by using a field and a exact match against that field.
    * @param field to be used to find documents
    * @param value to be used as exact match
-   * @param doc documents of fields to be updated
+   * @param fields fields to be updated
    * @return number of updated documents
    * @throws IOException
    */
-  public long update(String field, String value, Map<String,String> doc) throws IOException {
-    return indexWriter.updateDocument(new Term(field, value), doc.entrySet().stream()
-                                                                .map(e -> new TextField(e.getKey(), e.getValue(), Field.Store.YES))
-                                                                .collect(Collectors.toList()));
+  public long update(String field, String value, List<IndexableField> fields) throws IOException {
+    return indexWriter.updateDocument(new Term(field, value), fields);
   }
 
   /**Converts a Lucene {@link Document} into a Map<String,String>.*/
   private static Map<String,String> docToMap(Document document) {
     return document.getFields().stream().collect(Collectors.toMap(IndexableField::name, IndexableField::stringValue));
-  }
-
-  /**
-   * Performs a search on a field value.
-   * @param fieldName to be used for the search
-   * @param q term query
-   * @param numResults maximum number of results to return
-   * @return a {@link SearchResult}, a SearchResults.result empty if no results.
-   * @throws IOException in case lof low-level errors.
-   */
-  public SearchResult search(String fieldName, String q, int numResults) throws IOException {
-    return search(fieldName, q, 1, numResults);
   }
 
   /** Transforms a fieldName and q pair into Lucene query.
@@ -163,34 +147,27 @@ public class SimpleSearchIndex implements Closeable {
 
     getIndexSearcher().search(query, collector);
 
-    TopDocs topDocs = collector.topDocs((pageNumber - 1) * pageSize, pageSize);
+    TopDocs topDocs = collector.topDocs(pageNumber, pageSize);
 
-    if (topDocs.totalHits > 0 && Objects.nonNull(topDocs.scoreDocs)) {
+    if (Objects.nonNull(topDocs.scoreDocs) && topDocs.scoreDocs.length > 0) {
       List<Map<String,String>> results = new ArrayList<>();
-      Arrays.stream(topDocs.scoreDocs).forEach(scoreDoc -> {
-        try {
-          results.add(docToMap(getDocument(scoreDoc.doc)));
-        } catch (IOException ex) {
-          throw new RuntimeException(ex);
-        }
-      });
-      return SearchResult.of(topDocs.totalHits, results);
+      Arrays.stream(topDocs.scoreDocs)
+          .forEach(
+              scoreDoc -> {
+                try {
+                  Optional.ofNullable(docToMap(getDocument(scoreDoc.doc)))
+                      .filter(m -> !m.isEmpty())
+                      .ifPresent(results::add);
+                } catch (IOException ex) {
+                  throw new RuntimeException(ex);
+                }
+              });
+      if (!results.isEmpty()) {
+        return SearchResult.of(topDocs.scoreDocs.length, results);
+      }
     }
     return  SearchResult.empty();
   }
-  /**
-   * Performs a pageable search on a field value.
-   * @param fieldName to be used for the search
-   * @param q term query
-   * @param pageNumber page number, it must be controlled by the user.
-   * @param pageSize maximum number of results to return
-   * @return a {@link SearchResult}, a SearchResults.result empty if no results.
-   * @throws IOException in case lof low-level errors.
-   */
-  public SearchResult search(String fieldName, String q, int pageNumber, int pageSize) throws IOException {
-    return doSearch(toQuery(fieldName,q), pageNumber, pageSize);
-  }
-
 
   /**
    * Performs a pageable exact term search on a field value.
@@ -205,16 +182,47 @@ public class SimpleSearchIndex implements Closeable {
   }
 
   /**
-   * Performs a pageable exact multi-term search on a field value.
-   * @param terms pair of field and terms to be searched
+   * Performs a pageable search on a field value.
+   * @param fieldName to be used for the search
+   * @param q term query
    * @param pageNumber page number, it must be controlled by the user.
    * @param pageSize maximum number of results to return
    * @return a {@link SearchResult}, a SearchResults.result empty if no results.
    * @throws IOException in case lof low-level errors.
    */
-  public SearchResult multiTermSearch(Map<String,String> terms, int pageNumber, int pageSize) throws IOException {
-    BooleanQuery.Builder queryBuilder = new BooleanQuery.Builder().setMinimumNumberShouldMatch(1);
-    terms.forEach( (k, v) -> queryBuilder.add(new BooleanClause(new TermQuery(new Term(k, v)), BooleanClause.Occur.SHOULD)));
+  public SearchResult search(String fieldName, String q, int pageNumber, int pageSize) throws IOException {
+    return doSearch(toQuery(fieldName,q), pageNumber, pageSize);
+  }
+
+  /**
+   * Performs a pageable exact multi-term search on a field value.
+   *
+   * @param termQueries term queries to include in the search
+   * @param searchQueries full text queries to include in the search
+   * @param pageNumber page number, it must be controlled by the user.
+   * @param pageSize maximum number of results to return
+   * @return a {@link SearchResult}, a SearchResults.result empty if no results.
+   * @throws IOException in case lof low-level errors.
+   */
+  public SearchResult multiTermSearch(
+      Map<String, String> termQueries,
+      Map<String, String> searchQueries,
+      int pageNumber,
+      int pageSize)
+      throws IOException {
+    BooleanQuery.Builder queryBuilder =
+        new BooleanQuery.Builder()
+            .setMinimumNumberShouldMatch(termQueries.size() + searchQueries.size());
+    termQueries.forEach(
+        (k, v) ->
+            queryBuilder.add(
+                new BooleanClause(new TermQuery(new Term(k, v)), BooleanClause.Occur.SHOULD)));
+
+    searchQueries.forEach(
+      (k, v) ->
+        queryBuilder.add(
+          new BooleanClause(toQuery(k, v), BooleanClause.Occur.SHOULD)));
+
     return doSearch(queryBuilder.build(), pageNumber, pageSize);
   }
 

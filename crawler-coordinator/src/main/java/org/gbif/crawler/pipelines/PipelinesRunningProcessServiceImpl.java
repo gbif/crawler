@@ -12,6 +12,7 @@ import org.gbif.common.messaging.api.messages.PipelinesXmlMessage;
 import org.gbif.crawler.constants.CrawlerNodePaths;
 import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
 import org.gbif.crawler.pipelines.search.PipelinesRunningProcessSearchService;
+import org.gbif.crawler.pipelines.search.SearchParams;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
@@ -26,7 +27,6 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
 
-import com.google.common.base.Strings;
 import com.google.common.io.Files;
 import com.google.inject.Inject;
 import org.apache.curator.framework.CuratorFramework;
@@ -138,8 +138,8 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
                         loadRunningPipelineProcess(path)
                             .ifPresent(
                                 process -> {
-                                  processCache.put(path, process);
-                                  searchService.index(process);
+                                  processCache.replace(path, process);
+                                  searchService.update(process);
                                 }));
           } else if (event.getType() == NODE_REMOVED) {
             crawlIdPath
@@ -199,48 +199,40 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
   @Override
   public PipelineProcessSearchResult search(
       @Nullable String datasetTitle,
-      @Nullable Status stepStatus,
-      @Nullable StepType stepType,
+      @Nullable UUID datasetKey,
+      @Nullable List<Status> stepStatuses,
+      @Nullable List<StepType> stepTypes,
       int pageNumber,
       int pageSize) {
 
-    Function<List<String>, PipelineProcessSearchResult> hitsToResult =
-        hits -> {
-          Set<PipelineProcess> processes =
-              hits.stream().map(processCache::get).collect(Collectors.toSet());
-
-          return new PipelineProcessSearchResult(processes.size(), processes);
-        };
-
-    if (!Strings.isNullOrEmpty(datasetTitle)) {
-      return hitsToResult.apply(
-          searchService.searchByDatasetTitle(datasetTitle, pageNumber, pageSize));
-    }
-
-    if (stepStatus != null && stepType != null) {
-      return hitsToResult.apply(
-          searchService.searchByStepStatus(stepType, stepStatus, pageNumber, pageSize));
-    }
-
-    if (stepStatus != null) {
-      return hitsToResult.apply(searchService.searchByStatus(stepStatus, pageNumber, pageSize));
-    }
-
-    if (stepType != null) {
-      return hitsToResult.apply(searchService.searchByStep(stepType, pageNumber, pageSize));
-    }
+    SearchParams searchParams =
+        SearchParams.newBuilder()
+            .setDatasetTitle(datasetTitle)
+            .setDatasetKey(datasetKey)
+            .setStepTypes(stepTypes)
+            .setStatuses(stepStatuses)
+            .build();
 
     // if there's no params get all processes
-    Set<PipelineProcess> allProcesses =
-        StreamSupport.stream(processCache.entries().spliterator(), true)
-            .skip(pageNumber)
-            .limit(pageSize)
-            .map(CacheEntry::getValue)
-            .collect(
-                Collectors.toCollection(
-                    () -> new TreeSet<>(PIPELINE_PROCESS_BY_LATEST_STEP_ASC.reversed())));
+    if (searchParams.isEmpty()) {
+      Set<PipelineProcess> allProcesses =
+          StreamSupport.stream(processCache.entries().spliterator(), true)
+              .skip(pageNumber)
+              .limit(pageSize)
+              .map(CacheEntry::getValue)
+              .collect(
+                  Collectors.toCollection(
+                      () -> new TreeSet<>(PIPELINE_PROCESS_BY_LATEST_STEP_ASC.reversed())));
 
-    return new PipelineProcessSearchResult(allProcesses.size(), allProcesses);
+      return new PipelineProcessSearchResult(allProcesses.size(), allProcesses);
+    }
+
+    // search by params
+    List<String> hits = searchService.search(searchParams, pageNumber, pageSize);
+    Set<PipelineProcess> processes =
+        hits.stream().map(processCache::get).collect(Collectors.toSet());
+
+    return new PipelineProcessSearchResult(processes.size(), processes);
   }
 
   private void deleteZkPipelinesNode(String crawlId) {
