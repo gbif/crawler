@@ -44,21 +44,14 @@ public class SimpleSearchIndexTest {
     simpleSearchIndex.index(createTextDocument("val", "hi 3"));
 
     // When perform a search of all results
-    SimpleSearchIndex.SearchResult response = simpleSearchIndex.termSearch("val", "hi", 0, 5);
+    SimpleSearchIndex.SearchResult response = simpleSearchIndex.termSearch("val", "hi");
 
     // Expect
     assertEquals(3, response.getTotalHits());
     assertEquals(3, response.getResults().size());
 
-    // When perform a search of last result
-    response = simpleSearchIndex.termSearch("val", "hi", 0, 1);
-
-    // Expect
-    assertEquals(1, response.getTotalHits());
-    assertEquals(1, response.getResults().size());
-
     // When perform a phrase search of all results
-    response = simpleSearchIndex.search("val", "2", 0, 3);
+    response = simpleSearchIndex.search("val", "2");
 
     // Expect
     assertEquals(1, response.getTotalHits());
@@ -72,21 +65,21 @@ public class SimpleSearchIndexTest {
     simpleSearchIndex.index(createTextDocument("val", "dataset two"));
 
     // When do a search query
-    SimpleSearchIndex.SearchResult response = simpleSearchIndex.search("val", "data*", 0, 5);
+    SimpleSearchIndex.SearchResult response = simpleSearchIndex.search("val", "data*");
 
     // Expect
     assertEquals(2, response.getTotalHits());
     assertEquals(2, response.getResults().size());
 
     // When do a search query
-    response = simpleSearchIndex.search("val", "ata on*", 0, 5);
+    response = simpleSearchIndex.search("val", "ata on*");
 
     // Expect
     assertEquals(1, response.getTotalHits());
     assertEquals(1, response.getResults().size());
 
     // When do a search query
-    response = simpleSearchIndex.search("val", "two*", 0, 5);
+    response = simpleSearchIndex.search("val", "two*");
 
     // Expect
     assertEquals(1, response.getTotalHits());
@@ -101,7 +94,7 @@ public class SimpleSearchIndexTest {
     simpleSearchIndex.index(createTextDocument("val", "hi 2"));
 
     // When
-    SimpleSearchIndex.SearchResult response = simpleSearchIndex.search("val", "hi", 0, 2);
+    SimpleSearchIndex.SearchResult response = simpleSearchIndex.search("val", "hi");
 
     // Expect
     assertEquals(2, response.getTotalHits());
@@ -110,7 +103,7 @@ public class SimpleSearchIndexTest {
     simpleSearchIndex.index(createTextDocument("val", "hi 2"));
 
     // When state changed
-    response = simpleSearchIndex.search("val", "hi", 0, 3);
+    response = simpleSearchIndex.search("val", "hi");
 
     // Expect
     assertEquals(3, response.getTotalHits());
@@ -125,7 +118,7 @@ public class SimpleSearchIndexTest {
 
     // When deletes a document and try to retrieve it
     simpleSearchIndex.delete("val", "hi");
-    SimpleSearchIndex.SearchResult response = simpleSearchIndex.termSearch("val", "hi", 0, 3);
+    SimpleSearchIndex.SearchResult response = simpleSearchIndex.termSearch("val", "hi");
 
     // Expect
     assertEquals(0, response.getTotalHits());
@@ -142,13 +135,13 @@ public class SimpleSearchIndexTest {
 
     // When update a document and search of rit
     simpleSearchIndex.update("val", "hi2", createStringDocument("val", "hi4").getFields());
-    SimpleSearchIndex.SearchResult response = simpleSearchIndex.termSearch("val", "hi2", 0, 3);
+    SimpleSearchIndex.SearchResult response = simpleSearchIndex.termSearch("val", "hi2");
 
     // Expect
     assertEquals(0, response.getTotalHits());
 
     // When search for the updated value
-    response = simpleSearchIndex.termSearch("val", "hi4", 0, 3);
+    response = simpleSearchIndex.termSearch("val", "hi4");
 
     // Expect
     assertEquals(1, response.getTotalHits());

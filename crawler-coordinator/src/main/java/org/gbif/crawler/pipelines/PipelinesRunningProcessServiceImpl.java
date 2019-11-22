@@ -82,9 +82,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
    * @param curator to access ZooKeeper
    */
   @Inject
-  public PipelinesRunningProcessServiceImpl(
-      CuratorFramework curator,
-      DatasetService datasetService)
+  public PipelinesRunningProcessServiceImpl(CuratorFramework curator, DatasetService datasetService)
       throws Exception {
     this.curator = checkNotNull(curator, "curator can't be null");
     this.datasetService = datasetService;
@@ -156,13 +154,13 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
     cache.getListenable().addListener(listener);
 
     Runtime.getRuntime()
-      .addShutdownHook(
-        new Thread(
-          () -> {
-            cache.close();
-            processCache.clearAndClose();
-            searchService.close();
-          }));
+        .addShutdownHook(
+            new Thread(
+                () -> {
+                  cache.close();
+                  processCache.clearAndClose();
+                  searchService.close();
+                }));
   }
 
   @Override
@@ -202,8 +200,8 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
       @Nullable UUID datasetKey,
       @Nullable List<Status> stepStatuses,
       @Nullable List<StepType> stepTypes,
-      int pageNumber,
-      int pageSize) {
+      int offset,
+      int limit) {
 
     SearchParams searchParams =
         SearchParams.newBuilder()
@@ -217,20 +215,24 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
     if (searchParams.isEmpty()) {
       Set<PipelineProcess> allProcesses =
           StreamSupport.stream(processCache.entries().spliterator(), true)
-              .skip(pageNumber)
-              .limit(pageSize)
               .map(CacheEntry::getValue)
-              .collect(
-                  Collectors.toCollection(
-                      () -> new TreeSet<>(PIPELINE_PROCESS_BY_LATEST_STEP_ASC.reversed())));
+              .sorted(PIPELINE_PROCESS_BY_LATEST_STEP_ASC.reversed())
+              .skip(offset)
+              .limit(limit)
+              .collect(Collectors.toSet());
 
       return new PipelineProcessSearchResult(allProcesses.size(), allProcesses);
     }
 
     // search by params
-    List<String> hits = searchService.search(searchParams, pageNumber, pageSize);
+    List<String> hits = searchService.search(searchParams);
     Set<PipelineProcess> processes =
-        hits.stream().map(processCache::get).collect(Collectors.toSet());
+        hits.stream()
+            .map(processCache::get)
+            .sorted(PIPELINE_PROCESS_BY_LATEST_STEP_ASC.reversed())
+            .skip(offset)
+            .limit(limit)
+            .collect(Collectors.toSet());
 
     return new PipelineProcessSearchResult(processes.size(), processes);
   }
@@ -259,7 +261,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
 
       // Check if dataset is actually being processed right now
       if (!checkExists(getPipelinesInfoPath(crawlId))) {
-       return Optional.empty();
+        return Optional.empty();
       }
       // Here we're trying to load all information from Zookeeper into a PipelineProcess object
       PipelineProcess process =

@@ -26,8 +26,6 @@ public class PipelinesRunningProcessSearchService implements Closeable {
 
   private final SimpleSearchIndex datasetSimpleSearchIndex;
 
-  private static final int MAX_PAGE_SIZE = 100;
-
   /**
    * Creates a search index at the specified path, contents of the directory will be removed.
    *
@@ -68,9 +66,8 @@ public class PipelinesRunningProcessSearchService implements Closeable {
     }
   }
 
-  /** Pageable search by step status */
-  public List<String> search(
-      SearchParams searchParams, int pageNumber, int pageSize) {
+  /** Search by multiple params. */
+  public List<String> search(SearchParams searchParams) {
 
     Map<String, String> searchQueries =
         searchParams
@@ -99,9 +96,7 @@ public class PipelinesRunningProcessSearchService implements Closeable {
     }
 
     try {
-      return fromSearchResult(
-          datasetSimpleSearchIndex.multiTermSearch(
-              termQueries, searchQueries, pageNumber, Math.min(MAX_PAGE_SIZE, pageSize)));
+      return fromSearchResult(datasetSimpleSearchIndex.multiTermSearch(termQueries, searchQueries));
     } catch (IOException ex) {
       throw new IllegalStateException(ex);
     }

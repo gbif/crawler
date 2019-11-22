@@ -64,7 +64,7 @@ public class PipelinesRunningProcessSearchServiceTest {
 
     // When
     List<String> hits =
-        searchService.search(SearchParams.newBuilder().setDatasetTitle("ponta").build(), 0, 10);
+        searchService.search(SearchParams.newBuilder().setDatasetTitle("ponta").build());
 
     // Expect
     assertEquals(1, hits.size());
@@ -72,7 +72,7 @@ public class PipelinesRunningProcessSearchServiceTest {
 
     // When
     hits =
-        searchService.search(SearchParams.newBuilder().setDatasetTitle("onta dat").build(), 0, 10);
+        searchService.search(SearchParams.newBuilder().setDatasetTitle("onta dat").build());
 
     // Expect
     assertEquals(1, hits.size());
@@ -97,7 +97,7 @@ public class PipelinesRunningProcessSearchServiceTest {
 
     // When
     List<String> hits =
-        searchService.search(SearchParams.newBuilder().setDatasetTitle("ponta").build(), 0, 10);
+        searchService.search(SearchParams.newBuilder().setDatasetTitle("ponta").build());
 
     // Expect
     assertEquals(1, hits.size());
@@ -109,9 +109,7 @@ public class PipelinesRunningProcessSearchServiceTest {
             SearchParams.newBuilder()
                 .setDatasetTitle("ponta")
                 .setDatasetKey(pipelineProcess.getDatasetKey())
-                .build(),
-            0,
-            10);
+                .build());
 
     // Expect
     assertEquals(1, hits.size());
@@ -120,9 +118,7 @@ public class PipelinesRunningProcessSearchServiceTest {
     // When
     hits =
         searchService.search(
-            SearchParams.newBuilder().setDatasetKey(pipelineProcess.getDatasetKey()).build(),
-            0,
-            10);
+            SearchParams.newBuilder().setDatasetKey(pipelineProcess.getDatasetKey()).build());
 
     // Expect
     assertEquals(1, hits.size());
@@ -134,9 +130,7 @@ public class PipelinesRunningProcessSearchServiceTest {
             SearchParams.newBuilder()
                 .setDatasetTitle("foo")
                 .setDatasetKey(pipelineProcess.getDatasetKey())
-                .build(),
-            0,
-            10);
+                .build());
 
     // Expect
     assertEquals(0, hits.size());
@@ -148,9 +142,7 @@ public class PipelinesRunningProcessSearchServiceTest {
                 .setDatasetKey(pipelineProcess.getDatasetKey())
                 .addStepType(StepType.HDFS_VIEW)
                 .addStatus(PipelineStep.Status.RUNNING)
-                .build(),
-            0,
-            10);
+                .build());
 
     // Expect
     assertEquals(1, hits.size());
@@ -163,9 +155,7 @@ public class PipelinesRunningProcessSearchServiceTest {
                 .setDatasetKey(pipelineProcess.getDatasetKey())
                 .addStepType(StepType.HDFS_VIEW)
                 .addStatus(PipelineStep.Status.FAILED)
-                .build(),
-            0,
-            10);
+                .build());
 
     // Expect
     assertEquals(0, hits.size());
@@ -173,7 +163,7 @@ public class PipelinesRunningProcessSearchServiceTest {
     // When
     hits =
         searchService.search(
-            SearchParams.newBuilder().addStepType(StepType.HDFS_VIEW).build(), 0, 10);
+            SearchParams.newBuilder().addStepType(StepType.HDFS_VIEW).build());
 
     // Expect
     assertEquals(1, hits.size());
@@ -185,9 +175,7 @@ public class PipelinesRunningProcessSearchServiceTest {
             SearchParams.newBuilder()
                 .addStepType(StepType.HDFS_VIEW)
                 .addStepType(StepType.VERBATIM_TO_INTERPRETED)
-                .build(),
-            0,
-            10);
+                .build());
 
     // Expect
     assertEquals(2, hits.size());
@@ -198,19 +186,41 @@ public class PipelinesRunningProcessSearchServiceTest {
             SearchParams.newBuilder()
                 .addStatus(PipelineStep.Status.RUNNING)
                 .addStatus(PipelineStep.Status.COMPLETED)
-                .build(),
-            0,
-            10);
+                .build());
 
     // Expect
     assertEquals(2, hits.size());
 
     // When
     hits =
-        searchService.search(SearchParams.newBuilder().setDatasetTitle("dataset").build(), 0, 10);
+        searchService.search(SearchParams.newBuilder().setDatasetTitle("dataset").build());
 
     // Expect
     assertEquals(2, hits.size());
+  }
+
+  @Test
+  public void duplicatesTest() {
+    // State
+    PipelineProcess pipelineProcess = getTestPipelineProcess();
+    searchService.index(pipelineProcess);
+    searchService.index(pipelineProcess);
+
+    // When
+    List<String> hits =
+        searchService.search(
+            SearchParams.newBuilder().setDatasetKey(pipelineProcess.getDatasetKey()).build());
+    // Expect
+    assertEquals(2, hits.size());
+
+    // When
+    searchService.delete(pipelineProcess.getDatasetKey() + "_" + pipelineProcess.getAttempt());
+
+    // Expect
+    hits =
+        searchService.search(
+            SearchParams.newBuilder().setDatasetKey(pipelineProcess.getDatasetKey()).build());
+    assertEquals(0, hits.size());
   }
 
   @Test
@@ -233,9 +243,7 @@ public class PipelinesRunningProcessSearchServiceTest {
         searchService.search(
             SearchParams.newBuilder()
                 .setStepTypes(Collections.singletonList(StepType.INTERPRETED_TO_INDEX))
-                .build(),
-            0,
-            10);
+                .build());
 
     // Expect
     assertEquals(1, hits.size());
@@ -243,12 +251,8 @@ public class PipelinesRunningProcessSearchServiceTest {
 
     // When
     hits =
-      searchService.search(
-        SearchParams.newBuilder()
-          .addStatus(PipelineStep.Status.COMPLETED)
-          .build(),
-        0,
-        10);
+        searchService.search(
+            SearchParams.newBuilder().addStatus(PipelineStep.Status.COMPLETED).build());
 
     // Expect
     assertEquals(1, hits.size());
@@ -256,12 +260,8 @@ public class PipelinesRunningProcessSearchServiceTest {
 
     // When
     hits =
-      searchService.search(
-        SearchParams.newBuilder()
-          .addStatus(PipelineStep.Status.RUNNING)
-          .build(),
-        0,
-        10);
+        searchService.search(
+            SearchParams.newBuilder().addStatus(PipelineStep.Status.RUNNING).build());
 
     // Expect
     assertEquals(0, hits.size());
@@ -286,9 +286,7 @@ public class PipelinesRunningProcessSearchServiceTest {
 
     List<String> hits =
         searchService.search(
-            SearchParams.newBuilder().setDatasetKey(pipelineProcess.getDatasetKey()).build(),
-            0,
-            10);
+            SearchParams.newBuilder().setDatasetKey(pipelineProcess.getDatasetKey()).build());
 
     // Expect
     assertEquals(0, hits.size());

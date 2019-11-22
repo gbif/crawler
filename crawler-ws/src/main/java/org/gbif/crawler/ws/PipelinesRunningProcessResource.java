@@ -48,15 +48,15 @@ public class PipelinesRunningProcessResource {
       @QueryParam("datasetKey") UUID datasetKey,
       @QueryParam("statuses") List<PipelineStep.Status> statuses,
       @QueryParam("steps") List<StepType> stepTypes,
-      @Nullable @QueryParam("page") Integer pageNumber,
-      @Nullable @QueryParam("size") Integer pageSize) {
+      @Nullable @QueryParam("offset") Integer offset,
+      @Nullable @QueryParam("limit") Integer limit) {
     return service.search(
         datasetTitle,
         datasetKey,
         statuses,
         stepTypes,
-        pageNumber != null ? pageNumber : 0,
-        pageSize != null ? pageSize : DEFAULT_PAGE_SIZE);
+        offset != null ? offset : 0,
+        limit != null ? limit : DEFAULT_PAGE_SIZE);
   }
 
   /**
