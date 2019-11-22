@@ -51,6 +51,21 @@ public class SimpleSearchIndex implements Closeable {
     // IndexWriter Configuration
     IndexWriterConfig iwc = new IndexWriterConfig(analyzer);
     iwc.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
+    iwc.setIndexDeletionPolicy(new IndexDeletionPolicy() {
+      @Override
+      public void onInit(List<? extends IndexCommit> commits) throws IOException {
+        onCommit(commits);
+      }
+
+      @Override
+      public void onCommit(List<? extends IndexCommit> commits) throws IOException {
+        // it doesn't keep any commit
+        int size = commits.size();
+        for(int i=0;i<size;i++) {
+          commits.get(i).delete();
+        }
+      }
+    });
 
     //IndexWriter writes new index files to the directory
     indexWriter = new IndexWriter(mMapDirectory, iwc);
@@ -104,7 +119,9 @@ public class SimpleSearchIndex implements Closeable {
    * @throws IOException in case of low-level IO error
    */
   public long delete(String field, String value) throws IOException {
-    return indexWriter.deleteDocuments(new Term(field, value));
+    long deleted = indexWriter.deleteDocuments(new Term(field, value));
+    indexWriter.commit();
+    return deleted;
   }
 
   /**
