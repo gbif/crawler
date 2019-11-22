@@ -205,7 +205,7 @@ public class SimpleSearchIndex implements Closeable {
    * @throws IOException in case lof low-level errors.
    */
   public SearchResult multiTermSearch(
-      Map<String, String> termQueries,
+      Map<String, Set<String>> termQueries,
       Map<String, String> searchQueries,
       int pageNumber,
       int pageSize)
@@ -213,10 +213,21 @@ public class SimpleSearchIndex implements Closeable {
     BooleanQuery.Builder queryBuilder =
         new BooleanQuery.Builder()
             .setMinimumNumberShouldMatch(termQueries.size() + searchQueries.size());
+
     termQueries.forEach(
-        (k, v) ->
-            queryBuilder.add(
-                new BooleanClause(new TermQuery(new Term(k, v)), BooleanClause.Occur.SHOULD)));
+        (k, v) -> {
+          // OR query, one matching clause is enough
+          BooleanQuery.Builder multiTermQueryBuilder =
+              new BooleanQuery.Builder().setMinimumNumberShouldMatch(1);
+
+          v.forEach(
+              value ->
+                  multiTermQueryBuilder.add(
+                      new BooleanClause(
+                          new TermQuery(new Term(k, value)), BooleanClause.Occur.SHOULD)));
+
+          queryBuilder.add(multiTermQueryBuilder.build(), BooleanClause.Occur.SHOULD);
+        });
 
     searchQueries.forEach(
       (k, v) ->

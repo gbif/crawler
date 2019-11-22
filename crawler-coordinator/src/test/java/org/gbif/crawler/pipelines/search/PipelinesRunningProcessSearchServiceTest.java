@@ -26,7 +26,7 @@ public class PipelinesRunningProcessSearchServiceTest {
 
   private static PipelineProcess getTestPipelineProcess() {
     UUID datasetKey = UUID.randomUUID();
-    String datasetTitle = "Pontaurus one";
+    String datasetTitle = "Pontaurus dataset";
     int attemptId = 1;
     PipelineProcess pipelineProcess = new PipelineProcess();
     pipelineProcess.setDatasetKey(datasetKey);
@@ -85,6 +85,15 @@ public class PipelinesRunningProcessSearchServiceTest {
     // State
     PipelineProcess pipelineProcess = getTestPipelineProcess();
     searchService.index(pipelineProcess);
+    PipelineProcess pipelineProcess2 = getTestPipelineProcess();
+    pipelineProcess2.setDatasetTitle("another dataset");
+    pipelineProcess2
+        .getSteps()
+        .iterator()
+        .next()
+        .setType(StepType.VERBATIM_TO_INTERPRETED)
+        .setState(PipelineStep.Status.COMPLETED);
+    searchService.index(pipelineProcess2);
 
     // When
     List<String> hits =
@@ -169,6 +178,39 @@ public class PipelinesRunningProcessSearchServiceTest {
     // Expect
     assertEquals(1, hits.size());
     assertTrue(hits.get(0).startsWith(pipelineProcess.getDatasetKey().toString()));
+
+    // When
+    hits =
+        searchService.search(
+            SearchParams.newBuilder()
+                .addStepType(StepType.HDFS_VIEW)
+                .addStepType(StepType.VERBATIM_TO_INTERPRETED)
+                .build(),
+            0,
+            10);
+
+    // Expect
+    assertEquals(2, hits.size());
+
+    // When
+    hits =
+        searchService.search(
+            SearchParams.newBuilder()
+                .addStatus(PipelineStep.Status.RUNNING)
+                .addStatus(PipelineStep.Status.COMPLETED)
+                .build(),
+            0,
+            10);
+
+    // Expect
+    assertEquals(2, hits.size());
+
+    // When
+    hits =
+        searchService.search(SearchParams.newBuilder().setDatasetTitle("dataset").build(), 0, 10);
+
+    // Expect
+    assertEquals(2, hits.size());
   }
 
   @Test
@@ -178,6 +220,8 @@ public class PipelinesRunningProcessSearchServiceTest {
     searchService.index(pipelineProcess);
 
     // When
+    pipelineProcess.getSteps().iterator().next().setState(PipelineStep.Status.COMPLETED);
+
     PipelineStep step = new PipelineStep();
     step.setStarted(LocalDateTime.now());
     step.setType(StepType.INTERPRETED_TO_INDEX);
@@ -196,6 +240,31 @@ public class PipelinesRunningProcessSearchServiceTest {
     // Expect
     assertEquals(1, hits.size());
     assertTrue(hits.get(0).startsWith(pipelineProcess.getDatasetKey().toString()));
+
+    // When
+    hits =
+      searchService.search(
+        SearchParams.newBuilder()
+          .addStatus(PipelineStep.Status.COMPLETED)
+          .build(),
+        0,
+        10);
+
+    // Expect
+    assertEquals(1, hits.size());
+    assertTrue(hits.get(0).startsWith(pipelineProcess.getDatasetKey().toString()));
+
+    // When
+    hits =
+      searchService.search(
+        SearchParams.newBuilder()
+          .addStatus(PipelineStep.Status.RUNNING)
+          .build(),
+        0,
+        10);
+
+    // Expect
+    assertEquals(0, hits.size());
   }
 
   @Test

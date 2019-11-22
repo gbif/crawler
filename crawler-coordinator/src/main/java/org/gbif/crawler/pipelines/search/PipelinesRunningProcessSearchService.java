@@ -1,6 +1,8 @@
 package org.gbif.crawler.pipelines.search;
 
 import org.gbif.api.model.pipelines.PipelineProcess;
+import org.gbif.api.model.pipelines.PipelineStep;
+import org.gbif.api.model.pipelines.StepType;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -76,13 +78,25 @@ public class PipelinesRunningProcessSearchService implements Closeable {
             .map(title -> Collections.singletonMap(DATASET_TITLE_FIELD, title.trim() + "*"))
             .orElse(new HashMap<>());
 
-    Map<String, String> termQueries = new HashMap<>();
+    Map<String, Set<String>> termQueries = new HashMap<>();
     searchParams
         .getDatasetKey()
-        .ifPresent(key -> termQueries.put(DATASET_KEY_FIELD, key.toString()));
+        .ifPresent(
+            key -> termQueries.put(DATASET_KEY_FIELD, Collections.singleton(key.toString())));
 
-    searchParams.getStepTypes().forEach(t -> termQueries.put(STEP_FIELD, t.name()));
-    searchParams.getStatuses().forEach(s -> termQueries.put(STATUS_FIELD, s.name()));
+    if (searchParams.getStepTypes() != null && !searchParams.getStepTypes().isEmpty()) {
+      termQueries.put(
+          STEP_FIELD,
+          searchParams.getStepTypes().stream().map(StepType::name).collect(Collectors.toSet()));
+    }
+
+    if (searchParams.getStatuses() != null && !searchParams.getStatuses().isEmpty()) {
+      termQueries.put(
+          STATUS_FIELD,
+          searchParams.getStatuses().stream()
+              .map(PipelineStep.Status::name)
+              .collect(Collectors.toSet()));
+    }
 
     try {
       return fromSearchResult(

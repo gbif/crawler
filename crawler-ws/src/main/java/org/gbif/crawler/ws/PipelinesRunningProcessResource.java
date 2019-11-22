@@ -44,10 +44,10 @@ public class PipelinesRunningProcessResource {
   @GET
   @Path("search")
   public PipelinesRunningProcessServiceImpl.PipelineProcessSearchResult search(
-      @QueryParam("datasetTile") String datasetTitle,
+      @QueryParam("datasetTitle") String datasetTitle,
       @QueryParam("datasetKey") UUID datasetKey,
-      @QueryParam("status") List<PipelineStep.Status> statuses,
-      @QueryParam("step") List<StepType> stepTypes,
+      @QueryParam("statuses") List<PipelineStep.Status> statuses,
+      @QueryParam("steps") List<StepType> stepTypes,
       @Nullable @QueryParam("page") Integer pageNumber,
       @Nullable @QueryParam("size") Integer pageSize) {
     return service.search(
