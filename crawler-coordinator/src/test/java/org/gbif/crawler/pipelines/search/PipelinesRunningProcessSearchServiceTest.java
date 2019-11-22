@@ -72,7 +72,7 @@ public class PipelinesRunningProcessSearchServiceTest {
 
     // When
     hits =
-        searchService.search(SearchParams.newBuilder().setDatasetTitle("onta on").build(), 0, 10);
+        searchService.search(SearchParams.newBuilder().setDatasetTitle("onta dat").build(), 0, 10);
 
     // Expect
     assertEquals(1, hits.size());
