@@ -46,8 +46,8 @@ public class PipelinesRunningProcessResource {
   public PipelinesRunningProcessServiceImpl.PipelineProcessSearchResult search(
       @QueryParam("datasetTitle") String datasetTitle,
       @QueryParam("datasetKey") UUID datasetKey,
-      @QueryParam("statuses") List<PipelineStep.Status> statuses,
-      @QueryParam("steps") List<StepType> stepTypes,
+      @QueryParam("status") List<PipelineStep.Status> statuses,
+      @QueryParam("step") List<StepType> stepTypes,
       @Nullable @QueryParam("offset") Integer offset,
       @Nullable @QueryParam("limit") Integer limit) {
     return service.search(
