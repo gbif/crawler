@@ -42,7 +42,7 @@ public class PipelinesRunningProcessResource {
 
   /** Searchs for the received parameters. */
   @GET
-  @Path("search")
+  @Path("query")
   public PipelinesRunningProcessServiceImpl.PipelineProcessSearchResult search(
       @QueryParam("datasetTitle") String datasetTitle,
       @QueryParam("datasetKey") UUID datasetKey,
