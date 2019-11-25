@@ -122,7 +122,11 @@ public class SimpleSearchIndex implements Closeable {
    * @throws IOException
    */
   public long update(String field, String value, List<IndexableField> fields) throws IOException {
-    return indexWriter.updateDocument(new Term(field, value), fields);
+    long updated = indexWriter.updateDocument(new Term(field, value), fields);
+    if (indexWriter.hasUncommittedChanges()) {
+      indexWriter.commit();
+    }
+    return updated;
   }
 
   /**Converts a Lucene {@link Document} into a Map<String,String>.*/
