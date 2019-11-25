@@ -19,6 +19,7 @@ import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.*;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.MMapDirectory;
+import org.elasticsearch.index.cache.query.DisabledQueryCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -85,7 +86,19 @@ public class SimpleSearchIndex implements Closeable {
   /** Gets a searcher using a index reader aware of changes*/
   private IndexSearcher getIndexSearcher() throws IOException {
     //Create index reader and searcher
-    return new IndexSearcher(getIndexReader());
+    IndexSearcher indexSearcher = new IndexSearcher(getIndexReader());
+    indexSearcher.setQueryCachingPolicy(new QueryCachingPolicy() {
+      @Override
+      public void onUse(Query query) {
+        // do nothing
+      }
+
+      @Override
+      public boolean shouldCache(Query query) throws IOException {
+        return false;
+      }
+    });
+    return indexSearcher;
   }
 
   /** Adds a document to the  index. Duplication of content is not checked bu this index.*/
