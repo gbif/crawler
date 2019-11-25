@@ -72,6 +72,7 @@ public class PipelinesRunningProcessSearchService implements Closeable {
     Map<String, String> searchQueries =
         searchParams
             .getDatasetTitle()
+            .filter(v -> !v.isEmpty())
             .map(title -> Collections.singletonMap(DATASET_TITLE_FIELD, title.trim() + "*"))
             .orElse(new HashMap<>());
 

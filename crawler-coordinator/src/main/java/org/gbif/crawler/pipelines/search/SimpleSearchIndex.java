@@ -123,9 +123,7 @@ public class SimpleSearchIndex implements Closeable {
    */
   public long update(String field, String value, List<IndexableField> fields) throws IOException {
     long updated = indexWriter.updateDocument(new Term(field, value), fields);
-    if (indexWriter.hasUncommittedChanges()) {
-      indexWriter.commit();
-    }
+    indexWriter.commit();
     return updated;
   }
 

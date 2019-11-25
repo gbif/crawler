@@ -176,9 +176,6 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
 
   @Override
   public Set<PipelineProcess> getPipelineProcesses(UUID datasetKey) {
-    LOG.info("Entries in cache: " + processCache.asMap().entrySet().size());
-    processCache.entries().forEach(c -> LOG.info("Entry: " + c.getKey() + " with value: " + c.getValue()));
-
     return StreamSupport.stream(processCache.entries().spliterator(), true)
         .filter(node -> datasetKey == null || node.getKey().startsWith(datasetKey.toString()))
         .map(CacheEntry::getValue)
@@ -228,7 +225,9 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
               .sorted(PIPELINE_PROCESS_BY_LATEST_STEP_ASC.reversed())
               .skip(offset)
               .limit(limit)
-              .collect(Collectors.toSet());
+              .collect(
+                  Collectors.toCollection(
+                      () -> new TreeSet<>(PIPELINE_PROCESS_BY_LATEST_STEP_ASC.reversed())));
 
       return new PipelineProcessSearchResult(allProcesses.size(), allProcesses);
     }
@@ -241,7 +240,9 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
             .sorted(PIPELINE_PROCESS_BY_LATEST_STEP_ASC.reversed())
             .skip(offset)
             .limit(limit)
-            .collect(Collectors.toSet());
+            .collect(
+                Collectors.toCollection(
+                    () -> new TreeSet<>(PIPELINE_PROCESS_BY_LATEST_STEP_ASC.reversed())));
 
     return new PipelineProcessSearchResult(processes.size(), processes);
   }
