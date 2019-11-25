@@ -245,6 +245,9 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
 
     // search by params
     List<String> hits = searchService.search(searchParams);
+    LOG.info("Hits: {}", hits.size());
+    hits.forEach(h -> LOG.info("hit: {}", h));
+
     Set<PipelineProcess> processes =
         hits.stream()
             .map(processCache::get)
