@@ -106,10 +106,9 @@ public class SimpleSearchIndex implements Closeable {
    * @throws IOException in case of low-level IO error
    */
   public long delete(String field, String value) throws IOException {
+    LOG.info("Deleting from index field: {} with value: {}", field, value);
     long deleted = indexWriter.deleteDocuments(new Term(field, value));
-    if (indexWriter.hasUncommittedChanges()) {
-      indexWriter.commit();
-    }
+    indexWriter.commit();
     return deleted;
   }
 
@@ -122,6 +121,8 @@ public class SimpleSearchIndex implements Closeable {
    * @throws IOException
    */
   public long update(String field, String value, List<IndexableField> fields) throws IOException {
+    LOG.info("Updating index field: {} with value: {}", field, value);
+    fields.forEach(f -> LOG.info("Field: {} and value: {}", f.name(), f.stringValue()));
     long updated = indexWriter.updateDocument(new Term(field, value), fields);
     indexWriter.commit();
     return updated;
