@@ -89,7 +89,13 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
     File tmpDir = Files.createTempDir();
     tmpDir.deleteOnExit();
     this.searchService = new PipelinesRunningProcessSearchService(tmpDir.getPath());
-    Runtime.getRuntime().addShutdownHook(new Thread(searchService::close));
+    Runtime.getRuntime()
+        .addShutdownHook(
+            new Thread(
+                () -> {
+                  searchService.close();
+                  tmpDir.delete();
+                }));
     setupTreeCache();
   }
 
@@ -171,6 +177,8 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
   @Override
   public Set<PipelineProcess> getPipelineProcesses(UUID datasetKey) {
     LOG.info("Entries in cache: " + processCache.asMap().entrySet().size());
+    processCache.entries().forEach(c -> LOG.info("Entry: " + c.getKey() + " with value: " + c.getValue()));
+
     return StreamSupport.stream(processCache.entries().spliterator(), true)
         .filter(node -> datasetKey == null || node.getKey().startsWith(datasetKey.toString()))
         .map(CacheEntry::getValue)
