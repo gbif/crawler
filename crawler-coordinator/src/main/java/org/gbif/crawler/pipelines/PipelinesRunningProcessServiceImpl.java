@@ -90,8 +90,11 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
       throws Exception {
     this.curator = checkNotNull(curator, "curator can't be null");
     this.datasetService = datasetService;
-    Path tmpDir = Files.createTempDirectory(FileSystems.getDefault().getPath("").toAbsolutePath(), "search-",
-                                            PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rwxrwxrwx")));
+    Path tmpDir =
+        Files.createTempDirectory(
+            FileSystems.getDefault().getPath("").toAbsolutePath(),
+            "search-",
+            PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rwxrwxrwx")));
     this.searchService = new PipelinesRunningProcessSearchService(tmpDir.toString());
     Runtime.getRuntime()
         .addShutdownHook(
@@ -100,9 +103,9 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
                   searchService.close();
                   try {
                     Files.walk(tmpDir)
-                      .sorted(Comparator.reverseOrder())
-                      .map(Path::toFile)
-                      .forEach(File::delete);
+                        .sorted(Comparator.reverseOrder())
+                        .map(Path::toFile)
+                        .forEach(File::delete);
                   } catch (IOException e) {
                     throw new IllegalStateException("Couldn't delete temp search dir", e);
                   }
@@ -143,6 +146,8 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
                             .ifPresent(
                                 process -> {
                                   processCache.put(path, process);
+                                  // since some added events are actually updates in the same crawl
+                                  // we update always the index to avoid duplicates
                                   searchService.update(process);
                                 }));
           } else if (event.getType() == NODE_UPDATED) {
@@ -176,7 +181,6 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
                 () -> {
                   cache.close();
                   processCache.clearAndClose();
-                  searchService.close();
                 }));
   }
 
@@ -245,9 +249,6 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
 
     // search by params
     List<String> hits = searchService.search(searchParams);
-    LOG.info("Hits: {}", hits.size());
-    hits.forEach(h -> LOG.info("hit: {}", h));
-
     Set<PipelineProcess> processes =
         hits.stream()
             .map(processCache::get)
