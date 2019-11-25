@@ -75,9 +75,9 @@ public class SimpleSearchIndex implements Closeable {
    */
   private IndexReader getIndexReader() throws IOException {
     if(Objects.isNull(indexReader)) { //first instance
-      indexReader = DirectoryReader.open(indexWriter);
+      indexReader = DirectoryReader.open(indexWriter, true, true);
     } else { //Checked if changes are made
-      DirectoryReader newDirectoryReader = DirectoryReader.openIfChanged(indexReader);
+      DirectoryReader newDirectoryReader = DirectoryReader.openIfChanged(indexReader, indexWriter);
       indexReader = Objects.isNull(newDirectoryReader)? indexReader :newDirectoryReader;
     }
     return indexReader;
