@@ -8,6 +8,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.naming.directory.SearchResult;
+
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
@@ -104,7 +106,11 @@ public class SimpleSearchIndex implements Closeable {
    * @throws IOException in case of low-level IO error
    */
   public long delete(String field, String value) throws IOException {
-    return indexWriter.deleteDocuments(new Term(field, value));
+    long deleted = indexWriter.deleteDocuments(new Term(field, value));
+    if (indexWriter.hasUncommittedChanges()) {
+      indexWriter.commit();
+    }
+    return deleted;
   }
 
   /**
