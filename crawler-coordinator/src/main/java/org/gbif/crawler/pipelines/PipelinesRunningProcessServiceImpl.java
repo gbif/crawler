@@ -170,6 +170,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
 
   @Override
   public Set<PipelineProcess> getPipelineProcesses(UUID datasetKey) {
+    LOG.info("Entries in cache: " + processCache.asMap().entrySet().size());
     return StreamSupport.stream(processCache.entries().spliterator(), true)
         .filter(node -> datasetKey == null || node.getKey().startsWith(datasetKey.toString()))
         .map(CacheEntry::getValue)
