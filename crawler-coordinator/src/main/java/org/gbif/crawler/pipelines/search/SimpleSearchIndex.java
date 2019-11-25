@@ -104,9 +104,7 @@ public class SimpleSearchIndex implements Closeable {
    * @throws IOException in case of low-level IO error
    */
   public long delete(String field, String value) throws IOException {
-    long deleted = indexWriter.deleteDocuments(new Term(field, value));
-    indexWriter.commit();
-    return deleted;
+    return indexWriter.deleteDocuments(new Term(field, value));
   }
 
   /**

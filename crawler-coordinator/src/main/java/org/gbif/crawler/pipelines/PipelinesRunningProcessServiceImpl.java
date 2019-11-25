@@ -126,7 +126,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
                             .ifPresent(
                                 process -> {
                                   processCache.put(path, process);
-                                  searchService.index(process);
+                                  searchService.update(process);
                                 }));
           } else if (event.getType() == NODE_UPDATED && !event.getData().getPath().contains(SIZE)) {
             crawlIdPath
