@@ -14,13 +14,7 @@ import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
 import org.gbif.crawler.pipelines.search.PipelinesRunningProcessSearchService;
 import org.gbif.crawler.pipelines.search.SearchParams;
 
-import java.io.File;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.attribute.PosixFilePermissions;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -90,26 +84,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
       throws Exception {
     this.curator = checkNotNull(curator, "curator can't be null");
     this.datasetService = datasetService;
-    Path tmpDir =
-        Files.createTempDirectory(
-            FileSystems.getDefault().getPath("").toAbsolutePath(),
-            "search-",
-            PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rwxrwxrwx")));
-    this.searchService = new PipelinesRunningProcessSearchService(tmpDir.toString());
-    Runtime.getRuntime()
-        .addShutdownHook(
-            new Thread(
-                () -> {
-                  searchService.close();
-                  try {
-                    Files.walk(tmpDir)
-                        .sorted(Comparator.reverseOrder())
-                        .map(Path::toFile)
-                        .forEach(File::delete);
-                  } catch (IOException e) {
-                    throw new IllegalStateException("Couldn't delete temp search dir", e);
-                  }
-                }));
+    this.searchService = new PipelinesRunningProcessSearchService();
     setupTreeCache();
   }
 

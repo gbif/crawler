@@ -5,7 +5,12 @@ import org.gbif.api.model.pipelines.PipelineStep;
 import org.gbif.api.model.pipelines.StepType;
 
 import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -25,15 +30,17 @@ public class PipelinesRunningProcessSearchService implements Closeable {
   private static final String STEP_FIELD = "step";
 
   private final SimpleSearchIndex datasetSimpleSearchIndex;
+  private final Path tmpDir;
 
-  /**
-   * Creates a search index at the specified path, contents of the directory will be removed.
-   *
-   * @param path directory to store the index
-   */
-  public PipelinesRunningProcessSearchService(String path) {
+  /** Creates a search index at the specified path, contents of the directory will be removed. */
+  public PipelinesRunningProcessSearchService() {
     try {
-      datasetSimpleSearchIndex = SimpleSearchIndex.create(path);
+      tmpDir =
+          Files.createTempDirectory(
+              FileSystems.getDefault().getPath("").toAbsolutePath(),
+              "search-",
+              PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rwxrwxrwx")));
+      datasetSimpleSearchIndex = SimpleSearchIndex.create(tmpDir);
     } catch (IOException ex) {
       throw new IllegalStateException(ex);
     }
@@ -150,5 +157,10 @@ public class PipelinesRunningProcessSearchService implements Closeable {
   @Override
   public void close() {
     datasetSimpleSearchIndex.close();
+    try {
+      Files.walk(tmpDir).sorted(Comparator.reverseOrder()).map(Path::toFile).forEach(File::delete);
+    } catch (IOException e) {
+      throw new IllegalStateException("Couldn't delete tmp search dir", e);
+    }
   }
 }
