@@ -85,6 +85,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
     this.curator = checkNotNull(curator, "curator can't be null");
     this.datasetService = datasetService;
     this.searchService = new PipelinesRunningProcessSearchService();
+    Runtime.getRuntime().addShutdownHook(new Thread(searchService::close));
     setupTreeCache();
   }
 

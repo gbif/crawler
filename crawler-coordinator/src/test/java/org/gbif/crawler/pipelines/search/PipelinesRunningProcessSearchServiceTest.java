@@ -4,14 +4,12 @@ import org.gbif.api.model.pipelines.PipelineProcess;
 import org.gbif.api.model.pipelines.PipelineStep;
 import org.gbif.api.model.pipelines.StepType;
 
-import java.io.File;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
-import com.google.common.io.Files;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -42,9 +40,7 @@ public class PipelinesRunningProcessSearchServiceTest {
   /** Initializes the cache and test data. */
   @Before
   public void init() {
-    File tmpDir = Files.createTempDir();
-    tmpDir.deleteOnExit();
-    searchService = new PipelinesRunningProcessSearchService(tmpDir.getPath());
+    searchService = new PipelinesRunningProcessSearchService();
   }
 
   /** Close the search service. */
