@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.gbif.crawler</groupId>
     <artifactId>crawler-motherpom</artifactId>
-    <version>0.93-SNAPSHOT</version>
+    <version>0.94-SNAPSHOT</version>
   </parent>
 
   <artifactId>crawler-coordinator</artifactId>
@@ -148,16 +148,6 @@
       <groupId>org.apache.lucene</groupId>
       <artifactId>lucene-backward-codecs</artifactId>
     </dependency>
-
-    <dependency>
-      <groupId>org.cache2k</groupId>
-      <artifactId>cache2k-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.cache2k</groupId>
-      <artifactId>cache2k-core</artifactId>
-    </dependency>
-
     <dependency>
       <groupId>org.cache2k</groupId>
       <artifactId>cache2k-api</artifactId>
