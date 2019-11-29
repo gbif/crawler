@@ -2,6 +2,7 @@ package org.gbif.crawler.pipelines.abcd;
 
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
 
 import org.gbif.api.model.pipelines.StepType;
 import org.gbif.api.vocabulary.EndpointType;
@@ -39,11 +40,13 @@ public class AbcdToAvroCallback extends AbstractMessageCallback<PipelinesAbcdMes
   private final MessagePublisher publisher;
   private final CuratorFramework curator;
   private final PipelinesHistoryWsClient historyWsClient;
+  private final ExecutorService executor;
 
   public AbcdToAvroCallback(XmlToAvroConfiguration config, MessagePublisher publisher, CuratorFramework curator,
-                            PipelinesHistoryWsClient historyWsClient) {
+                            PipelinesHistoryWsClient historyWsClient, ExecutorService executor) {
     this.curator = checkNotNull(curator, "curator cannot be null");
     this.config = checkNotNull(config, "config cannot be null");
+    this.executor = checkNotNull(executor, "executor cannot be null");
     this.publisher = publisher;
     this.historyWsClient = historyWsClient;
   }
@@ -80,7 +83,7 @@ public class AbcdToAvroCallback extends AbstractMessageCallback<PipelinesAbcdMes
       // Common variables
       Set<String> steps = message.getPipelineSteps();
       EndpointType endpointType = message.getEndpointType();
-      Runnable runnable = XmlToAvroCallback.createRunnable(config, datasetId, attempt.toString(), endpointType);
+      Runnable runnable = XmlToAvroCallback.createRunnable(config, datasetId, attempt.toString(), endpointType, executor);
 
       // Message callback handler, updates zookeeper info, runs process logic and sends next MQ message
       PipelineCallback.create()

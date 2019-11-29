@@ -81,6 +81,10 @@ final class ProcessRunnerBuilder {
     throw new IllegalArgumentException("Wrong runner type - " + config.processRunner);
   }
 
+  public String[] buildOptions() {
+    return buildCommonOptions(new StringJoiner(DELIMITER)).split(DELIMITER);
+  }
+
   /**
    * Builds ProcessBuilder to process direct command
    */
@@ -96,9 +100,9 @@ final class ProcessRunnerBuilder {
         .add("--pipelineStep=VERBATIM_TO_INTERPRETED");
 
     Optional.ofNullable(sparkEventLogDir).ifPresent(sparkEventLogDir -> joiner.add("--conf spark.eventLog.enabled=true")
-      .add("--conf spark.eventLog.dir=" +  sparkEventLogDir));
+        .add("--conf spark.eventLog.dir=" + sparkEventLogDir));
 
-    return buildCommon(joiner);
+    return buildProcessCommon(joiner);
   }
 
   /**
@@ -130,13 +134,13 @@ final class ProcessRunnerBuilder {
         .add("--driver-memory " + config.sparkDriverMemory)
         .add(Objects.requireNonNull(config.distributedJarPath));
 
-    return buildCommon(joiner);
+    return buildProcessCommon(joiner);
   }
 
   /**
    * Adds common properties to direct or spark process, for running Java pipelines with pipeline options
    */
-  private ProcessBuilder buildCommon(StringJoiner command) {
+  private String buildCommonOptions(StringJoiner command) {
 
     String interpretationTypes = String.join(",", message.getInterpretTypes());
 
@@ -164,6 +168,17 @@ final class ProcessRunnerBuilder {
     Optional.ofNullable(message.getValidationResult())
         .flatMap(vr -> Optional.ofNullable(vr.isUseExtendedRecordId()))
         .ifPresent(x -> command.add("--useExtendedRecordId=" + x));
+
+    return command.toString();
+
+  }
+
+  /**
+   * Adds common properties to direct or spark process, for running Java pipelines with pipeline options
+   */
+  private ProcessBuilder buildProcessCommon(StringJoiner command) {
+
+    buildCommonOptions(command);
 
     // Adds user name to run a command if it is necessary
     StringJoiner joiner = new StringJoiner(DELIMITER);

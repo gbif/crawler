@@ -1,6 +1,8 @@
 package org.gbif.crawler.pipelines.indexing;
 
 import java.io.IOException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.gbif.api.service.registry.DatasetService;
 import org.gbif.common.messaging.DefaultMessagePublisher;
@@ -29,6 +31,7 @@ public class IndexingService extends AbstractIdleService {
   private CuratorFramework curator;
   private CloseableHttpClient httpClient;
   private DatasetService datasetService;
+  private ExecutorService executor;
 
 
   public IndexingService(IndexingConfiguration config) {
@@ -43,17 +46,17 @@ public class IndexingService extends AbstractIdleService {
     publisher = new DefaultMessagePublisher(config.messaging.getConnectionParameters());
     curator = config.zooKeeper.getCuratorFramework();
     datasetService = config.registry.newRegistryInjector().getInstance(DatasetService.class);
+    executor = config.standaloneNumberThreads == null ? null : Executors.newFixedThreadPool(config.standaloneNumberThreads);
     httpClient = HttpClients.custom()
         .setDefaultRequestConfig(RequestConfig.custom()
             .setConnectTimeout(60_000)
             .setSocketTimeout(60_000)
             .build())
         .build();
-    PipelinesHistoryWsClient
-      historyWsClient = config.registry.newRegistryInjector().getInstance(PipelinesHistoryWsClient.class);
+    PipelinesHistoryWsClient historyWsClient = config.registry.newRegistryInjector().getInstance(PipelinesHistoryWsClient.class);
 
-    listener.listen(config.queueName, config.poolSize, new IndexingCallback(config, publisher, datasetService, curator,
-                                                                            httpClient, historyWsClient));
+    IndexingCallback callback = new IndexingCallback(config, publisher, datasetService, curator, httpClient, historyWsClient, executor);
+    listener.listen(config.queueName, config.poolSize, callback);
   }
 
   @Override
@@ -61,6 +64,7 @@ public class IndexingService extends AbstractIdleService {
     listener.close();
     publisher.close();
     curator.close();
+    executor.shutdown();
     try {
       httpClient.close();
     } catch (IOException e) {

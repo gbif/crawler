@@ -105,6 +105,12 @@ public class HdfsViewConfiguration {
   @Parameter(names = "--spark-records-per-thread")
   public int sparkRecordsPerThread;
 
+  @Parameter(names = "--standalone-number-threads")
+  public Integer standaloneNumberThreads;
+
+  @Parameter(names = "--standalone-use-java")
+  public boolean standaloneUseJava = false;
+
   @Parameter(names = "--deploy-mode")
   public String deployMode;
 

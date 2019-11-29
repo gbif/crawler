@@ -1,5 +1,8 @@
 package org.gbif.crawler.pipelines.hdfs;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import org.gbif.common.messaging.DefaultMessagePublisher;
 import org.gbif.common.messaging.MessageListener;
 import org.gbif.common.messaging.api.MessagePublisher;
@@ -21,6 +24,7 @@ public class HdfsViewService extends AbstractIdleService {
   private MessageListener listener;
   private MessagePublisher publisher;
   private CuratorFramework curator;
+  private ExecutorService executor;
 
   public HdfsViewService(HdfsViewConfiguration config) {
     this.config = config;
@@ -33,10 +37,11 @@ public class HdfsViewService extends AbstractIdleService {
     listener = new MessageListener(config.messaging.getConnectionParameters(), 1);
     publisher = new DefaultMessagePublisher(config.messaging.getConnectionParameters());
     curator = config.zooKeeper.getCuratorFramework();
-    PipelinesHistoryWsClient historyWsClient =
-      config.registry.newRegistryInjector().getInstance(PipelinesHistoryWsClient.class);
+    executor = config.standaloneNumberThreads == null ? null : Executors.newFixedThreadPool(config.standaloneNumberThreads);
+    PipelinesHistoryWsClient historyWsClient = config.registry.newRegistryInjector().getInstance(PipelinesHistoryWsClient.class);
 
-    listener.listen(config.queueName, config.poolSize, new HdfsViewCallback(config, publisher, curator, historyWsClient));
+    HdfsViewCallback callback = new HdfsViewCallback(config, publisher, curator, historyWsClient, executor);
+    listener.listen(config.queueName, config.poolSize, callback);
   }
 
   @Override
@@ -44,6 +49,7 @@ public class HdfsViewService extends AbstractIdleService {
     listener.close();
     publisher.close();
     curator.close();
+    executor.shutdown();
     LOG.info("Stopping pipelines-hdfs-view service");
   }
 }

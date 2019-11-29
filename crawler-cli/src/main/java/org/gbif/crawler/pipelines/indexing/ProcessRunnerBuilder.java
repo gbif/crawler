@@ -93,6 +93,10 @@ final class ProcessRunnerBuilder {
     throw new IllegalArgumentException("Wrong runner type - " + config.processRunner);
   }
 
+  public String[] buildOptions() {
+    return buildCommonOptions(new StringJoiner(DELIMITER)).split(DELIMITER);
+  }
+
   /**
    * Builds ProcessBuilder to process direct command
    */
@@ -148,7 +152,7 @@ final class ProcessRunnerBuilder {
   /**
    * Adds common properties to direct or spark process, for running Java pipelines with pipeline options
    */
-  private ProcessBuilder buildCommon(StringJoiner command) {
+  private String buildCommonOptions(StringJoiner command) {
 
     String esHosts = String.join(",", config.esHosts);
 
@@ -172,6 +176,15 @@ final class ProcessRunnerBuilder {
     Optional.ofNullable(config.indexRefreshInterval).ifPresent(x -> command.add("--indexRefreshInterval=" + x));
     Optional.ofNullable(esShardsNumber).ifPresent(x -> command.add("--indexNumberShards=" + x));
     Optional.ofNullable(config.indexNumberReplicas).ifPresent(x -> command.add("--indexNumberReplicas=" + x));
+
+    return command.toString();
+  }
+
+  /**
+   * Adds common properties to direct or spark process, for running Java pipelines with pipeline options
+   */
+  private ProcessBuilder buildCommon(StringJoiner command) {
+    buildCommonOptions(command);
 
     // Adds user name to run a command if it is necessary
     StringJoiner joiner = new StringJoiner(DELIMITER);

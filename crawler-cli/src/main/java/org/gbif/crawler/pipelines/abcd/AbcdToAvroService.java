@@ -1,5 +1,8 @@
 package org.gbif.crawler.pipelines.abcd;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import org.gbif.common.messaging.DefaultMessagePublisher;
 import org.gbif.common.messaging.MessageListener;
 import org.gbif.common.messaging.api.MessagePublisher;
@@ -25,6 +28,7 @@ public class AbcdToAvroService extends AbstractIdleService {
   private MessageListener listener;
   private MessagePublisher publisher;
   private CuratorFramework curator;
+  private ExecutorService executor;
 
   public AbcdToAvroService(XmlToAvroConfiguration config) {
     this.config = config;
@@ -39,9 +43,11 @@ public class AbcdToAvroService extends AbstractIdleService {
     // CrawlFinishedMessage
     publisher = new DefaultMessagePublisher(config.messaging.getConnectionParameters());
     curator = config.zooKeeper.getCuratorFramework();
+    executor = Executors.newFixedThreadPool(config.xmlReaderParallelism);
     PipelinesHistoryWsClient historyWsClient = config.registry.newRegistryInjector().getInstance(PipelinesHistoryWsClient.class);
 
-    listener.listen(config.queueName, config.poolSize, new AbcdToAvroCallback(config, publisher, curator, historyWsClient));
+    AbcdToAvroCallback callback = new AbcdToAvroCallback(config, publisher, curator, historyWsClient, executor);
+    listener.listen(config.queueName, config.poolSize, callback);
   }
 
   @Override
@@ -49,6 +55,7 @@ public class AbcdToAvroService extends AbstractIdleService {
     publisher.close();
     listener.close();
     curator.close();
+    executor.shutdown();
     LOG.info("Stopping pipelines-to-avro-from-abcd service");
   }
 

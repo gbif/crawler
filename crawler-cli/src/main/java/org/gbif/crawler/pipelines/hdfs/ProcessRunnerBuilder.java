@@ -81,6 +81,10 @@ final class ProcessRunnerBuilder {
     throw new IllegalArgumentException("Wrong runner type - " + config.processRunner);
   }
 
+  public String[] buildOptions() {
+    return buildCommonOptions(new StringJoiner(DELIMITER)).split(DELIMITER);
+  }
+
   /**
    * Builds ProcessBuilder to process direct command
    */
@@ -135,8 +139,7 @@ final class ProcessRunnerBuilder {
   /**
    * Adds common properties to direct or spark process, for running Java pipelines with pipeline options
    */
-  private ProcessBuilder buildCommon(StringJoiner command) {
-
+  private String buildCommonOptions(StringJoiner command) {
     // Common properties
     command.add("--datasetId=" + Objects.requireNonNull(message.getDatasetUuid()))
         .add("--attempt=" + message.getAttempt())
@@ -148,6 +151,16 @@ final class ProcessRunnerBuilder {
         .add("--coreSiteConfig=" + Objects.requireNonNull(config.coreSiteConfig))
         .add("--numberOfShards=" + numberOfShards)
         .add("--properties=" + Objects.requireNonNull(config.pipelinesConfig));
+
+    return command.toString();
+  }
+
+  /**
+   * Adds common properties to direct or spark process, for running Java pipelines with pipeline options
+   */
+  private ProcessBuilder buildCommon(StringJoiner command) {
+
+    buildCommonOptions(command);
 
     // Adds user name to run a command if it is necessary
     StringJoiner joiner = new StringJoiner(DELIMITER);

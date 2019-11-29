@@ -1,5 +1,11 @@
 package org.gbif.crawler.pipelines.hdfs;
 
+import java.io.IOException;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.function.Predicate;
+
 import org.gbif.api.model.pipelines.StepRunner;
 import org.gbif.api.model.pipelines.StepType;
 import org.gbif.common.messaging.AbstractMessageCallback;
@@ -11,18 +17,16 @@ import org.gbif.crawler.pipelines.PipelineCallback;
 import org.gbif.crawler.pipelines.dwca.DwcaToAvroConfiguration;
 import org.gbif.crawler.pipelines.indexing.IndexingConfiguration;
 import org.gbif.pipelines.common.PipelinesVariables.Metrics;
+import org.gbif.pipelines.ingest.java.pipelines.InterpretedToHdfsViewPipeline;
 import org.gbif.registry.ws.client.pipelines.PipelinesHistoryWsClient;
 
-import java.io.IOException;
-import java.util.Set;
-import java.util.UUID;
-
-import com.google.common.base.Strings;
 import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.slf4j.MDC.MDCCloseable;
+
+import com.google.common.base.Strings;
 
 import static org.gbif.pipelines.common.PipelinesVariables.Pipeline.Interpretation.DIRECTORY_NAME;
 
@@ -42,13 +46,15 @@ public class HdfsViewCallback extends AbstractMessageCallback<PipelinesInterpret
   private final MessagePublisher publisher;
   private final CuratorFramework curator;
   private final PipelinesHistoryWsClient historyWsClient;
+  private final ExecutorService executor;
 
   HdfsViewCallback(HdfsViewConfiguration config, MessagePublisher publisher, CuratorFramework curator,
-      PipelinesHistoryWsClient historyWsClient) {
+      PipelinesHistoryWsClient historyWsClient, ExecutorService executor) {
     this.curator = checkNotNull(curator, "curator cannot be null");
     this.config = checkNotNull(config, "config cannot be null");
     this.publisher = publisher;
     this.historyWsClient = historyWsClient;
+    this.executor = executor;
   }
 
   /** Handles a MQ {@link PipelinesInterpretedMessage} message */
@@ -102,30 +108,55 @@ public class HdfsViewCallback extends AbstractMessageCallback<PipelinesInterpret
             .message(message)
             .numberOfShards(computeNumberOfShards(message));
 
-        if (config.processRunner.equalsIgnoreCase(StepRunner.DISTRIBUTED.name())) {
+        Predicate<StepRunner> runnerPr = sr -> config.processRunner.equalsIgnoreCase(sr.name());
 
-          long recordNumber = getRecordNumber(message);
-          int sparkExecutorNumbers = computeSparkExecutorNumbers(recordNumber);
-
-          builder.sparkParallelism(computeSparkParallelism(sparkExecutorNumbers))
-              .sparkExecutorMemory(computeSparkExecutorMemory(sparkExecutorNumbers))
-              .sparkExecutorNumbers(sparkExecutorNumbers);
+        LOG.info("Start the process. Message - {}", message);
+        if (runnerPr.test(StepRunner.DISTRIBUTED)) {
+          runDistributed(message, builder);
+        } else if (runnerPr.test(StepRunner.STANDALONE)) {
+          runLocal(builder);
         }
-
-        // Assembles a terminal java process and runs it
-        int exitValue = builder.build().start().waitFor();
-
-        if (exitValue != 0) {
-          throw new RuntimeException("Process has been finished with exit value - " + exitValue);
-        } else {
-          LOG.info("Process has been finished with exit value - {}", exitValue);
-        }
-
-      } catch (InterruptedException | IOException ex) {
+      } catch (Exception ex) {
         LOG.error(ex.getMessage(), ex);
-        throw new IllegalStateException("Failed indexing on " + message.getDatasetUuid(), ex);
+        throw new IllegalStateException("Failed interpretation on " + message.getDatasetUuid().toString(), ex);
       }
+
     };
+  }
+
+  private void runLocal(ProcessRunnerBuilder builder) throws Exception {
+    if (config.standaloneUseJava) {
+      InterpretedToHdfsViewPipeline.run(builder.buildOptions(), executor);
+    } else {
+      // Assembles a terminal java process and runs it
+      int exitValue = builder.build().start().waitFor();
+
+      if (exitValue != 0) {
+        throw new RuntimeException("Process has been finished with exit value - " + exitValue);
+      } else {
+        LOG.info("Process has been finished with exit value - {}", exitValue);
+      }
+    }
+  }
+
+  private void runDistributed(PipelinesInterpretedMessage message, ProcessRunnerBuilder builder)
+      throws Exception {
+
+    long recordNumber = getRecordNumber(message);
+    int sparkExecutorNumbers = computeSparkExecutorNumbers(recordNumber);
+
+    builder.sparkParallelism(computeSparkParallelism(sparkExecutorNumbers))
+        .sparkExecutorMemory(computeSparkExecutorMemory(sparkExecutorNumbers))
+        .sparkExecutorNumbers(sparkExecutorNumbers);
+
+    // Assembles a terminal java process and runs it
+    int exitValue = builder.build().start().waitFor();
+
+    if (exitValue != 0) {
+      throw new RuntimeException("Process has been finished with exit value - " + exitValue);
+    } else {
+      LOG.info("Process has been finished with exit value - {}", exitValue);
+    }
   }
 
   /**

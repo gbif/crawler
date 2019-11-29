@@ -13,6 +13,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.UUID;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
@@ -51,6 +54,7 @@ public class XmlToAvroCallbackTest {
   private static TestingServer server;
   private static MessagePublisherStub publisher;
   private static PipelinesHistoryWsClient historyWsClient;
+  private static ExecutorService executor;
 
   @BeforeClass
   public static void setUp() throws Exception {
@@ -71,6 +75,8 @@ public class XmlToAvroCallbackTest {
         .build();
     curator.start();
 
+    executor = Executors.newSingleThreadExecutor();
+
     publisher = MessagePublisherStub.create();
     historyWsClient = Mockito.mock(PipelinesHistoryWsClient.class);
   }
@@ -82,6 +88,7 @@ public class XmlToAvroCallbackTest {
     curator.close();
     server.stop();
     publisher.close();
+    executor.shutdown();
   }
 
   @Test
@@ -93,7 +100,7 @@ public class XmlToAvroCallbackTest {
     config.repositoryPath = hdfsUri;
     config.xmlReaderParallelism = 4;
     config.archiveRepositorySubdir = Collections.singleton("xml");
-    XmlToAvroCallback callback = new XmlToAvroCallback(config, publisher, curator, historyWsClient);
+    XmlToAvroCallback callback = new XmlToAvroCallback(config, publisher, curator, historyWsClient, executor);
     PipelinesXmlMessage message =
         new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL, Collections.emptySet(),
                                 EndpointType.BIOCASE_XML_ARCHIVE, Platform.PIPELINES);
@@ -125,7 +132,7 @@ public class XmlToAvroCallbackTest {
     config.repositoryPath = hdfsUri;
     config.xmlReaderParallelism = 4;
     config.archiveRepositorySubdir = Collections.singleton("xml");
-    XmlToAvroCallback callback = new XmlToAvroCallback(config, publisher, curator, historyWsClient);
+    XmlToAvroCallback callback = new XmlToAvroCallback(config, publisher, curator, historyWsClient, executor);
     PipelinesXmlMessage message =
         new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL, Collections.emptySet(),
                                 EndpointType.BIOCASE_XML_ARCHIVE, Platform.PIPELINES);
@@ -157,7 +164,7 @@ public class XmlToAvroCallbackTest {
     config.repositoryPath = hdfsUri;
     config.xmlReaderParallelism = 4;
     config.archiveRepositorySubdir = Collections.singleton("xml");
-    XmlToAvroCallback callback = new XmlToAvroCallback(config, publisher, curator, historyWsClient);
+    XmlToAvroCallback callback = new XmlToAvroCallback(config, publisher, curator, historyWsClient, executor);
     PipelinesXmlMessage message =
         new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL, Collections.emptySet(),
                                 EndpointType.BIOCASE_XML_ARCHIVE, Platform.PIPELINES);
@@ -191,7 +198,7 @@ public class XmlToAvroCallbackTest {
     config.repositoryPath = hdfsUri;
     config.xmlReaderParallelism = 4;
     config.archiveRepositorySubdir = Collections.singleton("xml");
-    XmlToAvroCallback callback = new XmlToAvroCallback(config, publisher, curator, historyWsClient);
+    XmlToAvroCallback callback = new XmlToAvroCallback(config, publisher, curator, historyWsClient, executor);
     PipelinesXmlMessage message =
         new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NOT_MODIFIED, Collections.emptySet(),
                                 EndpointType.BIOCASE_XML_ARCHIVE, Platform.PIPELINES);

@@ -114,6 +114,12 @@ public class InterpreterConfiguration {
   @Parameter(names = "--distributed-main-class")
   public String distributedMainClass;
 
+  @Parameter(names = "--standalone-number-threads")
+  public Integer standaloneNumberThreads;
+
+  @Parameter(names = "--standalone-use-java")
+  public boolean standaloneUseJava = false;
+
   @Parameter(names = "--repository-path")
   public String repositoryPath;
 

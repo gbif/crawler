@@ -7,7 +7,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 
 import org.gbif.api.model.pipelines.StepRunner;
 import org.gbif.api.model.pipelines.StepType;
@@ -23,6 +25,7 @@ import org.gbif.crawler.pipelines.dwca.DwcaToAvroConfiguration;
 import org.gbif.pipelines.common.PipelinesVariables.Metrics;
 import org.gbif.pipelines.common.PipelinesVariables.Pipeline.Interpretation;
 import org.gbif.pipelines.common.PipelinesVariables.Pipeline.Interpretation.RecordType;
+import org.gbif.pipelines.ingest.java.pipelines.InterpretedToEsIndexExtendedPipeline;
 import org.gbif.registry.ws.client.pipelines.PipelinesHistoryWsClient;
 
 import org.apache.curator.framework.CuratorFramework;
@@ -58,15 +61,17 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
   private final CuratorFramework curator;
   private final HttpClient httpClient;
   private final PipelinesHistoryWsClient historyWsClient;
+  private final ExecutorService executor;
 
   IndexingCallback(IndexingConfiguration config, MessagePublisher publisher, DatasetService datasetService,
-      CuratorFramework curator, HttpClient httpClient, PipelinesHistoryWsClient historyWsClient) {
+      CuratorFramework curator, HttpClient httpClient, PipelinesHistoryWsClient historyWsClient, ExecutorService executor) {
     this.curator = checkNotNull(curator, "curator cannot be null");
     this.config = checkNotNull(config, "config cannot be null");
     this.datasetService = checkNotNull(datasetService, "config cannot be null");
     this.publisher = publisher;
     this.httpClient = httpClient;
     this.historyWsClient = historyWsClient;
+    this.executor = executor;
   }
 
   /**
@@ -130,9 +135,6 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
   private Runnable createRunnable(PipelinesInterpretedMessage message) {
     return () -> {
       try {
-        String datasetId = message.getDatasetUuid().toString();
-        String attempt = Integer.toString(message.getAttempt());
-
         long recordsNumber = getRecordNumber(message);
 
         String indexName = computeIndexName(message, recordsNumber);
@@ -145,30 +147,55 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
             .esAlias(config.indexAlias)
             .esShardsNumber(numberOfShards);
 
-        if (config.processRunner.equalsIgnoreCase(StepRunner.DISTRIBUTED.name())) {
+        Predicate<StepRunner> runnerPr = sr -> config.processRunner.equalsIgnoreCase(sr.name());
 
-          int sparkExecutorNumbers = computeSparkExecutorNumbers(recordsNumber);
-
-          builder.sparkParallelism(computeSparkParallelism(datasetId, attempt))
-              .sparkExecutorMemory(computeSparkExecutorMemory(sparkExecutorNumbers))
-              .sparkExecutorNumbers(sparkExecutorNumbers);
-
+        LOG.info("Start the process. Message - {}", message);
+        if (runnerPr.test(StepRunner.DISTRIBUTED)) {
+          runDistributed(message, builder, recordsNumber);
+        } else if (runnerPr.test(StepRunner.STANDALONE)) {
+          runLocal(builder);
         }
-
-        // Assembles a terminal java process and runs it
-        int exitValue = builder.build().start().waitFor();
-
-        if (exitValue != 0) {
-          throw new RuntimeException("Process has been finished with exit value - " + exitValue);
-        } else {
-          LOG.info("Process has been finished with exit value - {}", exitValue);
-        }
-
-      } catch (InterruptedException | IOException ex) {
+      } catch (Exception ex) {
         LOG.error(ex.getMessage(), ex);
-        throw new IllegalStateException("Failed indexing on " + message.getDatasetUuid(), ex);
+        throw new IllegalStateException("Failed interpretation on " + message.getDatasetUuid().toString(), ex);
       }
+
     };
+  }
+
+  private void runLocal(ProcessRunnerBuilder builder) throws Exception {
+    if (config.standaloneUseJava) {
+      InterpretedToEsIndexExtendedPipeline.run(builder.buildOptions(), executor);
+    } else {
+      // Assembles a terminal java process and runs it
+      int exitValue = builder.build().start().waitFor();
+
+      if (exitValue != 0) {
+        throw new RuntimeException("Process has been finished with exit value - " + exitValue);
+      } else {
+        LOG.info("Process has been finished with exit value - {}", exitValue);
+      }
+    }
+  }
+
+  private void runDistributed(PipelinesInterpretedMessage message, ProcessRunnerBuilder builder, long recordsNumber)
+      throws Exception {
+    String datasetId = message.getDatasetUuid().toString();
+    String attempt = Integer.toString(message.getAttempt());
+    int sparkExecutorNumbers = computeSparkExecutorNumbers(recordsNumber);
+
+    builder.sparkParallelism(computeSparkParallelism(datasetId, attempt))
+        .sparkExecutorMemory(computeSparkExecutorMemory(sparkExecutorNumbers))
+        .sparkExecutorNumbers(sparkExecutorNumbers);
+
+    // Assembles a terminal java process and runs it
+    int exitValue = builder.build().start().waitFor();
+
+    if (exitValue != 0) {
+      throw new RuntimeException("Process has been finished with exit value - " + exitValue);
+    } else {
+      LOG.info("Process has been finished with exit value - {}", exitValue);
+    }
   }
 
   /**

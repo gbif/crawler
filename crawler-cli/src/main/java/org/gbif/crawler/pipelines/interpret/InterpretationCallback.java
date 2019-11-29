@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.function.Predicate;
 
 import org.gbif.api.model.pipelines.StepRunner;
 import org.gbif.api.model.pipelines.StepType;
@@ -18,6 +20,7 @@ import org.gbif.pipelines.common.PipelinesVariables.Metrics;
 import org.gbif.pipelines.common.PipelinesVariables.Pipeline;
 import org.gbif.pipelines.common.PipelinesVariables.Pipeline.Conversion;
 import org.gbif.pipelines.common.PipelinesVariables.Pipeline.Interpretation;
+import org.gbif.pipelines.ingest.java.pipelines.VerbatimToInterpretedPipeline;
 import org.gbif.registry.ws.client.pipelines.PipelinesHistoryWsClient;
 
 import org.apache.curator.framework.CuratorFramework;
@@ -44,13 +47,15 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
   private final MessagePublisher publisher;
   private final CuratorFramework curator;
   private PipelinesHistoryWsClient historyWsClient;
+  private final ExecutorService executor;
 
   InterpretationCallback(InterpreterConfiguration config, MessagePublisher publisher, CuratorFramework curator,
-                         PipelinesHistoryWsClient historyWsClient) {
+                         PipelinesHistoryWsClient historyWsClient, ExecutorService executor) {
     this.curator = checkNotNull(curator, "curator cannot be null");
     this.config = checkNotNull(config, "config cannot be null");
     this.publisher = publisher;
     this.historyWsClient = historyWsClient;
+    this.executor = executor;
   }
 
   /**
@@ -118,46 +123,65 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
    */
   private Runnable createRunnable(PipelinesVerbatimMessage message) {
     return () -> {
+      String datasetId = message.getDatasetUuid().toString();
+      String attempt = Integer.toString(message.getAttempt());
+
+      String verbatim = Conversion.FILE_NAME + Pipeline.AVRO_EXTENSION;
+      String path = message.getExtraPath() != null ? message.getExtraPath() :
+          String.join("/", config.repositoryPath, datasetId, attempt, verbatim);
+
+      ProcessRunnerBuilder builder = ProcessRunnerBuilder.create()
+          .config(config)
+          .message(message)
+          .inputPath(path);
+
+      Predicate<StepRunner> runnerPr = sr -> config.processRunner.equalsIgnoreCase(sr.name());
+
+      LOG.info("Start the process. Message - {}", message);
       try {
-        String datasetId = message.getDatasetUuid().toString();
-        String attempt = Integer.toString(message.getAttempt());
-
-        long recordsNumber = getRecordNumber(message);
-
-        String verbatim = Conversion.FILE_NAME + Pipeline.AVRO_EXTENSION;
-        String path = message.getExtraPath() != null ? message.getExtraPath() :
-            String.join("/", config.repositoryPath, datasetId, attempt, verbatim);
-
-        ProcessRunnerBuilder builder = ProcessRunnerBuilder.create()
-            .config(config)
-            .message(message)
-            .inputPath(path);
-
-        if (config.processRunner.equalsIgnoreCase(StepRunner.DISTRIBUTED.name())) {
-
-          int sparkExecutorNumbers = computeSparkExecutorNumbers(recordsNumber);
-
-          builder.sparkParallelism(computeSparkParallelism(sparkExecutorNumbers))
-              .sparkExecutorMemory(computeSparkExecutorMemory(sparkExecutorNumbers))
-              .sparkExecutorNumbers(sparkExecutorNumbers);
+        if (runnerPr.test(StepRunner.DISTRIBUTED)) {
+          runDistributed(message, builder);
+        } else if (runnerPr.test(StepRunner.STANDALONE)) {
+          runLocal(builder);
         }
-
-        LOG.info("Start the process. Message - {}", message);
-
-        // Assembles a terminal java process and runs it
-        int exitValue = builder.build().start().waitFor();
-
-        if (exitValue != 0) {
-          throw new RuntimeException("Process has been finished with exit value - " + exitValue);
-        } else {
-          LOG.info("Process has been finished with exit value - {}", exitValue);
-        }
-
-      } catch (InterruptedException | IOException ex) {
+      } catch (Exception ex) {
         LOG.error(ex.getMessage(), ex);
         throw new IllegalStateException("Failed interpretation on " + message.getDatasetUuid().toString(), ex);
       }
     };
+  }
+
+  private void runLocal(ProcessRunnerBuilder builder) throws Exception {
+    if (config.standaloneUseJava) {
+      VerbatimToInterpretedPipeline.run(builder.buildOptions(), executor);
+    } else {
+      // Assembles a terminal java process and runs it
+      int exitValue = builder.build().start().waitFor();
+
+      if (exitValue != 0) {
+        throw new RuntimeException("Process has been finished with exit value - " + exitValue);
+      } else {
+        LOG.info("Process has been finished with exit value - {}", exitValue);
+      }
+    }
+  }
+
+  private void runDistributed(PipelinesVerbatimMessage message, ProcessRunnerBuilder builder) throws Exception {
+    long recordsNumber = getRecordNumber(message);
+    int sparkExecutorNumbers = computeSparkExecutorNumbers(recordsNumber);
+
+    builder.sparkParallelism(computeSparkParallelism(sparkExecutorNumbers))
+        .sparkExecutorMemory(computeSparkExecutorMemory(sparkExecutorNumbers))
+        .sparkExecutorNumbers(sparkExecutorNumbers);
+
+    // Assembles a terminal java process and runs it
+    int exitValue = builder.build().start().waitFor();
+
+    if (exitValue != 0) {
+      throw new RuntimeException("Process has been finished with exit value - " + exitValue);
+    } else {
+      LOG.info("Process has been finished with exit value - {}", exitValue);
+    }
   }
 
   /**

@@ -100,6 +100,12 @@ public class IndexingConfiguration {
   @Parameter(names = "--standalone-main-class")
   public String standaloneMainClass;
 
+  @Parameter(names = "--standalone-number-threads")
+  public Integer standaloneNumberThreads;
+
+  @Parameter(names = "--standalone-use-java")
+  public boolean standaloneUseJava = false;
+
   @Parameter(names = "--distributed-main-class")
   public String distributedMainClass;
 
