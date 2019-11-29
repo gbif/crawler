@@ -150,7 +150,7 @@ public class PipelinesRunningProcessServiceImplTest {
     }
 
     // we wait for the ZK TreeCache to respond to the events
-    TimeUnit.MILLISECONDS.sleep(700);
+    TimeUnit.MILLISECONDS.sleep(1500);
 
     // When
     Set<PipelineProcess> set = service.getPipelineProcesses();
@@ -174,7 +174,7 @@ public class PipelinesRunningProcessServiceImplTest {
     addStatusToZookeeper(crawlId);
 
     // we wait for the ZK TreeCache to respond to the events
-    TimeUnit.MILLISECONDS.sleep(200);
+    TimeUnit.MILLISECONDS.sleep(300);
 
     // When
     PipelineProcess status = service.getPipelineProcess(datasetKey, attempt);

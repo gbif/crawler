@@ -11,6 +11,8 @@ import org.gbif.common.messaging.api.messages.PipelinesDwcaMessage;
 import org.gbif.common.messaging.api.messages.PipelinesXmlMessage;
 import org.gbif.crawler.constants.CrawlerNodePaths;
 import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
+import org.gbif.crawler.pipelines.search.PipelinesRunningProcessSearchService;
+import org.gbif.crawler.pipelines.search.SearchParams;
 
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
@@ -25,7 +27,6 @@ import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
 
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.TreeCache;
 import org.apache.curator.framework.recipes.cache.TreeCacheListener;
@@ -54,15 +55,17 @@ import static org.apache.curator.framework.recipes.cache.TreeCacheEvent.Type.NOD
 /** Pipelines monitoring service collects all necessary information from Zookeeper */
 public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProcessService {
 
-  private static final Logger LOG = LoggerFactory.getLogger(PipelinesRunningProcessServiceImpl.class);
+  private static final Logger LOG =
+      LoggerFactory.getLogger(PipelinesRunningProcessServiceImpl.class);
 
   private static final ObjectMapper OBJECT_MAPPER =
       new ObjectMapper().disable(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES);
   private static final BiFunction<UUID, Integer, String> CRAWL_ID_GENERATOR =
-    (datasetKey, attempt) -> datasetKey + "_" + attempt;
+      (datasetKey, attempt) -> datasetKey + "_" + attempt;
 
   private final CuratorFramework curator;
   private final DatasetService datasetService;
+  private final PipelinesRunningProcessSearchService searchService;
   private final Cache<String, PipelineProcess> processCache =
       Cache2kBuilder.of(String.class, PipelineProcess.class)
           .entryCapacity(Long.MAX_VALUE)
@@ -77,11 +80,12 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
    * @param curator to access ZooKeeper
    */
   @Inject
-  public PipelinesRunningProcessServiceImpl(
-      CuratorFramework curator,
-      DatasetService datasetService) throws Exception {
+  public PipelinesRunningProcessServiceImpl(CuratorFramework curator, DatasetService datasetService)
+      throws Exception {
     this.curator = checkNotNull(curator, "curator can't be null");
     this.datasetService = datasetService;
+    this.searchService = new PipelinesRunningProcessSearchService();
+    Runtime.getRuntime().addShutdownHook(new Thread(searchService::close));
     setupTreeCache();
   }
 
@@ -115,16 +119,32 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
                 .ifPresent(
                     path ->
                         loadRunningPipelineProcess(path)
-                            .ifPresent(process -> processCache.put(path, process)));
-          } else if (event.getType() == NODE_UPDATED && !event.getData().getPath().contains(SIZE)) {
+                            .ifPresent(
+                                process -> {
+                                  processCache.put(path, process);
+                                  // since some added events are actually updates in the same crawl
+                                  // we update always the index to avoid duplicates
+                                  searchService.update(process);
+                                }));
+          } else if (event.getType() == NODE_UPDATED) {
             crawlIdPath
                 .apply(event.getData().getPath())
                 .ifPresent(
                     path ->
                         loadRunningPipelineProcess(path)
-                            .ifPresent(process -> processCache.replace(path, process)));
+                            .ifPresent(
+                                process -> {
+                                  processCache.replace(path, process);
+                                  searchService.update(process);
+                                }));
           } else if (event.getType() == NODE_REMOVED) {
-            crawlIdPath.apply(event.getData().getPath()).ifPresent(processCache::remove);
+            crawlIdPath
+                .apply(event.getData().getPath())
+                .ifPresent(
+                    path -> {
+                      processCache.remove(path);
+                      searchService.delete(path);
+                    });
           } else if (event.getType() == INITIALIZED) {
             LOG.info("ZK TreeCache initialized for pipelines");
           }
@@ -146,11 +166,13 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
   }
 
   @Override
-  public Set<PipelineProcess> getPipelineProcesses(@Nullable UUID datasetKey) {
+  public Set<PipelineProcess> getPipelineProcesses(UUID datasetKey) {
     return StreamSupport.stream(processCache.entries().spliterator(), true)
         .filter(node -> datasetKey == null || node.getKey().startsWith(datasetKey.toString()))
         .map(CacheEntry::getValue)
-        .collect(Collectors.toCollection(() -> new TreeSet<>(PIPELINE_PROCESS_BY_LATEST_STEP_ASC.reversed())));
+        .collect(
+            Collectors.toCollection(
+                () -> new TreeSet<>(PIPELINE_PROCESS_BY_LATEST_STEP_ASC.reversed())));
   }
 
   @Override
@@ -167,6 +189,53 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
   @Override
   public void deleteAllPipelineProcess() {
     deleteZkPipelinesNode(null);
+  }
+
+  @Override
+  public PipelineProcessSearchResult search(
+      @Nullable String datasetTitle,
+      @Nullable UUID datasetKey,
+      @Nullable List<Status> stepStatuses,
+      @Nullable List<StepType> stepTypes,
+      int offset,
+      int limit) {
+
+    SearchParams searchParams =
+        SearchParams.newBuilder()
+            .setDatasetTitle(datasetTitle)
+            .setDatasetKey(datasetKey)
+            .setStepTypes(stepTypes)
+            .setStatuses(stepStatuses)
+            .build();
+
+    // if there's no params get all processes
+    if (searchParams.isEmpty()) {
+      Set<PipelineProcess> allProcesses =
+          StreamSupport.stream(processCache.entries().spliterator(), true)
+              .map(CacheEntry::getValue)
+              .sorted(PIPELINE_PROCESS_BY_LATEST_STEP_ASC.reversed())
+              .skip(offset)
+              .limit(limit)
+              .collect(
+                  Collectors.toCollection(
+                      () -> new TreeSet<>(PIPELINE_PROCESS_BY_LATEST_STEP_ASC.reversed())));
+
+      return new PipelineProcessSearchResult(allProcesses.size(), allProcesses);
+    }
+
+    // search by params
+    List<String> hits = searchService.search(searchParams);
+    Set<PipelineProcess> processes =
+        hits.stream()
+            .map(processCache::get)
+            .sorted(PIPELINE_PROCESS_BY_LATEST_STEP_ASC.reversed())
+            .skip(offset)
+            .limit(limit)
+            .collect(
+                Collectors.toCollection(
+                    () -> new TreeSet<>(PIPELINE_PROCESS_BY_LATEST_STEP_ASC.reversed())));
+
+    return new PipelineProcessSearchResult(processes.size(), processes);
   }
 
   private void deleteZkPipelinesNode(String crawlId) {
@@ -195,14 +264,14 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
       if (!checkExists(getPipelinesInfoPath(crawlId))) {
         return Optional.empty();
       }
-      // Here we're trying to load all information from Zookeeper into the DatasetProcessStatus
-      // object
+      // Here we're trying to load all information from Zookeeper into a PipelineProcess object
       PipelineProcess process =
           new PipelineProcess()
               .setDatasetKey(UUID.fromString(ids[0]))
               .setAttempt(Integer.parseInt(ids[1]));
 
-      // ALL_STEPS - static set of all pipelines steps: DWCA_TO_AVRO, VERBATIM_TO_INTERPRETED and etc.
+      // ALL_STEPS - static set of all pipelines steps: DWCA_TO_AVRO, VERBATIM_TO_INTERPRETED and
+      // etc.
       getStepInfo(crawlId).stream().filter(s -> s.getStarted() != null).forEach(process::addStep);
 
       if (process.getSteps().isEmpty()) {
@@ -354,6 +423,29 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
     } catch (DateTimeParseException ex) {
       LOG.warn("Boolean was not parsed successfully: [{}]: {}", data.orElse(crawlId), ex);
       return Optional.empty();
+    }
+  }
+
+  /** Search results. */
+  public static final class PipelineProcessSearchResult {
+
+    private final long totalHits;
+
+    private final Set<PipelineProcess> results;
+
+    PipelineProcessSearchResult(long totalHits, Set<PipelineProcess> results) {
+      this.totalHits = totalHits;
+      this.results = results;
+    }
+
+    /** @return the total/global number of results */
+    public long getTotalHits() {
+      return totalHits;
+    }
+
+    /** @return PipelineProcess search results */
+    public Set<PipelineProcess> getResults() {
+      return results;
     }
   }
 }
