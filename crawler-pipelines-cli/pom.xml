@@ -7,10 +7,10 @@
     <version>0.94-SNAPSHOT</version>
   </parent>
 
-  <artifactId>crawler-cli</artifactId>
+  <artifactId>crawler-pipelines-cli</artifactId>
   <packaging>jar</packaging>
 
-  <name>Crawler :: CLI</name>
+  <name>Crawler :: Pipelines CLI</name>
 
   <distributionManagement>
     <site>
@@ -163,6 +163,11 @@
       <artifactId>validation-api</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-minicluster</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <scope>test</scope>
@@ -266,12 +271,42 @@
       </exclusions>
     </dependency>
     <dependency>
+      <groupId>org.gbif.pipelines</groupId>
+      <artifactId>archives-converters</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>org.apache.beam</groupId>
+          <artifactId>beam-sdks-java-core</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.gbif.pipelines</groupId>
+      <artifactId>common</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.gbif.pipelines</groupId>
+      <artifactId>ingest-gbif-java</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-hdfs</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-common</artifactId>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
@@ -313,6 +348,22 @@
           <groupId>org.slf4j</groupId>
         </exclusion>
       </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>commons-lang</groupId>
+      <artifactId>commons-lang</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>commons-io</groupId>
+      <artifactId>commons-io</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.avro</groupId>
+      <artifactId>avro</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.curator</groupId>
+      <artifactId>curator-test</artifactId>
     </dependency>
   </dependencies>
 
