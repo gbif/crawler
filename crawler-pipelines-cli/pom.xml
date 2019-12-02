@@ -43,6 +43,13 @@
                 <exclude>META-INF/*.RSA</exclude>
               </excludes>
             </filter>
+            <filter>
+              <artifact>org.gbif.datacite:datacite-rest-client</artifact>
+              <excludes>
+                <exclude>hidden/com/fasterxml/jackson/**</exclude>
+                <exclude>retrofit2/**</exclude>
+              </excludes>
+            </filter>
           </filters>
         </configuration>
         <executions>
