@@ -1,11 +1,16 @@
 package org.gbif.crawler.ws;
 
 import org.gbif.api.model.pipelines.PipelineProcess;
+import org.gbif.api.model.pipelines.PipelineStep;
+import org.gbif.api.model.pipelines.StepType;
 import org.gbif.crawler.pipelines.PipelinesRunningProcessService;
+import org.gbif.crawler.pipelines.PipelinesRunningProcessServiceImpl;
 import org.gbif.ws.util.ExtraMediaTypes;
 
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import javax.annotation.Nullable;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 
@@ -17,6 +22,8 @@ import com.google.inject.Inject;
 @Produces({MediaType.APPLICATION_JSON, ExtraMediaTypes.APPLICATION_JAVASCRIPT})
 @Path("pipelines/process/running")
 public class PipelinesRunningProcessResource {
+
+  private static final int DEFAULT_PAGE_SIZE = 10;
 
   private final PipelinesRunningProcessService service;
 
@@ -33,6 +40,25 @@ public class PipelinesRunningProcessResource {
     return service.getPipelineProcesses();
   }
 
+  /** Searchs for the received parameters. */
+  @GET
+  @Path("query")
+  public PipelinesRunningProcessServiceImpl.PipelineProcessSearchResult search(
+      @QueryParam("datasetTitle") String datasetTitle,
+      @QueryParam("datasetKey") UUID datasetKey,
+      @QueryParam("status") List<PipelineStep.Status> statuses,
+      @QueryParam("step") List<StepType> stepTypes,
+      @Nullable @QueryParam("offset") Integer offset,
+      @Nullable @QueryParam("limit") Integer limit) {
+    return service.search(
+        datasetTitle,
+        datasetKey,
+        statuses,
+        stepTypes,
+        offset != null ? offset : 0,
+        limit != null ? limit : DEFAULT_PAGE_SIZE);
+  }
+
   /**
    * Returns information about specific dataset by datasetKey
    *
@@ -43,7 +69,6 @@ public class PipelinesRunningProcessResource {
   public Set<PipelineProcess> getPipelinesProcessesByDatasetKey(@PathParam("datasetKey") UUID datasetKey) {
     return service.getPipelineProcesses(datasetKey);
   }
-
 
   /**
    * Returns information about specific running process.
