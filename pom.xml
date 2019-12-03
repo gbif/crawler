@@ -54,7 +54,7 @@
     <gbif-occurrence.version>0.86</gbif-occurrence.version>
     <gbif-postal-service.version>0.42</gbif-postal-service.version>
     <gbif-registry.version>2.141</gbif-registry.version>
-    <gbif-wrangler.version>0.2</gbif-wrangler.version>
+    <gbif-wrangler.version>0.3</gbif-wrangler.version>
     <gbif-archives-converters.version>2.2.32-SNAPSHOT</gbif-archives-converters.version>
     <gbif-pipelines-common.version>2.2.32-SNAPSHOT</gbif-pipelines-common.version>
     <gbif-pipelines-ingest-java.version>2.2.32-SNAPSHOT</gbif-pipelines-ingest-java.version>
