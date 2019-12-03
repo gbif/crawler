@@ -55,9 +55,7 @@
     <gbif-postal-service.version>0.42</gbif-postal-service.version>
     <gbif-registry.version>2.141</gbif-registry.version>
     <gbif-wrangler.version>0.3</gbif-wrangler.version>
-    <gbif-archives-converters.version>2.2.32-SNAPSHOT</gbif-archives-converters.version>
-    <gbif-pipelines-common.version>2.2.32-SNAPSHOT</gbif-pipelines-common.version>
-    <gbif-pipelines-ingest-java.version>2.2.32-SNAPSHOT</gbif-pipelines-ingest-java.version>
+    <gbif-pipelines.version>2.2.33-SNAPSHOT</gbif-pipelines.version>
     <gbif-metrics.version>0.33</gbif-metrics.version>
 
     <guava.version>18.0</guava.version>
@@ -251,17 +249,17 @@
       <dependency>
         <groupId>org.gbif.pipelines</groupId>
         <artifactId>archives-converters</artifactId>
-        <version>${gbif-archives-converters.version}</version>
+        <version>${gbif-pipelines.version>}</version>
       </dependency>
       <dependency>
         <groupId>org.gbif.pipelines</groupId>
         <artifactId>common</artifactId>
-        <version>${gbif-pipelines-common.version}</version>
+        <version>${gbif-pipelines.version>}</version>
       </dependency>
       <dependency>
         <groupId>org.gbif.pipelines</groupId>
         <artifactId>ingest-gbif-java</artifactId>
-        <version>${gbif-pipelines-ingest-java.version}</version>
+        <version>${gbif-pipelines.version>}</version>
       </dependency>
 
       <!-- Other -->

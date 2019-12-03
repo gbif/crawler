@@ -74,8 +74,9 @@
   </build>
 
   <properties>
-    <!-- need to match gbif-cli -->
-    <!--<guava.version>14.0.1</guava.version>-->
+    <pipelines.gbif-parsers.version>0.46</pipelines.gbif-parsers.version>
+    <pipelines.elasticsearch.version>6.5.4</pipelines.elasticsearch.version>
+    <pipelines.lucene.version>7.5.0</pipelines.lucene.version>
   </properties>
 
   <repositories>
@@ -90,6 +91,24 @@
   </repositories>
 
   <dependencies>
+    <!-- To avoid classpath issues when use ingest-gbif-java -->
+    <dependency>
+      <groupId>org.gbif</groupId>
+      <artifactId>gbif-parsers</artifactId>
+      <version>${pipelines.gbif-parsers.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.elasticsearch.client</groupId>
+      <artifactId>elasticsearch-rest-high-level-client</artifactId>
+      <version>${pipelines.elasticsearch.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.lucene</groupId>
+      <artifactId>lucene-core</artifactId>
+      <version>${pipelines.lucene.version}</version>
+    </dependency>
+
+    <!-- Main list -->
     <dependency>
       <groupId>com.yammer.metrics</groupId>
       <artifactId>metrics-core</artifactId>
@@ -248,6 +267,12 @@
     <dependency>
       <groupId>org.gbif.crawler</groupId>
       <artifactId>crawler-coordinator</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>org.elasticsearch.client</groupId>
+          <artifactId>elasticsearch-rest-high-level-client</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.gbif.crawler</groupId>
