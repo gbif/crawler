@@ -19,6 +19,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
@@ -292,11 +293,12 @@ public class PipelineCallback {
     }
   }
 
-  private String getPipelinesVersion() {
+  @VisibleForTesting
+  static String getPipelinesVersion() {
     MavenXpp3Reader reader = new MavenXpp3Reader();
     Model model = null;
     try {
-      model = reader.read(new FileReader("pom.xml"));
+      model = reader.read(new FileReader("../pom.xml"));
       return model.getProperties().getProperty("gbif-pipelines.version");
     } catch (IOException | XmlPullParserException e) {
       LOG.warn("Couldn't get the pipelines version", e);
