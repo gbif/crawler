@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -88,7 +89,7 @@ public class PipelineCallbackTest {
     );
     PipelineBasedMessage incomingMessage = createMessage(datasetKey, attempt, pipelineSteps);
     Runnable runnable = () -> System.out.println("RUN!");
-    PipelineBasedMessage outgoingMessage = null;
+    PipelineBasedMessage outgoingMessage = createMessage(datasetKey, attempt, pipelineSteps);
     MessagePublisher publisher = null;
 
     // When
@@ -101,6 +102,7 @@ public class PipelineCallbackTest {
         .runnable(runnable)
         .publisher(publisher)
         .historyWsClient(historyWsClient)
+        .metricsSupplier(ArrayList::new)
         .build()
         .handleMessage();
 
@@ -117,6 +119,7 @@ public class PipelineCallbackTest {
         .runnable(runnable)
         .publisher(publisher)
         .historyWsClient(historyWsClient)
+        .metricsSupplier(ArrayList::new)
         .build()
         .handleMessage();
 
@@ -160,7 +163,7 @@ public class PipelineCallbackTest {
     );
     PipelineBasedMessage incomingMessage = createMessage(datasetKey, attempt, pipelineSteps);
     Runnable runnable = () -> System.out.println("RUN!");
-    PipelineBasedMessage outgoingMessage = null;
+    PipelineBasedMessage outgoingMessage = createMessage(datasetKey, attempt, pipelineSteps);
 
     // When
     PipelineCallback.create()
@@ -172,6 +175,7 @@ public class PipelineCallbackTest {
       .runnable(runnable)
       .publisher(mockPublisher)
       .historyWsClient(historyWsClient)
+      .metricsSupplier(ArrayList::new)
       .build()
       .handleMessage();
 
@@ -204,7 +208,7 @@ public class PipelineCallbackTest {
     Set<String> pipelineSteps = Sets.newHashSet(StepType.DWCA_TO_VERBATIM.name());
     PipelineBasedMessage incomingMessage = createMessage(datasetKey, attempt, pipelineSteps);
     Runnable runnable = () -> System.out.println("RUN!");
-    PipelineBasedMessage outgoingMessage = null;
+    PipelineBasedMessage outgoingMessage = createMessage(datasetKey, attempt, pipelineSteps);
 
     // When
     PipelineCallback.create()
@@ -216,6 +220,7 @@ public class PipelineCallbackTest {
       .runnable(runnable)
       .publisher(mockPublisher)
       .historyWsClient(historyWsClient)
+      .metricsSupplier(ArrayList::new)
       .build()
       .handleMessage();
 
@@ -243,7 +248,7 @@ public class PipelineCallbackTest {
     );
     PipelineBasedMessage incomingMessage = createMessage(datasetKey, attempt, pipelineSteps);
     Runnable runnable = () -> {throw new RuntimeException("Oops!");};
-    PipelineBasedMessage outgoingMessage = null;
+    PipelineBasedMessage outgoingMessage = createMessage(datasetKey, attempt, pipelineSteps);
 
     // When
     PipelineCallback.create()
@@ -255,6 +260,7 @@ public class PipelineCallbackTest {
       .runnable(runnable)
       .publisher(mockPublisher)
       .historyWsClient(historyWsClient)
+      .metricsSupplier(ArrayList::new)
       .build()
       .handleMessage();
 
@@ -286,7 +292,7 @@ public class PipelineCallbackTest {
     Set<String> pipelineSteps = Sets.newHashSet(StepType.DWCA_TO_VERBATIM.name());
     PipelineBasedMessage incomingMessage = createMessage(datasetKey, attempt, pipelineSteps);
     Runnable runnable = () -> System.out.println("RUN!");
-    PipelineBasedMessage outgoingMessage = null;
+    PipelineBasedMessage outgoingMessage = createMessage(datasetKey, attempt, pipelineSteps);
 
     updateMonitoring(crawlId, SIZE, String.valueOf(4));
 
@@ -300,6 +306,7 @@ public class PipelineCallbackTest {
       .runnable(runnable)
       .publisher(mockPublisher)
       .historyWsClient(historyWsClient)
+      .metricsSupplier(ArrayList::new)
       .build()
       .handleMessage();
 
@@ -327,7 +334,7 @@ public class PipelineCallbackTest {
     );
     PipelineBasedMessage incomingMessage = createMessage(datasetKey, attempt, pipelineSteps);
     Runnable runnable = () -> System.out.println("RUN!");
-    PipelineBasedMessage outgoingMessage = null;
+    PipelineBasedMessage outgoingMessage = createMessage(datasetKey, attempt, pipelineSteps);
 
     updateMonitoring(crawlId, SIZE, String.valueOf(2));
 
@@ -341,6 +348,7 @@ public class PipelineCallbackTest {
       .runnable(runnable)
       .publisher(mockPublisher)
       .historyWsClient(historyWsClient)
+      .metricsSupplier(ArrayList::new)
       .build()
       .handleMessage();
 
