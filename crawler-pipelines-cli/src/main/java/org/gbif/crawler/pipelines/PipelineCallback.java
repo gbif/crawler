@@ -1,26 +1,29 @@
 package org.gbif.crawler.pipelines;
 
-import java.util.Optional;
-import java.util.Set;
-
+import org.gbif.api.model.pipelines.PipelineExecution;
 import org.gbif.api.model.pipelines.PipelineStep;
 import org.gbif.api.model.pipelines.StepRunner;
 import org.gbif.api.model.pipelines.StepType;
+import org.gbif.api.model.pipelines.ws.PipelineStepParameters;
 import org.gbif.common.messaging.api.Message;
 import org.gbif.common.messaging.api.MessagePublisher;
-import org.gbif.common.messaging.api.messages.PipelineBasedMessage;
-import org.gbif.common.messaging.api.messages.PipelinesAbcdMessage;
-import org.gbif.common.messaging.api.messages.PipelinesBalancerMessage;
-import org.gbif.common.messaging.api.messages.PipelinesDwcaMessage;
-import org.gbif.common.messaging.api.messages.PipelinesIndexedMessage;
-import org.gbif.common.messaging.api.messages.PipelinesInterpretedMessage;
-import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage;
-import org.gbif.common.messaging.api.messages.PipelinesXmlMessage;
+import org.gbif.common.messaging.api.messages.*;
 import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
 import org.gbif.registry.ws.client.pipelines.PipelinesHistoryWsClient;
 
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Supplier;
+
 import org.apache.curator.framework.CuratorFramework;
+import org.apache.maven.model.Model;
+import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -57,11 +60,12 @@ public class PipelineCallback {
     private MessagePublisher publisher;
     private CuratorFramework curator;
     private PipelineBasedMessage incomingMessage;
-    private Message outgoingMessage;
+    private PipelineBasedMessage outgoingMessage;
     private StepType pipelinesStepName;
     private String zkRootElementPath;
     private Runnable runnable;
     private PipelinesHistoryWsClient historyWsClient;
+    private Supplier<List<PipelineStep.MetricInfo>> metricsSupplier;
 
     /**
      * @param publisher MQ message publisher
@@ -90,7 +94,7 @@ public class PipelineCallback {
     /**
      * @param outgoingMessage outgoing MQ message for the next pipeline step
      */
-    public Builder outgoingMessage(Message outgoingMessage) {
+    public Builder outgoingMessage(PipelineBasedMessage outgoingMessage) {
       this.outgoingMessage = outgoingMessage;
       return this;
     }
@@ -124,6 +128,14 @@ public class PipelineCallback {
      */
     public Builder historyWsClient(PipelinesHistoryWsClient historyWsClient) {
       this.historyWsClient = historyWsClient;
+      return this;
+    }
+
+    /**
+     * @param metricsSupplier supplier to get the metrics of the step
+     */
+    public Builder metricsSupplier(Supplier<List<PipelineStep.MetricInfo>> metricsSupplier) {
+      this.metricsSupplier = metricsSupplier;
       return this;
     }
 
@@ -197,6 +209,9 @@ public class PipelineCallback {
         String successfulPath = Fn.SUCCESSFUL_AVAILABILITY.apply(b.zkRootElementPath);
         ZookeeperUtils.updateMonitoring(b.curator, crawlId, successfulPath, Boolean.TRUE.toString());
 
+        // set the executionId
+        trackingInfo.ifPresent(info -> b.outgoingMessage.setExecutionId(info.executionId));
+
         String nextMessageClassName = b.outgoingMessage.getClass().getSimpleName();
         String messagePayload = b.outgoingMessage.toString();
         b.publisher.send(new PipelinesBalancerMessage(nextMessageClassName, messagePayload));
@@ -230,8 +245,17 @@ public class PipelineCallback {
     try {
       // create pipeline process. If it already exists it returns the existing one (the db query does an upsert).
       long processKey =
-          b.historyWsClient.createPipelineProcess(
+          b.historyWsClient.createOrGetPipelineProcess(
               b.incomingMessage.getDatasetUuid(), b.incomingMessage.getAttempt());
+
+      Long executionId = b.incomingMessage.getExecutionId();
+      if (executionId == null) {
+        // create execution
+        PipelineExecution execution =
+            new PipelineExecution().setStepsToRun(Collections.singletonList(b.pipelinesStepName));
+
+        executionId = b.historyWsClient.addPipelineExecution(processKey, execution);
+      }
 
       // add step to the process
       PipelineStep step =
@@ -239,10 +263,11 @@ public class PipelineCallback {
               .setMessage(OBJECT_MAPPER.writeValueAsString(b.incomingMessage))
               .setType(b.pipelinesStepName)
               .setState(PipelineStep.Status.RUNNING)
-              .setRunner(StepRunner.valueOf(getRunner(b.incomingMessage)));
-      long stepKey = b.historyWsClient.addPipelineStep(processKey, step);
+              .setRunner(StepRunner.valueOf(getRunner(b.incomingMessage)))
+              .setPipelinesVersion(getPipelinesVersion());
+      long stepKey = b.historyWsClient.addPipelineStep(processKey, executionId, step);
 
-      return Optional.of(new TrackingInfo(processKey, stepKey));
+      return Optional.of(new TrackingInfo(processKey, executionId, stepKey));
     } catch (Exception ex) {
       // we don't want to break the crawling if the tracking fails
       LOG.error("Couldn't track pipeline step for message {}", b.incomingMessage, ex);
@@ -252,7 +277,11 @@ public class PipelineCallback {
 
   private void updateTrackingStatus(TrackingInfo trackingInfo, PipelineStep.Status status) {
     try {
-      b.historyWsClient.updatePipelineStepStatusAndMetrics(trackingInfo.processKey, trackingInfo.stepKey, status);
+      b.historyWsClient.updatePipelineStepStatusAndMetrics(
+          trackingInfo.processKey,
+          trackingInfo.executionId,
+          trackingInfo.stepKey,
+          new PipelineStepParameters(status, b.metricsSupplier.get()));
     } catch (Exception ex) {
       // we don't want to break the crawling if the tracking fails
       LOG.error(
@@ -260,6 +289,18 @@ public class PipelineCallback {
           trackingInfo.processKey,
           trackingInfo.stepKey,
           ex);
+    }
+  }
+
+  private String getPipelinesVersion() {
+    MavenXpp3Reader reader = new MavenXpp3Reader();
+    Model model = null;
+    try {
+      model = reader.read(new FileReader("pom.xml"));
+      return model.getProperties().getProperty("gbif-pipelines.version");
+    } catch (IOException | XmlPullParserException e) {
+      LOG.warn("Couldn't get the pipelines version", e);
+      return null;
     }
   }
 
@@ -288,10 +329,12 @@ public class PipelineCallback {
 
   private static class TrackingInfo {
     long processKey;
+    long executionId;
     long stepKey;
 
-    TrackingInfo(long processKey, long stepKey) {
+    TrackingInfo(long processKey, long executionId, long stepKey) {
       this.processKey = processKey;
+      this.executionId = executionId;
       this.stepKey = stepKey;
     }
   }

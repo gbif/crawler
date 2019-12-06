@@ -13,6 +13,7 @@ import org.gbif.common.messaging.api.Message;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.PipelineBasedMessage;
 import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
+import org.gbif.registry.ws.client.pipelines.PipelinesHistoryWsClient;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
@@ -36,8 +37,14 @@ import static org.gbif.crawler.constants.PipelinesNodePaths.getPipelinesInfoPath
 @RunWith(MockitoJUnitRunner.class)
 public class PipelineCallbackTest {
 
+  private static final Long EXECUTION_ID = 1L;
+
   private static CuratorFramework curator;
   private static TestingServer server;
+
+  @Mock
+  private PipelinesHistoryWsClient historyWsClient;
+
   @Mock
   private MessagePublisher mockPublisher;
 
@@ -81,7 +88,7 @@ public class PipelineCallbackTest {
     );
     PipelineBasedMessage incomingMessage = createMessage(datasetKey, attempt, pipelineSteps);
     Runnable runnable = () -> System.out.println("RUN!");
-    Message outgoingMessage = () -> null;
+    PipelineBasedMessage outgoingMessage = null;
     MessagePublisher publisher = null;
 
     // When
@@ -93,6 +100,7 @@ public class PipelineCallbackTest {
         .pipelinesStepName(nextStepName)
         .runnable(runnable)
         .publisher(publisher)
+        .historyWsClient(historyWsClient)
         .build()
         .handleMessage();
 
@@ -108,6 +116,7 @@ public class PipelineCallbackTest {
         .pipelinesStepName(nextStepName)
         .runnable(runnable)
         .publisher(publisher)
+        .historyWsClient(historyWsClient)
         .build()
         .handleMessage();
 
@@ -151,7 +160,7 @@ public class PipelineCallbackTest {
     );
     PipelineBasedMessage incomingMessage = createMessage(datasetKey, attempt, pipelineSteps);
     Runnable runnable = () -> System.out.println("RUN!");
-    Message outgoingMessage = () -> null;
+    PipelineBasedMessage outgoingMessage = null;
 
     // When
     PipelineCallback.create()
@@ -162,6 +171,7 @@ public class PipelineCallbackTest {
       .pipelinesStepName(nextStepName)
       .runnable(runnable)
       .publisher(mockPublisher)
+      .historyWsClient(historyWsClient)
       .build()
       .handleMessage();
 
@@ -194,7 +204,7 @@ public class PipelineCallbackTest {
     Set<String> pipelineSteps = Sets.newHashSet(StepType.DWCA_TO_VERBATIM.name());
     PipelineBasedMessage incomingMessage = createMessage(datasetKey, attempt, pipelineSteps);
     Runnable runnable = () -> System.out.println("RUN!");
-    Message outgoingMessage = () -> null;
+    PipelineBasedMessage outgoingMessage = null;
 
     // When
     PipelineCallback.create()
@@ -205,6 +215,7 @@ public class PipelineCallbackTest {
       .pipelinesStepName(nextStepName)
       .runnable(runnable)
       .publisher(mockPublisher)
+      .historyWsClient(historyWsClient)
       .build()
       .handleMessage();
 
@@ -232,7 +243,7 @@ public class PipelineCallbackTest {
     );
     PipelineBasedMessage incomingMessage = createMessage(datasetKey, attempt, pipelineSteps);
     Runnable runnable = () -> {throw new RuntimeException("Oops!");};
-    Message outgoingMessage = () -> null;
+    PipelineBasedMessage outgoingMessage = null;
 
     // When
     PipelineCallback.create()
@@ -243,6 +254,7 @@ public class PipelineCallbackTest {
       .pipelinesStepName(nextStepName)
       .runnable(runnable)
       .publisher(mockPublisher)
+      .historyWsClient(historyWsClient)
       .build()
       .handleMessage();
 
@@ -274,7 +286,7 @@ public class PipelineCallbackTest {
     Set<String> pipelineSteps = Sets.newHashSet(StepType.DWCA_TO_VERBATIM.name());
     PipelineBasedMessage incomingMessage = createMessage(datasetKey, attempt, pipelineSteps);
     Runnable runnable = () -> System.out.println("RUN!");
-    Message outgoingMessage = () -> null;
+    PipelineBasedMessage outgoingMessage = null;
 
     updateMonitoring(crawlId, SIZE, String.valueOf(4));
 
@@ -287,6 +299,7 @@ public class PipelineCallbackTest {
       .pipelinesStepName(nextStepName)
       .runnable(runnable)
       .publisher(mockPublisher)
+      .historyWsClient(historyWsClient)
       .build()
       .handleMessage();
 
@@ -314,7 +327,7 @@ public class PipelineCallbackTest {
     );
     PipelineBasedMessage incomingMessage = createMessage(datasetKey, attempt, pipelineSteps);
     Runnable runnable = () -> System.out.println("RUN!");
-    Message outgoingMessage = () -> null;
+    PipelineBasedMessage outgoingMessage = null;
 
     updateMonitoring(crawlId, SIZE, String.valueOf(2));
 
@@ -327,6 +340,7 @@ public class PipelineCallbackTest {
       .pipelinesStepName(nextStepName)
       .runnable(runnable)
       .publisher(mockPublisher)
+      .historyWsClient(historyWsClient)
       .build()
       .handleMessage();
 
@@ -349,6 +363,16 @@ public class PipelineCallbackTest {
       @Override
       public Set<String> getPipelineSteps() {
         return pipelineSteps;
+      }
+
+      @Override
+      public Long getExecutionId() {
+        return EXECUTION_ID;
+      }
+
+      @Override
+      public void setExecutionId(Long executionId) {
+        // do nothing
       }
 
       @Override

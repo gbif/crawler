@@ -1,11 +1,14 @@
 package org.gbif.crawler.pipelines.hdfs;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
+import org.gbif.api.model.pipelines.PipelineStep;
 import org.gbif.api.model.pipelines.StepRunner;
 import org.gbif.api.model.pipelines.StepType;
 import org.gbif.common.messaging.AbstractMessageCallback;
@@ -28,6 +31,7 @@ import org.slf4j.MDC.MDCCloseable;
 
 import com.google.common.base.Strings;
 
+import static org.gbif.crawler.pipelines.HdfsUtils.buildOutputPathAsString;
 import static org.gbif.pipelines.common.PipelinesVariables.Pipeline.Interpretation.DIRECTORY_NAME;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -88,6 +92,7 @@ public class HdfsViewCallback extends AbstractMessageCallback<PipelinesInterpret
           .publisher(publisher)
           .runnable(runnable)
           .historyWsClient(historyWsClient)
+          .metricsSupplier(metricsSupplier(datasetId, attempt))
           .build()
           .handleMessage();
 
@@ -257,5 +262,15 @@ public class HdfsViewCallback extends AbstractMessageCallback<PipelinesInterpret
     return numberOfShards <= 0 ? 1 : (int) numberOfShards;
   }
 
+  private Supplier<List<PipelineStep.MetricInfo>> metricsSupplier(UUID datasetId, int attempt) {
+    return () ->
+      HdfsUtils.readMetricsFromMetaFile(
+        config.hdfsSiteConfig,
+        buildOutputPathAsString(
+          config.repositoryPath,
+          datasetId.toString(),
+          String.valueOf(attempt),
+          config.metaFileName));
+  }
 
 }

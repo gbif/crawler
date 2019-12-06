@@ -10,7 +10,9 @@ import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
+import org.gbif.api.model.pipelines.PipelineStep;
 import org.gbif.api.model.pipelines.StepRunner;
 import org.gbif.api.model.pipelines.StepType;
 import org.gbif.api.model.registry.Dataset;
@@ -41,6 +43,8 @@ import org.slf4j.MDC.MDCCloseable;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
+
+import static org.gbif.crawler.pipelines.HdfsUtils.buildOutputPathAsString;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -107,6 +111,7 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
           .publisher(publisher)
           .runnable(runnable)
           .historyWsClient(historyWsClient)
+          .metricsSupplier(metricsSupplier(datasetId, attempt))
           .build()
           .handleMessage();
 
@@ -350,5 +355,16 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
       return Optional.of(indices.get(0).getName());
     }
     return Optional.empty();
+  }
+
+  private Supplier<List<PipelineStep.MetricInfo>> metricsSupplier(UUID datasetId, int attempt) {
+    return () ->
+      HdfsUtils.readMetricsFromMetaFile(
+        config.hdfsSiteConfig,
+        buildOutputPathAsString(
+          config.repositoryPath,
+          datasetId.toString(),
+          String.valueOf(attempt),
+          config.metaFileName));
   }
 }

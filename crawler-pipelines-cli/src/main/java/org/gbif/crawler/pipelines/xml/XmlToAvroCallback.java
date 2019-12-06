@@ -5,13 +5,16 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import org.gbif.api.model.crawler.FinishReason;
+import org.gbif.api.model.pipelines.PipelineStep;
 import org.gbif.api.model.pipelines.StepType;
 import org.gbif.api.vocabulary.EndpointType;
 import org.gbif.common.messaging.AbstractMessageCallback;
@@ -20,6 +23,7 @@ import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage;
 import org.gbif.common.messaging.api.messages.PipelinesXmlMessage;
 import org.gbif.common.messaging.api.messages.Platform;
 import org.gbif.converters.XmlToAvroConverter;
+import org.gbif.crawler.pipelines.HdfsUtils;
 import org.gbif.crawler.pipelines.PipelineCallback;
 import org.gbif.registry.ws.client.pipelines.PipelinesHistoryWsClient;
 
@@ -33,6 +37,7 @@ import org.slf4j.MDC.MDCCloseable;
 import com.google.common.collect.Sets;
 
 import static org.gbif.crawler.pipelines.HdfsUtils.buildOutputPath;
+import static org.gbif.crawler.pipelines.HdfsUtils.buildOutputPathAsString;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -110,6 +115,7 @@ public class XmlToAvroCallback extends AbstractMessageCallback<PipelinesXmlMessa
           .publisher(publisher)
           .runnable(runnable)
           .historyWsClient(historyWsClient)
+          .metricsSupplier(metricsSupplier(datasetId, attempt))
           .build()
           .handleMessage();
 
@@ -211,6 +217,16 @@ public class XmlToAvroCallback extends AbstractMessageCallback<PipelinesXmlMessa
 
     // Return general
     return directoryPath;
+  }
 
+  private Supplier<List<PipelineStep.MetricInfo>> metricsSupplier(UUID datasetId, int attempt) {
+    return () ->
+      HdfsUtils.readMetricsFromMetaFile(
+        config.hdfsSiteConfig,
+        buildOutputPathAsString(
+          config.repositoryPath,
+          datasetId.toString(),
+          String.valueOf(attempt),
+          config.metaFileName));
   }
 }

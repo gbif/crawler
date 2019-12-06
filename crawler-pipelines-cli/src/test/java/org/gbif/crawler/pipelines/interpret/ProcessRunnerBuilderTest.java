@@ -17,6 +17,8 @@ import static org.junit.Assert.assertEquals;
 
 public class ProcessRunnerBuilderTest {
 
+  private static final long EXECUTION_ID = 1L;
+
   @Test(expected = NullPointerException.class)
   public void testEmptyRunner() {
     // Should
@@ -60,7 +62,7 @@ public class ProcessRunnerBuilderTest {
     Set<String> steps = Collections.singleton(StepType.VERBATIM_TO_INTERPRETED.name());
     PipelinesVerbatimMessage message =
         new PipelinesVerbatimMessage(datasetId, attempt, types, steps, null, EndpointType.DWC_ARCHIVE, null,
-            new ValidationResult(true, true, null, 100L), null);
+            new ValidationResult(true, true, null, 100L), null, EXECUTION_ID);
 
     // When
     ProcessBuilder builder =
@@ -108,7 +110,7 @@ public class ProcessRunnerBuilderTest {
     Set<String> steps = Collections.singleton(StepType.VERBATIM_TO_INTERPRETED.name());
     PipelinesVerbatimMessage message =
         new PipelinesVerbatimMessage(datasetId, attempt, types, steps, null, EndpointType.DWC_ARCHIVE, "something",
-            new ValidationResult(true, true, true, null), null);
+            new ValidationResult(true, true, true, null), null, EXECUTION_ID);
 
     // Expected
     ProcessBuilder builder =
@@ -169,7 +171,7 @@ public class ProcessRunnerBuilderTest {
     Set<String> types = Collections.singleton(RecordType.ALL.name());
     Set<String> steps = Collections.singleton(StepType.VERBATIM_TO_INTERPRETED.name());
     PipelinesVerbatimMessage message =
-        new PipelinesVerbatimMessage(datasetId, attempt, types, steps, null, EndpointType.DWC_ARCHIVE, null, null, null);
+        new PipelinesVerbatimMessage(datasetId, attempt, types, steps, null, EndpointType.DWC_ARCHIVE, null, null, null, EXECUTION_ID);
 
     // Expected
     ProcessBuilder builder =

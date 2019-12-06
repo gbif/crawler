@@ -36,7 +36,12 @@ public class PipelinesIndexedMessageHandler {
     PipelinesIndexedMessage m = mapper.readValue(message.getPayload(), PipelinesIndexedMessage.class);
 
     PipelinesIndexedMessage outputMessage =
-        new PipelinesIndexedMessage(m.getDatasetUuid(), m.getAttempt(), m.getPipelineSteps(), m.getRunner());
+        new PipelinesIndexedMessage(
+            m.getDatasetUuid(),
+            m.getAttempt(),
+            m.getPipelineSteps(),
+            m.getRunner(),
+            m.getExecutionId());
 
     publisher.send(outputMessage);
 

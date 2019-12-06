@@ -47,6 +47,7 @@ public class XmlToAvroCallbackTest {
   private static final String STRING_UUID = "7ef15372-1387-11e2-bb2e-00145eb45e9a";
   private static final UUID DATASET_UUID = UUID.fromString(STRING_UUID);
   private static final String INPUT_DATASET_FOLDER = "dataset";
+  private static final long EXECUTION_ID = 1L;
 
   private static final Configuration CONFIG = new Configuration();
   private static String hdfsUri;
@@ -105,7 +106,7 @@ public class XmlToAvroCallbackTest {
     XmlToAvroCallback callback = new XmlToAvroCallback(config, publisher, curator, historyWsClient, executor);
     PipelinesXmlMessage message =
         new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL, Collections.emptySet(),
-                                EndpointType.BIOCASE_XML_ARCHIVE, Platform.PIPELINES);
+                                EndpointType.BIOCASE_XML_ARCHIVE, Platform.PIPELINES, EXECUTION_ID);
     String crawlId = DATASET_UUID + "_" + attempt;
 
     // When
@@ -137,7 +138,7 @@ public class XmlToAvroCallbackTest {
     XmlToAvroCallback callback = new XmlToAvroCallback(config, publisher, curator, historyWsClient, executor);
     PipelinesXmlMessage message =
         new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL, Collections.emptySet(),
-                                EndpointType.BIOCASE_XML_ARCHIVE, Platform.PIPELINES);
+                                EndpointType.BIOCASE_XML_ARCHIVE, Platform.PIPELINES, EXECUTION_ID);
     String crawlId = DATASET_UUID + "_" + attempt;
 
     // When
@@ -169,7 +170,7 @@ public class XmlToAvroCallbackTest {
     XmlToAvroCallback callback = new XmlToAvroCallback(config, publisher, curator, historyWsClient, executor);
     PipelinesXmlMessage message =
         new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NORMAL, Collections.emptySet(),
-                                EndpointType.BIOCASE_XML_ARCHIVE, Platform.PIPELINES);
+                                EndpointType.BIOCASE_XML_ARCHIVE, Platform.PIPELINES, EXECUTION_ID);
     String crawlId = DATASET_UUID + "_" + attempt;
 
     // When
@@ -203,7 +204,7 @@ public class XmlToAvroCallbackTest {
     XmlToAvroCallback callback = new XmlToAvroCallback(config, publisher, curator, historyWsClient, executor);
     PipelinesXmlMessage message =
         new PipelinesXmlMessage(DATASET_UUID, attempt, 20, FinishReason.NOT_MODIFIED, Collections.emptySet(),
-                                EndpointType.BIOCASE_XML_ARCHIVE, Platform.PIPELINES);
+                                EndpointType.BIOCASE_XML_ARCHIVE, Platform.PIPELINES, EXECUTION_ID);
     String crawlId = DATASET_UUID + "_" + attempt;
 
     // When
