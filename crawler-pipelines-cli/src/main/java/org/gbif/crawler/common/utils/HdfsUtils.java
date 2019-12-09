@@ -1,9 +1,11 @@
-package org.gbif.crawler.pipelines;
+package org.gbif.crawler.common.utils;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URI;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -17,15 +19,11 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.LocatedFileStatus;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.RemoteIterator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Utils help to work with HDFS files
  */
 public class HdfsUtils {
-
-  private static final Logger LOG = LoggerFactory.getLogger(HdfsUtils.class);
 
   private HdfsUtils() {
     // NOP
@@ -84,7 +82,7 @@ public class HdfsUtils {
    * @param hdfsSiteConfig path to hdfs-site.xml config file
    * @param filePath to directory
    */
-  public static List<String> getSubDirList(String hdfsSiteConfig, String filePath) throws IOException {
+  public static List<FileStatus> getSubDirList(String hdfsSiteConfig, String filePath) throws IOException {
     FileSystem fs = getFileSystem(hdfsSiteConfig, filePath);
     Path fsPath = new Path(filePath);
     if (fs.exists(fsPath)) {
@@ -92,7 +90,6 @@ public class HdfsUtils {
       if (statuses != null && statuses.length > 0) {
         return Arrays.stream(statuses)
             .filter(FileStatus::isDirectory)
-            .map(y -> y.getPath().getName())
             .collect(Collectors.toList());
       }
     }
@@ -146,6 +143,17 @@ public class HdfsUtils {
     }
 
     return true;
+  }
+
+  /**
+   * Delete HDFS sub-directories where modification date is older than deleteAfterDays value
+   */
+  public static void deleteSubFolders(String hdfsSiteConfig, String filePath, long deleteAfterDays) throws IOException {
+    LocalDateTime date = LocalDateTime.now().minusDays(deleteAfterDays);
+    getSubDirList(hdfsSiteConfig, filePath).stream()
+        .filter(x -> LocalDateTime.ofEpochSecond(x.getModificationTime(), 0, ZoneOffset.UTC).isBefore(date))
+        .map(y -> y.getPath().getName())
+        .forEach(z -> deleteDirectory(hdfsSiteConfig, z));
   }
 
   private static FileSystem getFileSystem(String hdfsSiteConfig, String filePath) {

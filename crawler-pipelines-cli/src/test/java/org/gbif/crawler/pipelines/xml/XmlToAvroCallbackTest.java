@@ -4,16 +4,15 @@ import org.gbif.api.model.crawler.FinishReason;
 import org.gbif.api.vocabulary.EndpointType;
 import org.gbif.common.messaging.api.messages.PipelinesXmlMessage;
 import org.gbif.common.messaging.api.messages.Platform;
-import org.gbif.crawler.pipelines.HdfsUtils;
+import org.gbif.crawler.common.utils.HdfsUtils;
 import org.gbif.crawler.pipelines.MessagePublisherStub;
-import org.gbif.crawler.pipelines.ZookeeperUtils;
+import org.gbif.crawler.common.utils.ZookeeperUtils;
 import org.gbif.registry.ws.client.pipelines.PipelinesHistoryWsClient;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.UUID;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 

@@ -1,4 +1,4 @@
-package org.gbif.crawler.pipelines;
+package org.gbif.crawler.common.utils;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -47,7 +47,7 @@ public class ZookeeperUtils {
    *
    * @param crawlId root node path
    */
-  static void checkMonitoringById(CuratorFramework curator, int size, String crawlId) {
+  public static void checkMonitoringById(CuratorFramework curator, int size, String crawlId) {
     try {
       String path = getPipelinesInfoPath(crawlId);
       if (checkExists(curator, path)) {
@@ -71,7 +71,7 @@ public class ZookeeperUtils {
   /**
    * Read value from Zookeeper as a {@link String}
    */
-  static Optional<Integer> getAsInteger(CuratorFramework curator, String crawlId, String path) throws Exception {
+  public static Optional<Integer> getAsInteger(CuratorFramework curator, String crawlId, String path) throws Exception {
     String infoPath = getPipelinesInfoPath(crawlId, path);
     if (checkExists(curator, infoPath)) {
       byte[] responseData = curator.getData().forPath(infoPath);
@@ -89,7 +89,7 @@ public class ZookeeperUtils {
    * @param path child node path
    * @param value some String value
    */
-  static void updateMonitoring(CuratorFramework curator, String crawlId, String path, String value) {
+  public static void updateMonitoring(CuratorFramework curator, String crawlId, String path, String value) {
     try {
       String fullPath = getPipelinesInfoPath(crawlId, path);
       byte[] bytes = value.getBytes(Charsets.UTF_8);
@@ -109,7 +109,7 @@ public class ZookeeperUtils {
    * @param crawlId root node path
    * @param path child node path
    */
-  static void updateMonitoringDate(CuratorFramework curator, String crawlId, String path) {
+  public static void updateMonitoringDate(CuratorFramework curator, String crawlId, String path) {
     String value = LocalDateTime.now(ZoneOffset.UTC).format(ISO_LOCAL_DATE_TIME);
     updateMonitoring(curator, crawlId, path, value);
   }

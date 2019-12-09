@@ -1,4 +1,4 @@
-package org.gbif.crawler.common;
+package org.gbif.crawler.common.configs;
 
 import java.io.IOException;
 import javax.validation.constraints.Min;

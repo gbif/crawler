@@ -1,9 +1,9 @@
 package org.gbif.crawler.pipelines.interpret;
 
 import org.gbif.common.messaging.config.MessagingConfiguration;
-import org.gbif.crawler.common.AvroWriteConfiguration;
-import org.gbif.crawler.common.RegistryConfiguration;
-import org.gbif.crawler.common.ZooKeeperConfiguration;
+import org.gbif.crawler.common.configs.AvroWriteConfiguration;
+import org.gbif.crawler.common.configs.RegistryConfiguration;
+import org.gbif.crawler.common.configs.ZooKeeperConfiguration;
 import org.gbif.pipelines.common.PipelinesVariables.Pipeline;
 
 import com.beust.jcommander.Parameter;
@@ -147,6 +147,9 @@ public class InterpreterConfiguration {
 
   @Parameter(names = "--yarn-queue")
   public String yarnQueue;
+
+  @Parameter(names = "--delete-after-days")
+public long deleteAfterDays = 7L;
 
   @Override
   public String toString() {

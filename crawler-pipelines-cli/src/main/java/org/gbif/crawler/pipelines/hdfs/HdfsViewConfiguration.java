@@ -1,8 +1,8 @@
 package org.gbif.crawler.pipelines.hdfs;
 
 import org.gbif.common.messaging.config.MessagingConfiguration;
-import org.gbif.crawler.common.RegistryConfiguration;
-import org.gbif.crawler.common.ZooKeeperConfiguration;
+import org.gbif.crawler.common.configs.RegistryConfiguration;
+import org.gbif.crawler.common.configs.ZooKeeperConfiguration;
 import org.gbif.pipelines.common.PipelinesVariables.Pipeline;
 
 import com.beust.jcommander.Parameter;
