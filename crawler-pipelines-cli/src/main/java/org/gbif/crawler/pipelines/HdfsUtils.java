@@ -3,13 +3,19 @@ package org.gbif.crawler.pipelines;
 import org.gbif.api.model.pipelines.PipelineStep;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.gbif.pipelines.ingest.utils.FileSystemFactory;
+
+import org.apache.hadoop.fs.FileStatus;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.LocatedFileStatus;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.RemoteIterator;
 import com.google.common.base.Strings;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.*;
@@ -35,7 +41,7 @@ public class HdfsUtils {
    */
   public static long getFileSizeByte(String filePath, String hdfsSiteConfig) throws IOException {
     URI fileUri = URI.create(filePath);
-    FileSystem fs = getFileSystem(fileUri, hdfsSiteConfig);
+    FileSystem fs = getFileSystem(hdfsSiteConfig, filePath);
     Path path = new Path(fileUri);
 
     return fs.exists(path) ? fs.getContentSummary(path).getLength() : -1;
@@ -49,7 +55,7 @@ public class HdfsUtils {
    */
   public static int getFileCount(String directoryPath, String hdfsSiteConfig) throws IOException {
     URI fileUri = URI.create(directoryPath);
-    FileSystem fs = getFileSystem(fileUri, hdfsSiteConfig);
+    FileSystem fs = getFileSystem(hdfsSiteConfig, directoryPath);
 
     int count = 0;
     RemoteIterator<LocatedFileStatus> iterator = fs.listFiles(new Path(fileUri), false);
@@ -69,7 +75,7 @@ public class HdfsUtils {
    * @param filePath to directory
    */
   public static boolean exists(String hdfsSiteConfig, String filePath) throws IOException {
-    FileSystem fs = getFileSystem(URI.create(filePath), hdfsSiteConfig);
+    FileSystem fs = getFileSystem(hdfsSiteConfig, filePath);
     Path fsPath = new Path(filePath);
     return fs.exists(fsPath);
   }
@@ -81,7 +87,7 @@ public class HdfsUtils {
    * @param filePath to directory
    */
   public static List<String> getSubDirList(String hdfsSiteConfig, String filePath) throws IOException {
-    FileSystem fs = getFileSystem(URI.create(filePath), hdfsSiteConfig);
+    FileSystem fs = getFileSystem(hdfsSiteConfig, filePath);
     Path fsPath = new Path(filePath);
     if (fs.exists(fsPath)) {
       FileStatus[] statuses = fs.listStatus(fsPath);
@@ -103,7 +109,7 @@ public class HdfsUtils {
    * @param key to value in yaml
    */
   public static String getValueByKey(String hdfsSiteConfig, String filePath, String key) throws IOException {
-    FileSystem fs = getFileSystem(URI.create(filePath), hdfsSiteConfig);
+    FileSystem fs = getFileSystem(hdfsSiteConfig, filePath);
     Path fsPath = new Path(filePath);
     if (fs.exists(fsPath)) {
       try (BufferedReader br = new BufferedReader(new InputStreamReader(fs.open(fsPath)))) {
@@ -164,7 +170,7 @@ public class HdfsUtils {
    * Delete HDFS directory
    */
   public static boolean deleteDirectory(String hdfsSiteConfig, String filePath) {
-    FileSystem fs = getFileSystem(URI.create(filePath), hdfsSiteConfig);
+    FileSystem fs = getFileSystem(hdfsSiteConfig, filePath);
     Path fsPath = new Path(filePath);
     try {
       if (fs.exists(fsPath)) {
@@ -177,30 +183,7 @@ public class HdfsUtils {
     return true;
   }
 
-  /**
-   * Gets HDFS file system using config file or without if it doesn't exist
-   *
-   * @param filePath path to some file
-   * @param hdfsSiteConfig path to hdfs-site.xml config file
-   */
-  private static FileSystem getFileSystem(URI filePath, String hdfsSiteConfig) {
-    try {
-      Configuration config = new Configuration();
-
-      // check if the hdfs-site.xml is provided
-      if (!Strings.isNullOrEmpty(hdfsSiteConfig)) {
-        File hdfsSite = new File(hdfsSiteConfig);
-        if (hdfsSite.exists() && hdfsSite.isFile()) {
-          LOG.info("using hdfs-site.xml");
-          config.addResource(hdfsSite.toURI().toURL());
-        } else {
-          LOG.warn("hdfs-site.xml does not exist");
-        }
-      }
-
-      return FileSystem.get(filePath, config);
-    } catch (IOException ex) {
-      throw new IllegalStateException("Can't get a valid filesystem from provided uri " + filePath, ex);
-    }
+  private static FileSystem getFileSystem(String hdfsSiteConfig, String filePath) {
+    return FileSystemFactory.getInstance(hdfsSiteConfig).getFs(filePath);
   }
 }
