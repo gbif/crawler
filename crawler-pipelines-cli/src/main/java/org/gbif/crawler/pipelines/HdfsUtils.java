@@ -131,7 +131,7 @@ public class HdfsUtils {
    * @param filePath to a yaml file
    */
   public static List<PipelineStep.MetricInfo> readMetricsFromMetaFile(String hdfsSiteConfig, String filePath) {
-    FileSystem fs = getFileSystem(URI.create(filePath), hdfsSiteConfig);
+    FileSystem fs = getFileSystem(hdfsSiteConfig, filePath);
     Path fsPath = new Path(filePath);
     try {
       if (fs.exists(fsPath)) {
