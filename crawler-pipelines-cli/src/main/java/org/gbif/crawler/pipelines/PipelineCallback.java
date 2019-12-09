@@ -293,12 +293,11 @@ public class PipelineCallback {
     }
   }
 
-  @VisibleForTesting
-  static String getPipelinesVersion() {
+  private static String getPipelinesVersion() {
     MavenXpp3Reader reader = new MavenXpp3Reader();
     Model model = null;
     try {
-      model = reader.read(new FileReader("../pom.xml"));
+      model = reader.read(new FileReader("pom.xml"));
       return model.getProperties().getProperty("gbif-pipelines.version");
     } catch (IOException | XmlPullParserException e) {
       LOG.warn("Couldn't get the pipelines version", e);
