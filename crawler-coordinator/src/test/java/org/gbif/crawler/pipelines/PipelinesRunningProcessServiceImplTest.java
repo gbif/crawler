@@ -159,7 +159,7 @@ public class PipelinesRunningProcessServiceImplTest {
     }
 
     // we wait for the ZK TreeCache to respond to the events
-    TimeUnit.MILLISECONDS.sleep(1750);
+    TimeUnit.MILLISECONDS.sleep(1850);
 
     // When
     Set<PipelineProcess> set = service.getPipelineProcesses();
