@@ -265,7 +265,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
 
       // ALL_STEPS - static set of all pipelines steps: DWCA_TO_AVRO, VERBATIM_TO_INTERPRETED and
       // etc.
-      getExecutions(crawlId).stream().forEach(process::addExecution);
+      getExecutions(crawlId).forEach(process::addExecution);
 
       if (process.getExecutions().isEmpty()) {
         return Optional.empty();
