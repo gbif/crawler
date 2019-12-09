@@ -33,7 +33,7 @@
         <artifactId>maven-shade-plugin</artifactId>
         <configuration>
           <finalName>${project.artifactId}</finalName>
-          <createDependencyReducedPom>false</createDependencyReducedPom>
+          <createDependencyReducedPom>true</createDependencyReducedPom>
           <filters>
             <filter>
               <artifact>*:*</artifact>

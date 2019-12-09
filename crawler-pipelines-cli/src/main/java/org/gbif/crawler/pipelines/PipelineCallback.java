@@ -297,7 +297,7 @@ public class PipelineCallback {
     MavenXpp3Reader reader = new MavenXpp3Reader();
     Model model = null;
     try {
-      model = reader.read(new FileReader("pom.xml"));
+      model = reader.read(new FileReader("dependency-reduced-pom.xml"));
       return model.getProperties().getProperty("gbif-pipelines.version");
     } catch (IOException | XmlPullParserException e) {
       LOG.warn("Couldn't get the pipelines version", e);
