@@ -1,6 +1,7 @@
 package org.gbif.crawler.common.utils;
 
 import org.gbif.api.model.pipelines.PipelineStep;
+import org.gbif.pipelines.ingest.utils.FileSystemFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -8,22 +9,10 @@ import java.io.InputStreamReader;
 import java.net.URI;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.StringJoiner;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import org.gbif.pipelines.ingest.utils.FileSystemFactory;
-
-import org.apache.hadoop.fs.FileStatus;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.LocatedFileStatus;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.fs.RemoteIterator;
 import com.google.common.base.Strings;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +21,8 @@ import org.slf4j.LoggerFactory;
  * Utils help to work with HDFS files
  */
 public class HdfsUtils {
+
+  private static final Logger LOG = LoggerFactory.getLogger(HdfsUtils.class);
 
   private HdfsUtils() {
     // NOP
