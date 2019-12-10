@@ -4,9 +4,9 @@ import java.util.Collections;
 import java.util.Set;
 
 import org.gbif.common.messaging.config.MessagingConfiguration;
-import org.gbif.crawler.common.AvroWriteConfiguration;
-import org.gbif.crawler.common.RegistryConfiguration;
-import org.gbif.crawler.common.ZooKeeperConfiguration;
+import org.gbif.crawler.common.configs.AvroWriteConfiguration;
+import org.gbif.crawler.common.configs.RegistryConfiguration;
+import org.gbif.crawler.common.configs.ZooKeeperConfiguration;
 import org.gbif.pipelines.common.PipelinesVariables.Pipeline;
 import org.gbif.pipelines.common.PipelinesVariables.Pipeline.Conversion;
 import org.gbif.pipelines.common.PipelinesVariables.Pipeline.Interpretation.RecordType;

@@ -38,6 +38,7 @@ import com.google.common.collect.Sets;
 
 import static org.gbif.crawler.pipelines.HdfsUtils.buildOutputPath;
 import static org.gbif.crawler.pipelines.HdfsUtils.buildOutputPathAsString;
+import static org.gbif.crawler.common.utils.HdfsUtils.buildOutputPath;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

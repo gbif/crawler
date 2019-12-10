@@ -16,7 +16,7 @@ import org.gbif.common.messaging.AbstractMessageCallback;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.PipelinesInterpretedMessage;
 import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage;
-import org.gbif.crawler.pipelines.HdfsUtils;
+import org.gbif.crawler.common.utils.HdfsUtils;
 import org.gbif.crawler.pipelines.PipelineCallback;
 import org.gbif.crawler.pipelines.dwca.DwcaToAvroConfiguration;
 import org.gbif.pipelines.common.PipelinesVariables.Metrics;
@@ -150,6 +150,11 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
         } else if (runnerPr.test(StepRunner.STANDALONE)) {
           runLocal(builder);
         }
+
+        LOG.info("Deleting old attempts directories");
+        String pathToDelete = String.join("/", config.repositoryPath, datasetId);
+        HdfsUtils.deleteSubFolders(config.hdfsSiteConfig, pathToDelete, config.deleteAfterDays);
+
       } catch (Exception ex) {
         LOG.error(ex.getMessage(), ex);
         throw new IllegalStateException("Failed interpretation on " + message.getDatasetUuid().toString(), ex);
@@ -280,6 +285,7 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
     try {
       return HdfsUtils.getSubDirList(config.hdfsSiteConfig, path)
           .stream()
+          .map(y -> y.getPath().getName())
           .filter(x -> x.chars().allMatch(Character::isDigit))
           .mapToInt(Integer::valueOf)
           .max()

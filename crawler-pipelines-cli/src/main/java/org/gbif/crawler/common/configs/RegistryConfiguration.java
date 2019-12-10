@@ -1,4 +1,4 @@
-package org.gbif.crawler.common;
+package org.gbif.crawler.common.configs;
 
 import org.gbif.cli.ConfigUtils;
 import org.gbif.cli.PropertyName;

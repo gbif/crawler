@@ -7,7 +7,7 @@ import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.PipelinesBalancerMessage;
 import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage;
 import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage.ValidationResult;
-import org.gbif.crawler.pipelines.HdfsUtils;
+import org.gbif.crawler.common.utils.HdfsUtils;
 import org.gbif.crawler.pipelines.balancer.BalancerConfiguration;
 import org.gbif.crawler.pipelines.dwca.DwcaToAvroConfiguration;
 import org.gbif.pipelines.common.PipelinesVariables.Metrics;
@@ -152,6 +152,7 @@ public class VerbatimMessageHandler {
     try {
       return HdfsUtils.getSubDirList(config.hdfsSiteConfig, path)
           .stream()
+          .map(y -> y.getPath().getName())
           .filter(x -> x.chars().allMatch(Character::isDigit))
           .mapToInt(Integer::valueOf)
           .max()
