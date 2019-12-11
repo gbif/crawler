@@ -10,20 +10,15 @@ import org.gbif.common.messaging.api.messages.*;
 import org.gbif.crawler.common.utils.ZookeeperUtils;
 import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
 import org.gbif.registry.ws.client.pipelines.PipelinesHistoryWsClient;
+import org.gbif.utils.file.properties.PropertiesUtil;
 
-import java.io.FileReader;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Supplier;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.curator.framework.CuratorFramework;
-import org.apache.maven.model.Model;
-import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -40,6 +35,15 @@ public class PipelineCallback {
   private static final Logger LOG = LoggerFactory.getLogger(PipelineCallback.class);
 
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+  private static Properties PIPELINES_PROPERTIES;
+
+  static {
+    try {
+      PIPELINES_PROPERTIES = PropertiesUtil.loadProperties("pipelines.properties");
+    } catch (IOException e) {
+      LOG.error("Couldn't load pipelines properties", e);
+    }
+  }
 
   private final Builder b;
 
@@ -292,16 +296,13 @@ public class PipelineCallback {
     }
   }
 
-  private static String getPipelinesVersion() {
-    MavenXpp3Reader reader = new MavenXpp3Reader();
-    Model model = null;
-    try {
-      model = reader.read(new FileReader("dependency-reduced-pom.xml"));
-      return model.getProperties().getProperty("gbif-pipelines.version");
-    } catch (IOException | XmlPullParserException e) {
-      LOG.warn("Couldn't get the pipelines version", e);
+  @VisibleForTesting
+  static String getPipelinesVersion() {
+    if (PIPELINES_PROPERTIES == null) {
       return null;
     }
+
+    return PIPELINES_PROPERTIES.getProperty("pipelines.version");
   }
 
   private String getRunner(PipelineBasedMessage inMessage) {

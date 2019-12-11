@@ -361,6 +361,11 @@ public class PipelineCallbackTest {
     deleteMonitoringById(crawlId);
   }
 
+  @Test
+  public void getPipelinesVersionTest() {
+    Assert.assertNotNull(PipelineCallback.getPipelinesVersion());
+  }
+
   private PipelineBasedMessage createMessage(UUID uuid, Integer attempt, Set<String> pipelineSteps) {
     return new PipelineBasedMessage() {
       @Override

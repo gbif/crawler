@@ -96,8 +96,6 @@
     <!-- Embedded simple search -->
     <lucene.version>7.3.0</lucene.version>
     <cache2k-version>1.2.4.Final</cache2k-version>
-
-    <maven-model.version>3.6.3</maven-model.version>
   </properties>
 
   <repositories>
@@ -597,12 +595,6 @@
         <groupId>org.cache2k</groupId>
         <artifactId>cache2k-core</artifactId>
         <version>${cache2k-version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.apache.maven</groupId>
-        <artifactId>maven-model</artifactId>
-        <version>${maven-model.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
