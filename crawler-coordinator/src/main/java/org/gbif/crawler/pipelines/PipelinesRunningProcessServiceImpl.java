@@ -342,7 +342,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
         PipelineExecution execution =
             executionsMap.computeIfAbsent(
                 executionId,
-                id -> new PipelineExecution().setKey(id).setCreated(LocalDateTime.now()));
+                id -> new PipelineExecution().setKey(id));
         execution.addStep(step);
       } catch (Exception ex) {
         LOG.error(ex.getMessage(), ex);
