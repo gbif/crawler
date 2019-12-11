@@ -108,7 +108,7 @@ public class PipelinesRunningProcessServiceImplTest {
   @After
   public void tearDown() throws IOException, InterruptedException {
     // we wait for the ZK TreeCache to finish since it's executed async and needs curator to be open
-    TimeUnit.MILLISECONDS.sleep(300);
+    TimeUnit.MILLISECONDS.sleep(350);
     curator.close();
     server.stop();
   }
