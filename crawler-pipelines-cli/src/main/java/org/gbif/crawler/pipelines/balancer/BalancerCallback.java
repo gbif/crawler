@@ -4,11 +4,9 @@ import java.io.IOException;
 
 import org.gbif.common.messaging.AbstractMessageCallback;
 import org.gbif.common.messaging.api.MessagePublisher;
-import org.gbif.common.messaging.api.messages.PipelinesBalancerMessage;
-import org.gbif.common.messaging.api.messages.PipelinesIndexedMessage;
-import org.gbif.common.messaging.api.messages.PipelinesInterpretedMessage;
-import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage;
+import org.gbif.common.messaging.api.messages.*;
 import org.gbif.crawler.pipelines.balancer.handler.InterpretedMessageHandler;
+import org.gbif.crawler.pipelines.balancer.handler.PipelinesHdfsViewBuiltMessageHandler;
 import org.gbif.crawler.pipelines.balancer.handler.PipelinesIndexedMessageHandler;
 import org.gbif.crawler.pipelines.balancer.handler.VerbatimMessageHandler;
 
@@ -51,6 +49,8 @@ public class BalancerCallback extends AbstractMessageCallback<PipelinesBalancerM
         InterpretedMessageHandler.handle(config, publisher, message);
       } else if (PipelinesIndexedMessage.class.getSimpleName().equals(className)) {
         PipelinesIndexedMessageHandler.handle(config, publisher, message);
+      } else if (PipelinesHdfsViewBuiltMessage.class.getSimpleName().equals(className)){
+        PipelinesHdfsViewBuiltMessageHandler.handle(config, publisher, message);
       } else {
         LOG.error("Handler for {} wasn't found!", className);
       }

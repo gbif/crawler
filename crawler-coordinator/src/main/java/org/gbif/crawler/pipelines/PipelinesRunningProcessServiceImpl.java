@@ -123,13 +123,18 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
             crawlIdPath
                 .apply(event.getData().getPath())
                 .ifPresent(
-                    path ->
-                        loadRunningPipelineProcess(path)
-                            .ifPresent(
-                                process -> {
-                                  processCache.replace(path, process);
-                                  searchService.update(process);
-                                }));
+                    path -> {
+                      if (!processCache.containsKey(path)) {
+                        // if already deleted we don't even create the PipelineProcess object
+                        return;
+                      }
+                      loadRunningPipelineProcess(path)
+                          .ifPresent(
+                              process -> {
+                                processCache.replace(path, process);
+                                searchService.update(process);
+                              });
+                    });
           } else if (event.getType() == NODE_REMOVED) {
             crawlIdPath
                 .apply(event.getData().getPath())

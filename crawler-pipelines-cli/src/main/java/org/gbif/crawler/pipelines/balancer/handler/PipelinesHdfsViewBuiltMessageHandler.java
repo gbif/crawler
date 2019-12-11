@@ -2,6 +2,7 @@ package org.gbif.crawler.pipelines.balancer.handler;
 
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.PipelinesBalancerMessage;
+import org.gbif.common.messaging.api.messages.PipelinesHdfsViewBuiltMessage;
 import org.gbif.common.messaging.api.messages.PipelinesIndexedMessage;
 import org.gbif.crawler.pipelines.balancer.BalancerConfiguration;
 
@@ -13,13 +14,13 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Populates and sends the {@link PipelinesIndexedMessage} message, the main method
- * is {@link PipelinesIndexedMessageHandler#handle}
+ * is {@link PipelinesHdfsViewBuiltMessageHandler#handle}
  */
-public class PipelinesIndexedMessageHandler {
+public class PipelinesHdfsViewBuiltMessageHandler {
 
-  private static final Logger LOG = LoggerFactory.getLogger(PipelinesIndexedMessageHandler.class);
+  private static final Logger LOG = LoggerFactory.getLogger(PipelinesHdfsViewBuiltMessageHandler.class);
 
-  private PipelinesIndexedMessageHandler() {
+  private PipelinesHdfsViewBuiltMessageHandler() {
     // NOP
   }
 
@@ -32,10 +33,10 @@ public class PipelinesIndexedMessageHandler {
     LOG.info("Process PipelinesIndexedMessage - {}", message);
 
     ObjectMapper mapper = new ObjectMapper();
-    PipelinesIndexedMessage m = mapper.readValue(message.getPayload(), PipelinesIndexedMessage.class);
+    PipelinesHdfsViewBuiltMessage m = mapper.readValue(message.getPayload(), PipelinesHdfsViewBuiltMessage.class);
 
-    PipelinesIndexedMessage outputMessage =
-        new PipelinesIndexedMessage(
+    PipelinesHdfsViewBuiltMessage outputMessage =
+        new PipelinesHdfsViewBuiltMessage(
             m.getDatasetUuid(),
             m.getAttempt(),
             m.getPipelineSteps(),
