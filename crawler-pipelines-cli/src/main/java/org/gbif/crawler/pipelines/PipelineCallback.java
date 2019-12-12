@@ -189,6 +189,10 @@ public class PipelineCallback {
         LOG.warn("Dataset is already in pipelines queue, please check the pipeline-ingestion monitoring tool - {}", crawlId);
         return;
       }
+
+      // track the pipeline step
+      trackingInfo = trackPipelineStep();
+
       String mqMessagePath = Fn.MQ_MESSAGE.apply(b.zkRootElementPath);
       ZookeeperUtils.updateMonitoring(b.curator, crawlId, mqMessagePath, inMessage.toString());
 
@@ -200,9 +204,6 @@ public class PipelineCallback {
 
       String runnerPath = Fn.RUNNER.apply(b.zkRootElementPath);
       ZookeeperUtils.updateMonitoring(b.curator, crawlId, runnerPath, getRunner(inMessage));
-
-      // track the pipeline step
-      trackingInfo = trackPipelineStep();
 
       LOG.info("Handler has been started, crawlId - {}", crawlId);
       b.runnable.run();
@@ -265,6 +266,7 @@ public class PipelineCallback {
             new PipelineExecution().setStepsToRun(Collections.singletonList(b.pipelinesStepName));
 
         executionId = b.historyWsClient.addPipelineExecution(processKey, execution);
+        b.incomingMessage.setExecutionId(executionId);
       }
 
       // add step to the process
