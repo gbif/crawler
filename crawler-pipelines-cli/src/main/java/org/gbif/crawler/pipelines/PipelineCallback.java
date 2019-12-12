@@ -18,7 +18,7 @@ import java.util.*;
 import java.util.function.Supplier;
 
 import com.google.common.annotations.VisibleForTesting;
-import io.github.resilience4j.core.IntervalFunction;
+import io.github.resilience4j.retry.IntervalFunction;
 import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryConfig;
 import org.apache.curator.framework.CuratorFramework;

@@ -97,7 +97,8 @@
     <lucene.version>7.3.0</lucene.version>
     <cache2k-version>1.2.4.Final</cache2k-version>
 
-    <resilience4j.version>1.2.0</resilience4j.version>
+    <!-- this version has to match with the one of pipelines -->
+    <resilience4j.version>1.1.0</resilience4j.version>
   </properties>
 
   <repositories>
