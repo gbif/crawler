@@ -13,10 +13,14 @@ import org.gbif.registry.ws.client.pipelines.PipelinesHistoryWsClient;
 import org.gbif.utils.file.properties.PropertiesUtil;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.*;
 import java.util.function.Supplier;
 
 import com.google.common.annotations.VisibleForTesting;
+import io.github.resilience4j.core.IntervalFunction;
+import io.github.resilience4j.retry.Retry;
+import io.github.resilience4j.retry.RetryConfig;
 import org.apache.curator.framework.CuratorFramework;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
@@ -46,9 +50,11 @@ public class PipelineCallback {
   }
 
   private final Builder b;
+  private final Retry retry;
 
   private PipelineCallback(Builder b) {
     this.b = b;
+    this.retry = createRetry();
   }
 
   public static Builder create() {
@@ -281,11 +287,15 @@ public class PipelineCallback {
 
   private void updateTrackingStatus(TrackingInfo trackingInfo, PipelineStep.Status status) {
     try {
-      b.historyWsClient.updatePipelineStepStatusAndMetrics(
-          trackingInfo.processKey,
-          trackingInfo.executionId,
-          trackingInfo.stepKey,
-          new PipelineStepParameters(status, b.metricsSupplier.get()));
+      Retry.decorateRunnable(
+              retry,
+              () ->
+                  b.historyWsClient.updatePipelineStepStatusAndMetrics(
+                      trackingInfo.processKey,
+                      trackingInfo.executionId,
+                      trackingInfo.stepKey,
+                      new PipelineStepParameters(status, b.metricsSupplier.get())))
+          .run();
     } catch (Exception ex) {
       // we don't want to break the crawling if the tracking fails
       LOG.error(
@@ -326,6 +336,16 @@ public class PipelineCallback {
     }
 
     return StepRunner.UNKNOWN.name();
+  }
+
+  private Retry createRetry (){
+    RetryConfig retryConfig =
+        RetryConfig.custom()
+            .maxAttempts(3)
+            .intervalFunction(IntervalFunction.ofExponentialBackoff(Duration.ofSeconds(1)))
+            .build();
+
+    return Retry.of("registryCall", retryConfig);
   }
 
   private static class TrackingInfo {
