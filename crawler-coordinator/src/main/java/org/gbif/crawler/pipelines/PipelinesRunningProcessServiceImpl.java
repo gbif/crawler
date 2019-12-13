@@ -279,7 +279,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
 
       return Optional.of(process);
     } catch (Exception ex) {
-      throw new ServiceUnavailableException("Error communicating with ZooKeeper", ex);
+      throw new ServiceUnavailableException("Error communicating with ZooKeeper pipelines", ex);
     }
   }
 
