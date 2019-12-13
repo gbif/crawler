@@ -258,7 +258,6 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
     try {
       String[] ids = crawlId.split("_");
 
-      // Check if dataset is actually being processed right now
       if (!checkExists(getPipelinesInfoPath(crawlId))) {
         return Optional.empty();
       }
