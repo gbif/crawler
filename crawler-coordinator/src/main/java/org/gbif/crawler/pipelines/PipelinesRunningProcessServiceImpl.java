@@ -119,7 +119,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
                                   // we update always the index to avoid duplicates
                                   searchService.update(process);
                                 }));
-          } else if (event.getType() == NODE_UPDATED) {
+          } else if (event.getType() == NODE_UPDATED && !event.getData().getPath().contains(SIZE)) {
             crawlIdPath
                 .apply(event.getData().getPath())
                 .ifPresent(
@@ -300,6 +300,10 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
       PipelineStep step = new PipelineStep().setType(stepType);
 
       try {
+        if (!checkExists(getPipelinesInfoPath(crawlId))) {
+          continue;
+        }
+
         Optional<String> msg = getAsString(crawlId, Fn.MQ_MESSAGE.apply(stepType.getLabel()));
         Optional<LocalDateTime> startDateOpt =
             getAsDate(crawlId, Fn.START_DATE.apply(stepType.getLabel()));
@@ -343,8 +347,8 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
                 id -> new PipelineExecution().setKey(id));
         execution.addStep(step);
       } catch (Exception ex) {
-        LOG.warn(ex.getMessage(), ex);
         // we skip this step
+        LOG.info("Skipping step because of error: {}", ex.getMessage());
       }
     }
 

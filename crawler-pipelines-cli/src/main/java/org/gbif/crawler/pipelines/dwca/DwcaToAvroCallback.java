@@ -200,13 +200,12 @@ public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMes
 
   private Supplier<List<PipelineStep.MetricInfo>> metricsSupplier(UUID datasetId, int attempt) {
     return () ->
-      HdfsUtils.readMetricsFromMetaFile(
-        config.hdfsSiteConfig,
-        buildOutputPathAsString(
-          config.repositoryPath,
-          datasetId.toString(),
-          String.valueOf(attempt),
-          config.metaFileName));
+        HdfsUtils.readMetricsFromMetaFile(
+            config.hdfsSiteConfig,
+            buildOutputPathAsString(
+                config.repositoryPath,
+                datasetId.toString(),
+                String.valueOf(attempt),
+                config.metaFileName));
   }
-
 }
