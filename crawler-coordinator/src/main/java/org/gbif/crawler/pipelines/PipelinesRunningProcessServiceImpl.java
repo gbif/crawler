@@ -345,7 +345,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
                 id -> new PipelineExecution().setKey(id));
         execution.addStep(step);
       } catch (Exception ex) {
-        LOG.error(ex.getMessage(), ex);
+        LOG.warn(ex.getMessage(), ex);
         // we skip this step
       }
     }
