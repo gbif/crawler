@@ -300,7 +300,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
       PipelineStep step = new PipelineStep().setType(stepType);
 
       try {
-        if (!checkExists(getPipelinesInfoPath(crawlId))) {
+        if (!checkExists(getPipelinesInfoPath(crawlId, stepType.getLabel()))) {
           continue;
         }
 
