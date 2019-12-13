@@ -279,7 +279,6 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
 
       return Optional.of(process);
     } catch (Exception ex) {
-      LOG.error("crawlId {}", crawlId, ex.getCause());
       throw new ServiceUnavailableException("Error communicating with ZooKeeper", ex);
     }
   }
