@@ -37,47 +37,56 @@ import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 @RunWith(MockitoJUnitRunner.class)
 public class PipelinesRunningProcessServiceImplTest {
 
-  private static final String MESSAGE = "info";
+  private static final long EXECUTION_ID = 1L;
+  private static final String MESSAGE = "{\"executionId\": \"" + EXECUTION_ID + "\"}";
 
-  private static final BiConsumer<Set<PipelineProcess>, Set<String>> ASSERT_FN = (s, ids) -> {
-    Consumer<PipelineStep> checkFn = step -> {
-      Assert.assertTrue(Arrays.asList(StepType.values()).contains(step.getType()));
-      Assert.assertNotNull(step.getStarted());
-      Assert.assertNotNull(step.getFinished());
-      Assert.assertEquals(PipelineStep.Status.COMPLETED, step.getState());
-      Assert.assertEquals(MESSAGE, step.getMessage());
-    };
+  private static final BiConsumer<Set<PipelineProcess>, Set<String>> ASSERT_FN =
+      (s, ids) -> {
+        Consumer<PipelineStep> checkFn =
+            step -> {
+              Assert.assertTrue(Arrays.asList(StepType.values()).contains(step.getType()));
+              Assert.assertNotNull(step.getStarted());
+              Assert.assertNotNull(step.getFinished());
+              Assert.assertEquals(PipelineStep.Status.COMPLETED, step.getState());
+              Assert.assertEquals(MESSAGE, step.getMessage());
+            };
 
-    s.forEach(status -> {
-      Assert.assertNotNull(status);
-      Assert.assertEquals(6, status.getSteps().size());
-      Assert.assertTrue(ids.contains(status.getDatasetKey() + "_" + status.getAttempt()));
-      status.getSteps().forEach(step -> {
-
-        if (step.getType() == StepType.DWCA_TO_VERBATIM
-            || step.getType() == StepType.XML_TO_VERBATIM
-            || step.getType() == StepType.ABCD_TO_VERBATIM
-            || step.getType() == StepType.VERBATIM_TO_INTERPRETED) {
-          checkFn.accept(step);
-        }
-        if (step.getType() == StepType.HDFS_VIEW) {
-          Assert.assertTrue(Arrays.asList(StepType.values()).contains(step.getType()));
-          Assert.assertNotNull(step.getStarted());
-          Assert.assertNull(step.getFinished());
-          Assert.assertEquals(PipelineStep.Status.FAILED, step.getState());
-          Assert.assertEquals(MESSAGE, step.getMessage());
-        }
-        if (step.getType() == StepType.INTERPRETED_TO_INDEX) {
-          Assert.assertTrue(Arrays.asList(StepType.values()).contains(step.getType()));
-          Assert.assertNotNull(step.getStarted());
-          Assert.assertNull(step.getFinished());
-          Assert.assertEquals(PipelineStep.Status.RUNNING, step.getState());
-          Assert.assertNull(MESSAGE, step.getMessage());
-        }
-      });
-    });
-  };
-
+        s.forEach(
+            status -> {
+              Assert.assertNotNull(status);
+              Assert.assertEquals(6, status.getExecutions().iterator().next().getSteps().size());
+              Assert.assertTrue(ids.contains(status.getDatasetKey() + "_" + status.getAttempt()));
+              status
+                  .getExecutions()
+                  .iterator()
+                  .next()
+                  .getSteps()
+                  .forEach(
+                      step -> {
+                        if (step.getType() == StepType.DWCA_TO_VERBATIM
+                            || step.getType() == StepType.XML_TO_VERBATIM
+                            || step.getType() == StepType.ABCD_TO_VERBATIM
+                            || step.getType() == StepType.VERBATIM_TO_INTERPRETED) {
+                          checkFn.accept(step);
+                        }
+                        if (step.getType() == StepType.HDFS_VIEW) {
+                          Assert.assertTrue(
+                              Arrays.asList(StepType.values()).contains(step.getType()));
+                          Assert.assertNotNull(step.getStarted());
+                          Assert.assertNull(step.getFinished());
+                          Assert.assertEquals(PipelineStep.Status.FAILED, step.getState());
+                          Assert.assertEquals(MESSAGE, step.getMessage());
+                        }
+                        if (step.getType() == StepType.INTERPRETED_TO_INDEX) {
+                          Assert.assertTrue(
+                              Arrays.asList(StepType.values()).contains(step.getType()));
+                          Assert.assertNotNull(step.getStarted());
+                          Assert.assertNull(step.getFinished());
+                          Assert.assertEquals(PipelineStep.Status.RUNNING, step.getState());
+                        }
+                      });
+            });
+      };
 
   private CuratorFramework curator;
   private TestingServer server;
@@ -93,14 +102,13 @@ public class PipelinesRunningProcessServiceImplTest {
             .retryPolicy(new RetryOneTime(1))
             .build();
     curator.start();
-    service =
-        new PipelinesRunningProcessServiceImpl(curator, Mockito.mock(DatasetService.class));
+    service = new PipelinesRunningProcessServiceImpl(curator, Mockito.mock(DatasetService.class));
   }
 
   @After
   public void tearDown() throws IOException, InterruptedException {
     // we wait for the ZK TreeCache to finish since it's executed async and needs curator to be open
-    TimeUnit.MILLISECONDS.sleep(300);
+    TimeUnit.MILLISECONDS.sleep(350);
     curator.close();
     server.stop();
   }
@@ -144,13 +152,14 @@ public class PipelinesRunningProcessServiceImplTest {
   public void testGetRunningPipelinesProcesses() throws Exception {
     // State
     Set<String> crawlIds =
-        Sets.newHashSet("a731e3b1-bc81-4c1f-aad7-aba75ce3cf3b_1", "be6cd2ff-bcc0-46a5-877e-1fe6e4ef8483_2");
+        Sets.newHashSet(
+            "a731e3b1-bc81-4c1f-aad7-aba75ce3cf3b_1", "be6cd2ff-bcc0-46a5-877e-1fe6e4ef8483_2");
     for (String crawlId : crawlIds) {
       addStatusToZookeeper(crawlId);
     }
 
     // we wait for the ZK TreeCache to respond to the events
-    TimeUnit.MILLISECONDS.sleep(1750);
+    TimeUnit.MILLISECONDS.sleep(2000);
 
     // When
     Set<PipelineProcess> set = service.getPipelineProcesses();
@@ -208,16 +217,21 @@ public class PipelinesRunningProcessServiceImplTest {
   }
 
   private void addStatusToZookeeper(String crawlId) throws Exception {
-    Consumer<StepType> successfulFn = type -> {
-      try {
-        updateMonitoringDate(crawlId, Fn.START_DATE.apply(type.getLabel()));
-        updateMonitoringDate(crawlId, Fn.END_DATE.apply(type.getLabel()));
-        updateMonitoring(crawlId, Fn.SUCCESSFUL_AVAILABILITY.apply(type.getLabel()), Boolean.TRUE.toString());
-        updateMonitoring(crawlId, Fn.SUCCESSFUL_MESSAGE.apply(type.getLabel()), MESSAGE);
-      } catch (Exception ex) {
-        throw new RuntimeException(ex.getCause());
-      }
-    };
+    Consumer<StepType> successfulFn =
+        type -> {
+          try {
+            updateMonitoringDate(crawlId, Fn.START_DATE.apply(type.getLabel()));
+            updateMonitoringDate(crawlId, Fn.END_DATE.apply(type.getLabel()));
+            updateMonitoring(
+                crawlId,
+                Fn.SUCCESSFUL_AVAILABILITY.apply(type.getLabel()),
+                Boolean.TRUE.toString());
+            updateMonitoring(crawlId, Fn.SUCCESSFUL_MESSAGE.apply(type.getLabel()), MESSAGE);
+            updateMonitoring(crawlId, Fn.MQ_MESSAGE.apply(type.getLabel()), MESSAGE);
+          } catch (Exception ex) {
+            throw new RuntimeException(ex.getCause());
+          }
+        };
 
     successfulFn.accept(StepType.DWCA_TO_VERBATIM);
     successfulFn.accept(StepType.XML_TO_VERBATIM);
@@ -225,10 +239,15 @@ public class PipelinesRunningProcessServiceImplTest {
     successfulFn.accept(StepType.VERBATIM_TO_INTERPRETED);
 
     updateMonitoringDate(crawlId, Fn.START_DATE.apply(StepType.HDFS_VIEW.getLabel()));
-    updateMonitoring(crawlId, Fn.ERROR_AVAILABILITY.apply(StepType.HDFS_VIEW.getLabel()), Boolean.TRUE.toString());
+    updateMonitoring(
+        crawlId,
+        Fn.ERROR_AVAILABILITY.apply(StepType.HDFS_VIEW.getLabel()),
+        Boolean.TRUE.toString());
     updateMonitoring(crawlId, Fn.ERROR_MESSAGE.apply(StepType.HDFS_VIEW.getLabel()), MESSAGE);
+    updateMonitoring(crawlId, Fn.MQ_MESSAGE.apply(StepType.HDFS_VIEW.getLabel()), MESSAGE);
 
     updateMonitoringDate(crawlId, Fn.START_DATE.apply(StepType.INTERPRETED_TO_INDEX.getLabel()));
+    updateMonitoring(crawlId, Fn.MQ_MESSAGE.apply(StepType.INTERPRETED_TO_INDEX.getLabel()), MESSAGE);
   }
 
   /**

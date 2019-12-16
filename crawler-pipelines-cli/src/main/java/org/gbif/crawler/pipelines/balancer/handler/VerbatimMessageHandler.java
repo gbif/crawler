@@ -60,8 +60,17 @@ public class VerbatimMessageHandler {
     }
 
     PipelinesVerbatimMessage outputMessage =
-        new PipelinesVerbatimMessage(m.getDatasetUuid(), m.getAttempt(), m.getInterpretTypes(), m.getPipelineSteps(),
-            runner, m.getEndpointType(), m.getExtraPath(), result, m.getResetPrefix());
+        new PipelinesVerbatimMessage(
+            m.getDatasetUuid(),
+            m.getAttempt(),
+            m.getInterpretTypes(),
+            m.getPipelineSteps(),
+            runner,
+            m.getEndpointType(),
+            m.getExtraPath(),
+            result,
+            m.getResetPrefix(),
+            m.getExecutionId());
 
     publisher.send(outputMessage);
 

@@ -47,8 +47,16 @@ public class InterpretedMessageHandler {
     String runner = computeRunner(config, m, recordsNumber).name();
 
     PipelinesInterpretedMessage outputMessage =
-        new PipelinesInterpretedMessage(m.getDatasetUuid(), m.getAttempt(), m.getPipelineSteps(),
-            recordsNumber, runner, m.isRepeatAttempt(), m.getResetPrefix(), m.getOnlyForStep());
+        new PipelinesInterpretedMessage(
+            m.getDatasetUuid(),
+            m.getAttempt(),
+            m.getPipelineSteps(),
+            recordsNumber,
+            runner,
+            m.isRepeatAttempt(),
+            m.getResetPrefix(),
+            m.getOnlyForStep(),
+            m.getExecutionId());
 
     publisher.send(outputMessage);
 

@@ -26,10 +26,10 @@ public interface PipelinesRunningProcessService {
   void deleteAllPipelineProcess();
 
   PipelinesRunningProcessServiceImpl.PipelineProcessSearchResult search(
-    @Nullable String datasetTitle,
-    @Nullable UUID datasetKey,
-    @Nullable List<PipelineStep.Status> stepStatuses,
-    @Nullable List<StepType> stepTypes,
+      @Nullable String datasetTitle,
+      @Nullable UUID datasetKey,
+      @Nullable List<PipelineStep.Status> stepStatuses,
+      @Nullable List<StepType> stepTypes,
       int pageNumber,
       int pageSize);
 }

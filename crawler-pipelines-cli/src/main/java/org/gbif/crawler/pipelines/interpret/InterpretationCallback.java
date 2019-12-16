@@ -1,12 +1,6 @@
 package org.gbif.crawler.pipelines.interpret;
 
-import java.io.IOException;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.ExecutorService;
-import java.util.function.Predicate;
-
+import org.gbif.api.model.pipelines.PipelineStep;
 import org.gbif.api.model.pipelines.StepRunner;
 import org.gbif.api.model.pipelines.StepType;
 import org.gbif.common.messaging.AbstractMessageCallback;
@@ -23,13 +17,23 @@ import org.gbif.pipelines.common.PipelinesVariables.Pipeline.Interpretation;
 import org.gbif.pipelines.ingest.java.pipelines.VerbatimToInterpretedPipeline;
 import org.gbif.registry.ws.client.pipelines.PipelinesHistoryWsClient;
 
+import java.io.IOException;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
+
+import com.google.common.base.Strings;
 import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.slf4j.MDC.MDCCloseable;
 
-import com.google.common.base.Strings;
+import static org.gbif.crawler.common.utils.HdfsUtils.buildOutputPathAsString;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -99,6 +103,7 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
           .publisher(publisher)
           .runnable(runnable)
           .historyWsClient(historyWsClient)
+          .metricsSupplier(metricsSupplier(datasetId, attempt))
           .build()
           .handleMessage();
 
@@ -287,5 +292,16 @@ public class InterpretationCallback extends AbstractMessageCallback<PipelinesVer
     } catch (IOException ex) {
       throw new RuntimeException(ex);
     }
+  }
+
+  private Supplier<List<PipelineStep.MetricInfo>> metricsSupplier(UUID datasetId, int attempt) {
+    return () ->
+        HdfsUtils.readMetricsFromMetaFile(
+            config.hdfsSiteConfig,
+            buildOutputPathAsString(
+                config.repositoryPath,
+                datasetId.toString(),
+                String.valueOf(attempt),
+                config.metaFileName));
   }
 }

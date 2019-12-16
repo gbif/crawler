@@ -137,9 +137,9 @@ public class PipelinesRunningProcessSearchService implements Closeable {
           new TextField(DATASET_TITLE_FIELD, pipelineProcess.getDatasetTitle(), Field.Store.NO));
     }
 
-    if (Objects.nonNull(pipelineProcess.getSteps())) {
-      pipelineProcess
-          .getSteps()
+    if (Objects.nonNull(pipelineProcess.getExecutions())) {
+      pipelineProcess.getExecutions().stream()
+          .flatMap(e -> e.getSteps().stream())
           .forEach(
               step -> {
                 if (step.getState() != null) {

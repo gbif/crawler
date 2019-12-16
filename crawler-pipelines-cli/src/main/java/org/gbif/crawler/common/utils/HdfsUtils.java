@@ -1,29 +1,28 @@
 package org.gbif.crawler.common.utils;
 
+import org.gbif.api.model.pipelines.PipelineStep;
+import org.gbif.pipelines.ingest.utils.FileSystemFactory;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.StringJoiner;
+import java.util.*;
 import java.util.stream.Collectors;
 
-import org.gbif.pipelines.ingest.utils.FileSystemFactory;
-
-import org.apache.hadoop.fs.FileStatus;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.LocatedFileStatus;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.fs.RemoteIterator;
+import com.google.common.base.Strings;
+import org.apache.hadoop.fs.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Utils help to work with HDFS files
  */
 public class HdfsUtils {
+
+  private static final Logger LOG = LoggerFactory.getLogger(HdfsUtils.class);
 
   private HdfsUtils() {
     // NOP
@@ -120,12 +119,45 @@ public class HdfsUtils {
   }
 
   /**
+   * Reads a yaml file and returns all the values
+   *
+   * @param hdfsSiteConfig path to hdfs-site.xml config file
+   * @param filePath to a yaml file
+   */
+  public static List<PipelineStep.MetricInfo> readMetricsFromMetaFile(String hdfsSiteConfig, String filePath) {
+    FileSystem fs = getFileSystem(hdfsSiteConfig, filePath);
+    Path fsPath = new Path(filePath);
+    try {
+      if (fs.exists(fsPath)) {
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(fs.open(fsPath)))) {
+          return br.lines()
+              .map(x -> x.replace("\u0000", ""))
+              .filter(s -> !Strings.isNullOrEmpty(s))
+              .map(z -> z.split(":"))
+              .filter(s -> s.length > 1)
+              .map(v -> new PipelineStep.MetricInfo(v[0].trim(), v[1].trim()))
+              .collect(Collectors.toList());
+        }
+      }
+    } catch (IOException e) {
+      LOG.warn("Couldn't read meta file from {}", filePath, e);
+    }
+    return new ArrayList<>();
+  }
+
+  /**
    * Store an Avro file on HDFS in /data/ingest/<datasetUUID>/<attemptID>/verbatim.avro
    */
   public static Path buildOutputPath(String... values) {
     StringJoiner joiner = new StringJoiner(org.apache.hadoop.fs.Path.SEPARATOR);
     Arrays.stream(values).forEach(joiner::add);
     return new org.apache.hadoop.fs.Path(joiner.toString());
+  }
+
+  public static String buildOutputPathAsString(String... values) {
+    StringJoiner joiner = new StringJoiner(org.apache.hadoop.fs.Path.SEPARATOR);
+    Arrays.stream(values).forEach(joiner::add);
+    return joiner.toString();
   }
 
   /**

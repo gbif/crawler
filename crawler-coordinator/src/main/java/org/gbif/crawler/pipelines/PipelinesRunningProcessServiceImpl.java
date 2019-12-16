@@ -1,14 +1,9 @@
 package org.gbif.crawler.pipelines;
 
 import org.gbif.api.exception.ServiceUnavailableException;
-import org.gbif.api.model.pipelines.PipelineProcess;
-import org.gbif.api.model.pipelines.PipelineStep;
-import org.gbif.api.model.pipelines.StepRunner;
-import org.gbif.api.model.pipelines.StepType;
+import org.gbif.api.model.pipelines.*;
 import org.gbif.api.model.registry.Dataset;
 import org.gbif.api.service.registry.DatasetService;
-import org.gbif.common.messaging.api.messages.PipelinesDwcaMessage;
-import org.gbif.common.messaging.api.messages.PipelinesXmlMessage;
 import org.gbif.crawler.constants.CrawlerNodePaths;
 import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
 import org.gbif.crawler.pipelines.search.PipelinesRunningProcessSearchService;
@@ -22,7 +17,6 @@ import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
 
@@ -38,8 +32,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.gbif.api.model.pipelines.PipelineProcess.PIPELINE_PROCESS_BY_LATEST_STEP_ASC;
-import static org.gbif.api.model.pipelines.PipelineStep.STEPS_BY_START_AND_FINISH_ASC;
+import static org.gbif.api.model.pipelines.PipelineProcess.PIPELINE_PROCESS_BY_LATEST_STEP_RUNNING_ASC;
 import static org.gbif.api.model.pipelines.PipelineStep.Status;
 import static org.gbif.crawler.constants.PipelinesNodePaths.DELIMITER;
 import static org.gbif.crawler.constants.PipelinesNodePaths.PIPELINES_ROOT;
@@ -126,17 +119,22 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
                                   // we update always the index to avoid duplicates
                                   searchService.update(process);
                                 }));
-          } else if (event.getType() == NODE_UPDATED) {
+          } else if (event.getType() == NODE_UPDATED && !event.getData().getPath().contains(SIZE)) {
             crawlIdPath
                 .apply(event.getData().getPath())
                 .ifPresent(
-                    path ->
-                        loadRunningPipelineProcess(path)
-                            .ifPresent(
-                                process -> {
-                                  processCache.replace(path, process);
-                                  searchService.update(process);
-                                }));
+                    path -> {
+                      if (!processCache.containsKey(path)) {
+                        // if already deleted we don't even create the PipelineProcess object
+                        return;
+                      }
+                      loadRunningPipelineProcess(path)
+                          .ifPresent(
+                              process -> {
+                                processCache.replace(path, process);
+                                searchService.update(process);
+                              });
+                    });
           } else if (event.getType() == NODE_REMOVED) {
             crawlIdPath
                 .apply(event.getData().getPath())
@@ -172,7 +170,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
         .map(CacheEntry::getValue)
         .collect(
             Collectors.toCollection(
-                () -> new TreeSet<>(PIPELINE_PROCESS_BY_LATEST_STEP_ASC.reversed())));
+                () -> new TreeSet<>(PIPELINE_PROCESS_BY_LATEST_STEP_RUNNING_ASC.reversed())));
   }
 
   @Override
@@ -213,12 +211,12 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
       Set<PipelineProcess> allProcesses =
           StreamSupport.stream(processCache.entries().spliterator(), true)
               .map(CacheEntry::getValue)
-              .sorted(PIPELINE_PROCESS_BY_LATEST_STEP_ASC.reversed())
+              .sorted(PIPELINE_PROCESS_BY_LATEST_STEP_RUNNING_ASC.reversed())
               .skip(offset)
               .limit(limit)
               .collect(
                   Collectors.toCollection(
-                      () -> new TreeSet<>(PIPELINE_PROCESS_BY_LATEST_STEP_ASC.reversed())));
+                      () -> new TreeSet<>(PIPELINE_PROCESS_BY_LATEST_STEP_RUNNING_ASC.reversed())));
 
       return new PipelineProcessSearchResult(allProcesses.size(), allProcesses);
     }
@@ -228,12 +226,12 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
     Set<PipelineProcess> processes =
         hits.stream()
             .map(processCache::get)
-            .sorted(PIPELINE_PROCESS_BY_LATEST_STEP_ASC.reversed())
+            .sorted(PIPELINE_PROCESS_BY_LATEST_STEP_RUNNING_ASC.reversed())
             .skip(offset)
             .limit(limit)
             .collect(
                 Collectors.toCollection(
-                    () -> new TreeSet<>(PIPELINE_PROCESS_BY_LATEST_STEP_ASC.reversed())));
+                    () -> new TreeSet<>(PIPELINE_PROCESS_BY_LATEST_STEP_RUNNING_ASC.reversed())));
 
     return new PipelineProcessSearchResult(processes.size(), processes);
   }
@@ -260,7 +258,6 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
     try {
       String[] ids = crawlId.split("_");
 
-      // Check if dataset is actually being processed right now
       if (!checkExists(getPipelinesInfoPath(crawlId))) {
         return Optional.empty();
       }
@@ -272,58 +269,18 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
 
       // ALL_STEPS - static set of all pipelines steps: DWCA_TO_AVRO, VERBATIM_TO_INTERPRETED and
       // etc.
-      getStepInfo(crawlId).stream().filter(s -> s.getStarted() != null).forEach(process::addStep);
+      getExecutions(crawlId).forEach(process::addExecution);
 
-      if (process.getSteps().isEmpty()) {
+      if (process.getExecutions().isEmpty()) {
         return Optional.empty();
       }
 
-      addNumberRecords(process, crawlId);
       setDatasetTitle(process);
 
       return Optional.of(process);
     } catch (Exception ex) {
-      LOG.error("crawlId {}", crawlId, ex.getCause());
-      throw new ServiceUnavailableException("Error communicating with ZooKeeper", ex);
+      throw new ServiceUnavailableException("Error communicating with ZooKeeper pipelines", ex);
     }
-  }
-
-  private void addNumberRecords(PipelineProcess status, String crawlId) {
-    // get number of records
-    status.getSteps().stream()
-        .filter(s -> s.getType().getExecutionOrder() == 1)
-        .max(STEPS_BY_START_AND_FINISH_ASC)
-        .ifPresent(
-            s -> {
-              try {
-                Optional<String> msg =
-                    getAsString(crawlId, Fn.MQ_MESSAGE.apply(s.getType().getLabel()));
-
-                if (!msg.isPresent()) {
-                  return;
-                }
-
-                if (s.getType() == StepType.DWCA_TO_VERBATIM) {
-                  status.setNumberRecords(
-                      OBJECT_MAPPER
-                          .readValue(msg.get(), PipelinesDwcaMessage.class)
-                          .getValidationReport()
-                          .getOccurrenceReport()
-                          .getCheckedRecords());
-                } else if (s.getType() == StepType.XML_TO_VERBATIM) {
-                  status.setNumberRecords(
-                      OBJECT_MAPPER
-                          .readValue(msg.get(), PipelinesXmlMessage.class)
-                          .getTotalRecordCount());
-                } // abcd doesn't have count
-              } catch (Exception ex) {
-                LOG.warn(
-                    "Couldn't get the number of records for dataset {} and attempt {}",
-                    status.getDatasetKey(),
-                    status.getAttempt(),
-                    ex);
-              }
-            });
   }
 
   private void setDatasetTitle(PipelineProcess process) {
@@ -336,51 +293,66 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
   }
 
   /** Gets step info from ZK */
-  private Set<PipelineStep> getStepInfo(String crawlId) {
-    return Stream.of(StepType.values())
-        .map(
-            stepType -> {
-              PipelineStep step = new PipelineStep().setType(stepType);
+  private Set<PipelineExecution> getExecutions(String crawlId) {
+    Map<Long, PipelineExecution> executionsMap = new HashMap<>();
 
-              try {
-                Optional<LocalDateTime> startDateOpt =
-                    getAsDate(crawlId, Fn.START_DATE.apply(stepType.getLabel()));
-                Optional<LocalDateTime> endDateOpt =
-                    getAsDate(crawlId, Fn.END_DATE.apply(stepType.getLabel()));
-                Optional<Boolean> isErrorOpt =
-                    getAsBoolean(crawlId, Fn.ERROR_AVAILABILITY.apply(stepType.getLabel()));
-                Optional<String> errorMessageOpt =
-                    getAsString(crawlId, Fn.ERROR_MESSAGE.apply(stepType.getLabel()));
-                Optional<Boolean> isSuccessful =
-                    getAsBoolean(crawlId, Fn.SUCCESSFUL_AVAILABILITY.apply(stepType.getLabel()));
-                Optional<String> successfulMessageOpt =
-                    getAsString(crawlId, Fn.SUCCESSFUL_MESSAGE.apply(stepType.getLabel()));
+    for (StepType stepType : StepType.values()) {
+      PipelineStep step = new PipelineStep().setType(stepType);
 
-                getAsString(crawlId, Fn.RUNNER.apply(stepType.getLabel()))
-                    .ifPresent(r -> step.setRunner(StepRunner.valueOf(r)));
+      try {
+        if (!checkExists(getPipelinesInfoPath(crawlId, stepType.getLabel()))) {
+          continue;
+        }
 
-                // dates
-                step.setStarted(startDateOpt.orElse(endDateOpt.orElse(null)));
-                endDateOpt.ifPresent(step::setFinished);
+        Optional<String> msg = getAsString(crawlId, Fn.MQ_MESSAGE.apply(stepType.getLabel()));
+        Optional<LocalDateTime> startDateOpt =
+            getAsDate(crawlId, Fn.START_DATE.apply(stepType.getLabel()));
+        if (!msg.isPresent() || !startDateOpt.isPresent()) {
+          // we skip steps without msg or start date. Without msg we can't assign them to an
+          // execution
+          continue;
+        }
 
-                if (isErrorOpt.isPresent()) {
-                  step.setState(Status.FAILED);
-                  errorMessageOpt.ifPresent(step::setMessage);
-                } else if (isSuccessful.isPresent()) {
-                  step.setState(Status.COMPLETED);
-                  successfulMessageOpt.ifPresent(step::setMessage);
-                } else if (startDateOpt.isPresent() && !endDateOpt.isPresent()) {
-                  step.setState(Status.RUNNING);
-                }
+        // set fields
+        step.setMessage(msg.get());
+        step.setStarted(startDateOpt.get());
 
-              } catch (Exception ex) {
-                LOG.error(ex.getMessage(), ex);
-                return null;
-              }
-              return step;
-            })
-        .filter(Objects::nonNull)
-        .collect(Collectors.toSet());
+        // end date
+        Optional<LocalDateTime> endDateOpt =
+            getAsDate(crawlId, Fn.END_DATE.apply(stepType.getLabel()));
+        endDateOpt.ifPresent(step::setFinished);
+
+        // runner
+        getAsString(crawlId, Fn.RUNNER.apply(stepType.getLabel()))
+            .ifPresent(r -> step.setRunner(StepRunner.valueOf(r)));
+
+        // state
+        Optional<Boolean> isErrorOpt =
+            getAsBoolean(crawlId, Fn.ERROR_AVAILABILITY.apply(stepType.getLabel()));
+        Optional<Boolean> isSuccessful =
+            getAsBoolean(crawlId, Fn.SUCCESSFUL_AVAILABILITY.apply(stepType.getLabel()));
+        if (isErrorOpt.isPresent()) {
+          step.setState(Status.FAILED);
+        } else if (isSuccessful.isPresent()) {
+          step.setState(Status.COMPLETED);
+        } else if (!endDateOpt.isPresent()) {
+          step.setState(Status.RUNNING);
+        }
+
+        // assign the step to an execution
+        Long executionId = OBJECT_MAPPER.readTree(step.getMessage()).get("executionId").asLong();
+        PipelineExecution execution =
+            executionsMap.computeIfAbsent(
+                executionId,
+                id -> new PipelineExecution().setKey(id));
+        execution.addStep(step);
+      } catch (Exception ex) {
+        // we skip this step
+        LOG.info("Skipping step because of error: {}", ex.getMessage());
+      }
+    }
+
+    return new HashSet<>(executionsMap.values());
   }
 
   /**

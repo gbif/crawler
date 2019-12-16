@@ -1,12 +1,7 @@
 package org.gbif.crawler.pipelines.dwca;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-
 import org.gbif.api.model.crawler.OccurrenceValidationReport;
+import org.gbif.api.model.pipelines.PipelineStep;
 import org.gbif.api.model.pipelines.StepType;
 import org.gbif.api.vocabulary.EndpointType;
 import org.gbif.common.messaging.AbstractMessageCallback;
@@ -16,9 +11,20 @@ import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage;
 import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage.ValidationResult;
 import org.gbif.common.messaging.api.messages.Platform;
 import org.gbif.converters.DwcaToAvroConverter;
+import org.gbif.crawler.common.utils.HdfsUtils;
 import org.gbif.crawler.pipelines.PipelineCallback;
 import org.gbif.registry.ws.client.pipelines.PipelinesHistoryWsClient;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.function.Supplier;
+
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Sets;
 import org.apache.avro.file.CodecFactory;
 import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
@@ -26,10 +32,8 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.slf4j.MDC.MDCCloseable;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Sets;
-
 import static org.gbif.crawler.common.utils.HdfsUtils.buildOutputPath;
+import static org.gbif.crawler.common.utils.HdfsUtils.buildOutputPathAsString;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -109,6 +113,7 @@ public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMes
           .publisher(publisher)
           .runnable(runnable)
           .historyWsClient(historyWsClient)
+          .metricsSupplier(metricsSupplier(datasetId, attempt))
           .build()
           .handleMessage();
 
@@ -193,4 +198,14 @@ public class DwcaToAvroCallback extends AbstractMessageCallback<PipelinesDwcaMes
     return report.getCheckedRecords() > 0 && report.getUniqueOccurrenceIds() == report.getCheckedRecords();
   }
 
+  private Supplier<List<PipelineStep.MetricInfo>> metricsSupplier(UUID datasetId, int attempt) {
+    return () ->
+        HdfsUtils.readMetricsFromMetaFile(
+            config.hdfsSiteConfig,
+            buildOutputPathAsString(
+                config.repositoryPath,
+                datasetId.toString(),
+                String.valueOf(attempt),
+                config.metaFileName));
+  }
 }

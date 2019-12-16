@@ -50,6 +50,7 @@ public class DwcaToAvroCallbackTest {
   private static final String DUMMY_URL = "http://some.new.url";
   private static final String INPUT_DATASET_FOLDER = "dataset/dwca";
   private static final Configuration CONFIG = new Configuration();
+  private static final long EXECUTION_ID = 1L;
   private static String hdfsUri;
   private static MiniDFSCluster cluster;
   private static FileSystem clusterFs;
@@ -107,8 +108,16 @@ public class DwcaToAvroCallbackTest {
     OccurrenceValidationReport report = new OccurrenceValidationReport(1, 1, 0, 1, 0, true);
     DwcaValidationReport reason = new DwcaValidationReport(uuid, report);
     PipelinesDwcaMessage message =
-        new PipelinesDwcaMessage(uuid, DatasetType.OCCURRENCE, URI.create(DUMMY_URL), attempt, reason,
-                                 Collections.emptySet(), EndpointType.DWC_ARCHIVE, Platform.PIPELINES);
+        new PipelinesDwcaMessage(
+            uuid,
+            DatasetType.OCCURRENCE,
+            URI.create(DUMMY_URL),
+            attempt,
+            reason,
+            Collections.emptySet(),
+            EndpointType.DWC_ARCHIVE,
+            Platform.PIPELINES,
+            null);
 
     // When
     callback.handleMessage(message);
@@ -146,7 +155,7 @@ public class DwcaToAvroCallbackTest {
     DwcaValidationReport reason = new DwcaValidationReport(uuid, report);
     PipelinesDwcaMessage message =
         new PipelinesDwcaMessage(uuid, DatasetType.OCCURRENCE, URI.create(DUMMY_URL), attempt, reason,
-            Collections.singleton(DWCA_TO_VERBATIM.name()), EndpointType.DWC_ARCHIVE, Platform.PIPELINES);
+            Collections.singleton(DWCA_TO_VERBATIM.name()), EndpointType.DWC_ARCHIVE, Platform.PIPELINES, EXECUTION_ID);
 
     // When
     callback.handleMessage(message);
@@ -183,7 +192,7 @@ public class DwcaToAvroCallbackTest {
     DwcaValidationReport reason = new DwcaValidationReport(uuid, report);
     PipelinesDwcaMessage message =
         new PipelinesDwcaMessage(uuid, DatasetType.OCCURRENCE, URI.create(DUMMY_URL), attempt, reason,
-            Collections.emptySet(), EndpointType.DWC_ARCHIVE, Platform.PIPELINES);
+            Collections.emptySet(), EndpointType.DWC_ARCHIVE, Platform.PIPELINES, EXECUTION_ID);
 
     // When
     callback.handleMessage(message);
@@ -220,7 +229,7 @@ public class DwcaToAvroCallbackTest {
     DwcaValidationReport reason = new DwcaValidationReport(uuid, report);
     PipelinesDwcaMessage message =
         new PipelinesDwcaMessage(uuid, DatasetType.OCCURRENCE, URI.create(DUMMY_URL), attempt, reason,
-            Collections.singleton(DWCA_TO_VERBATIM.name()), EndpointType.DWC_ARCHIVE, Platform.PIPELINES);
+            Collections.singleton(DWCA_TO_VERBATIM.name()), EndpointType.DWC_ARCHIVE, Platform.PIPELINES, EXECUTION_ID);
 
     // When
     callback.handleMessage(message);

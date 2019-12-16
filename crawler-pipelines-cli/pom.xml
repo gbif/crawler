@@ -33,7 +33,7 @@
         <artifactId>maven-shade-plugin</artifactId>
         <configuration>
           <finalName>${project.artifactId}</finalName>
-          <createDependencyReducedPom>false</createDependencyReducedPom>
+          <createDependencyReducedPom>true</createDependencyReducedPom>
           <filters>
             <filter>
               <artifact>*:*</artifact>
@@ -71,6 +71,13 @@
         </executions>
       </plugin>
     </plugins>
+
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>true</filtering>
+      </resource>
+    </resources>
   </build>
 
   <properties>
@@ -396,6 +403,11 @@
     <dependency>
       <groupId>org.apache.curator</groupId>
       <artifactId>curator-test</artifactId>
+    </dependency>
+    <!-- Fault tolerance - Used for API service calls-->
+    <dependency>
+      <groupId>io.github.resilience4j</groupId>
+      <artifactId>resilience4j-retry</artifactId>
     </dependency>
   </dependencies>
 
