@@ -109,15 +109,22 @@ public class InterpretedMessageHandler {
     String metaFileName = new DwcaToAvroConfiguration().metaFileName;
     String metaPath = String.join("/", config.repositoryPath, datasetId, attempt, metaFileName);
 
-    if (message.getNumberOfRecords() != null) {
-      return message.getNumberOfRecords();
-    } else {
-      String recordsNumber = HdfsUtils.getValueByKey(config.hdfsSiteConfig, metaPath, Metrics.ARCHIVE_TO_ER_COUNT);
-      if (recordsNumber == null || recordsNumber.isEmpty()) {
-        throw new IllegalArgumentException("Please check archive-to-avro metadata yaml file or message records number, recordsNumber can't be null or empty!");
-      }
-      return Long.parseLong(recordsNumber);
+    Long messageNumber = message.getNumberOfRecords();
+    String fileNumber = HdfsUtils.getValueByKey(config.hdfsSiteConfig, metaPath, Metrics.ARCHIVE_TO_ER_COUNT);
+
+    if (messageNumber == null && (fileNumber == null || fileNumber.isEmpty())) {
+      throw new IllegalArgumentException( "Please check archive-to-avro metadata yaml file or message records number, recordsNumber can't be null or empty!");
     }
+
+    if (messageNumber == null) {
+      return Long.parseLong(fileNumber);
+    }
+
+    if (fileNumber == null || fileNumber.isEmpty()) {
+      return messageNumber;
+    }
+
+    return messageNumber > Long.parseLong(fileNumber) ? messageNumber : Long.parseLong(fileNumber);
   }
 
 }
