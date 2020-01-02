@@ -42,7 +42,7 @@
     <!-- Fixed to the version Curator uses, problems otherwise -->
     <freemarker.version>2.3.23</freemarker.version>
 
-    <dwc-api.version>1.20</dwc-api.version>
+    <dwc-api.version>1.24-SNAPSHOT</dwc-api.version>
     <dwca-io.version>2.7</dwca-io.version>
     <gbif-api.version>0.101</gbif-api.version>
     <gbif-cli.version>0.13</gbif-cli.version>
