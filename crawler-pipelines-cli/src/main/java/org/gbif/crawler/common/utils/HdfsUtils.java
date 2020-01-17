@@ -189,6 +189,6 @@ public class HdfsUtils {
   }
 
   private static FileSystem getFileSystem(String hdfsSiteConfig, String filePath) {
-    return FileSystemFactory.create(hdfsSiteConfig).getFs(filePath);
+    return FileSystemFactory.getInstance(hdfsSiteConfig).getFs(filePath);
   }
 }
