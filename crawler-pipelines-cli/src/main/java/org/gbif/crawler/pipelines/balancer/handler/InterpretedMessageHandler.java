@@ -124,7 +124,7 @@ public class InterpretedMessageHandler {
       return messageNumber;
     }
 
-    return messageNumber > Long.parseLong(fileNumber) ? messageNumber : Long.parseLong(fileNumber);
+    return messageNumber > Long.parseLong(fileNumber) && messageNumber != 2_000_000L ? messageNumber : Long.parseLong(fileNumber);
   }
 
 }
