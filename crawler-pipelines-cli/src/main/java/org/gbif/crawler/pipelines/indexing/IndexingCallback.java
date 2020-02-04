@@ -1,5 +1,17 @@
 package org.gbif.crawler.pipelines.indexing;
 
+import java.io.IOException;
+import java.time.Instant;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
+
 import org.gbif.api.model.pipelines.PipelineStep;
 import org.gbif.api.model.pipelines.StepRunner;
 import org.gbif.api.model.pipelines.StepType;
@@ -18,17 +30,6 @@ import org.gbif.pipelines.common.PipelinesVariables.Pipeline.Interpretation.Reco
 import org.gbif.pipelines.ingest.java.pipelines.InterpretedToEsIndexExtendedPipeline;
 import org.gbif.registry.ws.client.pipelines.PipelinesHistoryWsClient;
 
-import java.io.IOException;
-import java.time.Instant;
-import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
-
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Strings;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -38,6 +39,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.slf4j.MDC.MDCCloseable;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Strings;
 
 import static org.gbif.crawler.common.utils.HdfsUtils.buildOutputPathAsString;
 
@@ -302,7 +307,10 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
     if (indexName.startsWith(config.indexDefDynamicPrefixName) || indexName.startsWith(config.indexDefStaticPrefixName)) {
       return (int) Math.ceil((double) config.indexDefSize / (double) config.indexRecordsPerShard);
     }
-    return (int) Math.ceil((double) recordsNumber / (double) config.indexRecordsPerShard);
+
+    double shards = (double) recordsNumber / (double) config.indexRecordsPerShard;
+    boolean isCeil = (shards - Math.floor(shards)) > 0.25d;
+    return isCeil ? (int) Math.ceil(shards) : (int) Math.floor(shards);
   }
 
   /**
