@@ -84,7 +84,7 @@
     <validation-api.version>1.1.0.Final</validation-api.version>
     <woodstox.version>4.4.1</woodstox.version>
     <yammer-metrics.version>2.2.0</yammer-metrics.version>
-    <zookeeper.version>3.4.5</zookeeper.version>
+    <zookeeper.version>3.4.14</zookeeper.version>
     <hadoop-core.version>2.6.0-mr1-cdh5.16.2</hadoop-core.version>
     <hadoop-common.version>2.6.0-cdh5.16.2</hadoop-common.version>
     <commons-lang.version>2.6</commons-lang.version>
