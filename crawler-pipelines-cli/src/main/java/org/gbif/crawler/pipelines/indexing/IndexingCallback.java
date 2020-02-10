@@ -309,6 +309,7 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
     }
 
     double shards = (double) recordsNumber / (double) config.indexRecordsPerShard;
+    shards = shards > 1d ? shards : 1d;
     boolean isCeil = (shards - Math.floor(shards)) > 0.25d;
     return isCeil ? (int) Math.ceil(shards) : (int) Math.floor(shards);
   }
