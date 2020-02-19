@@ -55,7 +55,7 @@
     <gbif-postal-service.version>0.43</gbif-postal-service.version>
     <gbif-registry.version>2.145</gbif-registry.version>
     <gbif-wrangler.version>0.3</gbif-wrangler.version>
-    <gbif-pipelines.version>2.3.4</gbif-pipelines.version>
+    <gbif-pipelines.version>2.3.5.1</gbif-pipelines.version>
     <gbif-metrics.version>0.33</gbif-metrics.version>
 
     <guava.version>18.0</guava.version>
