@@ -23,7 +23,7 @@ import org.gbif.common.messaging.api.messages.PipelinesIndexedMessage;
 import org.gbif.common.messaging.api.messages.PipelinesInterpretedMessage;
 import org.gbif.crawler.common.utils.HdfsUtils;
 import org.gbif.crawler.pipelines.PipelineCallback;
-import org.gbif.crawler.pipelines.dwca.DwcaToAvroConfiguration;
+import org.gbif.crawler.pipelines.interpret.InterpreterConfiguration;
 import org.gbif.pipelines.common.PipelinesVariables.Metrics;
 import org.gbif.pipelines.common.PipelinesVariables.Pipeline.Interpretation;
 import org.gbif.pipelines.common.PipelinesVariables.Pipeline.Interpretation.RecordType;
@@ -329,19 +329,25 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
   private long getRecordNumber(PipelinesInterpretedMessage message) throws IOException {
     String datasetId = message.getDatasetUuid().toString();
     String attempt = Integer.toString(message.getAttempt());
-    String metaFileName = new DwcaToAvroConfiguration().metaFileName;
+    String metaFileName = new InterpreterConfiguration().metaFileName;
     String metaPath = String.join("/", config.repositoryPath, datasetId, attempt, metaFileName);
 
-    String recordsNumber = HdfsUtils.getValueByKey(config.hdfsSiteConfig, metaPath, Metrics.ARCHIVE_TO_ER_COUNT);
-    if (recordsNumber == null || recordsNumber.isEmpty()) {
-      if (message.getNumberOfRecords() != null) {
-        return message.getNumberOfRecords();
-      } else {
-        throw new IllegalArgumentException(
-            "Please check archive-to-avro metadata yaml file or message records number, recordsNumber can't be null or empty!");
-      }
+    Long messageNumber = message.getNumberOfRecords();
+    String fileNumber = HdfsUtils.getValueByKey(config.hdfsSiteConfig, metaPath, Metrics.BASIC_RECORDS_COUNT + "Attempted");
+
+    if (messageNumber == null && (fileNumber == null || fileNumber.isEmpty())) {
+      throw new IllegalArgumentException( "Please check archive-to-avro metadata yaml file or message records number, recordsNumber can't be null or empty!");
     }
-    return Long.parseLong(recordsNumber);
+
+    if (messageNumber == null) {
+      return Long.parseLong(fileNumber);
+    }
+
+    if (fileNumber == null || fileNumber.isEmpty()) {
+      return messageNumber;
+    }
+
+    return messageNumber > Long.parseLong(fileNumber) ? messageNumber : Long.parseLong(fileNumber);
   }
 
   /**
