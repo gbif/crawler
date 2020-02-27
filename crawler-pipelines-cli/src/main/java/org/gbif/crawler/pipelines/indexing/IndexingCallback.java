@@ -224,17 +224,16 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
   /**
    * Computes the memory for executor in Gb, where min is config.sparkExecutorMemoryGbMin and
    * max is config.sparkExecutorMemoryGbMax
-   * <p>
-   * 65_536d is found empirically salt
    */
   private String computeSparkExecutorMemory(int sparkExecutorNumbers) {
-    if (sparkExecutorNumbers < config.sparkExecutorMemoryGbMin) {
+    int size =  sparkExecutorNumbers * 2;
+    if (size < config.sparkExecutorMemoryGbMin) {
       return config.sparkExecutorMemoryGbMin + "G";
     }
-    if (sparkExecutorNumbers > config.sparkExecutorMemoryGbMax) {
+    if (size > config.sparkExecutorMemoryGbMax) {
       return config.sparkExecutorMemoryGbMax + "G";
     }
-    return sparkExecutorNumbers + "G";
+    return size + "G";
   }
 
   /**
