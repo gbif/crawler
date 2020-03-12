@@ -49,6 +49,10 @@ public class CoordinatorCleanupConfiguration {
   @PropertyName("httpTimeout")
   public int httpTimeout = 3 * 60 * 1000;
 
+  @Parameter(names = "--pipelines-only-mode", description = "Ignore message-based processing steps")
+  @PropertyName("pipelinesOnlyMode")
+  public boolean pipelinesOnlyMode = false;
+
   @Override
   public String toString() {
     return Objects.toStringHelper(this).add("zooKeeper", zooKeeper)

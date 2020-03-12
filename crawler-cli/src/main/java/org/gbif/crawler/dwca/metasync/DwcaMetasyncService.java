@@ -2,6 +2,7 @@ package org.gbif.crawler.dwca.metasync;
 
 import org.gbif.api.model.common.paging.Pageable;
 import org.gbif.api.model.common.paging.PagingRequest;
+import org.gbif.api.model.crawler.ProcessState;
 import org.gbif.api.model.registry.Dataset;
 import org.gbif.api.model.registry.MachineTag;
 import org.gbif.api.service.registry.DatasetService;
@@ -39,7 +40,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
+import static org.gbif.crawler.common.ZookeeperUtils.createOrUpdate;
 import static org.gbif.crawler.constants.CrawlerNodePaths.PAGES_FRAGMENTED_ERROR;
+import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_CHECKLIST;
+import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_OCCURRENCE;
+import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_SAMPLE;
 
 /**
  * Service that listens to DwcaValidationFinishedMessages and puts found metadata documents into the metadata
@@ -154,6 +159,15 @@ public class DwcaMetasyncService extends DwcaService {
         } else {
           LOG.warn("Metadata processed, but not sending completion message because the archive is invalid.");
         }
+      }
+
+      if (message.getDatasetType() == DatasetType.METADATA) {
+        // for metadata only dataset this is the last step
+        // explicitly declare that no content is expected so the CoordinatorCleanup can pick it up.
+        createOrUpdate(curator, datasetKey, PROCESS_STATE_OCCURRENCE, ProcessState.EMPTY);
+        createOrUpdate(curator, datasetKey, PROCESS_STATE_CHECKLIST, ProcessState.EMPTY);
+        createOrUpdate(curator, datasetKey, PROCESS_STATE_SAMPLE, ProcessState.EMPTY);
+        LOG.info("Marked metadata-only dataset as empty [{}]", datasetKey);
       }
     }
 

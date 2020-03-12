@@ -193,6 +193,11 @@ public class CoordinatorCleanupService extends AbstractScheduledService {
       return true;
     }
 
+    // If we're in pipelines-only mode, we are done.
+    if (configuration.pipelinesOnlyMode) {
+      return true;
+    }
+
     // Done fragmenting?
     // We are done when we have as many pages fragmented (in error or successful) as we did crawl
     // this is only really used for xml protocols, dwca will have 1 page fragmented by the downloader
