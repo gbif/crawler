@@ -271,7 +271,7 @@ public class IndexingCallback extends AbstractMessageCallback<PipelinesInterpret
     if (recordsNumber >= config.indexIndepRecord) {
       idxName = datasetId + "_" + message.getAttempt();
       idxName = prefix == null ? idxName : idxName + "_" + prefix;
-      idxName = message.isRepeatAttempt() ? idxName + "_" + Instant.now().toEpochMilli() : idxName;
+      idxName = idxName + "_" + Instant.now().toEpochMilli();
       LOG.info("ES Index name - {}, recordsNumber - {}", idxName, recordsNumber);
       return idxName;
     }
