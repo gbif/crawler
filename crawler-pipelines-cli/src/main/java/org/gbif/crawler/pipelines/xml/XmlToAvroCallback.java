@@ -173,7 +173,7 @@ public class XmlToAvroCallback extends AbstractMessageCallback<PipelinesXmlMessa
 
   private static void checkRecordsSize(XmlToAvroConfiguration config, String datasetId, String attempt,
       int expectedRecords) {
-    if (expectedRecords != SKIP_RECORDS_CHECK) {
+    if (expectedRecords == SKIP_RECORDS_CHECK) {
       return;
     }
     String metaFileName = new DwcaToAvroConfiguration().metaFileName;
@@ -191,11 +191,10 @@ public class XmlToAvroCallback extends AbstractMessageCallback<PipelinesXmlMessa
     }
     double recordsNumber = Double.parseDouble(fileNumber);
     double persentage = recordsNumber * 100 / (double) expectedRecords;
+    LOG.info("The dataset conversion from xml to avro got {}% of records", persentage);
     if (persentage < 95d) {
       throw new IllegalArgumentException("Dataset - " + datasetId + " attempt - " + attempt
           + " the dataset conversion from xml to avro got less 95% of records");
-    } else {
-      LOG.info("The dataset conversion from xml to avro got {}% of records", persentage);
     }
   }
 
