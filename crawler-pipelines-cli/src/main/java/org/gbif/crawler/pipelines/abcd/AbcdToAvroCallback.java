@@ -1,5 +1,11 @@
 package org.gbif.crawler.pipelines.abcd;
 
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.function.Supplier;
+
 import org.gbif.api.model.pipelines.PipelineStep;
 import org.gbif.api.model.pipelines.StepType;
 import org.gbif.api.vocabulary.EndpointType;
@@ -14,20 +20,16 @@ import org.gbif.crawler.pipelines.xml.XmlToAvroCallback;
 import org.gbif.crawler.pipelines.xml.XmlToAvroConfiguration;
 import org.gbif.registry.ws.client.pipelines.PipelinesHistoryWsClient;
 
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.ExecutorService;
-import java.util.function.Supplier;
-
-import com.google.common.collect.Sets;
 import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.slf4j.MDC.MDCCloseable;
 
+import com.google.common.collect.Sets;
+
 import static org.gbif.crawler.common.utils.HdfsUtils.buildOutputPathAsString;
+import static org.gbif.crawler.pipelines.xml.XmlToAvroCallback.SKIP_RECORDS_CHECK;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -48,7 +50,7 @@ public class AbcdToAvroCallback extends AbstractMessageCallback<PipelinesAbcdMes
   private final ExecutorService executor;
 
   public AbcdToAvroCallback(XmlToAvroConfiguration config, MessagePublisher publisher, CuratorFramework curator,
-                            PipelinesHistoryWsClient historyWsClient, ExecutorService executor) {
+      PipelinesHistoryWsClient historyWsClient, ExecutorService executor) {
     this.curator = checkNotNull(curator, "curator cannot be null");
     this.config = checkNotNull(config, "config cannot be null");
     this.executor = checkNotNull(executor, "executor cannot be null");
@@ -88,7 +90,8 @@ public class AbcdToAvroCallback extends AbstractMessageCallback<PipelinesAbcdMes
       // Common variables
       Set<String> steps = message.getPipelineSteps();
       EndpointType endpointType = message.getEndpointType();
-      Runnable runnable = XmlToAvroCallback.createRunnable(config, datasetId, attempt.toString(), endpointType, executor);
+      Runnable runnable =
+          XmlToAvroCallback.createRunnable(config, datasetId, attempt.toString(), endpointType, executor, SKIP_RECORDS_CHECK);
 
       // Message callback handler, updates zookeeper info, runs process logic and sends next MQ message
       PipelineCallback.create()

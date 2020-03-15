@@ -1,19 +1,5 @@
 package org.gbif.crawler.pipelines.xml;
 
-import org.gbif.api.model.crawler.FinishReason;
-import org.gbif.api.model.pipelines.PipelineStep;
-import org.gbif.api.model.pipelines.StepType;
-import org.gbif.api.vocabulary.EndpointType;
-import org.gbif.common.messaging.AbstractMessageCallback;
-import org.gbif.common.messaging.api.MessagePublisher;
-import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage;
-import org.gbif.common.messaging.api.messages.PipelinesXmlMessage;
-import org.gbif.common.messaging.api.messages.Platform;
-import org.gbif.converters.XmlToAvroConverter;
-import org.gbif.crawler.common.utils.HdfsUtils;
-import org.gbif.crawler.pipelines.PipelineCallback;
-import org.gbif.registry.ws.client.pipelines.PipelinesHistoryWsClient;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -27,13 +13,30 @@ import java.util.concurrent.ExecutorService;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import com.google.common.collect.Sets;
+import org.gbif.api.model.crawler.FinishReason;
+import org.gbif.api.model.pipelines.PipelineStep;
+import org.gbif.api.model.pipelines.StepType;
+import org.gbif.api.vocabulary.EndpointType;
+import org.gbif.common.messaging.AbstractMessageCallback;
+import org.gbif.common.messaging.api.MessagePublisher;
+import org.gbif.common.messaging.api.messages.PipelinesVerbatimMessage;
+import org.gbif.common.messaging.api.messages.PipelinesXmlMessage;
+import org.gbif.common.messaging.api.messages.Platform;
+import org.gbif.converters.XmlToAvroConverter;
+import org.gbif.crawler.common.utils.HdfsUtils;
+import org.gbif.crawler.pipelines.PipelineCallback;
+import org.gbif.crawler.pipelines.dwca.DwcaToAvroConfiguration;
+import org.gbif.pipelines.common.PipelinesVariables.Metrics;
+import org.gbif.registry.ws.client.pipelines.PipelinesHistoryWsClient;
+
 import org.apache.avro.file.CodecFactory;
 import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.slf4j.MDC.MDCCloseable;
+
+import com.google.common.collect.Sets;
 
 import static org.gbif.crawler.common.utils.HdfsUtils.buildOutputPath;
 import static org.gbif.crawler.common.utils.HdfsUtils.buildOutputPathAsString;
@@ -51,6 +54,8 @@ public class XmlToAvroCallback extends AbstractMessageCallback<PipelinesXmlMessa
   private static final StepType STEP = StepType.XML_TO_VERBATIM;
   private static final String TAR_EXT = ".tar.xz";
 
+  public static final int SKIP_RECORDS_CHECK = -1;
+
   private final XmlToAvroConfiguration config;
   private final MessagePublisher publisher;
   private final CuratorFramework curator;
@@ -58,7 +63,7 @@ public class XmlToAvroCallback extends AbstractMessageCallback<PipelinesXmlMessa
   private final ExecutorService executor;
 
   public XmlToAvroCallback(XmlToAvroConfiguration config, MessagePublisher publisher, CuratorFramework curator,
-                           PipelinesHistoryWsClient historyWsClient, ExecutorService executor) {
+      PipelinesHistoryWsClient historyWsClient, ExecutorService executor) {
     this.curator = checkNotNull(curator, "curator cannot be null");
     this.config = checkNotNull(config, "config cannot be null");
     this.executor = checkNotNull(executor, "executor cannot be null");
@@ -102,7 +107,8 @@ public class XmlToAvroCallback extends AbstractMessageCallback<PipelinesXmlMessa
       // Common variables
       EndpointType endpointType = message.getEndpointType();
       Set<String> steps = message.getPipelineSteps();
-      Runnable runnable = createRunnable(config, datasetId, attempt.toString(), endpointType, executor);
+      Runnable runnable =
+          createRunnable(config, datasetId, attempt.toString(), endpointType, executor, message.getTotalRecordCount());
 
       // Message callback handler, updates zookeeper info, runs process logic and sends next MQ message
       PipelineCallback.create()
@@ -127,7 +133,7 @@ public class XmlToAvroCallback extends AbstractMessageCallback<PipelinesXmlMessa
    * Main message processing logic, converts an ABCD archive to an avro file.
    */
   public static Runnable createRunnable(XmlToAvroConfiguration config, UUID datasetId, String attempt,
-      EndpointType endpointType, ExecutorService executor) {
+      EndpointType endpointType, ExecutorService executor, int expectedRecords) {
     return () -> {
 
       Optional.ofNullable(endpointType)
@@ -156,11 +162,41 @@ public class XmlToAvroCallback extends AbstractMessageCallback<PipelinesXmlMessa
           .metaPath(metaPath)
           .convert();
 
-      if (!isConverted) {
+      if (isConverted) {
+        checkRecordsSize(config, datasetId.toString(), attempt, expectedRecords);
+      } else {
         throw new IllegalArgumentException("Dataset - " + datasetId + " attempt - " + attempt
             + " avro was deleted, cause it is empty! Please check XML files in the directory -> " + inputPath);
       }
     };
+  }
+
+  private static void checkRecordsSize(XmlToAvroConfiguration config, String datasetId, String attempt,
+      int expectedRecords) {
+    if (expectedRecords != SKIP_RECORDS_CHECK) {
+      return;
+    }
+    String metaFileName = new DwcaToAvroConfiguration().metaFileName;
+    String metaPath = String.join("/", config.repositoryPath, datasetId, attempt, metaFileName);
+    LOG.info("Getting records number from the file - {}", metaPath);
+    String fileNumber;
+    try {
+      fileNumber = HdfsUtils.getValueByKey(config.hdfsSiteConfig, metaPath, Metrics.ARCHIVE_TO_ER_COUNT);
+    } catch (IOException e) {
+      throw new IllegalArgumentException(e.getMessage(), e);
+    }
+    if (fileNumber == null || fileNumber.isEmpty()) {
+      throw new IllegalArgumentException(
+          "Please check archive-to-avro metadata yaml file or message records number, recordsNumber can't be null or empty!");
+    }
+    double recordsNumber = Double.parseDouble(fileNumber);
+    double persentage = recordsNumber * 100 / (double) expectedRecords;
+    if (persentage < 95d) {
+      throw new IllegalArgumentException("Dataset - " + datasetId + " attempt - " + attempt
+          + " the dataset conversion from xml to avro got less 95% of records");
+    } else {
+      LOG.info("The dataset conversion from xml to avro got {}% of records", persentage);
+    }
   }
 
   /**
