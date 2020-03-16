@@ -82,6 +82,11 @@ public class XmlToAvroCallback extends AbstractMessageCallback<PipelinesXmlMessa
       return;
     }
 
+    if(message.getTotalRecordCount() == 0){
+      LOG.info("Skip empty dataset {}", message);
+      return;
+    }
+
     UUID datasetId = message.getDatasetUuid();
     Integer attempt = message.getAttempt();
 
@@ -192,7 +197,7 @@ public class XmlToAvroCallback extends AbstractMessageCallback<PipelinesXmlMessa
     double recordsNumber = Double.parseDouble(fileNumber);
     double persentage = recordsNumber * 100 / (double) expectedRecords;
     LOG.info("The dataset conversion from xml to avro got {}% of records", persentage);
-    if (persentage < 95d) {
+    if (persentage < 90d) {
       throw new IllegalArgumentException("Dataset - " + datasetId + " attempt - " + attempt
           + " the dataset conversion from xml to avro got less 95% of records");
     }
