@@ -51,11 +51,11 @@
     <gbif-common.version>0.45</gbif-common.version>
     <gbif-httputils.version>0.12</gbif-httputils.version>
     <gbif-microservice.version>0.7</gbif-microservice.version>
-    <gbif-occurrence.version>0.116-ES-SNAPSHOT</gbif-occurrence.version>
+    <gbif-occurrence.version>0.116-ES</gbif-occurrence.version>
     <gbif-postal-service.version>0.43</gbif-postal-service.version>
     <gbif-registry.version>2.145</gbif-registry.version>
     <gbif-wrangler.version>0.3</gbif-wrangler.version>
-    <gbif-pipelines.version>2.3.8-SNAPSHOT</gbif-pipelines.version>
+    <gbif-pipelines.version>2.3.8</gbif-pipelines.version>
     <gbif-metrics.version>0.33</gbif-metrics.version>
 
     <guava.version>18.0</guava.version>
