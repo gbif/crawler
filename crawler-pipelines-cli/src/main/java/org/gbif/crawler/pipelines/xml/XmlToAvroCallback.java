@@ -197,9 +197,9 @@ public class XmlToAvroCallback extends AbstractMessageCallback<PipelinesXmlMessa
     double recordsNumber = Double.parseDouble(fileNumber);
     double persentage = recordsNumber * 100 / (double) expectedRecords;
     LOG.info("The dataset conversion from xml to avro got {}% of records", persentage);
-    if (persentage < 90d) {
+    if (persentage < 80d) {
       throw new IllegalArgumentException("Dataset - " + datasetId + " attempt - " + attempt
-          + " the dataset conversion from xml to avro got less 95% of records");
+          + " the dataset conversion from xml to avro got less 80% of records");
     }
   }
 
