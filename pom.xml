@@ -42,20 +42,20 @@
     <!-- Fixed to the version Curator uses, problems otherwise -->
     <freemarker.version>2.3.23</freemarker.version>
 
-    <dwc-api.version>1.25</dwc-api.version>
+    <dwc-api.version>1.26-SNAPSHOT</dwc-api.version>
     <dwca-io.version>2.8</dwca-io.version>
-    <gbif-api.version>0.105</gbif-api.version>
+    <gbif-api.version>0.106-SNAPSHOT</gbif-api.version>
     <gbif-cli.version>0.13</gbif-cli.version>
     <gbif-common-service.version>0.17</gbif-common-service.version>
     <gbif-common-ws.version>0.48</gbif-common-ws.version>
     <gbif-common.version>0.45</gbif-common.version>
     <gbif-httputils.version>0.12</gbif-httputils.version>
     <gbif-microservice.version>0.7</gbif-microservice.version>
-    <gbif-occurrence.version>0.116-ES</gbif-occurrence.version>
+    <gbif-occurrence.version>0.117-ES-SNAPSHOT</gbif-occurrence.version>
     <gbif-postal-service.version>0.43</gbif-postal-service.version>
     <gbif-registry.version>2.145</gbif-registry.version>
     <gbif-wrangler.version>0.3</gbif-wrangler.version>
-    <gbif-pipelines.version>2.3.8</gbif-pipelines.version>
+    <gbif-pipelines.version>2.3.9-SNAPSHOT</gbif-pipelines.version>
     <gbif-metrics.version>0.33</gbif-metrics.version>
 
     <guava.version>18.0</guava.version>
