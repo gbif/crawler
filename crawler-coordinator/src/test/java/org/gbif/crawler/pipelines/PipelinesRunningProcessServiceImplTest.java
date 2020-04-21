@@ -1,12 +1,5 @@
 package org.gbif.crawler.pipelines;
 
-import org.gbif.api.model.pipelines.PipelineProcess;
-import org.gbif.api.model.pipelines.PipelineStep;
-import org.gbif.api.model.pipelines.StepType;
-import org.gbif.api.service.registry.DatasetService;
-import org.gbif.crawler.constants.PipelinesNodePaths;
-import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
-
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -18,8 +11,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-import com.google.common.base.Charsets;
-import com.google.common.collect.Sets;
+import org.gbif.api.model.pipelines.PipelineProcess;
+import org.gbif.api.model.pipelines.PipelineStep;
+import org.gbif.api.model.pipelines.StepType;
+import org.gbif.api.service.registry.DatasetService;
+import org.gbif.crawler.constants.PipelinesNodePaths;
+import org.gbif.crawler.constants.PipelinesNodePaths.Fn;
+
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.RetryOneTime;
@@ -31,6 +29,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
+
+import com.google.common.base.Charsets;
+import com.google.common.collect.Sets;
 
 import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
@@ -159,7 +160,7 @@ public class PipelinesRunningProcessServiceImplTest {
     }
 
     // we wait for the ZK TreeCache to respond to the events
-    TimeUnit.MILLISECONDS.sleep(2000);
+    TimeUnit.MILLISECONDS.sleep(10_000);
 
     // When
     Set<PipelineProcess> set = service.getPipelineProcesses();
