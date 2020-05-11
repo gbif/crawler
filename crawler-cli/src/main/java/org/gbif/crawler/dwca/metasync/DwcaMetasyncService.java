@@ -160,15 +160,6 @@ public class DwcaMetasyncService extends DwcaService {
           LOG.warn("Metadata processed, but not sending completion message because the archive is invalid.");
         }
       }
-
-      if (message.getDatasetType() == DatasetType.METADATA) {
-        // for metadata only dataset this is the last step
-        // explicitly declare that no content is expected so the CoordinatorCleanup can pick it up.
-        createOrUpdate(curator, datasetKey, PROCESS_STATE_OCCURRENCE, ProcessState.EMPTY);
-        createOrUpdate(curator, datasetKey, PROCESS_STATE_CHECKLIST, ProcessState.EMPTY);
-        createOrUpdate(curator, datasetKey, PROCESS_STATE_SAMPLE, ProcessState.EMPTY);
-        LOG.info("Marked metadata-only dataset as empty [{}]", datasetKey);
-      }
     }
 
     private Map<String, UUID> processConstituents(Dataset parent, Archive archive) {

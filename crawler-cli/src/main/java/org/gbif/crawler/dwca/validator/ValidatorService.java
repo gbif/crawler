@@ -167,7 +167,7 @@ public class ValidatorService extends DwcaService {
      */
     private void updateProcessState(Dataset dataset, DwcaValidationReport report, ProcessState state) {
 
-      switch(dataset.getType()){
+      switch (dataset.getType()) {
         case OCCURRENCE:
           createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_OCCURRENCE, state);
           break;
@@ -184,10 +184,12 @@ public class ValidatorService extends DwcaService {
           createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_OCCURRENCE, state);
           break;
         case METADATA:
-          // DwcaFragmenterService will later set these to EMPTY
-          createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_OCCURRENCE, state);
-          createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_CHECKLIST, state);
-          createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_SAMPLE, state);
+          // for metadata only dataset this is the last step
+          // explicitly declare that no content is expected so the CoordinatorCleanup can pick it up.
+          createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_OCCURRENCE, ProcessState.EMPTY);
+          createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_CHECKLIST, ProcessState.EMPTY);
+          createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_SAMPLE, ProcessState.EMPTY);
+          LOG.info("Marked metadata-only dataset as empty [{}]", datasetKey);
           break;
         default:
           LOG.error("Can't updateProcessState dataset [{}]: unknown type -> {}", datasetKey, dataset.getType());

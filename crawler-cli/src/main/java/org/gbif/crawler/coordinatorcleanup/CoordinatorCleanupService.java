@@ -171,77 +171,41 @@ public class CoordinatorCleanupService extends AbstractScheduledService {
   private boolean checkDoneProcessing(DatasetProcessStatus status) {
     // crawl finished?
     if (status.getFinishedCrawling() == null) {
+      LOG.debug("Waiting for crawling to finish.");
       return false;
     }
 
-    // if metadata only, these are set to empty by the fragmenter
-    // Also if an occurrence dataset really is empty.
+    // if metadata only, these are set to empty by the metasyncer
     if (ProcessState.EMPTY == status.getProcessStateOccurrence() &&
             ProcessState.EMPTY == status.getProcessStateChecklist() &&
             ProcessState.EMPTY == status.getProcessStateSample()) {
+      LOG.debug("DONE: Empty dataset is finished.");
       return true;
+    }
+
+    // no processing started yet
+    if (status.getProcessStateChecklist() == null &&
+            status.getProcessStateOccurrence() == null &&
+            status.getProcessStateSample() == null) {
+      LOG.debug("Waiting for validation to start.");
+      return false;
     }
 
     // checklist indexing running?
     if (status.getProcessStateChecklist() != null && status.getProcessStateChecklist() == ProcessState.RUNNING) {
-      return false;
-    }
-
-    // occurrence processing done?
-    if (status.getProcessStateOccurrence() != null && (status.getProcessStateOccurrence() == ProcessState.EMPTY
-                                                    || status.getProcessStateOccurrence() == ProcessState.FINISHED)) {
-      return true;
-    }
-
-    // If we're in pipelines-only mode, we are done.
-    if (configuration.pipelinesOnlyMode) {
-      return true;
-    }
-
-    // Done fragmenting?
-    // We are done when we have as many pages fragmented (in error or successful) as we did crawl
-    // this is only really used for xml protocols, dwca will have 1 page fragmented by the downloader
-    if (status.getPagesCrawled() > status.getPagesFragmentedError() + status.getPagesFragmentedSuccessful()) {
-      return false;
-    }
-
-    // Done persisting fragments?
-    // Verify that all fragments have been fully processed, i.e. when we have processed as many fragments as the fragmenter emitted.
-    // During this processing we could generate more raw occurrence records than we got fragments due to ABCD2
-    // We also make sure here that at least one fragment was already processed.
-    //
-    // In case the fragmenting is delayed cause its queued no fragments are emitted at all and we should wait,
-    // otherwise the cleanup would too eagerly kick in and we see broken or empty ZK nodes.
-    // This has often happened with mixed Plazi checklists containing also occurrences.
-    if (status.getFragmentsEmitted() == 0 || status.getFragmentsEmitted() > status.getFragmentsProcessed()) {
-      return false;
-    }
-
-    // Are we done persisting all verbatim occurrences?
-    // We are done when we have persisted (in error or successful) as many verbatim records
-    // as there were new or updated raw occurrences in the previous steps
-    long rawPersistedCnt = status.getRawOccurrencesPersistedNew() + status.getRawOccurrencesPersistedUpdated();
-    long verbatimPersistedCnt = status.getVerbatimOccurrencesPersistedSuccessful() + status.getVerbatimOccurrencesPersistedError();
-    // At this point rawPersistedCnt should never be zero as we have made sure we at least processed one fragment
-    if (rawPersistedCnt > verbatimPersistedCnt) {
-      return false;
-    }
-
-    // Are we done interpreting occurrences?
-    // We are done when we have interpreted (in error or successful) as many occurrences
-    // as there were successful verbatim occurrences persisted
-    // Again also check that the interpretation is not just queued and we have at least one verbatim record persisted
-    long interpretedCnt = status.getInterpretedOccurrencesPersistedSuccessful() + status.getInterpretedOccurrencesPersistedError();
-    // At this point verbatimPersistedCnt should never be zero, but we could have zero successful verbatim records
-    if (status.getVerbatimOccurrencesPersistedSuccessful() > interpretedCnt) {
+      LOG.debug("Waiting for checklist processing to finish.");
       return false;
     }
 
     // the crawl is finally done!
+    LOG.debug("DONE: crawling and checklist processing is completed. (Pipelines continues independently.)");
 
     // Set the occurrence processing to completed.
     if (status.getProcessStateOccurrence() == ProcessState.RUNNING) {
       status.setProcessStateOccurrence(ProcessState.FINISHED);
+    }
+    if (status.getProcessStateSample() == ProcessState.RUNNING) {
+      status.setProcessStateSample(ProcessState.FINISHED);
     }
 
     return true;
