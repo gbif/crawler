@@ -137,7 +137,7 @@ public class PipelinesRunningProcessServiceImplTest {
   }
 
   @Test
-  public void testEmptyPipelinesProcessByDatasetId() {
+  public void testEmptyPipelinesProcessByDatasetKey() {
     // State
     UUID datasetKey = UUID.fromString("a731e3b1-bc81-4c1f-aad7-aba75ce3cf3b");
     int attempt = 1;
@@ -198,9 +198,9 @@ public class PipelinesRunningProcessServiceImplTest {
   }
 
   @Test
-  public void testPipelinesProcessByDatasetId() throws Exception {
+  public void testPipelinesProcessByDatasetKey() throws Exception {
     // State
-    UUID datasetId = UUID.fromString("a731e3b1-bc81-4c1f-aad7-aba75ce3cf3b");
+    UUID datasetKey = UUID.fromString("a731e3b1-bc81-4c1f-aad7-aba75ce3cf3b");
     String crawlId = "a731e3b1-bc81-4c1f-aad7-aba75ce3cf3b_1";
     addStatusToZookeeper(crawlId);
 
@@ -208,7 +208,7 @@ public class PipelinesRunningProcessServiceImplTest {
     TimeUnit.MILLISECONDS.sleep(200);
 
     // When
-    Set<PipelineProcess> set = service.getPipelineProcesses(datasetId);
+    Set<PipelineProcess> set = service.getPipelineProcesses(datasetKey);
 
     // Should
     ASSERT_FN.accept(set, Collections.singleton(crawlId));

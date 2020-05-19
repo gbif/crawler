@@ -113,6 +113,7 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
 
     metrics.successfulSchedule(datasetKey);
     MDC.remove("datasetKey");
+    MDC.remove("attempt");
   }
 
   @Override
@@ -184,6 +185,7 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
 
     // This object holds all information needed by Crawlers to crawl the endpoint
     CrawlJob crawlJob = getCrawlJob(datasetKey, dataset, endpoint.get(), declaredCount, platform);
+    MDC.put("attempt", String.valueOf(crawlJob.getAttempt()));
 
     byte[] dataBytes = serializeCrawlJob(crawlJob);
     queueCrawlJob(datasetKey, isAbcdArchive(endpoint.get()), isDarwinCoreArchive(endpoint.get()), priority, dataBytes);

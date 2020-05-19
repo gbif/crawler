@@ -62,7 +62,10 @@ public abstract class DownloadCrawlConsumer extends CrawlConsumer {
     // we keep the file (potentially compressed) forever and use it to retrieve the last modified for conditional gets
     final File localFile = new File(archiveRepository, datasetKey + getSuffix());
 
-    try (MDC.MDCCloseable closeable = MDC.putCloseable("datasetKey", datasetKey.toString())) {
+    try (
+      MDC.MDCCloseable ignored1 = MDC.putCloseable("datasetKey", datasetKey.toString());
+      MDC.MDCCloseable ignored2 = MDC.putCloseable("attempt", String.valueOf(crawlJob.getAttempt()))
+    ) {
       LOG.info("Start download of archive from {} to {}", crawlJob.getTargetUrl(), localFile);
       StatusLine status = client.downloadIfModifiedSince(crawlJob.getTargetUrl().toURL(), localFile);
 

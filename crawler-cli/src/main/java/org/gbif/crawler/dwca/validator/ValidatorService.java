@@ -85,7 +85,10 @@ public class ValidatorService extends DwcaService {
       messageCount.inc();
 
       final UUID datasetKey = message.getDatasetUuid();
-      try (MDC.MDCCloseable closeable = MDC.putCloseable("datasetKey", datasetKey.toString())) {
+      try (
+        MDC.MDCCloseable ignored1 = MDC.putCloseable("datasetKey", datasetKey.toString());
+        MDC.MDCCloseable ignored2 = MDC.putCloseable("attempt", String.valueOf(message.getAttempt()))
+      ) {
 
         LOG.info("Now validating DwC-A for dataset [{}]", datasetKey);
         Dataset dataset = datasetService.get(datasetKey);

@@ -81,7 +81,10 @@ public class CoordinatorCleanupService extends AbstractScheduledService {
     }
 
     for (DatasetProcessStatus status : statuses) {
-      try (MDC.MDCCloseable closeable = MDC.putCloseable("datasetKey", status.getDatasetKey().toString())) {
+      try (
+        MDC.MDCCloseable ignored1 = MDC.putCloseable("datasetKey", status.getDatasetKey().toString());
+        MDC.MDCCloseable ignored2 = MDC.putCloseable("attempt", String.valueOf(status.getCrawlJob().getAttempt()))
+      ) {
         LOG.info("Checking DatasetProcessStatus with UUID [{}] now", status.getDatasetKey());
 
         try {

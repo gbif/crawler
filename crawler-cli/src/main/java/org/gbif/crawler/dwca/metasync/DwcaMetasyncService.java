@@ -40,11 +40,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
-import static org.gbif.crawler.common.ZookeeperUtils.createOrUpdate;
 import static org.gbif.crawler.constants.CrawlerNodePaths.PAGES_FRAGMENTED_ERROR;
-import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_CHECKLIST;
-import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_OCCURRENCE;
-import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_SAMPLE;
 
 /**
  * Service that listens to DwcaValidationFinishedMessages and puts found metadata documents into the metadata
@@ -94,18 +90,17 @@ public class DwcaMetasyncService extends DwcaService {
 
     @Override
     public void handleMessage(DwcaValidationFinishedMessage message) {
-      MDC.put("datasetKey", message.getDatasetUuid().toString());
       messageCount.inc();
       UUID uuid = message.getDatasetUuid();
-      LOG.info("Updating metadata from DwC-A for dataset [{}]", uuid);
-
-      try {
+      try (
+        MDC.MDCCloseable ignored1 = MDC.putCloseable("datasetKey", uuid.toString());
+        MDC.MDCCloseable ignored2 = MDC.putCloseable("attempt", String.valueOf(message.getAttempt()))
+      ) {
+        LOG.info("Updating metadata from DwC-A for dataset [{}]", uuid);
         handleMessageInternal(message, uuid);
       } catch (Exception e) {
         LOG.error("Exception caught during metasyncing DwC-A [{}]", uuid, e);
         updateZookeeper(uuid);
-      } finally {
-        MDC.remove("datasetKey");
       }
     }
 
