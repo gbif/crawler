@@ -11,7 +11,7 @@ import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.queue.QueueConsumer;
 import org.apache.curator.framework.state.ConnectionState;
-import org.codehaus.jackson.map.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;

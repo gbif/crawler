@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.google.inject.Inject;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.TreeCache;
@@ -27,8 +28,7 @@ import org.apache.curator.framework.recipes.cache.TreeCacheListener;
 import org.cache2k.Cache;
 import org.cache2k.Cache2kBuilder;
 import org.cache2k.CacheEntry;
-import org.codehaus.jackson.map.DeserializationConfig;
-import org.codehaus.jackson.map.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,7 +52,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
       LoggerFactory.getLogger(PipelinesRunningProcessServiceImpl.class);
 
   private static final ObjectMapper OBJECT_MAPPER =
-      new ObjectMapper().disable(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES);
+      new ObjectMapper().disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
   private static final BiFunction<UUID, Integer, String> CRAWL_ID_GENERATOR =
       (datasetKey, attempt) -> datasetKey + "_" + attempt;
 

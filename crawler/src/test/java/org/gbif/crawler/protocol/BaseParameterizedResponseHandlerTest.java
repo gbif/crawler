@@ -9,11 +9,11 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Optional;
 import com.google.common.io.Resources;
 import org.apache.http.HttpResponse;
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.map.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,7 +52,7 @@ public abstract class BaseParameterizedResponseHandlerTest {
 
     for (JsonNode node : root) {
       objects.add(new Object[] {
-        node.get("file_name").getTextValue(),
+        node.get("file_name").textValue(),
         node.get("record_count") == null ? Optional.absent() : Optional.of(node.get("record_count").asInt()),
         node.get("hash") == null ? Optional.absent() : Optional.of(node.get("hash").asLong()),
         node.get("end_of_records") == null ? Optional.absent() : Optional.of(node.get("end_of_records").asBoolean()),

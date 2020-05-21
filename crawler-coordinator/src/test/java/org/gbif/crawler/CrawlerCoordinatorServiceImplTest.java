@@ -22,7 +22,7 @@ import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.RetryOneTime;
 import org.apache.curator.test.TestingServer;
 import org.apache.curator.utils.ZKPaths;
-import org.codehaus.jackson.map.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.gbif.registry.metasync.api.MetadataSynchroniser;
 import org.junit.After;
 import org.junit.Before;

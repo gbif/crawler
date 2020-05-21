@@ -1,42 +1,31 @@
 package org.gbif.crawler.ws.guice;
 
-import org.gbif.api.service.crawler.DatasetProcessService;
 import org.gbif.api.service.registry.DatasetService;
-import org.gbif.crawler.DatasetProcessServiceImpl;
-import org.gbif.crawler.pipelines.PipelinesRunningProcessService;
-import org.gbif.crawler.pipelines.PipelinesRunningProcessServiceImpl;
-import org.gbif.registry.ws.client.guice.RegistryWsClientModule;
-import org.gbif.service.guice.PrivateServiceModule;
-import org.gbif.ws.client.guice.AnonymousAuthModule;
+import org.gbif.registry.ws.client.DatasetClient;
+import org.gbif.ws.client.ClientFactory;
 
-import java.util.Properties;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
-import com.google.inject.*;
-import com.google.inject.name.Named;
-import com.google.inject.name.Names;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.ExponentialBackoffRetry;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
 /**
  * A basic class for setting up the injection to enable metrics.
  */
-class CrawlerModule extends PrivateServiceModule {
+@Configuration
+public class CrawlerModule  {
 
-  public static final String PREFIX = "crawler.";
-
-  CrawlerModule(String propertyPrefix, Properties properties) {
-    super(propertyPrefix, properties);
-  }
-
-  @Override
+  /*
   protected void configureService() {
     bind(DatasetProcessService.class).to(DatasetProcessServiceImpl.class).in(Scopes.SINGLETON);
-    // it has to be an eager singleton to load the ZK cache
+
     bind(PipelinesRunningProcessService.class).to(PipelinesRunningProcessServiceImpl.class).asEagerSingleton();
     expose(DatasetProcessService.class);
     expose(PipelinesRunningProcessService.class);
@@ -45,20 +34,14 @@ class CrawlerModule extends PrivateServiceModule {
     expose(DatasetService.class);
 
     expose(String.class).annotatedWith(Names.named("overcrawledReportFilePath"));
-  }
+  }*/
 
-  CrawlerModule(Properties properties) {
-    super(PREFIX, properties);
-  }
-
-  @Provides
-  @Singleton
-  @Inject
+  @Bean
   public CuratorFramework provideZookeperResource(
-      @Named("crawl.server") String url,
-      @Named("crawl.namespace") String crawlNamespace,
-      @Named("crawl.server.retryAttempts") Integer retryAttempts,
-      @Named("crawl.server.retryDelayMs") Integer retryWait
+      @Value("${crawl.server}") String url,
+      @Value("${crawl.namespace}") String crawlNamespace,
+      @Value("${crawl.server.retryAttempts}") Integer retryAttempts,
+      @Value("${crawl.server.retryDelayMs}") Integer retryWait
   ) {
     CuratorFramework client = CuratorFrameworkFactory.builder()
         .connectString(url)
@@ -74,9 +57,8 @@ class CrawlerModule extends PrivateServiceModule {
    *
    * @param threadCount number of maximum threads to use
    */
-  @Provides
-  @Singleton
-  public Executor provideExecutor(@Named("crawl.threadCount") int threadCount) {
+  @Bean
+  public Executor provideExecutor(@Value("${crawl.threadCount}") int threadCount) {
     checkArgument(threadCount > 0, "threadCount has to be greater than zero");
     return Executors.newFixedThreadPool(threadCount);
   }
@@ -86,11 +68,9 @@ class CrawlerModule extends PrivateServiceModule {
    *
    * @param url to registry
    */
-  @Provides
-  @Singleton
-  public DatasetService provideDatasetService(@Named("registry.ws.url") String url) {
-    Properties p = new Properties();
-    p.setProperty("registry.ws.url", url);
-    return Guice.createInjector(new RegistryWsClientModule(p), new AnonymousAuthModule()).getInstance(DatasetService.class);
+  @Bean
+  public DatasetService provideDatasetService(@Value("${registry.ws.url}") String url) {
+    ClientFactory clientFactory = new ClientFactory(url);
+    return clientFactory.newInstance(DatasetClient.class);
   }
 }

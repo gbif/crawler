@@ -4,6 +4,7 @@ import org.gbif.api.service.registry.DatasetService;
 import org.gbif.common.messaging.DefaultMessagePublisher;
 import org.gbif.common.messaging.MessageListener;
 import org.gbif.common.messaging.api.MessagePublisher;
+import org.gbif.registry.ws.client.DatasetClient;
 
 import java.io.IOException;
 
@@ -34,7 +35,7 @@ public abstract class DwcaService extends AbstractIdleService {
     publisher = new DefaultMessagePublisher(config.messaging.getConnectionParameters());
     // dwca messages are rather long running processes. Only prefetch one message at a time
     listener = new MessageListener(config.messaging.getConnectionParameters(), 1);
-    datasetService = config.registry.newRegistryInjector().getInstance(DatasetService.class);
+    datasetService = config.registry.newClientFactory().newInstance(DatasetClient.class);
     bindListeners();
   }
 

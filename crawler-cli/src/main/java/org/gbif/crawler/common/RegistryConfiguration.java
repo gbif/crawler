@@ -1,18 +1,13 @@
 package org.gbif.crawler.common;
 
-import org.gbif.cli.ConfigUtils;
 import org.gbif.cli.PropertyName;
-import org.gbif.registry.ws.client.guice.RegistryWsClientModule;
-import org.gbif.ws.client.guice.SingleUserAuthModule;
+import org.gbif.ws.client.ClientFactory;
 
-import java.util.Properties;
 import javax.validation.constraints.NotNull;
 
 import com.beust.jcommander.Parameter;
 import com.google.common.base.Objects;
 import com.google.common.base.Strings;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 
 /**
  * A configuration class which can be used to get all the details needed to create a writable connection to the
@@ -45,13 +40,9 @@ public class RegistryConfiguration {
    *
    * @return guice injector with RegistryWsClientModule bound
    */
-  public Injector newRegistryInjector() {
+  public ClientFactory newClientFactory() {
     // setup writable registry client
-    Properties properties = ConfigUtils.toProperties(this);
-    RegistryWsClientModule regModule = new RegistryWsClientModule(properties);
-    SingleUserAuthModule authModule = new SingleUserAuthModule(user, password);
-
-    return Guice.createInjector(regModule, authModule);
+    return new ClientFactory(user, wsUrl, user, password);
   }
 
 }

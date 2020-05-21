@@ -15,16 +15,13 @@ import org.gbif.registry.metasync.protocols.tapir.TapirMetadataSynchroniser;
 import org.gbif.registry.metasync.resulthandler.DebugHandler;
 import org.gbif.registry.metasync.resulthandler.RegistryUpdater;
 import org.gbif.registry.metasync.util.HttpClientFactory;
-import org.gbif.registry.ws.client.guice.RegistryWsClientModule;
-import org.gbif.ws.client.guice.SingleUserAuthModule;
-
-import java.util.Properties;
+import org.gbif.registry.ws.client.DatasetClient;
+import org.gbif.registry.ws.client.InstallationClient;
+import org.gbif.ws.client.ClientFactory;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,14 +37,12 @@ public class MetasyncService extends AbstractIdleService {
 
   @Override
   protected void startUp() throws Exception {
-    Properties props = new Properties();
-    props.setProperty("registry.ws.url", configuration.registry.wsUrl);
-    Injector injector = Guice.createInjector(new RegistryWsClientModule(props),
-      new SingleUserAuthModule(configuration.registry.user, configuration.registry.password));
+    ClientFactory clientFactory = new ClientFactory(configuration.registry.user, configuration.registry.wsUrl, configuration.registry.user, configuration.registry.password);
 
-    DatasetService datasetService = injector.getInstance(DatasetService.class);
-    MetasyncHistoryService historyService = injector.getInstance(MetasyncHistoryService.class);
-    InstallationService installationService = injector.getInstance(InstallationService.class);
+    DatasetService datasetService = clientFactory.newInstance(DatasetClient.class);
+    //TODO: MetasyncHistoryService Client?
+    MetasyncHistoryService historyService = clientFactory.newInstance(MetasyncHistoryService.class);
+    InstallationService installationService = clientFactory.newInstance(InstallationClient.class);
 
     AbstractMessageCallback<StartMetasyncMessage> metasyncCallback;
 

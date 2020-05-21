@@ -21,16 +21,15 @@ import org.gbif.api.service.crawler.DatasetProcessService;
 import org.gbif.api.service.registry.DatasetProcessStatusService;
 import org.gbif.api.service.registry.DatasetService;
 import org.gbif.api.util.MachineTagUtils;
-import org.gbif.cli.ConfigUtils;
 import org.gbif.common.messaging.DefaultMessagePublisher;
 import org.gbif.common.messaging.api.Message;
 import org.gbif.common.messaging.api.messages.StartCrawlMessage;
-import org.gbif.crawler.ws.client.guice.CrawlerWsClientModule;
-import org.gbif.registry.ws.client.guice.RegistryWsClientModule;
-import org.gbif.ws.client.guice.AnonymousAuthModule;
+import org.gbif.crawler.ws.client.DatasetProcessClient;
+import org.gbif.registry.ws.client.DatasetClient;
+import org.gbif.registry.ws.client.DatasetProcessStatusClient;
+import org.gbif.ws.client.ClientFactory;
 
 import java.util.List;
-import java.util.Properties;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -38,8 +37,6 @@ import java.util.concurrent.TimeUnit;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractScheduledService;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import org.joda.time.DateTime;
 import org.joda.time.Days;
 import org.joda.time.ReadableInstant;
@@ -186,14 +183,10 @@ public class CrawlSchedulerService extends AbstractScheduledService {
   @Override
   protected void startUp() throws Exception {
     publisher = new DefaultMessagePublisher(configuration.messaging.getConnectionParameters());
-
-    Properties props = ConfigUtils.toProperties(configuration);
-
-    Injector injector = Guice
-      .createInjector(new CrawlerWsClientModule(props), new RegistryWsClientModule(props), new AnonymousAuthModule());
-    datasetService = injector.getInstance(DatasetService.class);
-    crawlService = injector.getInstance(DatasetProcessService.class);
-    registryService = injector.getInstance(DatasetProcessStatusService.class);
+    ClientFactory clientFactory = new ClientFactory(configuration.registryWsUrl);
+    datasetService = clientFactory.newInstance(DatasetClient.class);
+    crawlService = clientFactory.newInstance(DatasetProcessClient.class);
+    registryService = clientFactory.newInstance(DatasetProcessStatusClient.class);
   }
 
   @Override

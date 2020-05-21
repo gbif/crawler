@@ -1,41 +1,42 @@
 package org.gbif.crawler.ws;
 
-import org.gbif.ws.server.interceptor.NullToNotFound;
+import org.gbif.api.annotation.NullToNotFound;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
 
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Primary;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Expose the dataset overcrawl report.
  *
  * Note: overcrawledReport is expected to be updated on a regular basic on the file system.
  */
-@Produces(MediaType.APPLICATION_JSON)
-@Path("dataset/overcrawled")
+@Primary
+@RestController
+@RequestMapping(value = "dataset/overcrawled", produces = org.springframework.http.MediaType.APPLICATION_JSON_VALUE)
 public class OvercrawledResource {
 
   private static final Logger LOG = LoggerFactory.getLogger(OvercrawledResource.class);
 
   private final File overcrawledReport;
 
-  @Inject
-  public OvercrawledResource(@Named("overcrawledReportFilePath") String overcrawledReportFilePath) {
+  @Autowired
+  public OvercrawledResource(@Qualifier("overcrawledReportFilePath") String overcrawledReportFilePath) {
     this.overcrawledReport = new File(overcrawledReportFilePath);
   }
 
-  @GET
-  @NullToNotFound
+  @GetMapping
+  @NullToNotFound("dataset/overcrawled")
   public String getOvercrawledReport() {
     /**
      * At the moment we blindly expose the report as String since there is no need to parse it.

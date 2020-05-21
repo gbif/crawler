@@ -9,8 +9,8 @@ import org.gbif.common.messaging.api.messages.RegistryChangeMessage;
 
 import java.io.IOException;
 
-import org.codehaus.jackson.map.DeserializationConfig.Feature;
-import org.codehaus.jackson.map.ObjectMapper;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,7 +24,7 @@ public class TestListener {
 
   public static void main(String[] args) throws IOException {
     ConnectionParameters connectionParameters = new ConnectionParameters("localhost", 5672, "guest", "guest", "/");
-    ObjectMapper objectMapper = new ObjectMapper().configure(Feature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    ObjectMapper objectMapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
     MessageListener listener = new MessageListener(connectionParameters, new DefaultMessageRegistry(), objectMapper);
 

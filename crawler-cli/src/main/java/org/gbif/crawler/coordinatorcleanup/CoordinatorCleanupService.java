@@ -12,22 +12,20 @@
  */
 package org.gbif.crawler.coordinatorcleanup;
 
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.util.concurrent.AbstractScheduledService;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import org.apache.curator.framework.CuratorFramework;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.map.SerializationConfig;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.gbif.api.exception.ServiceUnavailableException;
 import org.gbif.api.model.crawler.DatasetProcessStatus;
 import org.gbif.api.model.crawler.ProcessState;
 import org.gbif.api.service.crawler.DatasetProcessService;
 import org.gbif.api.service.registry.DatasetProcessStatusService;
-import org.gbif.cli.ConfigUtils;
 import org.gbif.crawler.constants.CrawlerNodePaths;
-import org.gbif.crawler.ws.client.guice.CrawlerWsClientModule;
-import org.gbif.registry.ws.client.guice.RegistryWsClientModule;
-import org.gbif.ws.client.guice.SingleUserAuthModule;
+import org.gbif.crawler.ws.client.DatasetProcessClient;
+import org.gbif.registry.ws.client.DatasetProcessStatusClient;
+import org.gbif.ws.client.ClientFactory;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -110,14 +108,12 @@ public class CoordinatorCleanupService extends AbstractScheduledService {
   protected void startUp() throws Exception {
     Properties props = new Properties();
     props.setProperty("registry.ws.url", configuration.registry.wsUrl);
-
-    Injector injector = Guice.createInjector(new CrawlerWsClientModule(ConfigUtils.toProperties(configuration)),
-      new RegistryWsClientModule(props),
-      new SingleUserAuthModule(configuration.registry.user, configuration.registry.password));
-    service = injector.getInstance(DatasetProcessService.class);
-    registryService = injector.getInstance(DatasetProcessStatusService.class);
+    ClientFactory clientFactory = new ClientFactory(configuration.registry.user, configuration.registry.wsUrl, configuration.registry.user, configuration.registry.password);
+    //TODO:
+    service = clientFactory.newInstance(DatasetProcessClient.class);
+    registryService = clientFactory.newInstance(DatasetProcessStatusClient.class);
     curator = initializeCurator();
-    MAPPER.configure(SerializationConfig.Feature.INDENT_OUTPUT, true);
+    MAPPER.enable(SerializationFeature.INDENT_OUTPUT);
   }
 
   /**

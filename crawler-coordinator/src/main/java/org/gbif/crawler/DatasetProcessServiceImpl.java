@@ -23,7 +23,7 @@ import org.apache.curator.framework.recipes.atomic.DistributedAtomicLong;
 import org.apache.curator.framework.recipes.queue.QueueHelper;
 import org.apache.curator.framework.recipes.queue.QueueSerializer;
 import org.apache.curator.retry.RetryNTimes;
-import org.codehaus.jackson.map.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -5,6 +5,7 @@ import org.gbif.api.model.common.paging.PagingRequest;
 import org.gbif.api.model.common.paging.PagingResponse;
 import org.gbif.api.model.registry.Dataset;
 import org.gbif.api.model.registry.Installation;
+
 import org.gbif.api.service.registry.InstallationService;
 import org.gbif.cli.BaseCommand;
 import org.gbif.cli.Command;
@@ -12,12 +13,11 @@ import org.gbif.common.messaging.DefaultMessagePublisher;
 import org.gbif.common.messaging.api.Message;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.StartMetasyncMessage;
-import org.gbif.registry.ws.client.guice.RegistryWsClientModule;
-import org.gbif.ws.client.guice.AnonymousAuthModule;
+import org.gbif.registry.ws.client.InstallationClient;
+import org.gbif.ws.client.ClientFactory;
 
 import java.io.IOException;
 import java.util.Iterator;
-import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -25,8 +25,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
+
 import org.kohsuke.MetaInfServices;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,17 +55,13 @@ public class MetasyncEverythingCommand extends BaseCommand {
       MessagePublisher publisher = new DefaultMessagePublisher(config.messaging.getConnectionParameters());
 
       // Create Registry WS Client
-      Properties properties = new Properties();
-      properties.setProperty("registry.ws.url", config.registryWsUrl);
-
-      Injector injector = Guice.createInjector(new RegistryWsClientModule(properties), new AnonymousAuthModule());
-
+      ClientFactory clientFactory = new ClientFactory(config.registryWsUrl);
       int offset = 0;
       boolean endOfRecords = true;
       ExecutorService executor = Executors.newFixedThreadPool(20);
       AtomicInteger totalCount = new AtomicInteger();
       AtomicInteger scheduledCount = new AtomicInteger();
-      InstallationService installationService = injector.getInstance(InstallationService.class);
+      InstallationService installationService = clientFactory.newInstance(InstallationClient.class);
       do {
         Pageable request = new PagingRequest(offset, LIMIT);
         Stopwatch stopwatch = Stopwatch.createStarted();

@@ -13,11 +13,13 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Injector;
 import org.apache.curator.framework.CuratorFramework;
 import org.gbif.registry.metasync.MetadataSynchroniserImpl;
-import org.gbif.registry.metasync.api.MetadataSynchroniser;
 import org.gbif.registry.metasync.protocols.biocase.BiocaseMetadataSynchroniser;
 import org.gbif.registry.metasync.protocols.digir.DigirMetadataSynchroniser;
 import org.gbif.registry.metasync.protocols.tapir.TapirMetadataSynchroniser;
 import org.gbif.registry.metasync.util.HttpClientFactory;
+import org.gbif.registry.ws.client.DatasetClient;
+import org.gbif.registry.ws.client.InstallationClient;
+import org.gbif.ws.client.ClientFactory;
 
 import java.util.concurrent.TimeUnit;
 
@@ -42,9 +44,9 @@ public class CoordinatorService extends AbstractIdleService {
     curator = configuration.zooKeeper.getCuratorFramework();
 
     // Create Registry WS Client
-    Injector injector = configuration.registry.newRegistryInjector();
-    DatasetService datasetService = injector.getInstance(DatasetService.class);
-    InstallationService installationService = injector.getInstance(InstallationService.class);
+    ClientFactory wsClientFactory = configuration.registry.newClientFactory();
+    DatasetService datasetService = wsClientFactory.newInstance(DatasetClient.class);
+    InstallationService installationService = wsClientFactory.newInstance(InstallationClient.class);
 
     HttpClientFactory clientFactory = new HttpClientFactory(30, TimeUnit.SECONDS);
     MetadataSynchroniserImpl metadataSynchroniser = new MetadataSynchroniserImpl(installationService);

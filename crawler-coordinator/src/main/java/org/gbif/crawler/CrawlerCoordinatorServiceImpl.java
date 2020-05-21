@@ -31,7 +31,7 @@ import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.queue.DistributedPriorityQueue;
 import org.apache.curator.framework.recipes.queue.QueueBuilder;
 import org.apache.zookeeper.data.Stat;
-import org.codehaus.jackson.map.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.gbif.registry.metasync.api.MetadataSynchroniser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

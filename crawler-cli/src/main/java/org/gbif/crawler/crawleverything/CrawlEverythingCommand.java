@@ -10,11 +10,10 @@ import org.gbif.common.messaging.DefaultMessagePublisher;
 import org.gbif.common.messaging.api.Message;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.StartCrawlMessage;
-import org.gbif.registry.ws.client.guice.RegistryWsClientModule;
-import org.gbif.ws.client.guice.AnonymousAuthModule;
+import org.gbif.registry.ws.client.DatasetClient;
+import org.gbif.ws.client.ClientFactory;
 
 import java.io.IOException;
-import java.util.Properties;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -23,8 +22,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import org.kohsuke.MetaInfServices;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,11 +51,8 @@ public class CrawlEverythingCommand extends BaseCommand {
       MessagePublisher publisher = new DefaultMessagePublisher(config.messaging.getConnectionParameters());
 
       // Create Registry WS Client
-      Properties properties = new Properties();
-      properties.setProperty("registry.ws.url", config.registryWsUrl);
-
-      Injector injector = Guice.createInjector(new RegistryWsClientModule(properties), new AnonymousAuthModule());
-      DatasetService datasetService = injector.getInstance(DatasetService.class);
+      ClientFactory clientFactory = new ClientFactory(config.registryWsUrl);
+      DatasetService datasetService = clientFactory.newInstance(DatasetClient.class);
 
       ExecutorService executor = Executors.newFixedThreadPool(20);
 

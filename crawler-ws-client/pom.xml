@@ -49,13 +49,16 @@
       <groupId>org.gbif</groupId>
       <artifactId>gbif-api</artifactId>
     </dependency>
+    <!-- Sptring dependencies -->
     <dependency>
-      <groupId>com.google.inject</groupId>
-      <artifactId>guice</artifactId>
+      <groupId>org.springframework.cloud</groupId>
+      <artifactId>spring-cloud-starter-openfeign</artifactId>
     </dependency>
+
+    <!-- Third party dependencies -->
     <dependency>
-      <groupId>com.sun.jersey</groupId>
-      <artifactId>jersey-client</artifactId>
+      <groupId>io.github.openfeign</groupId>
+      <artifactId>feign-jackson</artifactId>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>

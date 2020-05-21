@@ -4,19 +4,16 @@ import org.gbif.api.service.registry.DatasetService;
 import org.gbif.dwc.Archive;
 import org.gbif.dwc.DwcFiles;
 import org.gbif.dwc.UnsupportedArchiveException;
-import org.gbif.registry.ws.client.guice.RegistryWsClientModule;
-import org.gbif.ws.client.guice.SingleUserAuthModule;
+import org.gbif.registry.ws.client.DatasetClient;
+import org.gbif.ws.client.ClientFactory;
 
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Properties;
 import java.util.UUID;
 
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOCase;
 import org.apache.commons.io.filefilter.SuffixFileFilter;
@@ -43,11 +40,8 @@ public class EmlPusher {
   private EmlPusher(PushEmlConfiguration cfg) {
     LOG.info("Connecting to registry {} as user {}", cfg.registryWsUrl, cfg.registryUser);
 
-    Properties p = new Properties();
-    p.put("registry.ws.url", cfg.registryWsUrl);
-    Injector inj = Guice
-      .createInjector(new SingleUserAuthModule(cfg.registryUser, cfg.registryPassword), new RegistryWsClientModule(p));
-    datasetService = inj.getInstance(DatasetService.class);
+    ClientFactory clientFactory = new ClientFactory(cfg.registryUser, cfg.registryWsUrl, null, cfg.registryPassword);
+    datasetService = clientFactory.newInstance(DatasetClient.class);
 
     rootDirectory = cfg.archiveRepository;
   }

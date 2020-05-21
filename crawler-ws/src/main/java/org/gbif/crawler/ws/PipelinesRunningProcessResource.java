@@ -11,23 +11,29 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import javax.annotation.Nullable;
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
 
-import com.google.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Primary;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Pipelines monitoring resource HTTP endpoint
  */
-@Produces({MediaType.APPLICATION_JSON, ExtraMediaTypes.APPLICATION_JAVASCRIPT})
-@Path("pipelines/process/running")
+@Primary
+@RestController
+@RequestMapping(value = "pipelines/process/running", produces = {MediaType.APPLICATION_JSON_VALUE, "application/x-javascript"})
 public class PipelinesRunningProcessResource {
 
   private static final int DEFAULT_PAGE_SIZE = 10;
 
   private final PipelinesRunningProcessService service;
 
-  @Inject
+  @Autowired
   public PipelinesRunningProcessResource(PipelinesRunningProcessService service) {
     this.service = service;
   }
@@ -35,21 +41,20 @@ public class PipelinesRunningProcessResource {
   /**
    * Returns information about all running datasets
    */
-  @GET
+  @RequestMapping
   public Set<PipelineProcess> getPipelinesProcesses() {
     return service.getPipelineProcesses();
   }
 
   /** Searchs for the received parameters. */
-  @GET
-  @Path("query")
+  @RequestMapping("query")
   public PipelinesRunningProcessServiceImpl.PipelineProcessSearchResult search(
-      @QueryParam("datasetTitle") String datasetTitle,
-      @QueryParam("datasetKey") UUID datasetKey,
-      @QueryParam("status") List<PipelineStep.Status> statuses,
-      @QueryParam("step") List<StepType> stepTypes,
-      @Nullable @QueryParam("offset") Integer offset,
-      @Nullable @QueryParam("limit") Integer limit) {
+      @RequestParam("datasetTitle") String datasetTitle,
+      @RequestParam("datasetKey") UUID datasetKey,
+      @RequestParam("status") List<PipelineStep.Status> statuses,
+      @RequestParam("step") List<StepType> stepTypes,
+      @Nullable @RequestParam("offset") Integer offset,
+      @Nullable @RequestParam("limit") Integer limit) {
     return service.search(
         datasetTitle,
         datasetKey,
@@ -64,9 +69,8 @@ public class PipelinesRunningProcessResource {
    *
    * @param datasetKey typical dataset UUID
    */
-  @GET
-  @Path("{datasetKey}")
-  public Set<PipelineProcess> getPipelinesProcessesByDatasetKey(@PathParam("datasetKey") UUID datasetKey) {
+  @RequestMapping("{datasetKey}")
+  public Set<PipelineProcess> getPipelinesProcessesByDatasetKey(@PathVariable UUID datasetKey) {
     return service.getPipelineProcesses(datasetKey);
   }
 
@@ -76,10 +80,9 @@ public class PipelinesRunningProcessResource {
    * @param datasetKey dataset of the process
    * @param attempt attempt of the process
    */
-  @GET
-  @Path("{datasetKey}/{attempt}")
-  public PipelineProcess getRunningPipelinesProcess(@PathParam("datasetKey") UUID datasetKey,
-                                                    @PathParam("attempt") int attempt) {
+  @RequestMapping("{datasetKey}/{attempt}")
+  public PipelineProcess getRunningPipelinesProcess(@PathVariable("datasetKey") UUID datasetKey,
+                                                    @PathVariable("attempt") int attempt) {
     return service.getPipelineProcess(datasetKey, attempt);
   }
 
@@ -89,17 +92,16 @@ public class PipelinesRunningProcessResource {
    * @param datasetKey dataset of the process
    * @param attempt attempt of the process
    * */
-  @DELETE
-  @Path("{datasetKey}/{attempt}")
-  public void deletePipelinesProcess(@PathParam("datasetKey") UUID datasetKey,
-                                     @PathParam("attempt") int attempt) {
+  @DeleteMapping("{datasetKey}/{attempt}")
+  public void deletePipelinesProcess(@PathVariable("datasetKey") UUID datasetKey,
+                                     @PathVariable("attempt") int attempt) {
     service.deletePipelineProcess(datasetKey, attempt);
   }
 
   /**
    * Removes pipelines ZK path
    */
-  @DELETE
+  @DeleteMapping
   public void deletePipelinesProcess() {
     service.deleteAllPipelineProcess();
   }
