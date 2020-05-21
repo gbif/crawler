@@ -30,19 +30,21 @@ public class RegistryConfiguration {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this).add("registryWsUrl", wsUrl).add("registryUser", user)
-      .add("registryPassword", Strings.repeat("*", Strings.nullToEmpty(password).length())).toString();
+    return Objects.toStringHelper(this)
+        .add("registryWsUrl", wsUrl)
+        .add("registryUser", user)
+        .add("registryPassword", Strings.repeat("*", Strings.nullToEmpty(password).length()))
+        .toString();
   }
 
   /**
-   * Convenience method to setup a guice injector with a writable registry client module using the configuration
-   * of this instance.
+   * Convenience method to provide a ws client factory. The factory will be used to create writable registry clients.
    *
-   * @return guice injector with RegistryWsClientModule bound
+   * @return writable client factory
    */
   public ClientFactory newClientFactory() {
     // setup writable registry client
-    return new ClientFactory(user, wsUrl, user, password);
+    return new ClientFactory(user, password, wsUrl);
   }
 
 }
