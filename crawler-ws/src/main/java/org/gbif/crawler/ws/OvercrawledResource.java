@@ -38,11 +38,9 @@ public class OvercrawledResource {
   @GetMapping
   @NullToNotFound("dataset/overcrawled")
   public String getOvercrawledReport() {
-    /**
-     * At the moment we blindly expose the report as String since there is no need to parse it.
-     * It might be interesting to support query parameters and return only the relevant part of the report
-     * but it should be small enough to be done client side.
-     */
+//  At the moment we blindly expose the report as String since there is no need to parse it.
+//  It might be interesting to support query parameters and return only the relevant part of the report
+//  but it should be small enough to be done client side.
     String jsonContent = null;
 
     if(overcrawledReport.exists()) {

@@ -27,25 +27,25 @@ public class DatasetProcessResource implements DatasetProcessService {
     this.service = service;
   }
 
-  @GetMapping(value = "detail/{key}")
+  @GetMapping("detail/{key}")
   @Override
   public DatasetProcessStatus getDatasetProcessStatus(@PathVariable("key") UUID uuid) {
     return service.getDatasetProcessStatus(uuid);
   }
 
-  @GetMapping(value = "running")
+  @GetMapping("running")
   @Override
   public Set<DatasetProcessStatus> getRunningDatasetProcesses() {
     return service.getRunningDatasetProcesses();
   }
 
-  @GetMapping(value = "xml/pending")
+  @GetMapping("xml/pending")
   @Override
   public List<DatasetProcessStatus> getPendingXmlDatasetProcesses() {
     return service.getPendingXmlDatasetProcesses();
   }
 
-  @GetMapping(value = "dwca/pending")
+  @GetMapping("dwca/pending")
   @Override
   public List<DatasetProcessStatus> getPendingDwcaDatasetProcesses() {
     return service.getPendingDwcaDatasetProcesses();

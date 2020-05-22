@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -41,20 +42,20 @@ public class PipelinesRunningProcessResource {
   /**
    * Returns information about all running datasets
    */
-  @RequestMapping
+  @GetMapping
   public Set<PipelineProcess> getPipelinesProcesses() {
     return service.getPipelineProcesses();
   }
 
   /** Searchs for the received parameters. */
-  @RequestMapping("query")
+  @GetMapping("query")
   public PipelinesRunningProcessServiceImpl.PipelineProcessSearchResult search(
       @RequestParam("datasetTitle") String datasetTitle,
       @RequestParam("datasetKey") UUID datasetKey,
       @RequestParam("status") List<PipelineStep.Status> statuses,
       @RequestParam("step") List<StepType> stepTypes,
-      @Nullable @RequestParam("offset") Integer offset,
-      @Nullable @RequestParam("limit") Integer limit) {
+      @Nullable @RequestParam(value = "offset", required = false) Integer offset,
+      @Nullable @RequestParam(value = "limit", required = false) Integer limit) {
     return service.search(
         datasetTitle,
         datasetKey,
@@ -69,7 +70,7 @@ public class PipelinesRunningProcessResource {
    *
    * @param datasetKey typical dataset UUID
    */
-  @RequestMapping("{datasetKey}")
+  @GetMapping("{datasetKey}")
   public Set<PipelineProcess> getPipelinesProcessesByDatasetKey(@PathVariable UUID datasetKey) {
     return service.getPipelineProcesses(datasetKey);
   }
@@ -80,7 +81,7 @@ public class PipelinesRunningProcessResource {
    * @param datasetKey dataset of the process
    * @param attempt attempt of the process
    */
-  @RequestMapping("{datasetKey}/{attempt}")
+  @GetMapping("{datasetKey}/{attempt}")
   public PipelineProcess getRunningPipelinesProcess(@PathVariable("datasetKey") UUID datasetKey,
                                                     @PathVariable("attempt") int attempt) {
     return service.getPipelineProcess(datasetKey, attempt);
