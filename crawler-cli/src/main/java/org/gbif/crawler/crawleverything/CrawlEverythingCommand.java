@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 /**
  * This command iterates over all datasets from the registry and sends a StartCrawlMessage for each of them.
  */
+@SuppressWarnings("UnstableApiUsage")
 @MetaInfServices(Command.class)
 public class CrawlEverythingCommand extends BaseCommand {
 

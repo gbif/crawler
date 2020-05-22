@@ -5,7 +5,6 @@ import org.gbif.api.model.pipelines.PipelineStep;
 import org.gbif.api.model.pipelines.StepType;
 import org.gbif.crawler.pipelines.PipelinesRunningProcessService;
 import org.gbif.crawler.pipelines.PipelinesRunningProcessServiceImpl;
-import org.gbif.ws.util.ExtraMediaTypes;
 
 import java.util.List;
 import java.util.Set;

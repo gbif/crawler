@@ -25,6 +25,7 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@SuppressWarnings("UnstableApiUsage")
 public class MetasyncService extends AbstractIdleService {
 
   private static final Logger LOG = LoggerFactory.getLogger(MetasyncService.class);
@@ -37,11 +38,13 @@ public class MetasyncService extends AbstractIdleService {
 
   @Override
   protected void startUp() throws Exception {
-    ClientFactory clientFactory = new ClientFactory(configuration.registry.user, configuration.registry.wsUrl, configuration.registry.user, configuration.registry.password);
+    ClientFactory clientFactory = new ClientFactory(
+        configuration.registry.user,
+        configuration.registry.password,
+        configuration.registry.wsUrl
+    );
 
     DatasetService datasetService = clientFactory.newInstance(DatasetClient.class);
-    //TODO: MetasyncHistoryService Client?
-    MetasyncHistoryService historyService = clientFactory.newInstance(MetasyncHistoryService.class);
     InstallationService installationService = clientFactory.newInstance(InstallationClient.class);
 
     AbstractMessageCallback<StartMetasyncMessage> metasyncCallback;
@@ -50,7 +53,7 @@ public class MetasyncService extends AbstractIdleService {
       LOG.warn("Metasync dry run: the registry will not be updated.");
       metasyncCallback = new DebugMetasyncCallback(installationService);
     } else {
-      RegistryUpdater registryUpdater = new RegistryUpdater(datasetService, historyService);
+      RegistryUpdater registryUpdater = new RegistryUpdater(datasetService, ((MetasyncHistoryService) installationService));
       metasyncCallback = new MetasyncCallback(registryUpdater, installationService);
     }
 
@@ -59,7 +62,7 @@ public class MetasyncService extends AbstractIdleService {
   }
 
   @Override
-  protected void shutDown() throws Exception {
+  protected void shutDown() {
     listener.close();
   }
 

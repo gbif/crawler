@@ -57,6 +57,7 @@ import org.slf4j.MDC;
  * <p/>
  * This reads the load on the crawler before initiating any crawls, allowing self throttling behaviour.
  */
+@SuppressWarnings("UnstableApiUsage")
 public class CrawlSchedulerService extends AbstractScheduledService {
   public static final String CRAWLER_NAMESPACE = "crawler.gbif.org";
   public static final String TAG_EXCLUDE_FROM_SCHEDULED_CRAWL = "omitFromScheduledCrawl";
@@ -213,7 +214,7 @@ public class CrawlSchedulerService extends AbstractScheduledService {
     }
 
     if (dataset.getDuplicateOfDatasetKey() != null) {
-      LOG.debug("Not eligible to crawl [{}] - dataset [{}] is marked as a duplicate", dataset.getKey());
+      LOG.debug("Not eligible to crawl [{}] - dataset is marked as a duplicate", dataset.getKey());
       return false;
     }
 

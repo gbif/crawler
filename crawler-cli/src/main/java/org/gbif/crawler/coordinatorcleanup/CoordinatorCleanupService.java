@@ -31,7 +31,6 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
 import java.io.IOException;
-import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -39,6 +38,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * This services starts the Crawler Coordinator by listening for messages.
  */
+@SuppressWarnings("UnstableApiUsage")
 public class CoordinatorCleanupService extends AbstractScheduledService {
 
   private static final Logger LOG = LoggerFactory.getLogger(CoordinatorCleanupService.class);
@@ -106,10 +106,10 @@ public class CoordinatorCleanupService extends AbstractScheduledService {
 
   @Override
   protected void startUp() throws Exception {
-    Properties props = new Properties();
-    props.setProperty("registry.ws.url", configuration.registry.wsUrl);
-    ClientFactory clientFactory = new ClientFactory(configuration.registry.user, configuration.registry.wsUrl, configuration.registry.user, configuration.registry.password);
-    //TODO:
+    ClientFactory clientFactory = new ClientFactory(
+        configuration.registry.user,
+        configuration.registry.password,
+        configuration.registry.wsUrl);
     service = clientFactory.newInstance(DatasetProcessClient.class);
     registryService = clientFactory.newInstance(DatasetProcessStatusClient.class);
     curator = initializeCurator();
@@ -124,14 +124,16 @@ public class CoordinatorCleanupService extends AbstractScheduledService {
     if (curator != null) {
       try {
         curator.close();
-      } catch (Exception e) {}
+      } catch (Exception e) {
+        LOG.debug("Unexpected exception while closing curator: {}", e.getMessage());
+      }
     }
     curator = configuration.zooKeeper.getCuratorFramework();
     return curator;
   }
 
   @Override
-  protected void shutDown() throws Exception {
+  protected void shutDown() {
     LOG.info("Shutting down");
     if (curator != null) {
       curator.close();

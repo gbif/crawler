@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 /**
  * This command iterates over all installations from the registry and sends a StartMetasyncMessage for each of them.
  */
+@SuppressWarnings("UnstableApiUsage")
 @MetaInfServices(Command.class)
 public class MetasyncEverythingCommand extends BaseCommand {
 
