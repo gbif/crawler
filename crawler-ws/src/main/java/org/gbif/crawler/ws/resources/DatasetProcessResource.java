@@ -1,4 +1,4 @@
-package org.gbif.crawler.ws;
+package org.gbif.crawler.ws.resources;
 
 import org.gbif.api.model.crawler.DatasetProcessStatus;
 import org.gbif.api.service.crawler.DatasetProcessService;

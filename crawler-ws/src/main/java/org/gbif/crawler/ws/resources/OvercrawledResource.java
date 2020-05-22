@@ -1,4 +1,4 @@
-package org.gbif.crawler.ws;
+package org.gbif.crawler.ws.resources;
 
 import org.gbif.api.annotation.NullToNotFound;
 
@@ -10,7 +10,7 @@ import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -31,7 +31,7 @@ public class OvercrawledResource {
   private final File overcrawledReport;
 
   @Autowired
-  public OvercrawledResource(@Qualifier("overcrawledReportFilePath") String overcrawledReportFilePath) {
+  public OvercrawledResource(@Value("${crawler.overcrawledReportFilePath}") String overcrawledReportFilePath) {
     this.overcrawledReport = new File(overcrawledReportFilePath);
   }
 

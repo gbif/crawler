@@ -1,4 +1,4 @@
-package org.gbif.crawler.ws;
+package org.gbif.crawler.ws.resources;
 
 import org.gbif.api.model.pipelines.PipelineProcess;
 import org.gbif.api.model.pipelines.PipelineStep;
