@@ -27,7 +27,7 @@ mvn clean package
        * Fragmenter (Occurrence)
        * Normalizer (Checklist)
 
-More information in crawler-cli [README](https://github.com/gbif/crawler/tree/master/crawler-cli).
+More information in crawler-cli [README](crawler-cli/README.md).
 
 ## Change Log
 [Change Log](CHANGELOG.md)

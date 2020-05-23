@@ -31,14 +31,9 @@ class CrawlerCoordinatorServiceMetrics {
   /* These two fields are used to give a quick "status" to anyone interested. I modeled it after the Hadoop status
      messages which have proven to be useful in the past. This UUID is updated every time a new dataset UUID was
      successfully enqueued. */
-  private final AtomicReference<UUID> lastUuid = new AtomicReference<UUID>();
+  private final AtomicReference<UUID> lastUuid = new AtomicReference<>();
   private final Gauge<UUID> lastSuccessfulDatasetKey =
-    registry.register(name(CrawlerCoordinatorService.class, "lastSuccessfulDatasetKey"), new Gauge<UUID>() {
-      @Override
-      public UUID getValue() {
-        return lastUuid.get();
-      }
-    });
+    registry.register(name(CrawlerCoordinatorService.class, "lastSuccessfulDatasetKey"), lastUuid::get);
   private final Timer crawls = registry.timer(name(CrawlerCoordinatorService.class, "crawls"));
   private Timer.Context timerContext;
 

@@ -1,5 +1,15 @@
 package org.gbif.crawler;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Charsets;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Ordering;
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.recipes.queue.DistributedPriorityQueue;
+import org.apache.curator.framework.recipes.queue.QueueBuilder;
+import org.apache.zookeeper.data.Stat;
 import org.gbif.api.exception.ServiceUnavailableException;
 import org.gbif.api.model.Constants;
 import org.gbif.api.model.crawler.CrawlJob;
@@ -13,35 +23,29 @@ import org.gbif.api.util.comparators.EndpointPriorityComparator;
 import org.gbif.api.vocabulary.EndpointType;
 import org.gbif.common.messaging.api.messages.Platform;
 import org.gbif.crawler.constants.CrawlerNodePaths;
+import org.gbif.registry.metasync.api.MetadataSynchroniser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Charsets;
-import com.google.common.base.Optional;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Ordering;
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.recipes.queue.DistributedPriorityQueue;
-import org.apache.curator.framework.recipes.queue.QueueBuilder;
-import org.apache.zookeeper.data.Stat;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.gbif.registry.metasync.api.MetadataSynchroniser;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
-
+import static com.google.common.base.Preconditions.checkNotNull;
 import static org.gbif.api.vocabulary.TagName.CRAWL_ATTEMPT;
 import static org.gbif.api.vocabulary.TagName.DECLARED_COUNT;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static org.gbif.crawler.constants.CrawlerNodePaths.*;
+import static org.gbif.crawler.constants.CrawlerNodePaths.ABCDA_CRAWL;
+import static org.gbif.crawler.constants.CrawlerNodePaths.CRAWL_INFO;
+import static org.gbif.crawler.constants.CrawlerNodePaths.DWCA_CRAWL;
+import static org.gbif.crawler.constants.CrawlerNodePaths.QUEUED_CRAWLS;
+import static org.gbif.crawler.constants.CrawlerNodePaths.RUNNING_CRAWLS;
+import static org.gbif.crawler.constants.CrawlerNodePaths.XML_CRAWL;
+import static org.gbif.crawler.constants.CrawlerNodePaths.buildPath;
 
 /**
  * This implementation stores crawls in ZooKeeper in a node structure like this:
@@ -152,9 +156,9 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
    */
   private DistributedPriorityQueue<UUID> buildQueue(CuratorFramework curator, String path) {
     QueueBuilder<UUID> builder =
-      QueueBuilder.builder(curator, null, new UuidSerializer(), CrawlerNodePaths.buildPath(path, QUEUED_CRAWLS));
+      QueueBuilder.builder(curator, null, new UuidSerializer(), buildPath(path, QUEUED_CRAWLS));
     DistributedPriorityQueue<UUID> queue =
-      builder.lockPath(CrawlerNodePaths.buildPath(path, RUNNING_CRAWLS)).buildPriorityQueue(1);
+      builder.lockPath(buildPath(path, RUNNING_CRAWLS)).buildPriorityQueue(1);
 
     try {
       curator.create().orSetData().creatingParentContainersIfNeeded().forPath(buildPath(CRAWL_INFO));
@@ -337,10 +341,10 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
     // Are any of the endpoints eligible to be crawled
     List<Endpoint> sortedEndpoints = prioritySortEndpoints(dataset.getEndpoints());
     if (sortedEndpoints.isEmpty()) {
-      return Optional.absent();
+      return java.util.Optional.empty();
     }
     Endpoint ep = sortedEndpoints.get(0);
-    return Optional.fromNullable(ep);
+    return java.util.Optional.ofNullable(ep);
   }
 
   /**
@@ -424,7 +428,7 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
       int tagKey = tag.getKey();
       try {
         int taggedAttempt = Integer.parseInt(tag.getValue());
-        attempt = (taggedAttempt > attempt) ? taggedAttempt : attempt;
+        attempt = Math.max(taggedAttempt, attempt);
       } catch (NumberFormatException e) {
         // Swallow it - the tag is corrupt and should be removed
       }
@@ -480,7 +484,7 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
         return Optional.of(tag.getValue());
       }
     }
-    return Optional.absent();
+    return Optional.empty();
   }
 
   /**

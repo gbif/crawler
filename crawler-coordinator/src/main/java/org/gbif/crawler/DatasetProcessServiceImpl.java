@@ -1,19 +1,7 @@
 package org.gbif.crawler;
 
-import org.gbif.api.exception.ServiceUnavailableException;
-import org.gbif.api.model.crawler.CrawlJob;
-import org.gbif.api.model.crawler.DatasetProcessStatus;
-import org.gbif.api.model.crawler.FinishReason;
-import org.gbif.api.model.crawler.ProcessState;
-import org.gbif.api.service.crawler.DatasetProcessService;
-
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.concurrent.*;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
-import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
@@ -23,13 +11,60 @@ import org.apache.curator.framework.recipes.atomic.DistributedAtomicLong;
 import org.apache.curator.framework.recipes.queue.QueueHelper;
 import org.apache.curator.framework.recipes.queue.QueueSerializer;
 import org.apache.curator.retry.RetryNTimes;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.gbif.api.exception.ServiceUnavailableException;
+import org.gbif.api.model.crawler.CrawlJob;
+import org.gbif.api.model.crawler.DatasetProcessStatus;
+import org.gbif.api.model.crawler.FinishReason;
+import org.gbif.api.model.crawler.ProcessState;
+import org.gbif.api.service.crawler.DatasetProcessService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.gbif.crawler.constants.CrawlerNodePaths.*;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.CompletionService;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.Future;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.gbif.crawler.constants.CrawlerNodePaths.CRAWL_CONTEXT;
+import static org.gbif.crawler.constants.CrawlerNodePaths.CRAWL_INFO;
+import static org.gbif.crawler.constants.CrawlerNodePaths.DECLARED_COUNT;
+import static org.gbif.crawler.constants.CrawlerNodePaths.DWCA_CRAWL;
+import static org.gbif.crawler.constants.CrawlerNodePaths.FINISHED_CRAWLING;
+import static org.gbif.crawler.constants.CrawlerNodePaths.FINISHED_REASON;
+import static org.gbif.crawler.constants.CrawlerNodePaths.FRAGMENTS_EMITTED;
+import static org.gbif.crawler.constants.CrawlerNodePaths.FRAGMENTS_PROCESSED;
+import static org.gbif.crawler.constants.CrawlerNodePaths.FRAGMENTS_RECEIVED;
+import static org.gbif.crawler.constants.CrawlerNodePaths.INTERPRETED_OCCURRENCES_PERSISTED_ERROR;
+import static org.gbif.crawler.constants.CrawlerNodePaths.INTERPRETED_OCCURRENCES_PERSISTED_SUCCESSFUL;
+import static org.gbif.crawler.constants.CrawlerNodePaths.PAGES_CRAWLED;
+import static org.gbif.crawler.constants.CrawlerNodePaths.PAGES_FRAGMENTED_ERROR;
+import static org.gbif.crawler.constants.CrawlerNodePaths.PAGES_FRAGMENTED_SUCCESSFUL;
+import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_CHECKLIST;
+import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_OCCURRENCE;
+import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_SAMPLE;
+import static org.gbif.crawler.constants.CrawlerNodePaths.QUEUED_CRAWLS;
+import static org.gbif.crawler.constants.CrawlerNodePaths.RAW_OCCURRENCES_PERSISTED_ERROR;
+import static org.gbif.crawler.constants.CrawlerNodePaths.RAW_OCCURRENCES_PERSISTED_NEW;
+import static org.gbif.crawler.constants.CrawlerNodePaths.RAW_OCCURRENCES_PERSISTED_UNCHANGED;
+import static org.gbif.crawler.constants.CrawlerNodePaths.RAW_OCCURRENCES_PERSISTED_UPDATED;
+import static org.gbif.crawler.constants.CrawlerNodePaths.RUNNING_CRAWLS;
+import static org.gbif.crawler.constants.CrawlerNodePaths.STARTED_CRAWLING;
+import static org.gbif.crawler.constants.CrawlerNodePaths.VERBATIM_OCCURRENCES_PERSISTED_ERROR;
+import static org.gbif.crawler.constants.CrawlerNodePaths.VERBATIM_OCCURRENCES_PERSISTED_SUCCESSFUL;
+import static org.gbif.crawler.constants.CrawlerNodePaths.XML_CRAWL;
+import static org.gbif.crawler.constants.CrawlerNodePaths.buildPath;
+import static org.gbif.crawler.constants.CrawlerNodePaths.getCrawlInfoPath;
 
 /**
  * This {@link DatasetProcessService} implementation uses a {@link CuratorFramework} instance to communicate with
@@ -120,20 +155,20 @@ public class DatasetProcessServiceImpl implements DatasetProcessService {
           builder.finishReason(FinishReason.valueOf(new String(responseData)));
         }
 
-        builder.pagesCrawled(getCounter(crawlPath, PAGES_CRAWLED).or(0L));
-        builder.pagesFragmentedSuccessful(getCounter(crawlPath, PAGES_FRAGMENTED_SUCCESSFUL).or(0L));
-        builder.pagesFragmentedError(getCounter(crawlPath, PAGES_FRAGMENTED_ERROR).or(0L));
-        builder.fragmentsEmitted(getCounter(crawlPath, FRAGMENTS_EMITTED).or(0L));
-        builder.fragmentsReceived(getCounter(crawlPath, FRAGMENTS_RECEIVED).or(0L));
-        builder.rawOccurrencesPersistedNew(getCounter(crawlPath, RAW_OCCURRENCES_PERSISTED_NEW).or(0L));
-        builder.rawOccurrencesPersistedUpdated(getCounter(crawlPath, RAW_OCCURRENCES_PERSISTED_UPDATED).or(0L));
-        builder.rawOccurrencesPersistedUnchanged(getCounter(crawlPath, RAW_OCCURRENCES_PERSISTED_UNCHANGED).or(0L));
-        builder.rawOccurrencesPersistedError(getCounter(crawlPath, RAW_OCCURRENCES_PERSISTED_ERROR).or(0L));
-        builder.fragmentsProcessed(getCounter(crawlPath, FRAGMENTS_PROCESSED).or(0L));
-        builder.verbatimOccurrencesPersistedSuccessful(getCounter(crawlPath, VERBATIM_OCCURRENCES_PERSISTED_SUCCESSFUL).or(0L));
-        builder.verbatimOccurrencesPersistedError(getCounter(crawlPath, VERBATIM_OCCURRENCES_PERSISTED_ERROR).or(0L));
-        builder.interpretedOccurrencesPersistedSuccessful(getCounter(crawlPath, INTERPRETED_OCCURRENCES_PERSISTED_SUCCESSFUL).or(0L));
-        builder.interpretedOccurrencesPersistedError(getCounter(crawlPath, INTERPRETED_OCCURRENCES_PERSISTED_ERROR).or(0L));
+        builder.pagesCrawled(getCounter(crawlPath, PAGES_CRAWLED).orElse(0L));
+        builder.pagesFragmentedSuccessful(getCounter(crawlPath, PAGES_FRAGMENTED_SUCCESSFUL).orElse(0L));
+        builder.pagesFragmentedError(getCounter(crawlPath, PAGES_FRAGMENTED_ERROR).orElse(0L));
+        builder.fragmentsEmitted(getCounter(crawlPath, FRAGMENTS_EMITTED).orElse(0L));
+        builder.fragmentsReceived(getCounter(crawlPath, FRAGMENTS_RECEIVED).orElse(0L));
+        builder.rawOccurrencesPersistedNew(getCounter(crawlPath, RAW_OCCURRENCES_PERSISTED_NEW).orElse(0L));
+        builder.rawOccurrencesPersistedUpdated(getCounter(crawlPath, RAW_OCCURRENCES_PERSISTED_UPDATED).orElse(0L));
+        builder.rawOccurrencesPersistedUnchanged(getCounter(crawlPath, RAW_OCCURRENCES_PERSISTED_UNCHANGED).orElse(0L));
+        builder.rawOccurrencesPersistedError(getCounter(crawlPath, RAW_OCCURRENCES_PERSISTED_ERROR).orElse(0L));
+        builder.fragmentsProcessed(getCounter(crawlPath, FRAGMENTS_PROCESSED).orElse(0L));
+        builder.verbatimOccurrencesPersistedSuccessful(getCounter(crawlPath, VERBATIM_OCCURRENCES_PERSISTED_SUCCESSFUL).orElse(0L));
+        builder.verbatimOccurrencesPersistedError(getCounter(crawlPath, VERBATIM_OCCURRENCES_PERSISTED_ERROR).orElse(0L));
+        builder.interpretedOccurrencesPersistedSuccessful(getCounter(crawlPath, INTERPRETED_OCCURRENCES_PERSISTED_SUCCESSFUL).orElse(0L));
+        builder.interpretedOccurrencesPersistedError(getCounter(crawlPath, INTERPRETED_OCCURRENCES_PERSISTED_ERROR).orElse(0L));
       }
 
     } catch (Exception e) {
@@ -240,9 +275,9 @@ public class DatasetProcessServiceImpl implements DatasetProcessService {
   private Optional<Long> getCounter(String rootPath, String counter) {
     DistributedAtomicLong dal = new DistributedAtomicLong(curator, rootPath + "/" + counter, counterRetryPolicy);
     try {
-      return Optional.fromNullable(dal.get().preValue());
+      return Optional.ofNullable(dal.get().preValue());
     } catch (Exception ignored) {
-      return Optional.absent();
+      return Optional.empty();
     }
   }
 
@@ -309,7 +344,7 @@ public class DatasetProcessServiceImpl implements DatasetProcessService {
     }
 
     if (sorted) {
-      Collections.sort(identifiers, String.CASE_INSENSITIVE_ORDER);
+      identifiers.sort(String.CASE_INSENSITIVE_ORDER);
     }
     return identifiers;
   }

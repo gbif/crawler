@@ -115,7 +115,7 @@ public class PipelineMessageFactory {
       int tagKey = tag.getKey();
       try {
         int taggedAttempt = Integer.parseInt(tag.getValue());
-        attempt = (taggedAttempt > attempt) ? taggedAttempt : attempt;
+        attempt = Math.max(taggedAttempt, attempt);
       } catch (NumberFormatException e) {
         // Swallow it - the tag is corrupt and should be removed
       }
