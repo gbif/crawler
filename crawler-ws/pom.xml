@@ -19,7 +19,8 @@
   </distributionManagement>
 
   <properties>
-    <servlet-api.version>3.1.0</servlet-api.version>
+    <main.basedir>${project.parent.basedir}</main.basedir>
+    <start-class>org.gbif.crawler.ws.CrawlerWsApplication</start-class>
   </properties>
 
   <build>
@@ -31,58 +32,79 @@
       <resource>
         <directory>src/main/webapp</directory>
         <filtering>true</filtering>
-        <targetPath>webapp</targetPath>
       </resource>
     </resources>
     <plugins>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-shade-plugin</artifactId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <configuration>
+          <usedDependencies>
+            <usedDependency>org.springframework.boot:spring-boot-starter</usedDependency>
+            <usedDependency>org.springframework.boot:spring-boot-starter-amqp</usedDependency>
+            <usedDependency>org.springframework.boot:spring-boot-starter-security</usedDependency>
+            <usedDependency>org.springframework.boot:spring-boot-starter-web</usedDependency>
+            <usedDependency>org.springframework.boot:spring-boot-starter-test</usedDependency>
+          </usedDependencies>
+        </configuration>
         <executions>
           <execution>
-            <phase>package</phase>
+            <id>analyze</id>
             <goals>
-              <goal>shade</goal>
+              <goal>analyze-only</goal>
             </goals>
             <configuration>
-              <createDependencyReducedPom>true</createDependencyReducedPom>
-              <transformers>
-                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
-                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                  <mainClass>org.gbif.ws.app.Application</mainClass>
-                  <manifestEntries>
-                    <Class-Path>conf/</Class-Path>
-                  </manifestEntries>
-                </transformer>
-              </transformers>
-              <filters>
-                <filter>
-                  <artifact>org.jruby:jruby-complete</artifact>
-                  <excludes>
-                    <exclude>org/joda/**</exclude>
-                  </excludes>
-                </filter>
-                <filter>
-                  <artifact>*:*</artifact>
-                  <excludes>
-                    <exclude>META-INF/*.SF</exclude>
-                    <exclude>META-INF/*.DSA</exclude>
-                    <exclude>META-INF/*.RSA</exclude>
-                    <exclude>logback.xml</exclude>
-                  </excludes>
-                </filter>
-                <filter>
-                  <!--Exclude configuration file that are not required in the output jar file -->
-                  <artifact>org.gbif.crawler:crawler-ws</artifact>
-                  <excludes>
-                    <exclude>crawler.properties</exclude>
-                    <exclude>logback.xml</exclude>
-                  </excludes>
-                </filter>
-              </filters>
+              <ignoreNonCompile>true</ignoreNonCompile>
+              <failOnWarning>false</failOnWarning>
+              <outputXML>true</outputXML>
             </configuration>
           </execution>
         </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>repackage</id>
+            <goals>
+              <goal>repackage</goal>
+            </goals>
+            <configuration>
+              <attach>true</attach>
+              <classifier>exec</classifier>
+            </configuration>
+          </execution>
+        </executions>
+        <configuration>
+          <mainClass>${start-class}</mainClass>
+          <addResources>false</addResources>
+          <layout>ZIP</layout>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>${maven-jar-plugin.version}</version>
+        <configuration>
+          <excludes>
+            <!-- This is where the exclusion occurs -->
+            <exclude>**/application.yml</exclude>
+            <exclude>**/bootstrap.yml</exclude>
+          </excludes>
+          <archive>
+            <manifest>
+              <mainClass>${start-class}</mainClass>
+              <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+            </manifest>
+          </archive>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
       </plugin>
     </plugins>
   </build>
@@ -99,13 +121,6 @@
   </repositories>
 
   <dependencies>
-    <!-- Module specific -->
-    <dependency>
-      <groupId>javax.servlet</groupId>
-      <artifactId>javax.servlet-api</artifactId>
-      <version>${servlet-api.version}</version>
-    </dependency>
-
     <!-- From parent -->
     <dependency>
       <groupId>ch.qos.logback</groupId>
@@ -187,8 +202,9 @@
       <artifactId>jackson-annotations</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.sun.jersey</groupId>
-      <artifactId>jersey-bundle</artifactId>
+      <groupId>com.rabbitmq</groupId>
+      <artifactId>amqp-client</artifactId>
+      <version>5.7.3</version>
     </dependency>
     <dependency>
       <groupId>org.apache.curator</groupId>
@@ -256,26 +272,27 @@
       <scope>runtime</scope>
     </dependency>
     <dependency>
-      <groupId>org.gbif</groupId>
-      <artifactId>gbif-microservice</artifactId>
-      <exclusions>
-        <exclusion>
-          <groupId>org.apache.curator</groupId>
-          <artifactId>curator-recipes</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.apache.curator</groupId>
-          <artifactId>curator-client</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.apache.curator</groupId>
-          <artifactId>curator-framework</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.apache.curator</groupId>
-          <artifactId>curator-x-discovery</artifactId>
-        </exclusion>
-      </exclusions>
+      <groupId>janino</groupId>
+      <artifactId>janino</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>net.logstash.logback</groupId>
+      <artifactId>logstash-logback-encoder</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-core</artifactId>
+    </dependency>
+
+    <!-- Test dependencies -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 </project>

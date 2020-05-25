@@ -51,7 +51,7 @@ public class CrawlerConfiguration {
 
   @Bean
   public CuratorFramework zookeeperResource(
-      @Value("${crawler.crawl.server}") String url,
+      @Value("${crawler.crawl.server.zk}") String url,
       @Value("${crawler.crawl.namespace}") String crawlNamespace,
       @Value("${crawler.crawl.server.retryAttempts}") Integer retryAttempts,
       @Value("${crawler.crawl.server.retryDelayMs}") Integer retryWait
@@ -84,6 +84,6 @@ public class CrawlerConfiguration {
   @Bean
   public DatasetService datasetService(@Value("${crawler.registry.ws.url}") String url) {
     ClientFactory clientFactory = new ClientFactory(url);
-    return clientFactory.newInstance(DatasetClient.class);
+    return clientFactory.newInstance(DatasetService.class);
   }
 }

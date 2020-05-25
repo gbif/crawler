@@ -1,0 +1,36 @@
+# application.yml
+
+# The URI to the zookeeper service
+
+crawler:
+  overcrawledReportFilePath: @crawler.overcrawledReportFilePath@
+  crawl:
+    namespace: @crawler.crawl.namespace@
+    server:
+      zk: @crawler.crawl.server.zk@
+      retryAttempts: @crawler.crawl.server.retryAttempts@
+      retryDelayMs: @crawler.crawl.server.retryDelayMs@
+    threadCount: @crawler.crawl.threadCount@
+
+  # The coordinator will use a thread pool to speed up certain tasks by parallelling them.
+  # This property can be used to specify the maximum number of threads this WS will use.
+  registry:
+    ws:
+      url: @crawler.registry.ws.url@
+
+  mq:
+    host: @crawler.mq.host@
+    virtualHost: @crawler.mq.virtualHost@
+    username: @crawler.mq.username@
+    password: @crawler.mq.virtualHost@
+
+application:
+  key: gbif.app.it
+  secret: a
+
+appkeys:
+  file: @appkeys.file@
+  whitelist: @appkeys.whitelist@
+
+
+

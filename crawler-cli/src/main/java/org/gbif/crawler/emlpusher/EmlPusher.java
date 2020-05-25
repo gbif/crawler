@@ -40,7 +40,7 @@ public class EmlPusher {
   private EmlPusher(PushEmlConfiguration cfg) {
     LOG.info("Connecting to registry {} as user {}", cfg.registryWsUrl, cfg.registryUser);
 
-    ClientFactory clientFactory = new ClientFactory(cfg.registryUser, cfg.registryWsUrl, null, cfg.registryPassword);
+    ClientFactory clientFactory = new ClientFactory(cfg.registryUser, cfg.registryPassword, cfg.registryWsUrl);
     datasetService = clientFactory.newInstance(DatasetClient.class);
 
     rootDirectory = cfg.archiveRepository;
