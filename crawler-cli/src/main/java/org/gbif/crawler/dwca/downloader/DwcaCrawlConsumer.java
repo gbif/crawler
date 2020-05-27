@@ -22,8 +22,9 @@ import static org.gbif.crawler.constants.CrawlerNodePaths.PAGES_CRAWLED;
  */
 public class DwcaCrawlConsumer extends DownloadCrawlConsumer {
 
-  public DwcaCrawlConsumer(CuratorFramework curator, MessagePublisher publisher, File archiveRepository) {
-    super(curator, publisher, archiveRepository);
+  public DwcaCrawlConsumer(CuratorFramework curator, MessagePublisher publisher, File archiveRepository,
+                           int httpTimeout) {
+    super(curator, publisher, archiveRepository, httpTimeout);
   }
 
   @Override

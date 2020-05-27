@@ -37,9 +37,10 @@ public abstract class DownloadCrawlConsumer extends CrawlConsumer {
   private final Counter startedDownloads = Metrics.newCounter(DownloaderService.class, "startedDownloads");
   private final Counter failedDownloads = Metrics.newCounter(DownloaderService.class, "failedDownloads");
   private final Counter notModified = Metrics.newCounter(DownloaderService.class, "notModified");
-  private final HttpUtil client = new HttpUtil(HttpUtil.newMultithreadedClient(10 * 60 * 1000, 25, 2));
+  private final HttpUtil client;
 
-  public DownloadCrawlConsumer(CuratorFramework curator, MessagePublisher publisher, File archiveRepository) {
+  public DownloadCrawlConsumer(CuratorFramework curator, MessagePublisher publisher, File archiveRepository,
+                               int httpTimeout) {
     super(curator, publisher);
     this.archiveRepository = archiveRepository;
     if (!archiveRepository.exists() && !archiveRepository.isDirectory()) {
@@ -50,6 +51,8 @@ public abstract class DownloadCrawlConsumer extends CrawlConsumer {
       throw new IllegalArgumentException(
         "Archive repository directory not writable: " + archiveRepository.getAbsolutePath());
     }
+
+    client = new HttpUtil(HttpUtil.newMultithreadedClient(httpTimeout, 25, 2));
   }
 
   @Override

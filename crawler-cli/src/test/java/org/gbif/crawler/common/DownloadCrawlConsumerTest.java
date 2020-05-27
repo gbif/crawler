@@ -47,7 +47,7 @@ public class DownloadCrawlConsumerTest extends TestCase {
       Files.write(attemptFile, Arrays.asList(""+attempt));
     } catch (Exception e) {}
 
-    DownloadCrawlConsumer cc = new DownloadCrawlConsumer(null, null, DWCA_REPO) {
+    DownloadCrawlConsumer cc = new DownloadCrawlConsumer(null, null, DWCA_REPO, 10*60*1000) {
       @Override
       protected DatasetBasedMessage createFinishedMessage(CrawlJob crawlJob) {
         return null;
