@@ -66,33 +66,36 @@ public abstract class DownloadCrawlConsumer extends CrawlConsumer {
       MDC.MDCCloseable ignored1 = MDC.putCloseable("datasetKey", datasetKey.toString());
       MDC.MDCCloseable ignored2 = MDC.putCloseable("attempt", String.valueOf(crawlJob.getAttempt()))
     ) {
-      LOG.info("Start download of archive from {} to {}", crawlJob.getTargetUrl(), localFile);
-      StatusLine status = client.downloadIfModifiedSince(crawlJob.getTargetUrl().toURL(), localFile);
+      // Sub-try so the MDC is still present for the exception logging.
+      try {
+        LOG.info("Start download of archive from {} to {}", crawlJob.getTargetUrl(), localFile);
+        StatusLine status = client.downloadIfModifiedSince(crawlJob.getTargetUrl().toURL(), localFile);
 
-      if (status.getStatusCode() == HttpStatus.SC_NOT_MODIFIED) {
-        notModified(datasetKey);
-        Files.createLink(
-            new File(archiveRepository, datasetKey + "." + crawlJob.getAttempt() + getSuffix()).toPath(),
-            localFile.toPath());
-      } else if (HttpUtil.success(status)) {
-        success(datasetKey, crawlJob);
-        Files.createLink(
-            new File(archiveRepository, datasetKey + "." + crawlJob.getAttempt() + getSuffix()).toPath(),
-            localFile.toPath());
-      } else {
+        if (status.getStatusCode() == HttpStatus.SC_NOT_MODIFIED) {
+          notModified(datasetKey);
+          Files.createLink(
+              new File(archiveRepository, datasetKey + "." + crawlJob.getAttempt() + getSuffix()).toPath(),
+              localFile.toPath());
+        } else if (HttpUtil.success(status)) {
+          success(datasetKey, crawlJob);
+          Files.createLink(
+              new File(archiveRepository, datasetKey + "." + crawlJob.getAttempt() + getSuffix()).toPath(),
+              localFile.toPath());
+        } else {
+          failed(datasetKey);
+          throw new IllegalStateException("HTTP " + status.getStatusCode() + ". Failed to download archive for dataset "
+                                          + datasetKey + " from " + crawlJob.getTargetUrl());
+        }
+      } catch (IOException e) {
+        LOG.error("Failed to download archive for dataset [{}] from [{}]", crawlJob.getDatasetKey(),
+          crawlJob.getTargetUrl(), e);
         failed(datasetKey);
-        throw new IllegalStateException("HTTP " + status.getStatusCode() + ". Failed to download archive for dataset "
-                                        + datasetKey + " from " + crawlJob.getTargetUrl());
-      }
-    } catch (IOException e) {
-      LOG.error("Failed to download archive for dataset [{}] from [{}]", crawlJob.getDatasetKey(),
-        crawlJob.getTargetUrl(), e);
-      failed(datasetKey);
-      throw new RuntimeException(e);
+        throw new RuntimeException(e);
 
-    } finally {
-      // finished crawl
-      updateDate(curator, datasetKey, CrawlerNodePaths.FINISHED_CRAWLING);
+      } finally {
+        // finished crawl
+        updateDate(curator, datasetKey, CrawlerNodePaths.FINISHED_CRAWLING);
+      }
     }
   }
 
