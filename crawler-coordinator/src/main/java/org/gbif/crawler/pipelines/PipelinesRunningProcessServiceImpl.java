@@ -158,13 +158,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
 
   @Override
   public Set<PipelineProcess> getPipelineProcesses() {
-    return getPipelineProcesses(null);
-  }
-
-  @Override
-  public Set<PipelineProcess> getPipelineProcesses(UUID datasetKey) {
     return StreamSupport.stream(processCache.entries().spliterator(), true)
-        .filter(node -> datasetKey == null || node.getKey().startsWith(datasetKey.toString()))
         .map(CacheEntry::getValue)
         .collect(
             Collectors.toCollection(

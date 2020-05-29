@@ -60,17 +60,6 @@ public class PipelinesRunningProcessResource {
   }
 
   /**
-   * Returns information about specific dataset by datasetKey
-   *
-   * @param datasetKey typical dataset UUID
-   */
-  @GET
-  @Path("{datasetKey}")
-  public Set<PipelineProcess> getPipelinesProcessesByDatasetKey(@PathParam("datasetKey") UUID datasetKey) {
-    return service.getPipelineProcesses(datasetKey);
-  }
-
-  /**
    * Returns information about specific running process.
    *
    * @param datasetKey dataset of the process

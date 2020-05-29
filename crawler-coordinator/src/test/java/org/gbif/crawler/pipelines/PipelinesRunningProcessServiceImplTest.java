@@ -137,11 +137,8 @@ public class PipelinesRunningProcessServiceImplTest {
 
   @Test
   public void testEmptyPipelinesProcessByDatasetKey() {
-    // State
-    UUID datasetKey = UUID.fromString("a731e3b1-bc81-4c1f-aad7-aba75ce3cf3b");
-
     // When
-    Set<PipelineProcess> set = service.getPipelineProcesses(datasetKey);
+    Set<PipelineProcess> set = service.getPipelineProcesses();
 
     // Should
     Assert.assertEquals(0, set.size());
@@ -204,10 +201,10 @@ public class PipelinesRunningProcessServiceImplTest {
     TimeUnit.MILLISECONDS.sleep(200);
 
     // When
-    Set<PipelineProcess> set = service.getPipelineProcesses(datasetKey);
+    PipelineProcess set = service.getPipelineProcess(datasetKey);
 
     // Should
-    ASSERT_FN.accept(set, Collections.singleton(crawlId));
+    ASSERT_FN.accept(Collections.singleton(set), Collections.singleton(crawlId));
 
     // Postprocess
     deleteMonitoringById(crawlId);
