@@ -98,6 +98,7 @@
     <avro.version>1.8.2</avro.version>
     <elasticsearch.client.version>5.6.15</elasticsearch.client.version>
     <log4j-api.version>2.3</log4j-api.version>
+    <log4j-to-slf4j.version>2.3</log4j-to-slf4j.version>
 
     <!-- Embedded simple search -->
     <lucene.version>7.3.0</lucene.version>
@@ -623,6 +624,12 @@
         <groupId>org.slf4j</groupId>
         <artifactId>jul-to-slf4j</artifactId>
         <version>${slf4j.version}</version>
+        <scope>runtime</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.logging.log4j</groupId>
+        <artifactId>log4j-to-slf4j</artifactId>
+        <version>${log4j-to-slf4j.version}</version>
         <scope>runtime</scope>
       </dependency>
 
