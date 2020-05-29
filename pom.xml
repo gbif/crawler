@@ -52,7 +52,7 @@
     <gbif-httputils.version>0.12</gbif-httputils.version>
     <gbif-occurrence.version>0.122</gbif-occurrence.version>
     <gbif-postal-service.version>0.45</gbif-postal-service.version>
-    <gbif-registry.version>3.0</gbif-registry.version>
+    <gbif-registry.version>3.6</gbif-registry.version>
     <gbif-wrangler.version>0.4</gbif-wrangler.version>
     <gbif-pipelines.version>2.4.1</gbif-pipelines.version>
     <gbif-metrics.version>0.36</gbif-metrics.version>
@@ -64,7 +64,6 @@
 
     <feign.version>10.4.0</feign.version>
     <guava.version>18.0</guava.version>
-    <guice.version>4.0</guice.version>
     <!-- Match the GBIF http-client! -->
     <httpclient.version>4.5.6</httpclient.version>
     <!-- Match the GBIF http-client! -->
@@ -422,11 +421,6 @@
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
         <version>${guava.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.google.inject</groupId>
-        <artifactId>guice</artifactId>
-        <version>${guice.version}</version>
       </dependency>
       <dependency>
         <groupId>javax.validation</groupId>
