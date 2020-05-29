@@ -56,7 +56,7 @@ public class PipelinesRunningProcessServiceImplTest {
             status -> {
               Assert.assertNotNull(status);
               Assert.assertEquals(6, status.getExecutions().iterator().next().getSteps().size());
-              Assert.assertTrue(ids.contains(status.getDatasetKey() + "_" + status.getAttempt()));
+              Assert.assertTrue(ids.contains(status.getDatasetKey().toString()));
               status
                   .getExecutions()
                   .iterator()
@@ -127,10 +127,9 @@ public class PipelinesRunningProcessServiceImplTest {
   public void testEmptyPipelinesProcessByCrawlId() {
     // State
     UUID datasetKey = UUID.fromString("a731e3b1-bc81-4c1f-aad7-aba75ce3cf3b");
-    int attempt = 1;
 
     // When
-    PipelineProcess status = service.getPipelineProcess(datasetKey, attempt);
+    PipelineProcess status = service.getPipelineProcess(datasetKey);
 
     // Should
     Assert.assertNull(status);
@@ -140,7 +139,6 @@ public class PipelinesRunningProcessServiceImplTest {
   public void testEmptyPipelinesProcessByDatasetKey() {
     // State
     UUID datasetKey = UUID.fromString("a731e3b1-bc81-4c1f-aad7-aba75ce3cf3b");
-    int attempt = 1;
 
     // When
     Set<PipelineProcess> set = service.getPipelineProcesses(datasetKey);
@@ -153,8 +151,7 @@ public class PipelinesRunningProcessServiceImplTest {
   public void testGetRunningPipelinesProcesses() throws Exception {
     // State
     Set<String> crawlIds =
-        Sets.newHashSet(
-            "a731e3b1-bc81-4c1f-aad7-aba75ce3cf3b_1", "be6cd2ff-bcc0-46a5-877e-1fe6e4ef8483_2");
+        Sets.newHashSet("a731e3b1-bc81-4c1f-aad7-aba75ce3cf3b", "be6cd2ff-bcc0-46a5-877e-1fe6e4ef8483");
     for (String crawlId : crawlIds) {
       addStatusToZookeeper(crawlId);
     }
@@ -179,15 +176,14 @@ public class PipelinesRunningProcessServiceImplTest {
   public void testPipelinesProcessByCrawlId() throws Exception {
     // State
     UUID datasetKey = UUID.fromString("a731e3b1-bc81-4c1f-aad7-aba75ce3cf3b");
-    int attempt = 1;
-    String crawlId = datasetKey.toString() + "_" + attempt;
+    String crawlId = datasetKey.toString();
     addStatusToZookeeper(crawlId);
 
     // we wait for the ZK TreeCache to respond to the events
     TimeUnit.MILLISECONDS.sleep(300);
 
     // When
-    PipelineProcess status = service.getPipelineProcess(datasetKey, attempt);
+    PipelineProcess status = service.getPipelineProcess(datasetKey);
 
     // Should
     Assert.assertNotNull(status);
@@ -201,7 +197,7 @@ public class PipelinesRunningProcessServiceImplTest {
   public void testPipelinesProcessByDatasetKey() throws Exception {
     // State
     UUID datasetKey = UUID.fromString("a731e3b1-bc81-4c1f-aad7-aba75ce3cf3b");
-    String crawlId = "a731e3b1-bc81-4c1f-aad7-aba75ce3cf3b_1";
+    String crawlId = datasetKey.toString();
     addStatusToZookeeper(crawlId);
 
     // we wait for the ZK TreeCache to respond to the events

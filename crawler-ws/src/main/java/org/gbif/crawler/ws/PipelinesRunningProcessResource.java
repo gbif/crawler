@@ -74,26 +74,22 @@ public class PipelinesRunningProcessResource {
    * Returns information about specific running process.
    *
    * @param datasetKey dataset of the process
-   * @param attempt attempt of the process
    */
   @GET
-  @Path("{datasetKey}/{attempt}")
-  public PipelineProcess getRunningPipelinesProcess(@PathParam("datasetKey") UUID datasetKey,
-                                                    @PathParam("attempt") int attempt) {
-    return service.getPipelineProcess(datasetKey, attempt);
+  @Path("{datasetKey}")
+  public PipelineProcess getRunningPipelinesProcess(@PathParam("datasetKey") UUID datasetKey) {
+    return service.getPipelineProcess(datasetKey);
   }
 
   /**
    * Removes a Zookeeper monitoring root node by crawlId
    *
    * @param datasetKey dataset of the process
-   * @param attempt attempt of the process
    * */
   @DELETE
-  @Path("{datasetKey}/{attempt}")
-  public void deletePipelinesProcess(@PathParam("datasetKey") UUID datasetKey,
-                                     @PathParam("attempt") int attempt) {
-    service.deletePipelineProcess(datasetKey, attempt);
+  @Path("{datasetKey}")
+  public void deletePipelinesProcess(@PathParam("datasetKey") UUID datasetKey) {
+    service.deletePipelineProcess(datasetKey);
   }
 
   /**
