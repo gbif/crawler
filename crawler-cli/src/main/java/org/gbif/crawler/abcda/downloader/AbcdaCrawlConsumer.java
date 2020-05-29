@@ -20,8 +20,8 @@ import org.apache.curator.framework.CuratorFramework;
  */
 public class AbcdaCrawlConsumer extends DownloadCrawlConsumer {
 
-  public AbcdaCrawlConsumer(CuratorFramework curator, MessagePublisher publisher, File archiveRepository) {
-    super(curator, publisher, archiveRepository);
+  public AbcdaCrawlConsumer(CuratorFramework curator, MessagePublisher publisher, File archiveRepository, int httpTimeout) {
+    super(curator, publisher, archiveRepository, httpTimeout);
   }
 
   @Override

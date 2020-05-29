@@ -72,18 +72,21 @@ public class EmlPusher {
   private void push(File archiveFile) {
     UUID key = getDatasetKey(archiveFile);
     try (MDC.MDCCloseable closeable = MDC.putCloseable("datasetKey", key.toString())) {
-      Archive arch = open(archiveFile);
-      File eml = arch.getMetadataLocationFile();
-      if (eml != null && eml.exists()) {
-        pushEMl(key, eml);
-      }
-    } catch (UnsupportedArchiveException e) {
-      LOG.warn("Skipping archive {} because of error[{}]", key, e.getMessage());
-      failCounter++;
+      // Sub-try so the MDC is still present for the exception logging.
+      try {
+        Archive arch = open(archiveFile);
+        File eml = arch.getMetadataLocationFile();
+        if (eml != null && eml.exists()) {
+          pushEMl(key, eml);
+        }
+      } catch (UnsupportedArchiveException e) {
+        LOG.warn("Skipping archive {} because of error[{}]", key, e.getMessage());
+        failCounter++;
 
-    } catch (Exception e) {
-      LOG.error("Unexpected exception when pushing metadata for dataset {}: {}", key, e);
-      failCounter++;
+      } catch (Exception e) {
+        LOG.error("Unexpected exception when pushing metadata for dataset {}: {}", key, e);
+        failCounter++;
+      }
     }
   }
 

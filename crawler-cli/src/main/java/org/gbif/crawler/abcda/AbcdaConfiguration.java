@@ -19,6 +19,7 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParametersDelegate;
 import com.google.common.base.Objects;
 import org.gbif.cli.IgnoreProperty;
+import org.gbif.cli.PropertyName;
 import org.gbif.common.messaging.config.MessagingConfiguration;
 import org.gbif.crawler.common.RegistryConfiguration;
 import org.gbif.crawler.common.ZooKeeperConfiguration;
@@ -41,6 +42,11 @@ public class AbcdaConfiguration extends CrawlServerConfiguration {
   @Parameter(names = "--archive-repository")
   @NotNull
   public File archiveRepository;
+
+  @Parameter(names = "--http-timeout", description = "Timeout for HTTP calls, milliseconds")
+  @Min(1 * 1000)
+  @PropertyName("httpTimeout")
+  public int httpTimeout = 10 * 60 * 1000;
 
   @Override
   public String toString() {

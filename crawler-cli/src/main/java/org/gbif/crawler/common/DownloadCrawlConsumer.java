@@ -37,9 +37,10 @@ public abstract class DownloadCrawlConsumer extends CrawlConsumer {
   private final Counter startedDownloads = Metrics.newCounter(DownloaderService.class, "startedDownloads");
   private final Counter failedDownloads = Metrics.newCounter(DownloaderService.class, "failedDownloads");
   private final Counter notModified = Metrics.newCounter(DownloaderService.class, "notModified");
-  private final HttpUtil client = new HttpUtil(HttpUtil.newMultithreadedClient(10 * 60 * 1000, 25, 2));
+  private final HttpUtil client;
 
-  public DownloadCrawlConsumer(CuratorFramework curator, MessagePublisher publisher, File archiveRepository) {
+  public DownloadCrawlConsumer(CuratorFramework curator, MessagePublisher publisher, File archiveRepository,
+                               int httpTimeout) {
     super(curator, publisher);
     this.archiveRepository = archiveRepository;
     if (!archiveRepository.exists() && !archiveRepository.isDirectory()) {
@@ -50,6 +51,8 @@ public abstract class DownloadCrawlConsumer extends CrawlConsumer {
       throw new IllegalArgumentException(
         "Archive repository directory not writable: " + archiveRepository.getAbsolutePath());
     }
+
+    client = new HttpUtil(HttpUtil.newMultithreadedClient(httpTimeout, 25, 2));
   }
 
   @Override
@@ -66,33 +69,36 @@ public abstract class DownloadCrawlConsumer extends CrawlConsumer {
       MDC.MDCCloseable ignored1 = MDC.putCloseable("datasetKey", datasetKey.toString());
       MDC.MDCCloseable ignored2 = MDC.putCloseable("attempt", String.valueOf(crawlJob.getAttempt()))
     ) {
-      LOG.info("Start download of archive from {} to {}", crawlJob.getTargetUrl(), localFile);
-      StatusLine status = client.downloadIfModifiedSince(crawlJob.getTargetUrl().toURL(), localFile);
+      // Sub-try so the MDC is still present for the exception logging.
+      try {
+        LOG.info("Start download of archive from {} to {}", crawlJob.getTargetUrl(), localFile);
+        StatusLine status = client.downloadIfModifiedSince(crawlJob.getTargetUrl().toURL(), localFile);
 
-      if (status.getStatusCode() == HttpStatus.SC_NOT_MODIFIED) {
-        notModified(datasetKey);
-        Files.createLink(
-            new File(archiveRepository, datasetKey + "." + crawlJob.getAttempt() + getSuffix()).toPath(),
-            localFile.toPath());
-      } else if (HttpUtil.success(status)) {
-        success(datasetKey, crawlJob);
-        Files.createLink(
-            new File(archiveRepository, datasetKey + "." + crawlJob.getAttempt() + getSuffix()).toPath(),
-            localFile.toPath());
-      } else {
+        if (status.getStatusCode() == HttpStatus.SC_NOT_MODIFIED) {
+          notModified(datasetKey);
+          Files.createLink(
+              new File(archiveRepository, datasetKey + "." + crawlJob.getAttempt() + getSuffix()).toPath(),
+              localFile.toPath());
+        } else if (HttpUtil.success(status)) {
+          success(datasetKey, crawlJob);
+          Files.createLink(
+              new File(archiveRepository, datasetKey + "." + crawlJob.getAttempt() + getSuffix()).toPath(),
+              localFile.toPath());
+        } else {
+          failed(datasetKey);
+          throw new IllegalStateException("HTTP " + status.getStatusCode() + ". Failed to download archive for dataset "
+                                          + datasetKey + " from " + crawlJob.getTargetUrl());
+        }
+      } catch (IOException e) {
+        LOG.error("Failed to download archive for dataset [{}] from [{}]", crawlJob.getDatasetKey(),
+          crawlJob.getTargetUrl(), e);
         failed(datasetKey);
-        throw new IllegalStateException("HTTP " + status.getStatusCode() + ". Failed to download archive for dataset "
-                                        + datasetKey + " from " + crawlJob.getTargetUrl());
-      }
-    } catch (IOException e) {
-      LOG.error("Failed to download archive for dataset [{}] from [{}]", crawlJob.getDatasetKey(),
-        crawlJob.getTargetUrl(), e);
-      failed(datasetKey);
-      throw new RuntimeException(e);
+        throw new RuntimeException(e);
 
-    } finally {
-      // finished crawl
-      updateDate(curator, datasetKey, CrawlerNodePaths.FINISHED_CRAWLING);
+      } finally {
+        // finished crawl
+        updateDate(curator, datasetKey, CrawlerNodePaths.FINISHED_CRAWLING);
+      }
     }
   }
 

@@ -96,11 +96,14 @@ public class DwcaMetasyncService extends DwcaService {
         MDC.MDCCloseable ignored1 = MDC.putCloseable("datasetKey", uuid.toString());
         MDC.MDCCloseable ignored2 = MDC.putCloseable("attempt", String.valueOf(message.getAttempt()))
       ) {
-        LOG.info("Updating metadata from DwC-A for dataset [{}]", uuid);
-        handleMessageInternal(message, uuid);
-      } catch (Exception e) {
-        LOG.error("Exception caught during metasyncing DwC-A [{}]", uuid, e);
-        updateZookeeper(uuid);
+        // Sub-try so the MDC is still present for the exception logging.
+        try {
+          LOG.info("Updating metadata from DwC-A for dataset [{}]", uuid);
+          handleMessageInternal(message, uuid);
+        } catch (Exception e) {
+          LOG.error("Exception caught during metasyncing DwC-A [{}]", uuid, e);
+          updateZookeeper(uuid);
+        }
       }
     }
 

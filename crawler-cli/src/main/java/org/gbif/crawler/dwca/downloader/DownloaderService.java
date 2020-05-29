@@ -26,7 +26,7 @@ public class DownloaderService extends CrawlServerBaseService<DownloaderConfigur
   @Override
   protected QueueConsumer<UUID> newConsumer(CuratorFramework curator, MessagePublisher publisher,
     DownloaderConfiguration config) {
-    return new DwcaCrawlConsumer(curator, publisher, config.archiveRepository);
+    return new DwcaCrawlConsumer(curator, publisher, config.archiveRepository, config.httpTimeout);
   }
 
 }
