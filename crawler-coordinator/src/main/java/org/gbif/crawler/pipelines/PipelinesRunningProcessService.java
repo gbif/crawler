@@ -17,11 +17,9 @@ public interface PipelinesRunningProcessService {
 
   Set<PipelineProcess> getPipelineProcesses();
 
-  Set<PipelineProcess> getPipelineProcesses(UUID datasetKey);
+  PipelineProcess getPipelineProcess(UUID datasetKey);
 
-  PipelineProcess getPipelineProcess(UUID datasetKey, int attempt);
-
-  void deletePipelineProcess(UUID datasetKey, int attempt);
+  void deletePipelineProcess(UUID datasetKey);
 
   void deleteAllPipelineProcess();
 

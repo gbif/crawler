@@ -160,13 +160,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
 
   @Override
   public Set<PipelineProcess> getPipelineProcesses() {
-    return getPipelineProcesses(null);
-  }
-
-  @Override
-  public Set<PipelineProcess> getPipelineProcesses(UUID datasetKey) {
     return StreamSupport.stream(processCache.entries().spliterator(), true)
-        .filter(node -> datasetKey == null || node.getKey().startsWith(datasetKey.toString()))
         .map(CacheEntry::getValue)
         .collect(
             Collectors.toCollection(
@@ -174,13 +168,13 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
   }
 
   @Override
-  public PipelineProcess getPipelineProcess(UUID datasetKey, int attempt) {
-    return processCache.get(CRAWL_ID_GENERATOR.apply(datasetKey, attempt));
+  public PipelineProcess getPipelineProcess(UUID datasetKey) {
+    return processCache.get(datasetKey.toString());
   }
 
   @Override
-  public void deletePipelineProcess(UUID datasetKey, int attempt) {
-    deleteZkPipelinesNode(CRAWL_ID_GENERATOR.apply(datasetKey, attempt));
+  public void deletePipelineProcess(UUID datasetKey) {
+    deleteZkPipelinesNode(datasetKey.toString());
   }
 
   /** Removes pipelines root Zookeeper path */
@@ -256,7 +250,6 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
     checkNotNull(crawlId, "crawlId can't be null");
 
     try {
-      String[] ids = crawlId.split("_");
 
       if (!checkExists(getPipelinesInfoPath(crawlId))) {
         return Optional.empty();
@@ -264,8 +257,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
       // Here we're trying to load all information from Zookeeper into a PipelineProcess object
       PipelineProcess process =
           new PipelineProcess()
-              .setDatasetKey(UUID.fromString(ids[0]))
-              .setAttempt(Integer.parseInt(ids[1]));
+              .setDatasetKey(UUID.fromString(crawlId));
 
       // ALL_STEPS - static set of all pipelines steps: DWCA_TO_AVRO, VERBATIM_TO_INTERPRETED and
       // etc.

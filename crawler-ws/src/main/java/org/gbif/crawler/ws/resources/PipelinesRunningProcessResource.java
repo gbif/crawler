@@ -70,32 +70,28 @@ public class PipelinesRunningProcessResource {
    * @param datasetKey typical dataset UUID
    */
   @GetMapping("{datasetKey}")
-  public Set<PipelineProcess> getPipelinesProcessesByDatasetKey(@PathVariable UUID datasetKey) {
-    return service.getPipelineProcesses(datasetKey);
+  public PipelineProcess getPipelinesProcessesByDatasetKey(@PathVariable UUID datasetKey) {
+    return service.getPipelineProcess(datasetKey);
   }
 
   /**
    * Returns information about specific running process.
    *
    * @param datasetKey dataset of the process
-   * @param attempt attempt of the process
    */
   @GetMapping("{datasetKey}/{attempt}")
-  public PipelineProcess getRunningPipelinesProcess(@PathVariable("datasetKey") UUID datasetKey,
-                                                    @PathVariable("attempt") int attempt) {
-    return service.getPipelineProcess(datasetKey, attempt);
+  public PipelineProcess getRunningPipelinesProcess(@PathVariable("datasetKey") UUID datasetKey) {
+    return service.getPipelineProcess(datasetKey);
   }
 
   /**
    * Removes a Zookeeper monitoring root node by crawlId
    *
    * @param datasetKey dataset of the process
-   * @param attempt attempt of the process
    * */
-  @DeleteMapping("{datasetKey}/{attempt}")
-  public void deletePipelinesProcess(@PathVariable("datasetKey") UUID datasetKey,
-                                     @PathVariable("attempt") int attempt) {
-    service.deletePipelineProcess(datasetKey, attempt);
+  @DeleteMapping("{datasetKey}")
+  public void deletePipelinesProcess(@PathVariable("datasetKey") UUID datasetKey) {
+    service.deletePipelineProcess(datasetKey);
   }
 
   /**
