@@ -6,7 +6,6 @@ import org.gbif.api.service.registry.DatasetService;
 import org.gbif.crawler.DatasetProcessServiceImpl;
 import org.gbif.crawler.pipelines.PipelinesRunningProcessService;
 import org.gbif.crawler.pipelines.PipelinesRunningProcessServiceImpl;
-import org.gbif.registry.ws.client.DatasetClient;
 import org.gbif.ws.client.ClientFactory;
 
 import java.util.concurrent.Executor;
@@ -29,6 +28,29 @@ import static com.google.common.base.Preconditions.checkArgument;
 @Configuration
 public class CrawlerConfiguration {
 
+  public class CuratorWrapper {
+
+    private CuratorFramework curator;
+
+    CuratorWrapper(
+      String url,
+      String crawlNamespace,
+      Integer retryAttempts,
+      Integer retryWait
+    ) {
+      curator = CuratorFrameworkFactory.builder()
+        .connectString(url)
+        .namespace(crawlNamespace)
+        .retryPolicy(new ExponentialBackoffRetry(retryWait, retryAttempts))
+        .build();
+      curator.start();
+    }
+
+    public CuratorFramework getCurator() {
+      return curator;
+    }
+  }
+
   @Bean
   public ObjectMapper crawlerObjectMapper() {
     return JacksonJsonObjectMapperProvider.getObjectMapper();
@@ -36,34 +58,27 @@ public class CrawlerConfiguration {
 
   @Bean
   public DatasetProcessService datasetProcessService(
-      @Qualifier("zookeeperResource") CuratorFramework curator,
+      @Qualifier("zookeeperResource") CuratorWrapper curatorWrapper,
       @Qualifier("crawlerObjectMapper") ObjectMapper objectMapper,
       @Qualifier("crawlerExecutor") Executor executor) {
-    return new DatasetProcessServiceImpl(curator, objectMapper, executor);
+    return new DatasetProcessServiceImpl(curatorWrapper.getCurator(), objectMapper, executor);
   }
 
   @Bean
   public PipelinesRunningProcessService pipelinesRunningProcessService(
-      @Qualifier("zookeeperResource") CuratorFramework curator,
+      @Qualifier("zookeeperResource") CuratorWrapper curatorWrapper,
       DatasetService datasetService) throws Exception {
-    return new PipelinesRunningProcessServiceImpl(curator, datasetService);
+    return new PipelinesRunningProcessServiceImpl(curatorWrapper.getCurator(), datasetService);
   }
 
-  @Bean
-  @Qualifier("zookeeperResource")
-  public CuratorFramework zookeeperResource(
+  @Bean("zookeeperResource")
+  public CuratorWrapper zookeeperResource(
       @Value("${crawler.crawl.server.zk}") String url,
       @Value("${crawler.crawl.namespace}") String crawlNamespace,
       @Value("${crawler.crawl.server.retryAttempts}") Integer retryAttempts,
       @Value("${crawler.crawl.server.retryDelayMs}") Integer retryWait
   ) {
-    CuratorFramework client = CuratorFrameworkFactory.builder()
-        .connectString(url)
-        .namespace(crawlNamespace)
-        .retryPolicy(new ExponentialBackoffRetry(retryWait, retryAttempts))
-        .build();
-    client.start();
-    return client;
+    return new CuratorWrapper(url, crawlNamespace, retryAttempts, retryWait);
   }
 
   /**
