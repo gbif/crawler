@@ -49,7 +49,8 @@ public class CrawlerConfiguration {
     return new PipelinesRunningProcessServiceImpl(curator, datasetService);
   }
 
-  @Bean("zookeeperResource")
+  @Bean
+  @Qualifier("zookeeperResource")
   public CuratorFramework zookeeperResource(
       @Value("${crawler.crawl.server.zk}") String url,
       @Value("${crawler.crawl.namespace}") String crawlNamespace,
