@@ -48,4 +48,9 @@ public class DwcaCrawlConsumer extends DownloadCrawlConsumer {
   protected String getSuffix() {
     return DwcaConfiguration.DWCA_SUFFIX;
   }
+
+  @Override
+  protected File getArchiveDirectory(File archiveRepository, UUID datasetKey) {
+    return new File(archiveRepository, datasetKey.toString());
+  }
 }

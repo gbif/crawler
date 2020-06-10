@@ -49,7 +49,7 @@ public class EmlPusher {
       .createInjector(new SingleUserAuthModule(cfg.registryUser, cfg.registryPassword), new RegistryWsClientModule(p));
     datasetService = inj.getInstance(DatasetService.class);
 
-    rootDirectory = cfg.archiveRepository;
+    rootDirectory = cfg.unpackedRepository;
   }
 
   public void pushAll() {

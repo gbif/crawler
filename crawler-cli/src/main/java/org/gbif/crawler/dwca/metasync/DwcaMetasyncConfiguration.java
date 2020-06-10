@@ -38,6 +38,7 @@ public class DwcaMetasyncConfiguration extends DwcaConfiguration {
       .add("messaging", messaging)
       .add("zooKeeper", zooKeeper)
       .add("archiveRepository", archiveRepository)
+      .add("unpackedRepository", unpackedRepository)
       .add("poolSize", poolSize)
       .toString();
   }
