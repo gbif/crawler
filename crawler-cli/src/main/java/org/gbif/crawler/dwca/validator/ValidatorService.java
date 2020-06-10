@@ -99,7 +99,7 @@ public class ValidatorService extends DwcaService {
           throw new IllegalArgumentException("The requested dataset " + datasetKey + " is not registered");
         }
 
-        final Path dwcaFile = new File(archiveRepository, datasetKey + DwcaConfiguration.DWCA_SUFFIX).toPath();
+        final Path dwcaFile = new File(archiveRepository, datasetKey + "/" + datasetKey + DwcaConfiguration.DWCA_SUFFIX).toPath();
         final Path destinationDir = new File(archiveExtractDirectory, datasetKey.toString()).toPath();
 
         DwcaValidationReport validationReport = prepareAndRunValidation(dataset, dwcaFile, destinationDir);

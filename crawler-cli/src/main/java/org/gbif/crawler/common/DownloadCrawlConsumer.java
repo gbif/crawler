@@ -62,8 +62,12 @@ public abstract class DownloadCrawlConsumer extends CrawlConsumer {
     updateDate(curator, datasetKey, CrawlerNodePaths.STARTED_CRAWLING);
     startedDownloads.inc();
 
+    // downloaded archives are kept as archiveRepository/datasetKey/datasetKey.attempt.dwca
+    final File datasetDirectory = new File(archiveRepository, datasetKey.toString());
+    datasetDirectory.mkdirs();
+
     // we keep the file (potentially compressed) forever and use it to retrieve the last modified for conditional gets
-    final File localFile = new File(archiveRepository, datasetKey + getSuffix());
+    final File localFile = new File(datasetDirectory, datasetKey + getSuffix());
 
     try (
       MDC.MDCCloseable ignored1 = MDC.putCloseable("datasetKey", datasetKey.toString());
@@ -77,12 +81,12 @@ public abstract class DownloadCrawlConsumer extends CrawlConsumer {
         if (status.getStatusCode() == HttpStatus.SC_NOT_MODIFIED) {
           notModified(datasetKey);
           Files.createLink(
-              new File(archiveRepository, datasetKey + "." + crawlJob.getAttempt() + getSuffix()).toPath(),
+              new File(datasetDirectory, datasetKey + "." + crawlJob.getAttempt() + getSuffix()).toPath(),
               localFile.toPath());
         } else if (HttpUtil.success(status)) {
           success(datasetKey, crawlJob);
           Files.createLink(
-              new File(archiveRepository, datasetKey + "." + crawlJob.getAttempt() + getSuffix()).toPath(),
+              new File(datasetDirectory, datasetKey + "." + crawlJob.getAttempt() + getSuffix()).toPath(),
               localFile.toPath());
         } else {
           failed(datasetKey);
