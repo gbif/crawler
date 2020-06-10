@@ -21,7 +21,6 @@ import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.google.inject.Inject;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.TreeCache;
 import org.apache.curator.framework.recipes.cache.TreeCacheListener;
@@ -72,7 +71,6 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
    *
    * @param curator to access ZooKeeper
    */
-  @Inject
   public PipelinesRunningProcessServiceImpl(CuratorFramework curator, DatasetService datasetService)
       throws Exception {
     this.curator = checkNotNull(curator, "curator can't be null");
