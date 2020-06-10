@@ -4,6 +4,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.actuate.autoconfigure.elasticsearch.ElasticSearchRestHealthContributorAutoConfiguration;
 import org.springframework.boot.actuate.autoconfigure.security.servlet.ManagementWebSecurityAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration;
 import org.springframework.boot.autoconfigure.data.elasticsearch.ElasticsearchAutoConfiguration;
 import org.springframework.boot.autoconfigure.elasticsearch.rest.RestClientAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
@@ -17,7 +18,8 @@ import org.springframework.context.annotation.ComponentScan;
   RestClientAutoConfiguration.class,
   DataSourceAutoConfiguration.class,
   ManagementWebSecurityAutoConfiguration.class,
-  SecurityAutoConfiguration.class
+  SecurityAutoConfiguration.class,
+  RabbitAutoConfiguration.class
 })
 @EnableConfigurationProperties
 @ComponentScan(
