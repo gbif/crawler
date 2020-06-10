@@ -58,7 +58,7 @@ public class DownloadCrawlConsumerTest extends TestCase {
         return ".suffix";
       }
     };
-    CrawlJob test = new CrawlJob(datasetKey, attempt, EndpointType.DWC_ARCHIVE, URI.create("http://mb.gbif.org/test.zip"));
+    CrawlJob test = new CrawlJob(datasetKey, attempt, EndpointType.DWC_ARCHIVE, URI.create("https://hosted-datasets.gbif.org/datasets/usda_archive.zip"));
     cc.crawl(datasetKey, test);
   }
 }

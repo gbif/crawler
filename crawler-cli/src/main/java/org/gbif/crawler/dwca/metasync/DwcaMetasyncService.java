@@ -2,7 +2,6 @@ package org.gbif.crawler.dwca.metasync;
 
 import org.gbif.api.model.common.paging.Pageable;
 import org.gbif.api.model.common.paging.PagingRequest;
-import org.gbif.api.model.crawler.ProcessState;
 import org.gbif.api.model.registry.Dataset;
 import org.gbif.api.model.registry.MachineTag;
 import org.gbif.api.service.registry.DatasetService;
@@ -63,14 +62,14 @@ public class DwcaMetasyncService extends DwcaService {
 
     // listen to DwcaValidationFinishedMessage messages
     listener.listen("dwca-metasync", config.poolSize,
-      new DwcaValidationFinishedMessageCallback(datasetService, config.archiveRepository, publisher, curator));
+      new DwcaValidationFinishedMessageCallback(datasetService, config.archiveExtractDirectory, publisher, curator));
   }
 
   private static class DwcaValidationFinishedMessageCallback
     extends AbstractMessageCallback<DwcaValidationFinishedMessage> {
 
     private final DatasetService datasetService;
-    private final File archiveRepository;
+    private final File archiveExtractDirectory;
     private final MessagePublisher publisher;
     private final CuratorFramework curator;
 
@@ -80,9 +79,9 @@ public class DwcaMetasyncService extends DwcaService {
     private final Counter constituentsDeleted = Metrics.newCounter(DwcaMetasyncService.class, "constituentsDeleted");
     private final Counter constituentsUpdated = Metrics.newCounter(DwcaMetasyncService.class, "constituentsUpdated");
 
-    private DwcaValidationFinishedMessageCallback(DatasetService datasetService, File archiveRepository,
+    private DwcaValidationFinishedMessageCallback(DatasetService datasetService, File archiveExtractDirectory,
       MessagePublisher publisher, CuratorFramework curator) {
-      this.archiveRepository = archiveRepository;
+      this.archiveExtractDirectory = archiveExtractDirectory;
       this.datasetService = datasetService;
       this.publisher = publisher;
       this.curator = curator;
@@ -125,9 +124,9 @@ public class DwcaMetasyncService extends DwcaService {
       File metaFile;
       if (DatasetType.METADATA == dataset.getType()) {
         archive = null;
-        metaFile = new File(new File(archiveRepository, datasetKey.toString()), DwcaConfiguration.METADATA_FILE);
+        metaFile = new File(new File(archiveExtractDirectory, datasetKey.toString()), DwcaConfiguration.METADATA_FILE);
       } else {
-        archive = DwcFiles.fromLocation(new File(archiveRepository, datasetKey.toString()).toPath());
+        archive = DwcFiles.fromLocation(new File(archiveExtractDirectory, datasetKey.toString()).toPath());
         metaFile = archive.getMetadataLocationFile();
       }
 

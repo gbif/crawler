@@ -58,7 +58,7 @@ public class ValidatorService extends DwcaService {
 
     // listen to DwcaDownloadFinishedMessage messages
     listener.listen("dwca-validator", config.poolSize,
-      new DwcaDownloadFinishedMessageCallback(datasetService, config.archiveRepository, publisher, curator));
+      new DwcaDownloadFinishedMessageCallback(datasetService, config.archiveRepository, config.archiveExtractDirectory, publisher, curator));
   }
 
   private static class DwcaDownloadFinishedMessageCallback
@@ -66,6 +66,7 @@ public class ValidatorService extends DwcaService {
 
     private final DatasetService datasetService;
     private final File archiveRepository;
+    private final File archiveExtractDirectory;
     private final MessagePublisher publisher;
     private final CuratorFramework curator;
 
@@ -73,9 +74,10 @@ public class ValidatorService extends DwcaService {
     private final Counter failedValidations = Metrics.newCounter(ValidatorService.class, "failedValidations");
 
     private DwcaDownloadFinishedMessageCallback(DatasetService datasetService, File archiveRepository,
-      MessagePublisher publisher, CuratorFramework curator) {
+      File archiveExtractDirectory, MessagePublisher publisher, CuratorFramework curator) {
       this.datasetService = datasetService;
       this.archiveRepository = archiveRepository;
+      this.archiveExtractDirectory = archiveExtractDirectory;
       this.publisher = publisher;
       this.curator = curator;
     }
@@ -98,7 +100,7 @@ public class ValidatorService extends DwcaService {
         }
 
         final Path dwcaFile = new File(archiveRepository, datasetKey + DwcaConfiguration.DWCA_SUFFIX).toPath();
-        final Path destinationDir = new File(archiveRepository, datasetKey.toString()).toPath();
+        final Path destinationDir = new File(archiveExtractDirectory, datasetKey.toString()).toPath();
 
         DwcaValidationReport validationReport = prepareAndRunValidation(dataset, dwcaFile, destinationDir);
         if (validationReport.isValid()) {
