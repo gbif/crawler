@@ -1,7 +1,6 @@
 # application.yml
 
 crawler:
-  overcrawledReportFilePath: @crawler.overcrawledReportFilePath@
   crawl:
     namespace: @crawler.crawl.namespace@
     server:
