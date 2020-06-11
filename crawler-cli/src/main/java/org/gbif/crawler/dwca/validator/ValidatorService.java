@@ -166,15 +166,17 @@ public class ValidatorService extends DwcaService {
     }
 
     /**
-     * Set the process state.  The For existing dataset types (that contains data) this sets the process state as given.
-     * For METADATA, this method will simply return. DwcaFragmenterService will handle them.
-     *
+     * Set the process state.  For existing dataset types (that contains data) this sets the process state as given.
+     * For METADATA, this method sets the state to EMPTY.
      */
     private void updateProcessState(Dataset dataset, DwcaValidationReport report, ProcessState state) {
+      // Override state to EMPTY if there are no occurrences.
+      ProcessState occurrenceState = (report.getOccurrenceReport() != null && report.getOccurrenceReport().getCheckedRecords() > 0)
+        ? state : ProcessState.EMPTY;
 
       switch (dataset.getType()) {
         case OCCURRENCE:
-          createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_OCCURRENCE, state);
+          createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_OCCURRENCE, occurrenceState);
           break;
         case CHECKLIST:
         case SAMPLING_EVENT:
@@ -186,7 +188,7 @@ public class ValidatorService extends DwcaService {
           createOrUpdate(curator, report.getDatasetKey(), dataset.getType() == DatasetType.CHECKLIST ? PROCESS_STATE_CHECKLIST : PROCESS_STATE_SAMPLE, coreState);
 
           // update occurrence status
-          createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_OCCURRENCE, state);
+          createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_OCCURRENCE, occurrenceState);
           break;
         case METADATA:
           // for metadata only dataset this is the last step

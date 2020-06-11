@@ -202,7 +202,7 @@ public class CoordinatorCleanupService extends AbstractScheduledService {
 
     // occurrence (pipeline) indexing running?
     if (status.getProcessStateOccurrence() != null && status.getProcessStateOccurrence() == ProcessState.RUNNING) {
-      LOG.debug("Waiting for checklist processing to finish.");
+      LOG.debug("Waiting for occurrence processing to finish.");
       return false;
     }
 
