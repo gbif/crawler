@@ -37,6 +37,9 @@ public class DwcaConfiguration {
   @NotNull
   public File archiveRepository;
 
+  @Parameter(names = "--archive-extract-directory")
+  @NotNull
+  public File archiveExtractDirectory;
 
   @Override
   public String toString() {
@@ -45,6 +48,7 @@ public class DwcaConfiguration {
       .add("messaging", messaging)
       .add("poolSize", poolSize)
       .add("archiveRepository", archiveRepository)
+      .add("archiveExtractDirectory", archiveExtractDirectory)
       .toString();
   }
 

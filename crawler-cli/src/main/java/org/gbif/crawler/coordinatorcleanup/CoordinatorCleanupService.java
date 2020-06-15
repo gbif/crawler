@@ -198,13 +198,16 @@ public class CoordinatorCleanupService extends AbstractScheduledService {
       return false;
     }
 
-    // the crawl is finally done!
-    LOG.debug("DONE: crawling and checklist processing is completed. (Pipelines continues independently.)");
-
-    // Set the occurrence processing to completed.
-    if (status.getProcessStateOccurrence() == ProcessState.RUNNING) {
-      status.setProcessStateOccurrence(ProcessState.FINISHED);
+    // occurrence (pipeline) indexing running?
+    if (status.getProcessStateOccurrence() != null && status.getProcessStateOccurrence() == ProcessState.RUNNING) {
+      LOG.debug("Waiting for checklist processing to finish.");
+      return false;
     }
+
+    // the crawl is finally done!
+    LOG.debug("DONE: crawling, checklist and occurrence processing is completed. (Metadata sync is/was independent.)");
+
+    // Set the sample processing to completed.
     if (status.getProcessStateSample() == ProcessState.RUNNING) {
       status.setProcessStateSample(ProcessState.FINISHED);
     }
