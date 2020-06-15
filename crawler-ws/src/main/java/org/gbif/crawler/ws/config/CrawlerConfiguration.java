@@ -3,7 +3,6 @@ package org.gbif.crawler.ws.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.gbif.api.service.crawler.DatasetProcessService;
-import org.gbif.api.service.registry.DatasetService;
 import org.gbif.crawler.DatasetProcessServiceImpl;
 import org.gbif.crawler.pipelines.PipelinesRunningProcessService;
 import org.gbif.crawler.pipelines.PipelinesRunningProcessServiceImpl;
@@ -69,8 +68,9 @@ public class CrawlerConfiguration {
   @Bean
   public PipelinesRunningProcessService pipelinesRunningProcessService(
       @Qualifier("zookeeperResource") CuratorWrapper curatorWrapper,
-      DatasetService datasetService) throws Exception {
-    return new PipelinesRunningProcessServiceImpl(curatorWrapper.getCurator(), datasetService);
+      @Value("${crawler.registry.ws.url}") String url) throws Exception {
+    ClientFactory clientFactory = new ClientFactory(url);
+    return new PipelinesRunningProcessServiceImpl(curatorWrapper.getCurator(), clientFactory.newInstance(DatasetClient.class));
   }
 
   @Bean("zookeeperResource")
@@ -92,17 +92,6 @@ public class CrawlerConfiguration {
   public Executor crawlerExecutor(@Value("${crawler.crawl.threadCount}") int threadCount) {
     checkArgument(threadCount > 0, "threadCount has to be greater than zero");
     return Executors.newFixedThreadPool(threadCount);
-  }
-
-  /**
-   * Provides an DatasetService to query info about datasets. This is shared between all requests.
-   *
-   * @param url to registry
-   */
-  @Bean
-  public DatasetService datasetService(@Value("${crawler.registry.ws.url}") String url) {
-    ClientFactory clientFactory = new ClientFactory(url);
-    return clientFactory.newInstance(DatasetClient.class);
   }
 
 }
