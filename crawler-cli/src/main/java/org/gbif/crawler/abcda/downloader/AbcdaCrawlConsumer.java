@@ -3,6 +3,7 @@ package org.gbif.crawler.abcda.downloader;
 import java.io.File;
 import java.util.Date;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.gbif.api.model.crawler.CrawlJob;
 import org.gbif.common.messaging.api.MessagePublisher;
@@ -34,5 +35,10 @@ public class AbcdaCrawlConsumer extends DownloadCrawlConsumer {
   @Override
   protected String getSuffix() {
     return AbcdaConfiguration.ABCDA_SUFFIX;
+  }
+
+  @Override
+  protected File getArchiveDirectory(File archiveRepository, UUID datasetKey) {
+    return archiveRepository;
   }
 }

@@ -62,8 +62,9 @@ public abstract class DownloadCrawlConsumer extends CrawlConsumer {
     updateDate(curator, datasetKey, CrawlerNodePaths.STARTED_CRAWLING);
     startedDownloads.inc();
 
-    // downloaded archives are kept as archiveRepository/datasetKey/datasetKey.attempt.dwca
-    final File datasetDirectory = new File(archiveRepository, datasetKey.toString());
+    // DWCA downloaded archives are kept as archiveRepository/datasetKey/datasetKey.dwca and datasetKey.attempt.dwca
+    // ABCDA downloaded archives are kept as archiveRepsotiroy/datasetKey.abcda and datasetKey.attempt.abcda
+    final File datasetDirectory = getArchiveDirectory(archiveRepository, datasetKey);
     datasetDirectory.mkdirs();
 
     // we keep the file (potentially compressed) forever and use it to retrieve the last modified for conditional gets
@@ -141,4 +142,6 @@ public abstract class DownloadCrawlConsumer extends CrawlConsumer {
   protected abstract DatasetBasedMessage createFinishedMessage(CrawlJob crawlJob);
 
   protected abstract String getSuffix();
+
+  protected abstract File getArchiveDirectory(File archiveRepository, UUID datasetKey);
 }

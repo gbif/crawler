@@ -57,6 +57,11 @@ public class DownloadCrawlConsumerTest extends TestCase {
       protected String getSuffix() {
         return ".suffix";
       }
+
+      @Override
+      protected File getArchiveDirectory(File archiveRepository, UUID datasetKey) {
+        return archiveRepository;
+      }
     };
     CrawlJob test = new CrawlJob(datasetKey, attempt, EndpointType.DWC_ARCHIVE, URI.create("https://hosted-datasets.gbif.org/datasets/usda_archive.zip"));
     cc.crawl(datasetKey, test);

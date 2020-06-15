@@ -19,7 +19,7 @@ public class PushEmlConfiguration {
   @NotNull
   public String registryPassword;
 
-  @Parameter(names = "--extracted-repository")
+  @Parameter(names = "--unpacked-repository")
   @NotNull
-  public File extractedRepository;
+  public File unpackedRepository;
 }

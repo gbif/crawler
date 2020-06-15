@@ -37,6 +37,9 @@ public class DwcaConfiguration {
   @NotNull
   public File archiveRepository;
 
+  @Parameter(names = "--unpacked-repository")
+  @NotNull
+  public File unpackedRepository;
   @Parameter(names = "--archive-extract-directory")
   @NotNull
   public File archiveExtractDirectory;
@@ -48,7 +51,7 @@ public class DwcaConfiguration {
       .add("messaging", messaging)
       .add("poolSize", poolSize)
       .add("archiveRepository", archiveRepository)
-      .add("archiveExtractDirectory", archiveExtractDirectory)
+      .add("unpackedRepository", unpackedRepository)
       .toString();
   }
 

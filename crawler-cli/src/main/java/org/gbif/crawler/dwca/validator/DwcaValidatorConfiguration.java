@@ -38,7 +38,7 @@ public class DwcaValidatorConfiguration extends DwcaConfiguration {
       .add("messaging", messaging)
       .add("zooKeeper", zooKeeper)
       .add("archiveRepository", archiveRepository)
-      .add("archiveExtractDirectory", archiveExtractDirectory)
+      .add("unpackedRepository", unpackedRepository)
       .add("poolSize", poolSize)
       .toString();
   }

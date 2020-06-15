@@ -58,7 +58,7 @@ public class ValidatorService extends DwcaService {
 
     // listen to DwcaDownloadFinishedMessage messages
     listener.listen("dwca-validator", config.poolSize,
-      new DwcaDownloadFinishedMessageCallback(datasetService, config.archiveRepository, config.archiveExtractDirectory, publisher, curator));
+      new DwcaDownloadFinishedMessageCallback(datasetService, config.archiveRepository, config.unpackedRepository, publisher, curator));
   }
 
   private static class DwcaDownloadFinishedMessageCallback
@@ -66,7 +66,7 @@ public class ValidatorService extends DwcaService {
 
     private final DatasetService datasetService;
     private final File archiveRepository;
-    private final File archiveExtractDirectory;
+    private final File unpackDirectory;
     private final MessagePublisher publisher;
     private final CuratorFramework curator;
 
@@ -74,10 +74,10 @@ public class ValidatorService extends DwcaService {
     private final Counter failedValidations = Metrics.newCounter(ValidatorService.class, "failedValidations");
 
     private DwcaDownloadFinishedMessageCallback(DatasetService datasetService, File archiveRepository,
-      File archiveExtractDirectory, MessagePublisher publisher, CuratorFramework curator) {
+      File unpackDirectory, MessagePublisher publisher, CuratorFramework curator) {
       this.datasetService = datasetService;
       this.archiveRepository = archiveRepository;
-      this.archiveExtractDirectory = archiveExtractDirectory;
+      this.unpackDirectory = unpackDirectory;
       this.publisher = publisher;
       this.curator = curator;
     }
@@ -100,7 +100,7 @@ public class ValidatorService extends DwcaService {
         }
 
         final Path dwcaFile = new File(archiveRepository, datasetKey + "/" + datasetKey + DwcaConfiguration.DWCA_SUFFIX).toPath();
-        final Path destinationDir = new File(archiveExtractDirectory, datasetKey.toString()).toPath();
+        final Path destinationDir = new File(unpackDirectory, datasetKey.toString()).toPath();
 
         DwcaValidationReport validationReport = prepareAndRunValidation(dataset, dwcaFile, destinationDir);
         if (validationReport.isValid()) {
@@ -166,15 +166,17 @@ public class ValidatorService extends DwcaService {
     }
 
     /**
-     * Set the process state.  The For existing dataset types (that contains data) this sets the process state as given.
-     * For METADATA, this method will simply return. DwcaFragmenterService will handle them.
-     *
+     * Set the process state.  For existing dataset types (that contains data) this sets the process state as given.
+     * For METADATA, this method sets the state to EMPTY.
      */
     private void updateProcessState(Dataset dataset, DwcaValidationReport report, ProcessState state) {
+      // Override state to EMPTY if there are no occurrences.
+      ProcessState occurrenceState = (report.getOccurrenceReport() != null && report.getOccurrenceReport().getCheckedRecords() > 0)
+        ? state : ProcessState.EMPTY;
 
       switch (dataset.getType()) {
         case OCCURRENCE:
-          createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_OCCURRENCE, state);
+          createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_OCCURRENCE, occurrenceState);
           break;
         case CHECKLIST:
         case SAMPLING_EVENT:
@@ -186,7 +188,7 @@ public class ValidatorService extends DwcaService {
           createOrUpdate(curator, report.getDatasetKey(), dataset.getType() == DatasetType.CHECKLIST ? PROCESS_STATE_CHECKLIST : PROCESS_STATE_SAMPLE, coreState);
 
           // update occurrence status
-          createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_OCCURRENCE, state);
+          createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_OCCURRENCE, occurrenceState);
           break;
         case METADATA:
           // for metadata only dataset this is the last step

@@ -43,7 +43,7 @@ public class EmlPusher {
     ClientFactory clientFactory = new ClientFactory(cfg.registryUser, cfg.registryPassword, cfg.registryWsUrl);
     datasetService = clientFactory.newInstance(DatasetClient.class);
 
-    rootDirectory = cfg.extractedRepository;
+    rootDirectory = cfg.unpackedRepository;
   }
 
   public void pushAll() {
