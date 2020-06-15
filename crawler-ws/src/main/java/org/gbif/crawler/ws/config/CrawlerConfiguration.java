@@ -1,11 +1,13 @@
 package org.gbif.crawler.ws.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.gbif.api.service.crawler.DatasetProcessService;
 import org.gbif.api.service.registry.DatasetService;
 import org.gbif.crawler.DatasetProcessServiceImpl;
 import org.gbif.crawler.pipelines.PipelinesRunningProcessService;
 import org.gbif.crawler.pipelines.PipelinesRunningProcessServiceImpl;
+import org.gbif.registry.ws.client.DatasetClient;
 import org.gbif.ws.client.ClientFactory;
 
 import java.util.concurrent.Executor;
@@ -100,6 +102,7 @@ public class CrawlerConfiguration {
   @Bean
   public DatasetService datasetService(@Value("${crawler.registry.ws.url}") String url) {
     ClientFactory clientFactory = new ClientFactory(url);
-    return clientFactory.newInstance(DatasetService.class);
+    return clientFactory.newInstance(DatasetClient.class);
   }
+
 }
