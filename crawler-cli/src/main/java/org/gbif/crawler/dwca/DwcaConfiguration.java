@@ -40,9 +40,6 @@ public class DwcaConfiguration {
   @Parameter(names = "--unpacked-repository")
   @NotNull
   public File unpackedRepository;
-  @Parameter(names = "--archive-extract-directory")
-  @NotNull
-  public File archiveExtractDirectory;
 
   @Override
   public String toString() {
