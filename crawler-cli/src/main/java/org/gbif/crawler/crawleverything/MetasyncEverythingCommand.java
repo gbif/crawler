@@ -5,7 +5,6 @@ import org.gbif.api.model.common.paging.PagingRequest;
 import org.gbif.api.model.common.paging.PagingResponse;
 import org.gbif.api.model.registry.Dataset;
 import org.gbif.api.model.registry.Installation;
-
 import org.gbif.api.service.registry.InstallationService;
 import org.gbif.cli.BaseCommand;
 import org.gbif.cli.Command;

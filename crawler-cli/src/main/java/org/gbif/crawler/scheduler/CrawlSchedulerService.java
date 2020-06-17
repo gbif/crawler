@@ -214,7 +214,7 @@ public class CrawlSchedulerService extends AbstractScheduledService {
     }
 
     if (dataset.getDuplicateOfDatasetKey() != null) {
-      LOG.debug("Not eligible to crawl [{}] - dataset is marked as a duplicate", dataset.getKey());
+      LOG.debug("Not eligible to crawl - dataset [{}] is marked as a duplicate", dataset.getKey());
       return false;
     }
 

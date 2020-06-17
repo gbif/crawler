@@ -88,7 +88,7 @@ public class CrawlerZooKeeperUpdatingListener<CTX extends CrawlContext>
       if (value.succeeded()) {
         LOG.debug("Set counter of pages crawled for [{}] to [{}]", configuration.getDatasetKey(), value.postValue());
       } else {
-        LOG.error("Failed to update counter of pages crawled for [{}]", configuration.getDatasetKey(),
+        LOG.error("Failed to update counter of pages crawled for [{}] to [{}]", configuration.getDatasetKey(),
           value.postValue());
       }
     } catch (Exception e) {
