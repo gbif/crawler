@@ -47,7 +47,7 @@
     <gbif-api.version>0.112</gbif-api.version>
     <gbif-cli.version>0.14</gbif-cli.version>
     <gbif-common-service.version>0.17</gbif-common-service.version>
-    <gbif-common-ws.version>0.51</gbif-common-ws.version>
+    <gbif-common-ws.version>1.2-SNAPSHOT</gbif-common-ws.version>
     <gbif-common.version>0.47</gbif-common.version>
     <gbif-httputils.version>0.12</gbif-httputils.version>
     <gbif-occurrence.version>0.122</gbif-occurrence.version>
