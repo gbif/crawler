@@ -34,6 +34,7 @@
   <properties>
     <jdkLevel>1.8</jdkLevel>
     <release.tagNameBase>crawler</release.tagNameBase>
+    <main.basedir>${project.basedir}</main.basedir>
 
     <amqp-client.version>4.8.0</amqp-client.version>
     <curator.version>4.0.1</curator.version>
@@ -672,6 +673,18 @@
         </plugin>
       </plugins>
     </pluginManagement>
+
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+      </plugin>
+
+      <plugin>
+        <groupId>com.diffplug.spotless</groupId>
+        <artifactId>spotless-maven-plugin</artifactId>
+      </plugin>
+    </plugins>
   </build>
 
 </project>
