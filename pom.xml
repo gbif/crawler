@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.gbif</groupId>
     <artifactId>motherpom</artifactId>
-    <version>39</version>
+    <version>46</version>
   </parent>
 
   <groupId>org.gbif.crawler</groupId>
