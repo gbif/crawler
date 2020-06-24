@@ -69,6 +69,7 @@
   <properties>
     <!-- need to match gbif-cli -->
     <!--<guava.version>14.0.1</guava.version>-->
+    <main.basedir>${project.parent.basedir}</main.basedir>
   </properties>
 
   <repositories>
