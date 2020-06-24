@@ -1,3 +1,18 @@
+/*
+ * Copyright 2020 Global Biodiversity Information Facility (GBIF)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.gbif.crawler.protocol.tapir;
 
 import org.gbif.crawler.exception.ProtocolException;
@@ -7,27 +22,31 @@ import javax.annotation.concurrent.NotThreadSafe;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 
-import com.google.common.base.Optional;
 import org.codehaus.stax2.XMLStreamReader2;
+
+import com.google.common.base.Optional;
 
 /**
  * This class handles a TAPIR response.
- * <p/>
- * Every TAPIR response has a few pieces of diagnostic information as defined in the <a
+ *
+ * <p>Every TAPIR response has a few pieces of diagnostic information as defined in the <a
  * href="http://www.tdwg.org/dav/subgroups/tapir/1.0/docs/tdwg_tapir_specification_2010-05-05.htm">specification</a>:
+ *
  * <ul>
- * <li>{@code start} index of the first element in this response</li>
- * <li>{@code totalReturned} number of elements in this response</li>
- * <li>{@code next} index of the next element that should be retrieved. Used for paging. This attribute is absent if
- * there are no more records.</li>
+ *   <li>{@code start} index of the first element in this response
+ *   <li>{@code totalReturned} number of elements in this response
+ *   <li>{@code next} index of the next element that should be retrieved. Used for paging. This
+ *       attribute is absent if there are no more records.
  * </ul>
- * <p/>
- * As an example. Sending a request with {@code start}=0 and {@code limit}=2 could return a response like this:
+ *
+ * <p>As an example. Sending a request with {@code start}=0 and {@code limit}=2 could return a
+ * response like this:
+ *
  * <pre>
  *   {@code <summary start='0' next='2' totalReturned='2'/>}
  * </pre>
- * <p/>
- * This class is not thread-safe.
+ *
+ * <p>This class is not thread-safe.
  */
 @NotThreadSafe
 public class TapirResponseHandler extends AbstractResponseHandler {
@@ -45,9 +64,12 @@ public class TapirResponseHandler extends AbstractResponseHandler {
       return false;
     }
 
-    boolean infoElement = isElement(reader, INFO_ELEMENT, true) || isElement(reader, INFO_ELEMENT, false);
+    boolean infoElement =
+        isElement(reader, INFO_ELEMENT, true) || isElement(reader, INFO_ELEMENT, false);
 
-    if (insideContent && !infoElement && reader.getEventType() == XMLStreamConstants.START_ELEMENT) {
+    if (insideContent
+        && !infoElement
+        && reader.getEventType() == XMLStreamConstants.START_ELEMENT) {
       seenContent = true;
     }
 
@@ -79,8 +101,6 @@ public class TapirResponseHandler extends AbstractResponseHandler {
       } else {
         setEndOfRecords(Optional.of(false));
       }
-
     }
   }
-
 }

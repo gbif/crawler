@@ -1,7 +1,20 @@
+/*
+ * Copyright 2020 Global Biodiversity Information Facility (GBIF)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.gbif.crawler.client;
 
-import org.apache.http.conn.HttpClientConnectionManager;
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.gbif.crawler.ResponseHandler;
 import org.gbif.crawler.exception.FatalCrawlException;
 import org.gbif.crawler.exception.ProtocolException;
@@ -14,7 +27,7 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.conn.ClientConnectionManager;
+import org.apache.http.conn.HttpClientConnectionManager;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -45,7 +58,8 @@ public class HttpCrawlClientTest {
     HttpCrawlClient client = new HttpCrawlClient(connectionManager, httpClient);
 
     ArgumentCaptor<HttpGet> captor = ArgumentCaptor.forClass(HttpGet.class);
-    when(httpClient.execute(captor.capture(), any(org.apache.http.client.ResponseHandler.class))).thenReturn("foo");
+    when(httpClient.execute(captor.capture(), any(org.apache.http.client.ResponseHandler.class)))
+        .thenReturn("foo");
     assertThat(client.execute(TEST_URL, innerResponseHandler)).isEqualTo("foo");
     assertThat(captor.getValue().getURI().toString()).isEqualTo(TEST_URL);
   }
@@ -55,7 +69,7 @@ public class HttpCrawlClientTest {
     HttpCrawlClient client = new HttpCrawlClient(connectionManager, httpClient);
 
     when(httpClient.execute(any(HttpGet.class), any(org.apache.http.client.ResponseHandler.class)))
-      .thenThrow(new ClientProtocolException("cpe"));
+        .thenThrow(new ClientProtocolException("cpe"));
 
     client.execute(TEST_URL, innerResponseHandler);
   }
@@ -65,7 +79,7 @@ public class HttpCrawlClientTest {
     HttpCrawlClient client = new HttpCrawlClient(connectionManager, httpClient);
 
     when(httpClient.execute(any(HttpGet.class), any(org.apache.http.client.ResponseHandler.class)))
-      .thenThrow(new RuntimeException(new TransportException("inner transport exception")));
+        .thenThrow(new RuntimeException(new TransportException("inner transport exception")));
 
     client.execute(TEST_URL, innerResponseHandler);
   }
@@ -75,7 +89,7 @@ public class HttpCrawlClientTest {
     HttpCrawlClient client = new HttpCrawlClient(connectionManager, httpClient);
 
     when(httpClient.execute(any(HttpGet.class), any(org.apache.http.client.ResponseHandler.class)))
-      .thenThrow(new RuntimeException(new ProtocolException("inner protocol exception")));
+        .thenThrow(new RuntimeException(new ProtocolException("inner protocol exception")));
 
     client.execute(TEST_URL, innerResponseHandler);
   }
@@ -85,7 +99,7 @@ public class HttpCrawlClientTest {
     HttpCrawlClient client = new HttpCrawlClient(connectionManager, httpClient);
 
     when(httpClient.execute(any(HttpGet.class), any(org.apache.http.client.ResponseHandler.class)))
-      .thenThrow(new RuntimeException(new FatalCrawlException("inner abort exception")));
+        .thenThrow(new RuntimeException(new FatalCrawlException("inner abort exception")));
 
     client.execute(TEST_URL, innerResponseHandler);
   }
@@ -95,11 +109,10 @@ public class HttpCrawlClientTest {
     HttpCrawlClient client = new HttpCrawlClient(connectionManager, httpClient);
 
     when(httpClient.execute(any(HttpGet.class), any(org.apache.http.client.ResponseHandler.class)))
-      .thenThrow(new RuntimeException("plain runtime exception"));
+        .thenThrow(new RuntimeException("plain runtime exception"));
 
     client.execute(TEST_URL, innerResponseHandler);
   }
-
 
   @Test
   public void testConstructor() {
@@ -120,7 +133,6 @@ public class HttpCrawlClientTest {
       fail();
     } catch (Exception e) {
     }
-
   }
 
   @Test
@@ -134,9 +146,9 @@ public class HttpCrawlClientTest {
 
   @Test
   public void testForwardingResponseHandler()
-    throws IOException, ProtocolException, TransportException, FatalCrawlException {
+      throws IOException, ProtocolException, TransportException, FatalCrawlException {
     HttpCrawlClient.ForwardingResponseHandler<String> responseHandler =
-      new HttpCrawlClient.ForwardingResponseHandler<String>(innerResponseHandler);
+        new HttpCrawlClient.ForwardingResponseHandler<String>(innerResponseHandler);
 
     HttpResponse response = mock(HttpResponse.class, RETURNS_DEEP_STUBS);
 
@@ -147,9 +159,10 @@ public class HttpCrawlClientTest {
   }
 
   @Test(expected = ClientProtocolException.class)
-  public void testForwardingResponseHandlerBadResponse() throws IOException, ProtocolException, TransportException {
+  public void testForwardingResponseHandlerBadResponse()
+      throws IOException, ProtocolException, TransportException {
     HttpCrawlClient.ForwardingResponseHandler<String> responseHandler =
-      new HttpCrawlClient.ForwardingResponseHandler<String>(innerResponseHandler);
+        new HttpCrawlClient.ForwardingResponseHandler<String>(innerResponseHandler);
 
     HttpResponse response = mock(HttpResponse.class, RETURNS_DEEP_STUBS);
 
@@ -160,7 +173,7 @@ public class HttpCrawlClientTest {
   @Test(expected = RuntimeException.class)
   public void testForwardingResponseHandlerException1() throws Exception {
     HttpCrawlClient.ForwardingResponseHandler<String> responseHandler =
-      new HttpCrawlClient.ForwardingResponseHandler<String>(innerResponseHandler);
+        new HttpCrawlClient.ForwardingResponseHandler<String>(innerResponseHandler);
 
     HttpResponse response = mock(HttpResponse.class, RETURNS_DEEP_STUBS);
 
@@ -173,7 +186,7 @@ public class HttpCrawlClientTest {
   @Test(expected = RuntimeException.class)
   public void testForwardingResponseHandlerException2() throws Exception {
     HttpCrawlClient.ForwardingResponseHandler<String> responseHandler =
-      new HttpCrawlClient.ForwardingResponseHandler<String>(innerResponseHandler);
+        new HttpCrawlClient.ForwardingResponseHandler<String>(innerResponseHandler);
 
     HttpResponse response = mock(HttpResponse.class, RETURNS_DEEP_STUBS);
 
@@ -186,7 +199,7 @@ public class HttpCrawlClientTest {
   @Test(expected = RuntimeException.class)
   public void testForwardingResponseHandlerException3() throws Exception {
     HttpCrawlClient.ForwardingResponseHandler<String> responseHandler =
-      new HttpCrawlClient.ForwardingResponseHandler<String>(innerResponseHandler);
+        new HttpCrawlClient.ForwardingResponseHandler<String>(innerResponseHandler);
 
     HttpResponse response = mock(HttpResponse.class, RETURNS_DEEP_STUBS);
 
@@ -195,5 +208,4 @@ public class HttpCrawlClientTest {
 
     responseHandler.handleResponse(response);
   }
-
 }

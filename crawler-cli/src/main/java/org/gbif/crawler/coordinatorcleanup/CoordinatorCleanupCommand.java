@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Global Biodiversity Information Facility (GBIF)
+ * Copyright 2020 Global Biodiversity Information Facility (GBIF)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,9 @@ package org.gbif.crawler.coordinatorcleanup;
 import org.gbif.cli.Command;
 import org.gbif.cli.service.ServiceCommand;
 
-import com.google.common.util.concurrent.Service;
 import org.kohsuke.MetaInfServices;
+
+import com.google.common.util.concurrent.Service;
 
 @MetaInfServices(Command.class)
 public class CoordinatorCleanupCommand extends ServiceCommand {
@@ -39,5 +40,4 @@ public class CoordinatorCleanupCommand extends ServiceCommand {
   protected Service getService() {
     return new CoordinatorCleanupService(config);
   }
-
 }

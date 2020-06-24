@@ -1,5 +1,5 @@
 /*
- * Copyright ${today.currentYear} Global Biodiversity Information Facility (GBIF)
+ * Copyright 2020 Global Biodiversity Information Facility (GBIF)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.gbif.crawler.xml.crawlserver;
 import org.gbif.crawler.common.crawlserver.CrawlServerConfiguration;
 
 import java.io.File;
+
 import javax.validation.constraints.Min;
 
 import com.beust.jcommander.Parameter;
@@ -26,21 +27,30 @@ import com.google.common.base.Objects;
 @SuppressWarnings("PublicField")
 public class XmlCrawlServerConfiguration extends CrawlServerConfiguration {
 
-  @Parameter(names = "--min-lock-delay", description = "An optional minimum delay before releasing a lock on an URL.")
+  @Parameter(
+      names = "--min-lock-delay",
+      description = "An optional minimum delay before releasing a lock on an URL.")
   @Min(1)
   public Long minLockDelay;
 
-  @Parameter(names = "--max-lock-delay", description = "An optional maximum delay before releasing a lock on an URL.")
+  @Parameter(
+      names = "--max-lock-delay",
+      description = "An optional maximum delay before releasing a lock on an URL.")
   @Min(1)
   public Long maxLockDelay;
 
-  @Parameter(names = "--response-archive", description = "An optional directory where all the responses will be saved")
+  @Parameter(
+      names = "--response-archive",
+      description = "An optional directory where all the responses will be saved")
   public File responseArchive;
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this).add("super", super.toString()).add("minLockDelay", minLockDelay)
-      .add("maxLockDelay", maxLockDelay).add("responseArchive", responseArchive).toString();
+    return Objects.toStringHelper(this)
+        .add("super", super.toString())
+        .add("minLockDelay", minLockDelay)
+        .add("maxLockDelay", maxLockDelay)
+        .add("responseArchive", responseArchive)
+        .toString();
   }
-
 }

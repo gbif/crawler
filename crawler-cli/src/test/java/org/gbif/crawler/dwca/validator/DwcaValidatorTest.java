@@ -1,3 +1,18 @@
+/*
+ * Copyright 2020 Global Biodiversity Information Facility (GBIF)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.gbif.crawler.dwca.validator;
 
 import org.gbif.api.model.crawler.DwcaValidationReport;
@@ -5,6 +20,7 @@ import org.gbif.api.model.registry.Dataset;
 import org.gbif.api.vocabulary.DatasetType;
 import org.gbif.crawler.dwca.util.DwcaTestUtil;
 import org.gbif.dwc.Archive;
+import org.gbif.dwc.DwcFiles;
 
 import java.io.File;
 import java.io.IOException;
@@ -12,7 +28,6 @@ import java.net.URI;
 import java.util.UUID;
 
 import org.apache.commons.io.FileUtils;
-import org.gbif.dwc.DwcFiles;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -62,10 +77,14 @@ public class DwcaValidatorTest {
     assertEquals(0, report.getOccurrenceReport().getRecordsMissingOccurrenceId());
     assertTrue(report.isValid());
     assertTrue(report.getOccurrenceReport().isAllRecordsChecked());
-    assertEquals(report.getOccurrenceReport().getUniqueTriplets(),
-      report.getOccurrenceReport().getCheckedRecords() - report.getOccurrenceReport().getRecordsWithInvalidTriplets());
-    assertEquals(report.getOccurrenceReport().getUniqueOccurrenceIds(),
-      report.getOccurrenceReport().getCheckedRecords() - report.getOccurrenceReport().getRecordsMissingOccurrenceId());
+    assertEquals(
+        report.getOccurrenceReport().getUniqueTriplets(),
+        report.getOccurrenceReport().getCheckedRecords()
+            - report.getOccurrenceReport().getRecordsWithInvalidTriplets());
+    assertEquals(
+        report.getOccurrenceReport().getUniqueOccurrenceIds(),
+        report.getOccurrenceReport().getCheckedRecords()
+            - report.getOccurrenceReport().getRecordsMissingOccurrenceId());
 
     DwcaTestUtil.cleanupArchive(archive);
   }
@@ -74,7 +93,8 @@ public class DwcaValidatorTest {
   public void testChecklistGoodTripletsGoodIds() throws IOException {
     dataset.setType(DatasetType.CHECKLIST);
 
-    Archive archive = DwcaTestUtil.openArchive("/dwca/dwca_checklist-one-hundred-good-triplets-good-ids.zip");
+    Archive archive =
+        DwcaTestUtil.openArchive("/dwca/dwca_checklist-one-hundred-good-triplets-good-ids.zip");
     DwcaValidationReport report = DwcaValidator.validate(dataset, archive);
     assertEquals(100, report.getOccurrenceReport().getCheckedRecords());
     assertEquals(100, report.getOccurrenceReport().getUniqueTriplets());
@@ -83,10 +103,14 @@ public class DwcaValidatorTest {
     assertEquals(0, report.getOccurrenceReport().getRecordsMissingOccurrenceId());
     assertTrue(report.isValid());
     assertTrue(report.getOccurrenceReport().isAllRecordsChecked());
-    assertEquals(report.getOccurrenceReport().getUniqueTriplets(),
-      report.getOccurrenceReport().getCheckedRecords() - report.getOccurrenceReport().getRecordsWithInvalidTriplets());
-    assertEquals(report.getOccurrenceReport().getUniqueOccurrenceIds(),
-      report.getOccurrenceReport().getCheckedRecords() - report.getOccurrenceReport().getRecordsMissingOccurrenceId());
+    assertEquals(
+        report.getOccurrenceReport().getUniqueTriplets(),
+        report.getOccurrenceReport().getCheckedRecords()
+            - report.getOccurrenceReport().getRecordsWithInvalidTriplets());
+    assertEquals(
+        report.getOccurrenceReport().getUniqueOccurrenceIds(),
+        report.getOccurrenceReport().getCheckedRecords()
+            - report.getOccurrenceReport().getRecordsMissingOccurrenceId());
 
     DwcaTestUtil.cleanupArchive(archive);
   }
@@ -111,10 +135,14 @@ public class DwcaValidatorTest {
     assertEquals(1000, report.getOccurrenceReport().getRecordsMissingOccurrenceId());
     assertTrue(report.isValid());
     assertTrue(report.getOccurrenceReport().isAllRecordsChecked());
-    assertEquals(report.getOccurrenceReport().getUniqueTriplets(),
-      report.getOccurrenceReport().getCheckedRecords() - report.getOccurrenceReport().getRecordsWithInvalidTriplets());
-    assertEquals(report.getOccurrenceReport().getUniqueOccurrenceIds(),
-      report.getOccurrenceReport().getCheckedRecords() - report.getOccurrenceReport().getRecordsMissingOccurrenceId());
+    assertEquals(
+        report.getOccurrenceReport().getUniqueTriplets(),
+        report.getOccurrenceReport().getCheckedRecords()
+            - report.getOccurrenceReport().getRecordsWithInvalidTriplets());
+    assertEquals(
+        report.getOccurrenceReport().getUniqueOccurrenceIds(),
+        report.getOccurrenceReport().getCheckedRecords()
+            - report.getOccurrenceReport().getRecordsMissingOccurrenceId());
 
     DwcaTestUtil.cleanupArchive(archive);
   }
@@ -137,7 +165,8 @@ public class DwcaValidatorTest {
 
   @Test
   public void testInvalidTripletInValidArchive() throws IOException {
-    Archive archive = DwcaTestUtil.openArchive("/dwca/dwca-one-hundred-20-percent-invalid-triplet.zip");
+    Archive archive =
+        DwcaTestUtil.openArchive("/dwca/dwca-one-hundred-20-percent-invalid-triplet.zip");
     DwcaValidationReport report = DwcaValidator.validate(dataset, archive);
     assertEquals(100, report.getOccurrenceReport().getCheckedRecords());
     assertEquals(80, report.getOccurrenceReport().getUniqueTriplets());
@@ -170,7 +199,8 @@ public class DwcaValidatorTest {
 
   @Test
   public void testGoodTripletsDupedAndMissingIds() throws IOException {
-    Archive archive = DwcaTestUtil.openArchive("/dwca/dwca-one-hundred-good-triplets-dupe-and-missing-ids.zip");
+    Archive archive =
+        DwcaTestUtil.openArchive("/dwca/dwca-one-hundred-good-triplets-dupe-and-missing-ids.zip");
 
     DwcaValidationReport report = DwcaValidator.validate(dataset, archive);
     assertEquals(100, report.getOccurrenceReport().getCheckedRecords());
@@ -187,7 +217,9 @@ public class DwcaValidatorTest {
 
   @Test
   public void testInvalidAndDupeTriplet() throws IOException {
-    Archive archive = DwcaTestUtil.openArchive("/dwca/dwca-one-hundred-50-percent-invalid-with-dupes-triplet.zip");
+    Archive archive =
+        DwcaTestUtil.openArchive(
+            "/dwca/dwca-one-hundred-50-percent-invalid-with-dupes-triplet.zip");
 
     DwcaValidationReport report = DwcaValidator.validate(dataset, archive);
     assertEquals(100, report.getOccurrenceReport().getCheckedRecords());
@@ -197,15 +229,17 @@ public class DwcaValidatorTest {
     assertEquals(100, report.getOccurrenceReport().getRecordsMissingOccurrenceId());
     assertFalse(report.isValid());
     assertEquals(
-      "Archive invalid because [50% invalid triplets is > than threshold of 25%; 45 duplicate triplets detected; 100 records without an occurrence id (should be 0)]",
-      report.getOccurrenceReport().getInvalidationReason());
+        "Archive invalid because [50% invalid triplets is > than threshold of 25%; 45 duplicate triplets detected; 100 records without an occurrence id (should be 0)]",
+        report.getOccurrenceReport().getInvalidationReason());
 
     DwcaTestUtil.cleanupArchive(archive);
   }
 
   @Test
   public void testDupeAndBadTripletNoOccurrenceId() throws IOException {
-    Archive archive = DwcaTestUtil.openArchive("/dwca/dwca-one-hundred-50-percent-invalid-with-dupes-triplet.zip");
+    Archive archive =
+        DwcaTestUtil.openArchive(
+            "/dwca/dwca-one-hundred-50-percent-invalid-with-dupes-triplet.zip");
     DwcaValidationReport report = DwcaValidator.validate(dataset, archive);
     assertEquals(100, report.getOccurrenceReport().getCheckedRecords());
     assertEquals(5, report.getOccurrenceReport().getUniqueTriplets());
@@ -214,8 +248,8 @@ public class DwcaValidatorTest {
     assertEquals(100, report.getOccurrenceReport().getRecordsMissingOccurrenceId());
     assertFalse(report.isValid());
     assertEquals(
-      "Archive invalid because [50% invalid triplets is > than threshold of 25%; 45 duplicate triplets detected; 100 records without an occurrence id (should be 0)]",
-      report.getOccurrenceReport().getInvalidationReason());
+        "Archive invalid because [50% invalid triplets is > than threshold of 25%; 45 duplicate triplets detected; 100 records without an occurrence id (should be 0)]",
+        report.getOccurrenceReport().getInvalidationReason());
 
     DwcaTestUtil.cleanupArchive(archive);
   }
@@ -235,7 +269,6 @@ public class DwcaValidatorTest {
     DwcaTestUtil.cleanupArchive(archive);
   }
 
-
   @Test
   public void testGoodChecklistTaxonID() throws IOException {
     dataset.setType(DatasetType.CHECKLIST);
@@ -248,7 +281,6 @@ public class DwcaValidatorTest {
 
     DwcaTestUtil.cleanupArchive(archive);
   }
-
 
   @Test
   public void testGoodGenericCore() throws IOException {
@@ -263,7 +295,6 @@ public class DwcaValidatorTest {
     DwcaTestUtil.cleanupArchive(archive);
   }
 
-
   @Test
   public void testBadGenericMissing() throws IOException {
     dataset.setType(DatasetType.CHECKLIST);
@@ -277,7 +308,6 @@ public class DwcaValidatorTest {
     DwcaTestUtil.cleanupArchive(archive);
   }
 
-
   @Test
   public void testBadGenericDupl() throws IOException {
     dataset.setType(DatasetType.CHECKLIST);
@@ -290,5 +320,4 @@ public class DwcaValidatorTest {
 
     DwcaTestUtil.cleanupArchive(archive);
   }
-
 }

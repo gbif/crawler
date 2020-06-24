@@ -1,9 +1,12 @@
 /*
- * Copyright 2012 Global Biodiversity Information Facility (GBIF)
+ * Copyright 2020 Global Biodiversity Information Facility (GBIF)
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -13,15 +16,14 @@
 package org.gbif.crawler.constants;
 
 import java.util.UUID;
+
 import javax.annotation.Nullable;
 
 import com.google.common.base.Joiner;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-/**
- * Constant class for storing the Zookeeper node paths.
- */
+/** Constant class for storing the Zookeeper node paths. */
 public class CrawlerNodePaths {
 
   public static final String SUCCESSFUL = "successful";
@@ -45,13 +47,18 @@ public class CrawlerNodePaths {
   public static final String FRAGMENTS_RECEIVED = "fragmentsReceived";
   public static final String RAW_OCCURRENCES_PERSISTED_NEW = "rawOccurrencesPersisted/new";
   public static final String RAW_OCCURRENCES_PERSISTED_UPDATED = "rawOccurrencesPersisted/updated";
-  public static final String RAW_OCCURRENCES_PERSISTED_UNCHANGED = "rawOccurrencesPersisted/unchanged";
+  public static final String RAW_OCCURRENCES_PERSISTED_UNCHANGED =
+      "rawOccurrencesPersisted/unchanged";
   public static final String RAW_OCCURRENCES_PERSISTED_ERROR = "rawOccurrencesPersisted/" + ERROR;
   public static final String FRAGMENTS_PROCESSED = "fragmentsProcessed";
-  public static final String VERBATIM_OCCURRENCES_PERSISTED_SUCCESSFUL = "verbatimOccurrencesPersisted/" + SUCCESSFUL;
-  public static final String VERBATIM_OCCURRENCES_PERSISTED_ERROR = "verbatimOccurrencesPersisted/" + ERROR;
-  public static final String INTERPRETED_OCCURRENCES_PERSISTED_SUCCESSFUL = "interpretedOccurrencesPersisted/" + SUCCESSFUL;
-  public static final String INTERPRETED_OCCURRENCES_PERSISTED_ERROR = "interpretedOccurrencesPersisted/" + ERROR;
+  public static final String VERBATIM_OCCURRENCES_PERSISTED_SUCCESSFUL =
+      "verbatimOccurrencesPersisted/" + SUCCESSFUL;
+  public static final String VERBATIM_OCCURRENCES_PERSISTED_ERROR =
+      "verbatimOccurrencesPersisted/" + ERROR;
+  public static final String INTERPRETED_OCCURRENCES_PERSISTED_SUCCESSFUL =
+      "interpretedOccurrencesPersisted/" + SUCCESSFUL;
+  public static final String INTERPRETED_OCCURRENCES_PERSISTED_ERROR =
+      "interpretedOccurrencesPersisted/" + ERROR;
   public static final String PROCESS_STATE_OCCURRENCE = "processState/occurrence";
   public static final String PROCESS_STATE_CHECKLIST = "processState/checklist";
   public static final String PROCESS_STATE_SAMPLE = "processState/sample";
@@ -59,10 +66,10 @@ public class CrawlerNodePaths {
   private static final Joiner JOINER = Joiner.on('/').skipNulls();
 
   /**
-   * Helper method to retrieve the path in ZooKeeper where all information about a specific dataset can be found.
+   * Helper method to retrieve the path in ZooKeeper where all information about a specific dataset
+   * can be found.
    *
    * @param uuid to retrieve path for
-   *
    * @return crawl info path for dataset
    */
   public static String getCrawlInfoPath(UUID uuid) {
@@ -73,7 +80,8 @@ public class CrawlerNodePaths {
    * Helper method to retrieve a path under the {@link #CRAWL_INFO} node.
    *
    * @param uuid of the dataset to get the path for
-   * @param path if null we retrieve the path of the {@link #CRAWL_INFO} node itself otherwise we append this path
+   * @param path if null we retrieve the path of the {@link #CRAWL_INFO} node itself otherwise we
+   *     append this path
    * @return ZK path to crawl info
    */
   public static String getCrawlInfoPath(UUID uuid, @Nullable String path) {
@@ -87,8 +95,8 @@ public class CrawlerNodePaths {
   }
 
   /**
-   * Builds a "/" separated path out of path elements. The returned string will have a "/" as the first character,
-   * but not as the last character.
+   * Builds a "/" separated path out of path elements. The returned string will have a "/" as the
+   * first character, but not as the last character.
    *
    * @param paths to concatenate
    * @return a string with all the parts concatenated
@@ -98,7 +106,5 @@ public class CrawlerNodePaths {
     return path;
   }
 
-  private CrawlerNodePaths() {
-  }
-
+  private CrawlerNodePaths() {}
 }

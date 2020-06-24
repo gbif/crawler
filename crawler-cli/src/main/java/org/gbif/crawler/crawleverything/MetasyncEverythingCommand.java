@@ -1,3 +1,18 @@
+/*
+ * Copyright 2020 Global Biodiversity Information Facility (GBIF)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.gbif.crawler.crawleverything;
 
 import org.gbif.api.model.common.paging.Pageable;
@@ -22,15 +37,16 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.google.common.base.Stopwatch;
-import com.google.common.base.Throwables;
-
 import org.kohsuke.MetaInfServices;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Stopwatch;
+import com.google.common.base.Throwables;
+
 /**
- * This command iterates over all installations from the registry and sends a StartMetasyncMessage for each of them.
+ * This command iterates over all installations from the registry and sends a StartMetasyncMessage
+ * for each of them.
  */
 @SuppressWarnings("UnstableApiUsage")
 @MetaInfServices(Command.class)
@@ -52,7 +68,8 @@ public class MetasyncEverythingCommand extends BaseCommand {
   @Override
   protected void doRun() {
     try {
-      MessagePublisher publisher = new DefaultMessagePublisher(config.messaging.getConnectionParameters());
+      MessagePublisher publisher =
+          new DefaultMessagePublisher(config.messaging.getConnectionParameters());
 
       // Create Registry WS Client
       ClientFactory clientFactory = new ClientFactory(config.registryWsUrl);
@@ -75,14 +92,17 @@ public class MetasyncEverythingCommand extends BaseCommand {
           continue;
         }
         stopwatch.stop();
-        LOG.info("Received [{}] installations in [{}]s", installations.getResults().size(),
-          stopwatch.elapsed(TimeUnit.SECONDS));
+        LOG.info(
+            "Received [{}] installations in [{}]s",
+            installations.getResults().size(),
+            stopwatch.elapsed(TimeUnit.SECONDS));
 
         // skip installations that don't serve any datasets!
         Iterator<Installation> iter = installations.getResults().iterator();
         while (iter.hasNext()) {
           Installation i = iter.next();
-          PagingResponse<Dataset> datasets = installationService.getHostedDatasets(i.getKey(), new PagingRequest(0, 1));
+          PagingResponse<Dataset> datasets =
+              installationService.getHostedDatasets(i.getKey(), new PagingRequest(0, 1));
           if (datasets.getResults().isEmpty()) {
             LOG.warn("Excluding installation [key={}] because it serves 0 datasets!", i.getKey());
             iter.remove();
@@ -90,7 +110,8 @@ public class MetasyncEverythingCommand extends BaseCommand {
         }
 
         executor.submit(
-          new InstallationSchedulingRunnable(installations, publisher, totalCount, scheduledCount, offset));
+            new InstallationSchedulingRunnable(
+                installations, publisher, totalCount, scheduledCount, offset));
 
         endOfRecords = installations.isEndOfRecords();
         offset += installations.getResults().size();
@@ -106,7 +127,10 @@ public class MetasyncEverythingCommand extends BaseCommand {
         }
       }
       publisher.close();
-      LOG.info("Done processing [{}] installations, [{}] were scheduled", totalCount.get(), scheduledCount.get());
+      LOG.info(
+          "Done processing [{}] installations, [{}] were scheduled",
+          totalCount.get(),
+          scheduledCount.get());
     } catch (IOException e) {
       throw Throwables.propagate(e); // we're hosed
     }
@@ -120,8 +144,12 @@ public class MetasyncEverythingCommand extends BaseCommand {
     private final AtomicInteger count;
     private final AtomicInteger scheduledCount;
 
-    private InstallationSchedulingRunnable(PagingResponse<Installation> installations, MessagePublisher publisher,
-      AtomicInteger count, AtomicInteger scheduledCount, int offset) {
+    private InstallationSchedulingRunnable(
+        PagingResponse<Installation> installations,
+        MessagePublisher publisher,
+        AtomicInteger count,
+        AtomicInteger scheduledCount,
+        int offset) {
       this.installations = installations;
       this.publisher = publisher;
       this.count = count;
@@ -144,8 +172,11 @@ public class MetasyncEverythingCommand extends BaseCommand {
           LOG.error("Caught exception while sending metasync message", e);
         }
       }
-      LOG.debug("[{}] installations out of [{}] for offset [{}] were registered and scheduled", registeredCount,
-        installations.getResults().size(), offset);
+      LOG.debug(
+          "[{}] installations out of [{}] for offset [{}] were registered and scheduled",
+          registeredCount,
+          installations.getResults().size(),
+          offset);
     }
   }
 }

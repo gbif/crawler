@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Global Biodiversity Information Facility (GBIF)
+ * Copyright 2020 Global Biodiversity Information Facility (GBIF)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,21 +26,18 @@ import com.google.common.base.Objects;
 
 public class DwcaMetasyncConfiguration extends DwcaConfiguration {
 
-  @ParametersDelegate
-  @Valid
-  @NotNull
+  @ParametersDelegate @Valid @NotNull
   public ZooKeeperConfiguration zooKeeper = new ZooKeeperConfiguration();
 
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
-      .add("registry", registry)
-      .add("messaging", messaging)
-      .add("zooKeeper", zooKeeper)
-      .add("archiveRepository", archiveRepository)
-      .add("unpackedRepository", unpackedRepository)
-      .add("poolSize", poolSize)
-      .toString();
+        .add("registry", registry)
+        .add("messaging", messaging)
+        .add("zooKeeper", zooKeeper)
+        .add("archiveRepository", archiveRepository)
+        .add("unpackedRepository", unpackedRepository)
+        .add("poolSize", poolSize)
+        .toString();
   }
-
 }

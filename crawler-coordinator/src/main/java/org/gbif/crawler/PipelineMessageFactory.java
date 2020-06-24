@@ -1,3 +1,18 @@
+/*
+ * Copyright 2020 Global Biodiversity Information Facility (GBIF)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.gbif.crawler;
 
 import org.gbif.api.model.metrics.cube.OccurrenceCube;
@@ -28,16 +43,16 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
 
-import static org.gbif.api.vocabulary.TagName.CRAWL_ATTEMPT;
-
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.gbif.api.vocabulary.TagName.CRAWL_ATTEMPT;
 
 public class PipelineMessageFactory {
 
-  private static final Comparator<Endpoint> ENDPOINT_COMPARATOR = Ordering.compound(Lists.newArrayList(
-    Collections.reverseOrder(new EndpointPriorityComparator()),
-    EndpointCreatedComparator.INSTANCE
-  ));
+  private static final Comparator<Endpoint> ENDPOINT_COMPARATOR =
+      Ordering.compound(
+          Lists.newArrayList(
+              Collections.reverseOrder(new EndpointPriorityComparator()),
+              EndpointCreatedComparator.INSTANCE));
 
   private final DatasetService datasetService;
   private final CubeService cubeService;
@@ -47,17 +62,14 @@ public class PipelineMessageFactory {
     this.cubeService = cubeService;
   }
 
-
   /**
    * Gets the endpoint that we want to crawl from the passed in dataset.
-   * <p/>
-   * We take into account a list of supported and prioritized endpoint types and verify that the declared dataset type
-   * matches a supported endpoint type.
+   *
+   * <p>We take into account a list of supported and prioritized endpoint types and verify that the
+   * declared dataset type matches a supported endpoint type.
    *
    * @param dataset to get the endpoint for
-   *
    * @return will be present if we found an eligible endpoint
-   *
    * @see EndpointPriorityComparator
    */
   private Optional<Endpoint> getEndpointToCrawl(Dataset dataset) {
@@ -71,12 +83,12 @@ public class PipelineMessageFactory {
   }
 
   /**
-   * Returns a list of valid Endpoints for the currently available Crawler implementations in a priority sorted order.
+   * Returns a list of valid Endpoints for the currently available Crawler implementations in a
+   * priority sorted order.
    *
    * @param endpoints to sort
-   *
-   * @return sorted and filtered list of Endpoints with the <em>best</em> ones at the beginning of the list
-   *
+   * @return sorted and filtered list of Endpoints with the <em>best</em> ones at the beginning of
+   *     the list
    * @see EndpointPriorityComparator
    */
   @VisibleForTesting
@@ -96,16 +108,14 @@ public class PipelineMessageFactory {
     return result;
   }
 
-  /**
-   * Use the metrics web service to get the record count of a dataset.
-   */
+  /** Use the metrics web service to get the record count of a dataset. */
   private long getMetricsRecordCount(UUID dataseyKey) {
     return cubeService.get(new ReadBuilder().at(OccurrenceCube.DATASET_KEY, dataseyKey));
   }
 
   /**
-   * This retrieves the current attempt of crawling for this dataset, increments it by one (in the registry) and
-   * returns this new number.
+   * This retrieves the current attempt of crawling for this dataset, increments it by one (in the
+   * registry) and returns this new number.
    */
   private int getAttempt(UUID datasetKey, Dataset dataset, Endpoint endpoint) {
     int attempt = 0;
@@ -123,11 +133,14 @@ public class PipelineMessageFactory {
     }
     // store updated tag
     attempt++;
-    MachineTag tag = new MachineTag(CRAWL_ATTEMPT.getNamespace().getNamespace(), CRAWL_ATTEMPT.getName(),
-                                    String.valueOf(attempt));
+    MachineTag tag =
+        new MachineTag(
+            CRAWL_ATTEMPT.getNamespace().getNamespace(),
+            CRAWL_ATTEMPT.getName(),
+            String.valueOf(attempt));
     datasetService.addMachineTag(datasetKey, tag);
 
-    //metrics.registerCrawl(endpoint);
+    // metrics.registerCrawl(endpoint);
     return attempt;
   }
 
@@ -137,22 +150,24 @@ public class PipelineMessageFactory {
     message.setDatasetType(DatasetType.OCCURRENCE);
     message.setDatasetUuid(datasetKey);
     message.setPipelineSteps(steps);
-    getEndpointToCrawl(dataset).ifPresent(endpoint -> {
-      message.setEndpointType(endpoint.getType());
-      message.setSource(endpoint.getUrl());
-      message.setAttempt(getAttempt(datasetKey, dataset, endpoint));
-    });
+    getEndpointToCrawl(dataset)
+        .ifPresent(
+            endpoint -> {
+              message.setEndpointType(endpoint.getType());
+              message.setSource(endpoint.getUrl());
+              message.setAttempt(getAttempt(datasetKey, dataset, endpoint));
+            });
     return message;
   }
 
-  public PipelinesInterpretedMessage buildPipelinesInterpretedMessage(UUID datasetKey, Set<String> steps) {
+  public PipelinesInterpretedMessage buildPipelinesInterpretedMessage(
+      UUID datasetKey, Set<String> steps) {
     Dataset dataset = datasetService.get(datasetKey);
     PipelinesInterpretedMessage message = new PipelinesInterpretedMessage();
     message.setDatasetUuid(datasetKey);
     message.setNumberOfRecords(getMetricsRecordCount(datasetKey));
-    getEndpointToCrawl(dataset).ifPresent(endpoint ->
-      message.setAttempt(getAttempt(datasetKey, dataset, endpoint))
-    );
+    getEndpointToCrawl(dataset)
+        .ifPresent(endpoint -> message.setAttempt(getAttempt(datasetKey, dataset, endpoint)));
     return message;
   }
 
@@ -161,14 +176,17 @@ public class PipelineMessageFactory {
     PipelinesXmlMessage message = new PipelinesXmlMessage();
     message.setDatasetUuid(datasetKey);
     message.setTotalRecordCount(Long.valueOf(getMetricsRecordCount(datasetKey)).intValue());
-    getEndpointToCrawl(dataset).ifPresent(endpoint -> {
-      message.setEndpointType(endpoint.getType());
-      message.setAttempt(getAttempt(datasetKey, dataset, endpoint));
-    });
+    getEndpointToCrawl(dataset)
+        .ifPresent(
+            endpoint -> {
+              message.setEndpointType(endpoint.getType());
+              message.setAttempt(getAttempt(datasetKey, dataset, endpoint));
+            });
     return message;
   }
 
-  public static PipelinesBalancerMessage buildPipelinesBalancerMessage(Class<?> messageClass, PipelineBasedMessage payload) {
+  public static PipelinesBalancerMessage buildPipelinesBalancerMessage(
+      Class<?> messageClass, PipelineBasedMessage payload) {
     PipelinesBalancerMessage message = new PipelinesBalancerMessage();
     message.setMessageClass(messageClass.getSimpleName());
     message.setPayload(payload.toString());

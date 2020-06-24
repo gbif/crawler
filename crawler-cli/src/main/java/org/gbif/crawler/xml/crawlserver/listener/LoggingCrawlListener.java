@@ -1,3 +1,18 @@
+/*
+ * Copyright 2020 Global Biodiversity Information Facility (GBIF)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.gbif.crawler.xml.crawlserver.listener;
 
 import org.gbif.api.model.crawler.FinishReason;
@@ -9,16 +24,19 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import com.google.common.base.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
+import com.google.common.base.Optional;
+
 /**
- * This class uses SLF4J to log events that occur during crawling. It logs everything at INFO level except errors which
- * are at WARN. It also make two things available in the MDC: datasetKey and attempt.
+ * This class uses SLF4J to log events that occur during crawling. It logs everything at INFO level
+ * except errors which are at WARN. It also make two things available in the MDC: datasetKey and
+ * attempt.
  */
-public class LoggingCrawlListener<CTX extends CrawlContext> implements CrawlListener<CTX, String, List<Byte>> {
+public class LoggingCrawlListener<CTX extends CrawlContext>
+    implements CrawlListener<CTX, String, List<Byte>> {
 
   private static final Logger LOG = LoggerFactory.getLogger(LoggingCrawlListener.class);
 
@@ -48,15 +66,28 @@ public class LoggingCrawlListener<CTX extends CrawlContext> implements CrawlList
 
   @Override
   public void error(String msg) {
-    LOG.warn("Error during crawling: [{}], last request [{}], message [{}]", lastContext, lastRequest, msg);
+    LOG.warn(
+        "Error during crawling: [{}], last request [{}], message [{}]",
+        lastContext,
+        lastRequest,
+        msg);
   }
 
   @Override
-  public void response(List<Byte> response, int retry, long duration, Optional<Integer> recordCount,
-    Optional<Boolean> endOfRecords) {
+  public void response(
+      List<Byte> response,
+      int retry,
+      long duration,
+      Optional<Integer> recordCount,
+      Optional<Boolean> endOfRecords) {
     totalRecordCount += recordCount.or(0);
-    LOG.info("Got response for [{}], records [{}], endOfRecords [{}], retry [{}], took [{}s]", lastContext, recordCount,
-      endOfRecords, retry, TimeUnit.MILLISECONDS.toSeconds(duration));
+    LOG.info(
+        "Got response for [{}], records [{}], endOfRecords [{}], retry [{}], took [{}s]",
+        lastContext,
+        recordCount,
+        endOfRecords,
+        retry,
+        TimeUnit.MILLISECONDS.toSeconds(duration));
   }
 
   @Override
@@ -78,8 +109,12 @@ public class LoggingCrawlListener<CTX extends CrawlContext> implements CrawlList
     Date finishDate = new Date();
     long minutes = (finishDate.getTime() - startDate.getTime()) / (60 * 1000);
     LOG.info(
-      "Finished crawling with a total of [{}] records, reason [{}], started at [{}], finished at [{}], took [{}] minutes",
-      totalRecordCount, reason, startDate, finishDate, minutes);
+        "Finished crawling with a total of [{}] records, reason [{}], started at [{}], finished at [{}], took [{}] minutes",
+        totalRecordCount,
+        reason,
+        startDate,
+        finishDate,
+        minutes);
 
     MDC.remove("datasetKey");
     MDC.remove("attempt");
@@ -97,5 +132,4 @@ public class LoggingCrawlListener<CTX extends CrawlContext> implements CrawlList
     lastContext = context;
     LOG.info("Now beginning to crawl [{}]", context);
   }
-
 }

@@ -1,3 +1,18 @@
+/*
+ * Copyright 2020 Global Biodiversity Information Facility (GBIF)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.gbif.crawler.strategy;
 
 import java.util.NoSuchElementException;
@@ -11,7 +26,8 @@ public class ScientificNameRangeStrategyTest {
 
   @Test
   public void testDefaultJob() {
-    ScientificNameRangeStrategy strategy = new ScientificNameRangeStrategy(new ScientificNameRangeCrawlContext());
+    ScientificNameRangeStrategy strategy =
+        new ScientificNameRangeStrategy(new ScientificNameRangeCrawlContext());
     ScientificNameRangeCrawlContext next = strategy.next();
 
     // Test if ...Aaa works
@@ -70,13 +86,14 @@ public class ScientificNameRangeStrategyTest {
   }
 
   /**
-   * Tests that when instructed it simplified to Aaa-Baa, Baa-Caa instead of Aaa, Aba, Aca etc.
-   * Is should still use 3 characters, but broader ranges.
+   * Tests that when instructed it simplified to Aaa-Baa, Baa-Caa instead of Aaa, Aba, Aca etc. Is
+   * should still use 3 characters, but broader ranges.
    */
   @Test
   public void testModeABCJob() {
-    ScientificNameRangeStrategy strategy = new ScientificNameRangeStrategy(new ScientificNameRangeCrawlContext(),
-                                                                           ScientificNameRangeStrategy.Mode.ABC);
+    ScientificNameRangeStrategy strategy =
+        new ScientificNameRangeStrategy(
+            new ScientificNameRangeCrawlContext(), ScientificNameRangeStrategy.Mode.ABC);
     ScientificNameRangeCrawlContext next = strategy.next();
 
     // Test if ...Aaa works
@@ -124,13 +141,14 @@ public class ScientificNameRangeStrategyTest {
   }
 
   /**
-   * Tests that when instructed it simplified to Aaa-Zaa.
-   * Is should still use 3 characters, but should result in null-Aaa, Aaa-Zaa, Zaa-null only
+   * Tests that when instructed it simplified to Aaa-Zaa. Is should still use 3 characters, but
+   * should result in null-Aaa, Aaa-Zaa, Zaa-null only
    */
   @Test
   public void testModeAZJob() {
-    ScientificNameRangeStrategy strategy = new ScientificNameRangeStrategy(new ScientificNameRangeCrawlContext(),
-                                                                           ScientificNameRangeStrategy.Mode.AZ);
+    ScientificNameRangeStrategy strategy =
+        new ScientificNameRangeStrategy(
+            new ScientificNameRangeCrawlContext(), ScientificNameRangeStrategy.Mode.AZ);
     ScientificNameRangeCrawlContext next = strategy.next();
 
     // Test if ...Aaa works
@@ -168,7 +186,8 @@ public class ScientificNameRangeStrategyTest {
 
   @Test
   public void testFailure() {
-    ScientificNameRangeStrategy strategy = new ScientificNameRangeStrategy(new ScientificNameRangeCrawlContext());
+    ScientificNameRangeStrategy strategy =
+        new ScientificNameRangeStrategy(new ScientificNameRangeCrawlContext());
     ScientificNameRangeCrawlContext next = strategy.next();
 
     next.setLowerBoundAbsent();
@@ -182,5 +201,4 @@ public class ScientificNameRangeStrategyTest {
     } catch (NoSuchElementException e) {
     }
   }
-
 }

@@ -1,3 +1,18 @@
+/*
+ * Copyright 2020 Global Biodiversity Information Facility (GBIF)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.gbif.util.zookeeper;
 
 import org.gbif.util.HueCsvReader;
@@ -18,16 +33,16 @@ public class ZookeeperCleanupFromFile {
   private static final String PROD_PATH = "/prod_crawler/crawls/";
   private static final String UAT_PATH = "/uat_crawler/crawls/";
   private static final String DEV_PATH = "/dev_crawler/crawls/";
-  private static final String PROD_ZK = "c5zk1.gbif.org:2181,c5zk2.gbif.org:2181,c5zk3.gbif.org:2181";
-  private static final String UAT_ZK = "c4zk1.gbif-uat.org:2181,c4zk2.gbif-uat.org:2181,c4zk3.gbif-uat.org:2181";
-  private static final String DEV_ZK = "c3zk1.gbif-dev.org:2181,c3zk2.gbif-dev.org:2181,c3zk3.gbif-dev.org:2181";
+  private static final String PROD_ZK =
+      "c5zk1.gbif.org:2181,c5zk2.gbif.org:2181,c5zk3.gbif.org:2181";
+  private static final String UAT_ZK =
+      "c4zk1.gbif-uat.org:2181,c4zk2.gbif-uat.org:2181,c4zk3.gbif-uat.org:2181";
+  private static final String DEV_ZK =
+      "c3zk1.gbif-dev.org:2181,c3zk2.gbif-dev.org:2181,c3zk3.gbif-dev.org:2181";
 
-  private ZookeeperCleanupFromFile() {
-  }
+  private ZookeeperCleanupFromFile() {}
 
-  /**
-   * Delete crawls specified in file from given environment
-   */
+  /** Delete crawls specified in file from given environment */
   public static void main(String[] args) throws IOException, KeeperException, InterruptedException {
     LOG.debug("ZookeeperCleanupFromFile starting");
     if (args.length != 2) {

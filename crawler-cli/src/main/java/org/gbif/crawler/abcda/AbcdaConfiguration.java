@@ -1,5 +1,5 @@
 /*
- * Copyright ${today.currentYear} Global Biodiversity Information Facility (GBIF)
+ * Copyright 2020 Global Biodiversity Information Facility (GBIF)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,28 +15,25 @@
  */
 package org.gbif.crawler.abcda;
 
-import com.beust.jcommander.Parameter;
-import com.beust.jcommander.ParametersDelegate;
-import com.google.common.base.Objects;
-import org.gbif.cli.IgnoreProperty;
 import org.gbif.cli.PropertyName;
-import org.gbif.common.messaging.config.MessagingConfiguration;
 import org.gbif.crawler.common.RegistryConfiguration;
-import org.gbif.crawler.common.ZooKeeperConfiguration;
 import org.gbif.crawler.common.crawlserver.CrawlServerConfiguration;
+
+import java.io.File;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
-import java.io.File;
+
+import com.beust.jcommander.Parameter;
+import com.beust.jcommander.ParametersDelegate;
+import com.google.common.base.Objects;
 
 public class AbcdaConfiguration extends CrawlServerConfiguration {
 
   public static final String ABCDA_SUFFIX = ".abcda";
 
-  @ParametersDelegate
-  @Valid
-  @NotNull
+  @ParametersDelegate @Valid @NotNull
   public RegistryConfiguration registry = new RegistryConfiguration();
 
   @Parameter(names = "--archive-repository")
@@ -51,11 +48,11 @@ public class AbcdaConfiguration extends CrawlServerConfiguration {
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
-      .add("registry", registry)
-      .add("messaging", messaging)
-      .add("zooKeeper", zooKeeper)
-      .add("archiveRepository", archiveRepository)
-      .add("poolSize", poolSize)
-      .toString();
+        .add("registry", registry)
+        .add("messaging", messaging)
+        .add("zooKeeper", zooKeeper)
+        .add("archiveRepository", archiveRepository)
+        .add("poolSize", poolSize)
+        .toString();
   }
 }

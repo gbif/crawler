@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Global Biodiversity Information Facility (GBIF)
+ * Copyright 2020 Global Biodiversity Information Facility (GBIF)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,19 +23,20 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-import com.google.common.base.Optional;
-import com.google.common.io.Files;
-import com.google.common.primitives.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Optional;
+import com.google.common.io.Files;
+import com.google.common.primitives.Bytes;
+
 /**
- * This Crawl Listener will persist every single response we receive to disk.
- * It will do so in sub folders of the given base path in a format like this:
+ * This Crawl Listener will persist every single response we receive to disk. It will do so in sub
+ * folders of the given base path in a format like this:
  * /<uuid>/<attempt>/<context>/<uuid>_<attempt>_<context>_<retry>.response
  */
 public class ResultPersistingListener
-  extends AbstractCrawlListener<ScientificNameRangeCrawlContext, String, List<Byte>> {
+    extends AbstractCrawlListener<ScientificNameRangeCrawlContext, String, List<Byte>> {
 
   private static final Logger LOG = LoggerFactory.getLogger(ResultPersistingListener.class);
 
@@ -48,23 +49,45 @@ public class ResultPersistingListener
   }
 
   @Override
-  public void response(List<Byte> response, int retry, long duration, Optional<Integer> recordCount,
-                       Optional<Boolean> endOfRecords) {
+  public void response(
+      List<Byte> response,
+      int retry,
+      long duration,
+      Optional<Integer> recordCount,
+      Optional<Boolean> endOfRecords) {
     String contextString =
-      getCurrentContext().getLowerBound().or("null") + "-" + getCurrentContext().getUpperBound().or("null");
+        getCurrentContext().getLowerBound().or("null")
+            + "-"
+            + getCurrentContext().getUpperBound().or("null");
     if (response == null || response.isEmpty()) {
-      LOG.info("Received empty response for [{}] [{}] in retry [{}]", configuration.getDatasetKey(), contextString,
-        retry);
+      LOG.info(
+          "Received empty response for [{}] [{}] in retry [{}]",
+          configuration.getDatasetKey(),
+          contextString,
+          retry);
     }
     // This is guaranteed to be efficient as documented on the AbstractResponseHandler
     byte[] bytes = Bytes.toArray(response);
     try {
-      // Creates a format like this: /<uuid>/<attempt>/<context>/<uuid>_<attempt>_<context>_<retry>.response
+      // Creates a format like this:
+      // /<uuid>/<attempt>/<context>/<uuid>_<attempt>_<context>_<retry>.response
       StringBuilder path = new StringBuilder();
-      path.append(configuration.getDatasetKey()).append(File.separator).append(configuration.getAttempt())
-        .append(File.separator).append(contextString).append(File.separator).append(configuration.getDatasetKey())
-        .append("_").append(configuration.getAttempt()).append("_").append(contextString).append("_")
-        .append(getCurrentContext().getOffset()).append("_").append(retry).append(".response");
+      path.append(configuration.getDatasetKey())
+          .append(File.separator)
+          .append(configuration.getAttempt())
+          .append(File.separator)
+          .append(contextString)
+          .append(File.separator)
+          .append(configuration.getDatasetKey())
+          .append("_")
+          .append(configuration.getAttempt())
+          .append("_")
+          .append(contextString)
+          .append("_")
+          .append(getCurrentContext().getOffset())
+          .append("_")
+          .append(retry)
+          .append(".response");
 
       File file = new File(basePath, path.toString());
       Files.createParentDirs(file);

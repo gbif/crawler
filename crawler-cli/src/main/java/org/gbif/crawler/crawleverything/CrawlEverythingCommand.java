@@ -1,3 +1,18 @@
+/*
+ * Copyright 2020 Global Biodiversity Information Facility (GBIF)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.gbif.crawler.crawleverything;
 
 import org.gbif.api.model.common.paging.PagingRequest;
@@ -20,14 +35,16 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.google.common.base.Stopwatch;
-import com.google.common.base.Throwables;
 import org.kohsuke.MetaInfServices;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Stopwatch;
+import com.google.common.base.Throwables;
+
 /**
- * This command iterates over all datasets from the registry and sends a StartCrawlMessage for each of them.
+ * This command iterates over all datasets from the registry and sends a StartCrawlMessage for each
+ * of them.
  */
 @SuppressWarnings("UnstableApiUsage")
 @MetaInfServices(Command.class)
@@ -49,7 +66,8 @@ public class CrawlEverythingCommand extends BaseCommand {
   @Override
   protected void doRun() {
     try {
-      MessagePublisher publisher = new DefaultMessagePublisher(config.messaging.getConnectionParameters());
+      MessagePublisher publisher =
+          new DefaultMessagePublisher(config.messaging.getConnectionParameters());
 
       // Create Registry WS Client
       ClientFactory clientFactory = new ClientFactory(config.registryWsUrl);
@@ -69,16 +87,24 @@ public class CrawlEverythingCommand extends BaseCommand {
         try {
           response = datasetService.list(request);
           stopwatch.stop();
-          LOG
-            .info("Received [{}] datasets in [{}]s", response.getResults().size(), stopwatch.elapsed(TimeUnit.SECONDS));
+          LOG.info(
+              "Received [{}] datasets in [{}]s",
+              response.getResults().size(),
+              stopwatch.elapsed(TimeUnit.SECONDS));
 
           // we never reach the limits of integers for dataset numbers. Simple casting is fine
           executor.submit(
-            new SchedulingRunnable(response, random, publisher, totalCount, scheduledCount, (int) request.getOffset()));
+              new SchedulingRunnable(
+                  response,
+                  random,
+                  publisher,
+                  totalCount,
+                  scheduledCount,
+                  (int) request.getOffset()));
 
         } catch (Exception e) {
-          LOG.error("Got error requesting datasets, skipping to offset [{}]", request.getOffset(), e);
-
+          LOG.error(
+              "Got error requesting datasets, skipping to offset [{}]", request.getOffset(), e);
         }
         // increase offset
         request.nextPage();
@@ -96,7 +122,10 @@ public class CrawlEverythingCommand extends BaseCommand {
       }
 
       publisher.close();
-      LOG.info("Done processing [{}] datasets, [{}] were scheduled", totalCount.get(), scheduledCount.get());
+      LOG.info(
+          "Done processing [{}] datasets, [{}] were scheduled",
+          totalCount.get(),
+          scheduledCount.get());
     } catch (IOException e) {
       throw Throwables.propagate(e); // we're hosed
     }
@@ -111,8 +140,13 @@ public class CrawlEverythingCommand extends BaseCommand {
     private final AtomicInteger count;
     private final AtomicInteger scheduledCount;
 
-    private SchedulingRunnable(PagingResponse<Dataset> datasets, Random random, MessagePublisher publisher,
-      AtomicInteger count, AtomicInteger scheduledCount, int offset) {
+    private SchedulingRunnable(
+        PagingResponse<Dataset> datasets,
+        Random random,
+        MessagePublisher publisher,
+        AtomicInteger count,
+        AtomicInteger scheduledCount,
+        int offset) {
       this.datasets = datasets;
       this.random = random;
       this.publisher = publisher;
@@ -138,9 +172,11 @@ public class CrawlEverythingCommand extends BaseCommand {
           }
         }
       }
-      LOG.debug("[{}] out of [{}] for offset [{}] were registered and scheduled", registeredCount,
-        datasets.getResults().size(), offset);
-
+      LOG.debug(
+          "[{}] out of [{}] for offset [{}] were registered and scheduled",
+          registeredCount,
+          datasets.getResults().size(),
+          offset);
     }
   }
 }

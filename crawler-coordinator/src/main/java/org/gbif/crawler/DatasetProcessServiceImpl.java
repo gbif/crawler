@@ -1,29 +1,30 @@
+/*
+ * Copyright 2020 Global Biodiversity Information Facility (GBIF)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.gbif.crawler;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Charsets;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
-import com.google.inject.Inject;
-import org.apache.curator.RetryPolicy;
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.recipes.atomic.DistributedAtomicLong;
-import org.apache.curator.framework.recipes.queue.QueueHelper;
-import org.apache.curator.framework.recipes.queue.QueueSerializer;
-import org.apache.curator.retry.RetryNTimes;
 import org.gbif.api.exception.ServiceUnavailableException;
 import org.gbif.api.model.crawler.CrawlJob;
 import org.gbif.api.model.crawler.DatasetProcessStatus;
 import org.gbif.api.model.crawler.FinishReason;
 import org.gbif.api.model.crawler.ProcessState;
 import org.gbif.api.service.crawler.DatasetProcessService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -34,6 +35,21 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.Future;
+
+import org.apache.curator.RetryPolicy;
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.recipes.atomic.DistributedAtomicLong;
+import org.apache.curator.framework.recipes.queue.QueueHelper;
+import org.apache.curator.framework.recipes.queue.QueueSerializer;
+import org.apache.curator.retry.RetryNTimes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Charsets;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+import com.google.inject.Inject;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.gbif.crawler.constants.CrawlerNodePaths.CRAWL_CONTEXT;
@@ -67,8 +83,8 @@ import static org.gbif.crawler.constants.CrawlerNodePaths.buildPath;
 import static org.gbif.crawler.constants.CrawlerNodePaths.getCrawlInfoPath;
 
 /**
- * This {@link DatasetProcessService} implementation uses a {@link CuratorFramework} instance to communicate with
- * a Zookeeper server.
+ * This {@link DatasetProcessService} implementation uses a {@link CuratorFramework} instance to
+ * communicate with a Zookeeper server.
  */
 public class DatasetProcessServiceImpl implements DatasetProcessService {
 
@@ -81,14 +97,16 @@ public class DatasetProcessServiceImpl implements DatasetProcessService {
   private final Executor executor;
 
   /**
-   * Creates a CrawlerMetricsService. Responsible for interacting with a ZooKeeper instance in a read-only fashion.
+   * Creates a CrawlerMetricsService. Responsible for interacting with a ZooKeeper instance in a
+   * read-only fashion.
    *
    * @param curator to access ZooKeeper
-   * @param mapper  to deserialize CrawlJob JSON back into an object
+   * @param mapper to deserialize CrawlJob JSON back into an object
    * @param executor to run the thread pool
    */
   @Inject
-  public DatasetProcessServiceImpl(CuratorFramework curator, ObjectMapper mapper, Executor executor) {
+  public DatasetProcessServiceImpl(
+      CuratorFramework curator, ObjectMapper mapper, Executor executor) {
     this.curator = checkNotNull(curator, "curator can't be null");
     this.mapper = checkNotNull(mapper, "mapper can't be null");
     this.executor = checkNotNull(executor, "executor can't be null");
@@ -135,7 +153,8 @@ public class DatasetProcessServiceImpl implements DatasetProcessService {
         builder.declaredCount(Long.valueOf(new String(responseData)));
       }
 
-      // should there be no started crawling, nothing else is read for now, later we might have to remove this
+      // should there be no started crawling, nothing else is read for now, later we might have to
+      // remove this
       // optimization as we could pause and resume crawls
       path = getCrawlInfoPath(datasetKey, STARTED_CRAWLING);
       if (curator.checkExists().forPath(path) != null) {
@@ -156,25 +175,38 @@ public class DatasetProcessServiceImpl implements DatasetProcessService {
         }
 
         builder.pagesCrawled(getCounter(crawlPath, PAGES_CRAWLED).orElse(0L));
-        builder.pagesFragmentedSuccessful(getCounter(crawlPath, PAGES_FRAGMENTED_SUCCESSFUL).orElse(0L));
+        builder.pagesFragmentedSuccessful(
+            getCounter(crawlPath, PAGES_FRAGMENTED_SUCCESSFUL).orElse(0L));
         builder.pagesFragmentedError(getCounter(crawlPath, PAGES_FRAGMENTED_ERROR).orElse(0L));
         builder.fragmentsEmitted(getCounter(crawlPath, FRAGMENTS_EMITTED).orElse(0L));
         builder.fragmentsReceived(getCounter(crawlPath, FRAGMENTS_RECEIVED).orElse(0L));
-        builder.rawOccurrencesPersistedNew(getCounter(crawlPath, RAW_OCCURRENCES_PERSISTED_NEW).orElse(0L));
-        builder.rawOccurrencesPersistedUpdated(getCounter(crawlPath, RAW_OCCURRENCES_PERSISTED_UPDATED).orElse(0L));
-        builder.rawOccurrencesPersistedUnchanged(getCounter(crawlPath, RAW_OCCURRENCES_PERSISTED_UNCHANGED).orElse(0L));
-        builder.rawOccurrencesPersistedError(getCounter(crawlPath, RAW_OCCURRENCES_PERSISTED_ERROR).orElse(0L));
+        builder.rawOccurrencesPersistedNew(
+            getCounter(crawlPath, RAW_OCCURRENCES_PERSISTED_NEW).orElse(0L));
+        builder.rawOccurrencesPersistedUpdated(
+            getCounter(crawlPath, RAW_OCCURRENCES_PERSISTED_UPDATED).orElse(0L));
+        builder.rawOccurrencesPersistedUnchanged(
+            getCounter(crawlPath, RAW_OCCURRENCES_PERSISTED_UNCHANGED).orElse(0L));
+        builder.rawOccurrencesPersistedError(
+            getCounter(crawlPath, RAW_OCCURRENCES_PERSISTED_ERROR).orElse(0L));
         builder.fragmentsProcessed(getCounter(crawlPath, FRAGMENTS_PROCESSED).orElse(0L));
-        builder.verbatimOccurrencesPersistedSuccessful(getCounter(crawlPath, VERBATIM_OCCURRENCES_PERSISTED_SUCCESSFUL).orElse(0L));
-        builder.verbatimOccurrencesPersistedError(getCounter(crawlPath, VERBATIM_OCCURRENCES_PERSISTED_ERROR).orElse(0L));
-        builder.interpretedOccurrencesPersistedSuccessful(getCounter(crawlPath, INTERPRETED_OCCURRENCES_PERSISTED_SUCCESSFUL).orElse(0L));
-        builder.interpretedOccurrencesPersistedError(getCounter(crawlPath, INTERPRETED_OCCURRENCES_PERSISTED_ERROR).orElse(0L));
+        builder.verbatimOccurrencesPersistedSuccessful(
+            getCounter(crawlPath, VERBATIM_OCCURRENCES_PERSISTED_SUCCESSFUL).orElse(0L));
+        builder.verbatimOccurrencesPersistedError(
+            getCounter(crawlPath, VERBATIM_OCCURRENCES_PERSISTED_ERROR).orElse(0L));
+        builder.interpretedOccurrencesPersistedSuccessful(
+            getCounter(crawlPath, INTERPRETED_OCCURRENCES_PERSISTED_SUCCESSFUL).orElse(0L));
+        builder.interpretedOccurrencesPersistedError(
+            getCounter(crawlPath, INTERPRETED_OCCURRENCES_PERSISTED_ERROR).orElse(0L));
       }
 
     } catch (Exception e) {
       LOG.debug("ZooKeeper path debug info: last path:" + path + " , crawlPath:" + crawlPath, e);
-      throw new ServiceUnavailableException("Error communicating with ZooKeeper, getting status for "
-                                            + datasetKey.toString() + ": " + e.getMessage(), e);
+      throw new ServiceUnavailableException(
+          "Error communicating with ZooKeeper, getting status for "
+              + datasetKey.toString()
+              + ": "
+              + e.getMessage(),
+          e);
     }
     return builder.build();
   }
@@ -207,7 +239,8 @@ public class DatasetProcessServiceImpl implements DatasetProcessService {
   }
 
   /**
-   * Gets all pending but not running crawls from the specified path (either XML or DwC-A queue usually)
+   * Gets all pending but not running crawls from the specified path (either XML or DwC-A queue
+   * usually)
    *
    * @param path which needs two sub nodes: one for queued and one for running crawls
    */
@@ -219,7 +252,8 @@ public class DatasetProcessServiceImpl implements DatasetProcessService {
     List<String> runningIdentifiers = getChildren(buildPath(path, RUNNING_CRAWLS), false);
     List<String> queueIdentifiers = getChildren(buildPath(path, QUEUED_CRAWLS), true);
 
-    // retain identifiers that are only present in the queued-jobs queue, so we are left with all queue identifiers
+    // retain identifiers that are only present in the queued-jobs queue, so we are left with all
+    // queue identifiers
     // that are _not_ currently being worked on
     queueIdentifiers.removeAll(runningIdentifiers);
 
@@ -234,12 +268,11 @@ public class DatasetProcessServiceImpl implements DatasetProcessService {
    * This method will retrieve the processing status for a list of UUIDs
    *
    * @param queueKeys uuids to query
-   *
    * @return list of processing statuses, at the moment no guarantees are made for ordering
    */
   private List<DatasetProcessStatus> getDatasetProcessStatuses(Collection<UUID> queueKeys) {
     CompletionService<DatasetProcessStatus> completionService =
-      new ExecutorCompletionService<DatasetProcessStatus>(executor);
+        new ExecutorCompletionService<DatasetProcessStatus>(executor);
 
     for (final UUID queueKey : queueKeys) {
       completionService.submit(() -> getDatasetProcessStatus(queueKey));
@@ -256,9 +289,11 @@ public class DatasetProcessServiceImpl implements DatasetProcessService {
         Thread.currentThread().interrupt();
       } catch (ExecutionException e) {
         LOG.warn("Caught exception trying to retrieve dataset", e.getCause());
-        // TODO: Commented out because we don't fail if ZK is inconsistent for a second. On the other hand if we
+        // TODO: Commented out because we don't fail if ZK is inconsistent for a second. On the
+        // other hand if we
         // get only exceptions we want to capture that somehow and throw something in the end.
-        //throw new ServiceUnavailableException("Exception while getting dataset process status", e.getCause());
+        // throw new ServiceUnavailableException("Exception while getting dataset process status",
+        // e.getCause());
       }
     }
     return processStatuses;
@@ -268,12 +303,12 @@ public class DatasetProcessServiceImpl implements DatasetProcessService {
    * This gets a counter which has been written using a {@link DistributedAtomicLong} if it exists.
    *
    * @param rootPath where this counter is supposed to be in
-   * @param counter  to read
-   *
+   * @param counter to read
    * @return the counter value or absent if it didn't exist
    */
   private Optional<Long> getCounter(String rootPath, String counter) {
-    DistributedAtomicLong dal = new DistributedAtomicLong(curator, rootPath + "/" + counter, counterRetryPolicy);
+    DistributedAtomicLong dal =
+        new DistributedAtomicLong(curator, rootPath + "/" + counter, counterRetryPolicy);
     try {
       return Optional.ofNullable(dal.get().preValue());
     } catch (Exception ignored) {
@@ -297,19 +332,22 @@ public class DatasetProcessServiceImpl implements DatasetProcessService {
    * Gets a list of {@link UUID} keys belonging to datasets. Each dataset key is associated to one
    * queue identifier.
    *
-   * @param path             of the queue (the actual path to the queue not a parent node and not the running crawls)
-   * @param queueIdentifiers queue identifiers that might or might not contain a dataset {@link UUID} key
-   *
+   * @param path of the queue (the actual path to the queue not a parent node and not the running
+   *     crawls)
+   * @param queueIdentifiers queue identifiers that might or might not contain a dataset {@link
+   *     UUID} key
    * @return list of dataset {@link UUID} keys
    */
   private List<UUID> getQueueKeys(final String path, Iterable<String> queueIdentifiers) {
     CompletionService<UUID> completionService = new ExecutorCompletionService<UUID>(executor);
     List<Future<UUID>> futures = Lists.newArrayList();
     for (final String queueIdentifier : queueIdentifiers) {
-      Future<UUID> future = completionService.submit(() -> {
-        byte[] responseData = curator.getData().forPath(path+"/"+queueIdentifier);
-        return QueueHelper.deserializeSingle(responseData, UUID_SERIALIZER);
-      });
+      Future<UUID> future =
+          completionService.submit(
+              () -> {
+                byte[] responseData = curator.getData().forPath(path + "/" + queueIdentifier);
+                return QueueHelper.deserializeSingle(responseData, UUID_SERIALIZER);
+              });
       futures.add(future);
     }
 
@@ -320,7 +358,8 @@ public class DatasetProcessServiceImpl implements DatasetProcessService {
       } catch (InterruptedException ignored) {
         Thread.currentThread().interrupt();
       } catch (ExecutionException e) {
-        throw new ServiceUnavailableException("Exception while getting dataset process status", e.getCause());
+        throw new ServiceUnavailableException(
+            "Exception while getting dataset process status", e.getCause());
       }
     }
     LOG.debug("Retrieved all queued dataset process statuses");
@@ -330,9 +369,8 @@ public class DatasetProcessServiceImpl implements DatasetProcessService {
   /**
    * Given a path, returns all the child nodes, optionally lexicographically sorted.
    *
-   * @param path   to get a list of queue identifiers
+   * @param path to get a list of queue identifiers
    * @param sorted whether to sort the child nodes lexicographically
-   *
    * @return a list of child nodes
    */
   private List<String> getChildren(String path, boolean sorted) {
@@ -353,7 +391,6 @@ public class DatasetProcessServiceImpl implements DatasetProcessService {
    * Utility to convert a date as an array of bytes to proper {@link Date} format.
    *
    * @param dateAsBytes a date as a byte array
-   *
    * @return The properly formatted date
    */
   private Date asDate(byte[] dateAsBytes) {
@@ -371,5 +408,4 @@ public class DatasetProcessServiceImpl implements DatasetProcessService {
     }
     return null;
   }
-
 }

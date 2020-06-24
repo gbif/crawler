@@ -1,3 +1,18 @@
+/*
+ * Copyright 2020 Global Biodiversity Information Facility (GBIF)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.gbif.crawler.xml.crawlserver.builder;
 
 import org.gbif.api.model.crawler.CrawlJob;
@@ -28,11 +43,13 @@ import org.gbif.wrangler.lock.NoLockFactory;
 import org.gbif.wrangler.lock.zookeeper.ZooKeeperLockFactory;
 
 import java.util.List;
+
 import javax.annotation.Nullable;
 
-import com.google.common.base.Optional;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.http.HttpResponse;
+
+import com.google.common.base.Optional;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -50,7 +67,6 @@ public class CrawlerBuilder {
   private Optional<Long> minDelay = Optional.absent();
   private Optional<Long> maxDelay = Optional.absent();
   private static final String LOCKING_PATH = "/lockedUrls/";
-
 
   public CrawlerBuilder(CrawlJob crawlJob) {
     setupProtocolSpecifics(crawlJob);
@@ -95,11 +111,11 @@ public class CrawlerBuilder {
     return this;
   }
 
-  public CrawlerBuilder withScientificNameRangeCrawlContext(@Nullable String lowerBound, @Nullable String upperBound) {
+  public CrawlerBuilder withScientificNameRangeCrawlContext(
+      @Nullable String lowerBound, @Nullable String upperBound) {
     context = new ScientificNameRangeCrawlContext(0, lowerBound, upperBound);
     return this;
   }
-
 
   public CrawlerBuilder withZooKeeperLock(CuratorFramework curator) {
     checkNotNull(curator, "curator can't be null");
@@ -118,8 +134,12 @@ public class CrawlerBuilder {
     checkNotNull(crawlJob.getProperty("datasetTitle"));
 
     BiocaseCrawlConfiguration job =
-      new BiocaseCrawlConfiguration(crawlJob.getDatasetKey(), crawlJob.getAttempt(), crawlJob.getTargetUrl(),
-        crawlJob.getProperty("conceptualSchema"), crawlJob.getProperty("datasetTitle"));
+        new BiocaseCrawlConfiguration(
+            crawlJob.getDatasetKey(),
+            crawlJob.getAttempt(),
+            crawlJob.getTargetUrl(),
+            crawlJob.getProperty("conceptualSchema"),
+            crawlJob.getProperty("datasetTitle"));
 
     crawlConfiguration = job;
     requestHandler = new BiocaseScientificNameRangeRequestHandler(job);
@@ -135,8 +155,12 @@ public class CrawlerBuilder {
     checkNotNull(crawlJob.getProperty("manis"));
 
     DigirCrawlConfiguration job =
-      new DigirCrawlConfiguration(crawlJob.getDatasetKey(), crawlJob.getAttempt(), crawlJob.getTargetUrl(),
-        crawlJob.getProperty("code"), Boolean.valueOf(crawlJob.getProperty("manis")));
+        new DigirCrawlConfiguration(
+            crawlJob.getDatasetKey(),
+            crawlJob.getAttempt(),
+            crawlJob.getTargetUrl(),
+            crawlJob.getProperty("code"),
+            Boolean.valueOf(crawlJob.getProperty("manis")));
 
     crawlConfiguration = job;
     requestHandler = new DigirScientificNameRangeRequestHandler(job);
@@ -161,23 +185,25 @@ public class CrawlerBuilder {
   }
 
   /**
-   * This extracts the properties from the crawl job specific to the TAPIR crawl.
-   * When used with the GBIF messaging service, this is populated in the private getCrawlJob() method in
-   * {@link CrawlerCoordinatorServiceImpl}. Note that in that implementation it selects a single
-   * <em>conceptualSchema</em> to use as the <em>contentNamespace</em> during crawling. Should logic be required to
-   * change the selection criteria, it must happen when the crawlJob is created, such as in
-   * {@link CrawlerCoordinatorServiceImpl}.
+   * This extracts the properties from the crawl job specific to the TAPIR crawl. When used with the
+   * GBIF messaging service, this is populated in the private getCrawlJob() method in {@link
+   * CrawlerCoordinatorServiceImpl}. Note that in that implementation it selects a single
+   * <em>conceptualSchema</em> to use as the <em>contentNamespace</em> during crawling. Should logic
+   * be required to change the selection criteria, it must happen when the crawlJob is created, such
+   * as in {@link CrawlerCoordinatorServiceImpl}.
    */
   private void setupTapirCrawl(CrawlJob crawlJob) {
     checkNotNull(crawlJob.getProperty("conceptualSchema"));
 
     TapirCrawlConfiguration job =
-      new TapirCrawlConfiguration(crawlJob.getDatasetKey(), crawlJob.getAttempt(), crawlJob.getTargetUrl(),
-        crawlJob.getProperty("conceptualSchema"));
+        new TapirCrawlConfiguration(
+            crawlJob.getDatasetKey(),
+            crawlJob.getAttempt(),
+            crawlJob.getTargetUrl(),
+            crawlJob.getProperty("conceptualSchema"));
 
     crawlConfiguration = job;
     requestHandler = new TapirScientificNameRangeRequestHandler(job);
     responseHandler = new TapirResponseHandler();
   }
-
 }

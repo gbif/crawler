@@ -1,3 +1,18 @@
+/*
+ * Copyright 2020 Global Biodiversity Information Facility (GBIF)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.gbif.crawler.pipelines;
 
 import org.gbif.api.exception.ServiceUnavailableException;
@@ -18,31 +33,32 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+
 import javax.annotation.Nullable;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.TreeCache;
 import org.apache.curator.framework.recipes.cache.TreeCacheListener;
 import org.cache2k.Cache;
 import org.cache2k.Cache2kBuilder;
 import org.cache2k.CacheEntry;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.gbif.api.model.pipelines.PipelineProcess.PIPELINE_PROCESS_BY_LATEST_STEP_RUNNING_ASC;
-import static org.gbif.api.model.pipelines.PipelineStep.Status;
-import static org.gbif.crawler.constants.PipelinesNodePaths.DELIMITER;
-import static org.gbif.crawler.constants.PipelinesNodePaths.PIPELINES_ROOT;
-import static org.gbif.crawler.constants.PipelinesNodePaths.SIZE;
-import static org.gbif.crawler.constants.PipelinesNodePaths.getPipelinesInfoPath;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.apache.curator.framework.recipes.cache.TreeCacheEvent.Type.INITIALIZED;
 import static org.apache.curator.framework.recipes.cache.TreeCacheEvent.Type.NODE_ADDED;
 import static org.apache.curator.framework.recipes.cache.TreeCacheEvent.Type.NODE_REMOVED;
 import static org.apache.curator.framework.recipes.cache.TreeCacheEvent.Type.NODE_UPDATED;
+import static org.gbif.api.model.pipelines.PipelineProcess.PIPELINE_PROCESS_BY_LATEST_STEP_RUNNING_ASC;
+import static org.gbif.api.model.pipelines.PipelineStep.Status;
+import static org.gbif.crawler.constants.PipelinesNodePaths.DELIMITER;
+import static org.gbif.crawler.constants.PipelinesNodePaths.PIPELINES_ROOT;
+import static org.gbif.crawler.constants.PipelinesNodePaths.SIZE;
+import static org.gbif.crawler.constants.PipelinesNodePaths.getPipelinesInfoPath;
 
 /** Pipelines monitoring service collects all necessary information from Zookeeper */
 public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProcessService {
@@ -253,9 +269,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
         return Optional.empty();
       }
       // Here we're trying to load all information from Zookeeper into a PipelineProcess object
-      PipelineProcess process =
-          new PipelineProcess()
-              .setDatasetKey(UUID.fromString(crawlId));
+      PipelineProcess process = new PipelineProcess().setDatasetKey(UUID.fromString(crawlId));
 
       // ALL_STEPS - static set of all pipelines steps: DWCA_TO_AVRO, VERBATIM_TO_INTERPRETED and
       // etc.
@@ -332,9 +346,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
         // assign the step to an execution
         Long executionId = OBJECT_MAPPER.readTree(step.getMessage()).get("executionId").asLong();
         PipelineExecution execution =
-            executionsMap.computeIfAbsent(
-                executionId,
-                id -> new PipelineExecution().setKey(id));
+            executionsMap.computeIfAbsent(executionId, id -> new PipelineExecution().setKey(id));
         execution.addStep(step);
       } catch (Exception ex) {
         // we skip this step

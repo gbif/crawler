@@ -1,3 +1,18 @@
+/*
+ * Copyright 2020 Global Biodiversity Information Facility (GBIF)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.gbif.crawler.common;
 
 import org.gbif.cli.PropertyName;
@@ -10,8 +25,8 @@ import com.google.common.base.Objects;
 import com.google.common.base.Strings;
 
 /**
- * A configuration class which can be used to get all the details needed to create a writable connection to the
- * GBIF registry.
+ * A configuration class which can be used to get all the details needed to create a writable
+ * connection to the GBIF registry.
  */
 public class RegistryConfiguration {
 
@@ -38,7 +53,8 @@ public class RegistryConfiguration {
   }
 
   /**
-   * Convenience method to provide a ws client factory. The factory will be used to create writable registry clients.
+   * Convenience method to provide a ws client factory. The factory will be used to create writable
+   * registry clients.
    *
    * @return writable client factory
    */
@@ -46,5 +62,4 @@ public class RegistryConfiguration {
     // setup writable registry client
     return new ClientFactory(user, password, wsUrl);
   }
-
 }

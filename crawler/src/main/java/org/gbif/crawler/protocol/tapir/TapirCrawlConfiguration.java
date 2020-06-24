@@ -1,9 +1,25 @@
+/*
+ * Copyright 2020 Global Biodiversity Information Facility (GBIF)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.gbif.crawler.protocol.tapir;
 
 import org.gbif.crawler.CrawlConfiguration;
 
 import java.net.URI;
 import java.util.UUID;
+
 import javax.annotation.concurrent.ThreadSafe;
 
 import com.google.common.base.Objects;
@@ -14,27 +30,30 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Holds information necessary to crawl a TAPIR resource:
- * <p/>
+ *
+ * <p>
+ *
  * <ul>
- * <li>target URL</li>
- * <li>content namespace, a list of supported namespaces is available in the {@link #VALID_SCHEMAS} field</li>
+ *   <li>target URL
+ *   <li>content namespace, a list of supported namespaces is available in the {@link
+ *       #VALID_SCHEMAS} field
  * </ul>
- * <p/>
- * This object is immutable.
+ *
+ * <p>This object is immutable.
  */
 @ThreadSafe
 public class TapirCrawlConfiguration extends CrawlConfiguration {
 
-  public static final ImmutableList<String> VALID_SCHEMAS = ImmutableList.of(
-    "http://rs.tdwg.org/dwc/dwcore/",
-    "http://rs.tdwg.org/dwc/geospatial/",
-    "http://rs.tdwg.org/dwc/curatorial/",
-    "http://rs.tdwg.org/dwc/terms/",
-    "http://digir.net/schema/conceptual/darwin/2003/1.0",
-    "http://www.tdwg.org/schemas/abcd/1.2",
-    "http://www.tdwg.org/schemas/abcd/2.05",
-    "http://www.tdwg.org/schemas/abcd/2.06"
-  );
+  public static final ImmutableList<String> VALID_SCHEMAS =
+      ImmutableList.of(
+          "http://rs.tdwg.org/dwc/dwcore/",
+          "http://rs.tdwg.org/dwc/geospatial/",
+          "http://rs.tdwg.org/dwc/curatorial/",
+          "http://rs.tdwg.org/dwc/terms/",
+          "http://digir.net/schema/conceptual/darwin/2003/1.0",
+          "http://www.tdwg.org/schemas/abcd/1.2",
+          "http://www.tdwg.org/schemas/abcd/2.05",
+          "http://www.tdwg.org/schemas/abcd/2.06");
 
   private final String contentNamespace;
 
@@ -43,8 +62,9 @@ public class TapirCrawlConfiguration extends CrawlConfiguration {
 
     this.contentNamespace = checkNotNull(contentNamespace, "contentNamespace can't be null");
 
-    checkArgument(VALID_SCHEMAS.contains(contentNamespace),
-      "contentNamespace not supported: [" + contentNamespace + "]");
+    checkArgument(
+        VALID_SCHEMAS.contains(contentNamespace),
+        "contentNamespace not supported: [" + contentNamespace + "]");
   }
 
   public String getContentNamespace() {
@@ -61,8 +81,7 @@ public class TapirCrawlConfiguration extends CrawlConfiguration {
     }
 
     final TapirCrawlConfiguration other = (TapirCrawlConfiguration) obj;
-    return super.equals(other)
-           && Objects.equal(this.contentNamespace, other.contentNamespace);
+    return super.equals(other) && Objects.equal(this.contentNamespace, other.contentNamespace);
   }
 
   @Override
@@ -74,5 +93,4 @@ public class TapirCrawlConfiguration extends CrawlConfiguration {
   public String toString() {
     return toStringHelper().add("contentNamespace", contentNamespace).toString();
   }
-
 }

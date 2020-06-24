@@ -1,3 +1,18 @@
+/*
+ * Copyright 2020 Global Biodiversity Information Facility (GBIF)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.gbif.crawler.protocol.digir;
 
 import org.gbif.crawler.protocol.AbstractScientificNameRangeRequestHandler;
@@ -8,16 +23,19 @@ import com.google.common.collect.ImmutableMap;
 
 /**
  * This is a request handler for DiGIR queries using a range of scientific names.
- * <p/>
- * It supports MANIS and normal DiGIR endpoints and requests 1000 results per page by default.
- * <p/>
- * This class is not thread-safe.
+ *
+ * <p>It supports MANIS and normal DiGIR endpoints and requests 1000 results per page by default.
+ *
+ * <p>This class is not thread-safe.
  */
 @NotThreadSafe
-public class DigirScientificNameRangeRequestHandler extends AbstractScientificNameRangeRequestHandler {
+public class DigirScientificNameRangeRequestHandler
+    extends AbstractScientificNameRangeRequestHandler {
 
-  private static final String RANGE_TEMPLATE_LOCATION = "template/digir/scientificNameRangeSearch.ftl";
-  private static final String NULL_TEMPLATE_LOCATION = "template/digir/scientificNameRangeSearch.ftl";
+  private static final String RANGE_TEMPLATE_LOCATION =
+      "template/digir/scientificNameRangeSearch.ftl";
+  private static final String NULL_TEMPLATE_LOCATION =
+      "template/digir/scientificNameRangeSearch.ftl";
   private static final String REQUEST_PARAM_KEY = "request";
 
   private static final int MAX_RESULTS = 1000;
@@ -28,37 +46,50 @@ public class DigirScientificNameRangeRequestHandler extends AbstractScientificNa
   private static final ImmutableMap<Boolean, ImmutableMap<String, String>> SCHEMA_INFOS;
 
   static {
-    ImmutableMap<String, String> normalDigir = ImmutableMap.<String, String>builder()
-      .put(SCHEMA_LOCATION_KEY, "http://digir.sourceforge.net/schema/conceptual/darwin/2003/1.0/darwin2.xsd")
-      .put(RECORD_SCHEMA_LOCATION_KEY, "http://digir.sourceforge.net/schema/conceptual/darwin/full/2003/1.0/darwin2full.xsd")
-      .build();
+    ImmutableMap<String, String> normalDigir =
+        ImmutableMap.<String, String>builder()
+            .put(
+                SCHEMA_LOCATION_KEY,
+                "http://digir.sourceforge.net/schema/conceptual/darwin/2003/1.0/darwin2.xsd")
+            .put(
+                RECORD_SCHEMA_LOCATION_KEY,
+                "http://digir.sourceforge.net/schema/conceptual/darwin/full/2003/1.0/darwin2full.xsd")
+            .build();
 
-    ImmutableMap<String, String> manisDigir = ImmutableMap.<String, String>builder()
-      .put(SCHEMA_LOCATION_KEY, "http://bnhm.berkeley.edu/manis/DwC/darwin2jrw030315.xsd")
-      .put(RECORD_SCHEMA_LOCATION_KEY, "http://bnhm.berkeley.edu/manis/DwC/darwin2resultfull.xsd")
-      .build();
+    ImmutableMap<String, String> manisDigir =
+        ImmutableMap.<String, String>builder()
+            .put(SCHEMA_LOCATION_KEY, "http://bnhm.berkeley.edu/manis/DwC/darwin2jrw030315.xsd")
+            .put(
+                RECORD_SCHEMA_LOCATION_KEY,
+                "http://bnhm.berkeley.edu/manis/DwC/darwin2resultfull.xsd")
+            .build();
 
-    SCHEMA_INFOS = ImmutableMap.<Boolean, ImmutableMap<String, String>>builder()
-      .put(true, manisDigir)
-      .put(false, normalDigir)
-      .build();
+    SCHEMA_INFOS =
+        ImmutableMap.<Boolean, ImmutableMap<String, String>>builder()
+            .put(true, manisDigir)
+            .put(false, normalDigir)
+            .build();
   }
 
   private final ImmutableMap<String, Object> defaultContext;
 
-  /**
-   * Initializes this request handler.
-   */
+  /** Initializes this request handler. */
   public DigirScientificNameRangeRequestHandler(DigirCrawlConfiguration configuration) {
-    super(configuration.getUrl(), RANGE_TEMPLATE_LOCATION, NULL_TEMPLATE_LOCATION, REQUEST_PARAM_KEY);
+    super(
+        configuration.getUrl(), RANGE_TEMPLATE_LOCATION, NULL_TEMPLATE_LOCATION, REQUEST_PARAM_KEY);
 
-    defaultContext = ImmutableMap.<String, Object>builder()
-      .put("resource", configuration.getResourceCode())
-      .put("destination", configuration.getUrl().toString())
-      .put("maxResults", Integer.toString(MAX_RESULTS))
-      .put(SCHEMA_LOCATION_KEY, SCHEMA_INFOS.get(configuration.isManis()).get(SCHEMA_LOCATION_KEY))
-      .put(RECORD_SCHEMA_LOCATION_KEY, SCHEMA_INFOS.get(configuration.isManis()).get(RECORD_SCHEMA_LOCATION_KEY))
-      .build();
+    defaultContext =
+        ImmutableMap.<String, Object>builder()
+            .put("resource", configuration.getResourceCode())
+            .put("destination", configuration.getUrl().toString())
+            .put("maxResults", Integer.toString(MAX_RESULTS))
+            .put(
+                SCHEMA_LOCATION_KEY,
+                SCHEMA_INFOS.get(configuration.isManis()).get(SCHEMA_LOCATION_KEY))
+            .put(
+                RECORD_SCHEMA_LOCATION_KEY,
+                SCHEMA_INFOS.get(configuration.isManis()).get(RECORD_SCHEMA_LOCATION_KEY))
+            .build();
   }
 
   @Override

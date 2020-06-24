@@ -1,3 +1,18 @@
+/*
+ * Copyright 2020 Global Biodiversity Information Facility (GBIF)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.gbif.crawler.coordinator;
 
 import org.gbif.api.service.registry.DatasetService;
@@ -8,10 +23,6 @@ import org.gbif.common.messaging.api.messages.StartCrawlMessage;
 import org.gbif.crawler.CrawlerCoordinatorService;
 import org.gbif.crawler.CrawlerCoordinatorServiceImpl;
 import org.gbif.crawler.StartCrawlMessageCallback;
-
-import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.inject.Injector;
-import org.apache.curator.framework.CuratorFramework;
 import org.gbif.registry.metasync.MetadataSynchroniserImpl;
 import org.gbif.registry.metasync.protocols.biocase.BiocaseMetadataSynchroniser;
 import org.gbif.registry.metasync.protocols.digir.DigirMetadataSynchroniser;
@@ -23,9 +34,11 @@ import org.gbif.ws.client.ClientFactory;
 
 import java.util.concurrent.TimeUnit;
 
-/**
- * This services starts the Crawler Coordinator by listening for messages.
- */
+import org.apache.curator.framework.CuratorFramework;
+
+import com.google.common.util.concurrent.AbstractIdleService;
+
+/** This services starts the Crawler Coordinator by listening for messages. */
 public class CoordinatorService extends AbstractIdleService {
 
   private final CoordinatorConfiguration configuration;
@@ -49,12 +62,17 @@ public class CoordinatorService extends AbstractIdleService {
     InstallationService installationService = wsClientFactory.newInstance(InstallationClient.class);
 
     HttpClientFactory clientFactory = new HttpClientFactory(30, TimeUnit.SECONDS);
-    MetadataSynchroniserImpl metadataSynchroniser = new MetadataSynchroniserImpl(installationService);
-    metadataSynchroniser.registerProtocolHandler(new DigirMetadataSynchroniser(clientFactory.provideHttpClient()));
-    metadataSynchroniser.registerProtocolHandler(new TapirMetadataSynchroniser(clientFactory.provideHttpClient()));
-    metadataSynchroniser.registerProtocolHandler(new BiocaseMetadataSynchroniser(clientFactory.provideHttpClient()));
+    MetadataSynchroniserImpl metadataSynchroniser =
+        new MetadataSynchroniserImpl(installationService);
+    metadataSynchroniser.registerProtocolHandler(
+        new DigirMetadataSynchroniser(clientFactory.provideHttpClient()));
+    metadataSynchroniser.registerProtocolHandler(
+        new TapirMetadataSynchroniser(clientFactory.provideHttpClient()));
+    metadataSynchroniser.registerProtocolHandler(
+        new BiocaseMetadataSynchroniser(clientFactory.provideHttpClient()));
 
-    CrawlerCoordinatorService coord = new CrawlerCoordinatorServiceImpl(curator, datasetService, metadataSynchroniser);
+    CrawlerCoordinatorService coord =
+        new CrawlerCoordinatorServiceImpl(curator, datasetService, metadataSynchroniser);
     MessageCallback<StartCrawlMessage> callback = new StartCrawlMessageCallback(coord);
 
     listener = new MessageListener(configuration.messaging.getConnectionParameters());

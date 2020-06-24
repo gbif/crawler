@@ -1,3 +1,18 @@
+/*
+ * Copyright 2020 Global Biodiversity Information Facility (GBIF)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.gbif.crawler.registry.metasync;
 
 import org.gbif.common.messaging.config.MessagingConfiguration;
@@ -13,18 +28,15 @@ import com.google.common.base.Objects;
 
 public class MetasyncConfiguration {
 
-  @ParametersDelegate
-  @NotNull
-  @Valid
+  @ParametersDelegate @NotNull @Valid
   public MessagingConfiguration messaging = new MessagingConfiguration();
 
-  @ParametersDelegate
-  @NotNull
-  @Valid
+  @ParametersDelegate @NotNull @Valid
   public RegistryConfiguration registry = new RegistryConfiguration();
 
-  @Parameter(names = "--thread-count",
-    description = "How many threads should this service use to service requests in parallel")
+  @Parameter(
+      names = "--thread-count",
+      description = "How many threads should this service use to service requests in parallel")
   @Min(1)
   public int threadCount = 10;
 
@@ -37,8 +49,11 @@ public class MetasyncConfiguration {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this).add("messaging", messaging).add("threadCount", threadCount)
-      .add("queueName", queueName).add("registry", registry).toString();
+    return Objects.toStringHelper(this)
+        .add("messaging", messaging)
+        .add("threadCount", threadCount)
+        .add("queueName", queueName)
+        .add("registry", registry)
+        .toString();
   }
-
 }

@@ -1,3 +1,18 @@
+/*
+ * Copyright 2020 Global Biodiversity Information Facility (GBIF)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.gbif.crawler.common;
 
 import org.gbif.crawler.constants.CrawlerNodePaths;
@@ -7,7 +22,6 @@ import java.util.Date;
 import java.util.TimeZone;
 import java.util.UUID;
 
-import com.google.common.base.Charsets;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.atomic.AtomicValue;
 import org.apache.curator.framework.recipes.atomic.DistributedAtomicLong;
@@ -15,6 +29,8 @@ import org.apache.curator.retry.RetryNTimes;
 import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Charsets;
 
 import static org.gbif.crawler.constants.CrawlerNodePaths.getCrawlInfoPath;
 
@@ -41,11 +57,13 @@ public class ZookeeperUtils {
     }
   }
 
-  public static void createOrUpdate(CuratorFramework curator, UUID datasetKey, String subPath, byte[] data) {
+  public static void createOrUpdate(
+      CuratorFramework curator, UUID datasetKey, String subPath, byte[] data) {
     createOrUpdate(curator, CrawlerNodePaths.getCrawlInfoPath(datasetKey, subPath), data);
   }
 
-  public static void createOrUpdate(CuratorFramework curator, UUID datasetKey, String subPath, Enum<?> data) {
+  public static void createOrUpdate(
+      CuratorFramework curator, UUID datasetKey, String subPath, Enum<?> data) {
     createOrUpdate(curator, datasetKey, subPath, data.name().getBytes(Charsets.UTF_8));
   }
 
@@ -53,7 +71,7 @@ public class ZookeeperUtils {
    * Updates a node in ZooKeeper saving the current date in time in there.
    *
    * @param datasetKey designates the first bit of the path to update
-   * @param path       the path to update within the dataset node
+   * @param path the path to update within the dataset node
    */
   public static void updateDate(CuratorFramework curator, UUID datasetKey, String path) {
     String crawlPath = getCrawlInfoPath(datasetKey, path);
@@ -65,11 +83,14 @@ public class ZookeeperUtils {
     createOrUpdate(curator, crawlPath, data);
   }
 
-  public static DistributedAtomicLong getCounter(CuratorFramework curator, UUID datasetKey, String path) {
-    return new DistributedAtomicLong(curator, getCrawlInfoPath(datasetKey, path), new RetryNTimes(5, 1000));
+  public static DistributedAtomicLong getCounter(
+      CuratorFramework curator, UUID datasetKey, String path) {
+    return new DistributedAtomicLong(
+        curator, getCrawlInfoPath(datasetKey, path), new RetryNTimes(5, 1000));
   }
 
-  public static void updateCounter(CuratorFramework curator, UUID datasetKey, String path, long value) {
+  public static void updateCounter(
+      CuratorFramework curator, UUID datasetKey, String path, long value) {
     DistributedAtomicLong dal = getCounter(curator, datasetKey, path);
     try {
       AtomicValue<Long> atom = dal.trySet(value);
@@ -82,5 +103,4 @@ public class ZookeeperUtils {
       LOG.error("Failed to update counter {} for dataset {}", path, datasetKey, e);
     }
   }
-
 }

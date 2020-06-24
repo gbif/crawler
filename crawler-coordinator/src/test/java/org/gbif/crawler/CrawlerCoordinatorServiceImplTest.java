@@ -1,3 +1,18 @@
+/*
+ * Copyright 2020 Global Biodiversity Information Facility (GBIF)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.gbif.crawler;
 
 import org.gbif.api.model.registry.Dataset;
@@ -8,6 +23,7 @@ import org.gbif.api.vocabulary.DatasetType;
 import org.gbif.api.vocabulary.EndpointType;
 import org.gbif.common.messaging.api.messages.Platform;
 import org.gbif.crawler.constants.CrawlerNodePaths;
+import org.gbif.registry.metasync.api.MetadataSynchroniser;
 
 import java.io.IOException;
 import java.net.URI;
@@ -16,14 +32,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import com.google.common.collect.Lists;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.RetryOneTime;
 import org.apache.curator.test.TestingServer;
 import org.apache.curator.utils.ZKPaths;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.gbif.registry.metasync.api.MetadataSynchroniser;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -33,10 +46,12 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.Lists;
+
 import static org.gbif.api.vocabulary.TagName.CONCEPTUAL_SCHEMA;
 import static org.gbif.api.vocabulary.TagName.CRAWL_ATTEMPT;
 import static org.gbif.api.vocabulary.TagName.DECLARED_COUNT;
-
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
@@ -47,12 +62,9 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class CrawlerCoordinatorServiceImplTest {
 
-  @Rule
-  public ExpectedException thrown = ExpectedException.none();
-  @Mock
-  private DatasetService datasetService;
-  @Mock
-  private MetadataSynchroniser metadataSynchroniser;
+  @Rule public ExpectedException thrown = ExpectedException.none();
+  @Mock private DatasetService datasetService;
+  @Mock private MetadataSynchroniser metadataSynchroniser;
   private CuratorFramework curator;
   private CrawlerCoordinatorServiceImpl service;
   private UUID uuid = UUID.randomUUID();
@@ -64,11 +76,12 @@ public class CrawlerCoordinatorServiceImplTest {
     when(metadataSynchroniser.getDatasetCount(any(), any())).thenReturn(null);
 
     server = new TestingServer();
-    curator = CuratorFrameworkFactory.builder()
-      .connectString(server.getConnectString())
-      .namespace("crawler")
-      .retryPolicy(new RetryOneTime(1))
-      .build();
+    curator =
+        CuratorFrameworkFactory.builder()
+            .connectString(server.getConnectString())
+            .namespace("crawler")
+            .retryPolicy(new RetryOneTime(1))
+            .build();
     curator.start();
     ZKPaths.mkdirs(curator.getZookeeperClient().getZooKeeper(), "/crawler/crawls");
 
@@ -115,7 +128,9 @@ public class CrawlerCoordinatorServiceImplTest {
 
     assertThat(sortedEndpoints.size(), equalTo(5));
     assertThat(sortedEndpoints, contains(endpoint1, endpoint6, endpoint4, endpoint3, endpoint5));
-    assertTrue("Priority of DwC-A is higher than its EML", sortedEndpoints.indexOf(endpoint1) < sortedEndpoints.indexOf(endpoint5));
+    assertTrue(
+        "Priority of DwC-A is higher than its EML",
+        sortedEndpoints.indexOf(endpoint1) < sortedEndpoints.indexOf(endpoint5));
   }
 
   @Test
@@ -139,7 +154,7 @@ public class CrawlerCoordinatorServiceImplTest {
     // now add created dates
     long now = System.currentTimeMillis();
     endpoint1.setCreated(new Date(now));
-    endpoint2.setCreated(new Date(now-100000));
+    endpoint2.setCreated(new Date(now - 100000));
 
     sortedEndpoints = service.prioritySortEndpoints(endpoints);
     assertThat(sortedEndpoints.size(), equalTo(2));
@@ -147,7 +162,7 @@ public class CrawlerCoordinatorServiceImplTest {
     assertThat(sortedEndpoints.get(0), equalTo(endpoint2));
 
     // now add created dates
-    endpoint1.setCreated(new Date(now-200000));
+    endpoint1.setCreated(new Date(now - 200000));
     sortedEndpoints = service.prioritySortEndpoints(endpoints);
     assertThat(sortedEndpoints, contains(endpoint1, endpoint2));
     assertThat(sortedEndpoints.get(0), equalTo(endpoint1));
@@ -216,7 +231,7 @@ public class CrawlerCoordinatorServiceImplTest {
     MachineTag tag = MachineTag.newInstance(CRAWL_ATTEMPT, "10");
     tag.setKey(123);
     dataset.getMachineTags().add(tag);
-    dataset.getMachineTags().add(MachineTag.newInstance(DECLARED_COUNT,"1234"));
+    dataset.getMachineTags().add(MachineTag.newInstance(DECLARED_COUNT, "1234"));
     service.initiateCrawl(uuid, 5, Platform.ALL);
 
     List<String> children = curator.getChildren().forPath("/crawls");

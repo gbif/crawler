@@ -1,3 +1,18 @@
+/*
+ * Copyright 2020 Global Biodiversity Information Facility (GBIF)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.gbif.crawler.start;
 
 import org.gbif.common.messaging.api.messages.StartCrawlMessage;
@@ -11,9 +26,7 @@ import com.beust.jcommander.ParametersDelegate;
 
 public class StartCrawlConfiguration {
 
-  @ParametersDelegate
-  @Valid
-  @NotNull
+  @ParametersDelegate @Valid @NotNull
   public MessagingConfiguration messaging = new MessagingConfiguration();
 
   @Parameter(names = "--dataset-uuid")
@@ -23,5 +36,4 @@ public class StartCrawlConfiguration {
   @Parameter(names = "--priority")
   @NotNull
   public StartCrawlMessage.Priority priority = StartCrawlMessage.Priority.NORMAL;
-
 }

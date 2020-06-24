@@ -1,3 +1,18 @@
+/*
+ * Copyright 2020 Global Biodiversity Information Facility (GBIF)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.gbif.crawler.dwca.validator;
 
 import org.gbif.api.model.crawler.DwcaValidationReport;
@@ -25,13 +40,14 @@ import java.nio.file.StandardCopyOption;
 import java.util.Objects;
 import java.util.UUID;
 
-import com.yammer.metrics.Metrics;
-import com.yammer.metrics.core.Counter;
 import org.apache.commons.io.FileUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+
+import com.yammer.metrics.Metrics;
+import com.yammer.metrics.core.Counter;
 
 import static org.gbif.crawler.common.ZookeeperUtils.createOrUpdate;
 import static org.gbif.crawler.constants.CrawlerNodePaths.FINISHED_REASON;
@@ -46,7 +62,6 @@ public class ValidatorService extends DwcaService {
 
   private final DwcaValidatorConfiguration configuration;
 
-
   public ValidatorService(DwcaValidatorConfiguration configuration) {
     super(configuration);
     this.configuration = configuration;
@@ -57,12 +72,19 @@ public class ValidatorService extends DwcaService {
     CuratorFramework curator = configuration.zooKeeper.getCuratorFramework();
 
     // listen to DwcaDownloadFinishedMessage messages
-    listener.listen("dwca-validator", config.poolSize,
-      new DwcaDownloadFinishedMessageCallback(datasetService, config.archiveRepository, config.unpackedRepository, publisher, curator));
+    listener.listen(
+        "dwca-validator",
+        config.poolSize,
+        new DwcaDownloadFinishedMessageCallback(
+            datasetService,
+            config.archiveRepository,
+            config.unpackedRepository,
+            publisher,
+            curator));
   }
 
   private static class DwcaDownloadFinishedMessageCallback
-    extends AbstractMessageCallback<DwcaDownloadFinishedMessage> {
+      extends AbstractMessageCallback<DwcaDownloadFinishedMessage> {
 
     private final DatasetService datasetService;
     private final File archiveRepository;
@@ -71,10 +93,15 @@ public class ValidatorService extends DwcaService {
     private final CuratorFramework curator;
 
     private final Counter messageCount = Metrics.newCounter(ValidatorService.class, "messageCount");
-    private final Counter failedValidations = Metrics.newCounter(ValidatorService.class, "failedValidations");
+    private final Counter failedValidations =
+        Metrics.newCounter(ValidatorService.class, "failedValidations");
 
-    private DwcaDownloadFinishedMessageCallback(DatasetService datasetService, File archiveRepository,
-      File unpackDirectory, MessagePublisher publisher, CuratorFramework curator) {
+    private DwcaDownloadFinishedMessageCallback(
+        DatasetService datasetService,
+        File archiveRepository,
+        File unpackDirectory,
+        MessagePublisher publisher,
+        CuratorFramework curator) {
       this.datasetService = datasetService;
       this.archiveRepository = archiveRepository;
       this.unpackDirectory = unpackDirectory;
@@ -87,22 +114,27 @@ public class ValidatorService extends DwcaService {
       messageCount.inc();
 
       final UUID datasetKey = message.getDatasetUuid();
-      try (
-        MDC.MDCCloseable ignored1 = MDC.putCloseable("datasetKey", datasetKey.toString());
-        MDC.MDCCloseable ignored2 = MDC.putCloseable("attempt", String.valueOf(message.getAttempt()))
-      ) {
+      try (MDC.MDCCloseable ignored1 = MDC.putCloseable("datasetKey", datasetKey.toString());
+          MDC.MDCCloseable ignored2 =
+              MDC.putCloseable("attempt", String.valueOf(message.getAttempt()))) {
 
         LOG.info("Now validating DwC-A for dataset [{}]", datasetKey);
         Dataset dataset = datasetService.get(datasetKey);
         if (dataset == null) {
           // exception, we don't know this dataset
-          throw new IllegalArgumentException("The requested dataset " + datasetKey + " is not registered");
+          throw new IllegalArgumentException(
+              "The requested dataset " + datasetKey + " is not registered");
         }
 
-        final Path dwcaFile = new File(archiveRepository, datasetKey + "/" + datasetKey + DwcaConfiguration.DWCA_SUFFIX).toPath();
+        final Path dwcaFile =
+            new File(
+                    archiveRepository,
+                    datasetKey + "/" + datasetKey + DwcaConfiguration.DWCA_SUFFIX)
+                .toPath();
         final Path destinationDir = new File(unpackDirectory, datasetKey.toString()).toPath();
 
-        DwcaValidationReport validationReport = prepareAndRunValidation(dataset, dwcaFile, destinationDir);
+        DwcaValidationReport validationReport =
+            prepareAndRunValidation(dataset, dwcaFile, destinationDir);
         if (validationReport.isValid()) {
           updateProcessState(dataset, validationReport, ProcessState.RUNNING);
 
@@ -112,14 +144,24 @@ public class ValidatorService extends DwcaService {
           updateProcessState(dataset, validationReport, ProcessState.FINISHED);
         }
 
-        LOG.info("Finished validating DwC-A for dataset [{}], valid? is [{}]. Full report [{}]", datasetKey,
-            validationReport.isValid(), validationReport);
+        LOG.info(
+            "Finished validating DwC-A for dataset [{}], valid? is [{}]. Full report [{}]",
+            datasetKey,
+            validationReport.isValid(),
+            validationReport);
 
         // send validation finished message
         try {
           publisher.send(
-              new DwcaValidationFinishedMessage(datasetKey, dataset.getType(), message.getSource(), message.getAttempt(),
-                  validationReport, message.getEndpointType(), message.getPlatform()), true);
+              new DwcaValidationFinishedMessage(
+                  datasetKey,
+                  dataset.getType(),
+                  message.getSource(),
+                  message.getAttempt(),
+                  validationReport,
+                  message.getEndpointType(),
+                  message.getPlatform()),
+              true);
         } catch (IOException e) {
           LOG.error("Failed to send validation finished message for dataset [{}]", datasetKey, e);
         }
@@ -128,12 +170,14 @@ public class ValidatorService extends DwcaService {
 
     /**
      * Prepare the file(s) and run the validation on the resulting file(s).
+     *
      * @param dataset
      * @param downloadedFile
      * @param destinationFolder
      * @return
      */
-    private DwcaValidationReport prepareAndRunValidation(Dataset dataset, Path downloadedFile, Path destinationFolder) {
+    private DwcaValidationReport prepareAndRunValidation(
+        Dataset dataset, Path downloadedFile, Path destinationFolder) {
 
       Objects.requireNonNull(dataset, "dataset shall be provided");
       DwcaValidationReport validationReport;
@@ -143,7 +187,8 @@ public class ValidatorService extends DwcaService {
           Path destinationPath = destinationFolder.resolve(DwcaConfiguration.METADATA_FILE);
           FileUtils.forceMkdir(destinationFolder.toFile());
           // not an archive so copy the file alone
-          // we copy the file (instead of using the .dwca directly) in case the dataset is transformed into a more concrete type eventually
+          // we copy the file (instead of using the .dwca directly) in case the dataset is
+          // transformed into a more concrete type eventually
           Files.copy(downloadedFile, destinationPath, StandardCopyOption.REPLACE_EXISTING);
           String metadata = new String(Files.readAllBytes(destinationPath), StandardCharsets.UTF_8);
           validationReport = DwcaValidator.validate(dataset, metadata);
@@ -156,27 +201,35 @@ public class ValidatorService extends DwcaService {
         validationReport = new DwcaValidationReport(dataset.getKey(), "Invalid Dwc archive");
       } catch (IOException e) {
         LOG.error("IOException when reading DwC archive for dataset [{}]", dataset.getKey(), e);
-        validationReport = new DwcaValidationReport(dataset.getKey(), "IOException when reading DwC archive");
+        validationReport =
+            new DwcaValidationReport(dataset.getKey(), "IOException when reading DwC archive");
       } catch (RuntimeException e) {
         LOG.error("Unknown error when reading DwC archive for dataset [{}]", dataset.getKey(), e);
-        validationReport = new DwcaValidationReport(dataset.getKey(), "Unexpected error when reading DwC archive: " + e.getMessage());
+        validationReport =
+            new DwcaValidationReport(
+                dataset.getKey(), "Unexpected error when reading DwC archive: " + e.getMessage());
       }
 
       return validationReport;
     }
 
     /**
-     * Set the process state.  For existing dataset types (that contains data) this sets the process state as given.
-     * For METADATA, this method sets the state to EMPTY.
+     * Set the process state. For existing dataset types (that contains data) this sets the process
+     * state as given. For METADATA, this method sets the state to EMPTY.
      */
-    private void updateProcessState(Dataset dataset, DwcaValidationReport report, ProcessState state) {
+    private void updateProcessState(
+        Dataset dataset, DwcaValidationReport report, ProcessState state) {
       // Override state to EMPTY if there are no occurrences.
-      ProcessState occurrenceState = (report.getOccurrenceReport() != null && report.getOccurrenceReport().getCheckedRecords() > 0)
-        ? state : ProcessState.EMPTY;
+      ProcessState occurrenceState =
+          (report.getOccurrenceReport() != null
+                  && report.getOccurrenceReport().getCheckedRecords() > 0)
+              ? state
+              : ProcessState.EMPTY;
 
       switch (dataset.getType()) {
         case OCCURRENCE:
-          createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_OCCURRENCE, occurrenceState);
+          createOrUpdate(
+              curator, report.getDatasetKey(), PROCESS_STATE_OCCURRENCE, occurrenceState);
           break;
         case CHECKLIST:
         case SAMPLING_EVENT:
@@ -185,21 +238,34 @@ public class ValidatorService extends DwcaService {
           // update core status
           // if there is no report, we record empty, otherwise we record the given state
           ProcessState coreState = report.getGenericReport() == null ? ProcessState.EMPTY : state;
-          createOrUpdate(curator, report.getDatasetKey(), dataset.getType() == DatasetType.CHECKLIST ? PROCESS_STATE_CHECKLIST : PROCESS_STATE_SAMPLE, coreState);
+          createOrUpdate(
+              curator,
+              report.getDatasetKey(),
+              dataset.getType() == DatasetType.CHECKLIST
+                  ? PROCESS_STATE_CHECKLIST
+                  : PROCESS_STATE_SAMPLE,
+              coreState);
 
           // update occurrence status
-          createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_OCCURRENCE, occurrenceState);
+          createOrUpdate(
+              curator, report.getDatasetKey(), PROCESS_STATE_OCCURRENCE, occurrenceState);
           break;
         case METADATA:
           // for metadata only dataset this is the last step
-          // explicitly declare that no content is expected so the CoordinatorCleanup can pick it up.
-          createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_OCCURRENCE, ProcessState.EMPTY);
-          createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_CHECKLIST, ProcessState.EMPTY);
+          // explicitly declare that no content is expected so the CoordinatorCleanup can pick it
+          // up.
+          createOrUpdate(
+              curator, report.getDatasetKey(), PROCESS_STATE_OCCURRENCE, ProcessState.EMPTY);
+          createOrUpdate(
+              curator, report.getDatasetKey(), PROCESS_STATE_CHECKLIST, ProcessState.EMPTY);
           createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_SAMPLE, ProcessState.EMPTY);
           LOG.info("Marked metadata-only dataset as empty [{}]", datasetKey);
           break;
         default:
-          LOG.error("Can't updateProcessState dataset [{}]: unknown type -> {}", datasetKey, dataset.getType());
+          LOG.error(
+              "Can't updateProcessState dataset [{}]: unknown type -> {}",
+              datasetKey,
+              dataset.getType());
       }
     }
   }

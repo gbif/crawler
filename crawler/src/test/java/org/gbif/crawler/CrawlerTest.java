@@ -1,3 +1,18 @@
+/*
+ * Copyright 2020 Global Biodiversity Information Facility (GBIF)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.gbif.crawler;
 
 import org.gbif.crawler.exception.FatalCrawlException;
@@ -16,8 +31,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 
-import com.google.common.base.Optional;
-import com.google.common.collect.Iterables;
 import org.apache.http.HttpResponse;
 import org.junit.After;
 import org.junit.Before;
@@ -28,6 +41,9 @@ import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
+
+import com.google.common.base.Optional;
+import com.google.common.collect.Iterables;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.anyString;
@@ -44,22 +60,21 @@ public class CrawlerTest {
   // * Test all 16 possible response conditions
 
   /**
-   * This Mockito Answer returns a different optional long every time it is called. It can be initialized by providing
-   * a
-   * Iterator of Optional longs. Every time a present value is encountered a random long is returned. So the passed in
-   * sequence serves as a pattern which is cycled over.
+   * This Mockito Answer returns a different optional long every time it is called. It can be
+   * initialized by providing a Iterator of Optional longs. Every time a present value is
+   * encountered a random long is returned. So the passed in sequence serves as a pattern which is
+   * cycled over.
    */
   private static class CyclingHashAnswer implements Answer<Optional<Long>> {
 
     private final Random rnd = new Random();
     private final Iterator<Optional<Long>> cycle;
 
-
-    /**
-     * The default is a cycle of present-absent-absent.
-     */
+    /** The default is a cycle of present-absent-absent. */
     private CyclingHashAnswer() {
-      cycle = Iterables.cycle(Optional.of(1L), Optional.<Long>absent(), Optional.<Long>absent()).iterator();
+      cycle =
+          Iterables.cycle(Optional.of(1L), Optional.<Long>absent(), Optional.<Long>absent())
+              .iterator();
     }
 
     private CyclingHashAnswer(Optional<Long>... values) {
@@ -74,31 +89,32 @@ public class CrawlerTest {
       }
       return next;
     }
-
   }
 
   private static final UUID DATASET_UUID = UUID.randomUUID();
 
-  // We have 26 * 26 = 676 + 2 (null->aaa, zza->null) + 1 (empty) = 679 different "bounds" which makes for 678 requests in total
+  // We have 26 * 26 = 676 + 2 (null->aaa, zza->null) + 1 (empty) = 679 different "bounds" which
+  // makes for 678 requests in total
   private static final int NUM_RANGES = 26 * 26 + 2 + 1 - 1;
   private ScientificNameRangeCrawlContext context;
   private ScientificNameRangeStrategy strategy;
   private LimitedRetryPolicy retryPolicy;
   private final BiocaseCrawlConfiguration job =
-    new BiocaseCrawlConfiguration(DATASET_UUID, 5, URI.create("http://gbif.org"),
-      "http://www.tdwg.org/schemas/abcd/2.06", "foo");
+      new BiocaseCrawlConfiguration(
+          DATASET_UUID,
+          5,
+          URI.create("http://gbif.org"),
+          "http://www.tdwg.org/schemas/abcd/2.06",
+          "foo");
 
-  private final BiocaseScientificNameRangeRequestHandler requestHandler = new BiocaseScientificNameRangeRequestHandler(
-    job);
+  private final BiocaseScientificNameRangeRequestHandler requestHandler =
+      new BiocaseScientificNameRangeRequestHandler(job);
 
-  @Mock
-  private ResponseHandler<HttpResponse, List<Byte>> responseHandler;
+  @Mock private ResponseHandler<HttpResponse, List<Byte>> responseHandler;
 
-  @Mock
-  private CrawlClient<String, HttpResponse> client;
+  @Mock private CrawlClient<String, HttpResponse> client;
 
-  @Mock
-  private CrawlListener<ScientificNameRangeCrawlContext, String, List<Byte>> crawlListener;
+  @Mock private CrawlListener<ScientificNameRangeCrawlContext, String, List<Byte>> crawlListener;
 
   private Crawler<ScientificNameRangeCrawlContext, String, HttpResponse, List<Byte>> crawler;
 
@@ -108,14 +124,18 @@ public class CrawlerTest {
     strategy = new ScientificNameRangeStrategy(context);
     retryPolicy = new LimitedRetryPolicy(1, 1, 1, 1);
     crawler =
-      Crawler.newInstance(strategy, requestHandler, responseHandler, client, retryPolicy, NoLockFactory.getLock());
+        Crawler.newInstance(
+            strategy,
+            requestHandler,
+            responseHandler,
+            client,
+            retryPolicy,
+            NoLockFactory.getLock());
     crawler.addListener(crawlListener);
     when(responseHandler.isValidState()).thenReturn(true);
   }
 
-  /**
-   * Necessary to avoid running out of RAM.
-   */
+  /** Necessary to avoid running out of RAM. */
   @After
   public void tearDown() {
     Mockito.reset(responseHandler, client, crawlListener);
@@ -123,7 +143,8 @@ public class CrawlerTest {
 
   @Test
   public void testAbortFatalCrawlException() throws Exception {
-    when(client.execute(anyString(), eq(responseHandler))).thenThrow(new FatalCrawlException("foo"));
+    when(client.execute(anyString(), eq(responseHandler)))
+        .thenThrow(new FatalCrawlException("foo"));
     crawler.crawl();
     verify(client, times(1)).execute(anyString(), eq(responseHandler));
   }
@@ -151,11 +172,10 @@ public class CrawlerTest {
   }
 
   /**
-   * unknown end of records
-   * known record count
-   * got content in first request, then nothing on next page
-   * <p/>
-   * relying on speculative requests to skip to next range
+   * unknown end of records known record count got content in first request, then nothing on next
+   * page
+   *
+   * <p>relying on speculative requests to skip to next range
    */
   @Test
   public void testScenario11And12And14() throws Exception {
@@ -168,11 +188,10 @@ public class CrawlerTest {
   }
 
   /**
-   * unknown end of records
-   * known record count
-   * got content in first request, then nothing on next page
-   * <p/>
-   * relying on speculative requests to skip to next range
+   * unknown end of records known record count got content in first request, then nothing on next
+   * page
+   *
+   * <p>relying on speculative requests to skip to next range
    */
   @Test
   public void testScenario11And12And14Error() throws Exception {
@@ -195,12 +214,10 @@ public class CrawlerTest {
   }
 
   /**
-   * unknown end of records
-   * unknown record count
-   * got content in first request, then nothing on next page
-   * valid response
-   * <p/>
-   * relying on speculative requests to skip to next range
+   * unknown end of records unknown record count got content in first request, then nothing on next
+   * page valid response
+   *
+   * <p>relying on speculative requests to skip to next range
    */
   @Test
   public void testScenario1And2And14() throws Exception {
@@ -212,11 +229,10 @@ public class CrawlerTest {
   }
 
   /**
-   * unknown end of records
-   * known record count
-   * got content in first request, then nothing on next page
-   * <p/>
-   * relying on speculative requests to skip to next range
+   * unknown end of records known record count got content in first request, then nothing on next
+   * page
+   *
+   * <p>relying on speculative requests to skip to next range
    */
   @Test
   public void testScenario3And4And14() throws Exception {
@@ -229,11 +245,10 @@ public class CrawlerTest {
   }
 
   /**
-   * unknown end of records
-   * known record count
-   * got content in first request, then nothing on next page
-   * <p/>
-   * relying on speculative requests to skip to next range
+   * unknown end of records known record count got content in first request, then nothing on next
+   * page
+   *
+   * <p>relying on speculative requests to skip to next range
    */
   @Test
   public void testScenario3And4And14Error() throws Exception {
@@ -245,11 +260,7 @@ public class CrawlerTest {
     verify(crawlListener, times(NUM_RANGES)).error(anyString());
   }
 
-  /**
-   * end of records
-   * unknown record count
-   * got content
-   */
+  /** end of records unknown record count got content */
   @Test
   public void testScenario5() throws Exception {
     when(responseHandler.isEndOfRecords()).thenReturn(Optional.of(true));
@@ -259,11 +270,7 @@ public class CrawlerTest {
     verify(client, times(NUM_RANGES)).execute(anyString(), eq(responseHandler));
   }
 
-  /**
-   * end of records
-   * unknown record count
-   * no content
-   */
+  /** end of records unknown record count no content */
   @Test
   public void testScenario6() throws Exception {
     when(responseHandler.isEndOfRecords()).thenReturn(Optional.of(true));
@@ -273,11 +280,7 @@ public class CrawlerTest {
     verify(client, times(NUM_RANGES)).execute(anyString(), eq(responseHandler));
   }
 
-  /**
-   * end of records
-   * known record count (!= 0)
-   * got content
-   */
+  /** end of records known record count (!= 0) got content */
   @Test
   public void testScenario7() throws Exception {
     when(responseHandler.isEndOfRecords()).thenReturn(Optional.of(true));
@@ -287,11 +290,7 @@ public class CrawlerTest {
     verify(client, times(NUM_RANGES)).execute(anyString(), eq(responseHandler));
   }
 
-  /**
-   * end of records
-   * known record count (== 0)
-   * got content
-   */
+  /** end of records known record count (== 0) got content */
   @Test
   public void testScenario7Error() throws Exception {
     when(responseHandler.isEndOfRecords()).thenReturn(Optional.of(true));
@@ -302,11 +301,7 @@ public class CrawlerTest {
     verify(crawlListener, times(NUM_RANGES)).error(anyString());
   }
 
-  /**
-   * end of records
-   * known record count (== 0)
-   * no content
-   */
+  /** end of records known record count (== 0) no content */
   @Test
   public void testScenario8() throws Exception {
     when(responseHandler.isEndOfRecords()).thenReturn(Optional.of(true));
@@ -316,11 +311,7 @@ public class CrawlerTest {
     verify(client, times(NUM_RANGES)).execute(anyString(), eq(responseHandler));
   }
 
-  /**
-   * end of records
-   * known record count (!= 0)
-   * no content
-   */
+  /** end of records known record count (!= 0) no content */
   @Test
   public void testScenario8Error() throws Exception {
     when(responseHandler.isEndOfRecords()).thenReturn(Optional.of(true));
@@ -332,12 +323,10 @@ public class CrawlerTest {
   }
 
   /**
-   * unknown end of records
-   * unknown record count
-   * got content in first request, then nothing on next page
-   * valid response
-   * <p/>
-   * relying on speculative requests to skip to next range
+   * unknown end of records unknown record count got content in first request, then nothing on next
+   * page valid response
+   *
+   * <p>relying on speculative requests to skip to next range
    */
   @Test
   public void testScenario9And10And14() throws Exception {
@@ -347,7 +336,6 @@ public class CrawlerTest {
     crawler.crawl();
     verify(client, times(3 * NUM_RANGES)).execute(anyString(), eq(responseHandler));
   }
-
 
   @Test
   public void testSuccessfulSimpleCrawl() throws Exception {

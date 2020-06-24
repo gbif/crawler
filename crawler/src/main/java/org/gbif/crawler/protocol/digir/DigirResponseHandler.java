@@ -1,3 +1,18 @@
+/*
+ * Copyright 2020 Global Biodiversity Information Facility (GBIF)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.gbif.crawler.protocol.digir;
 
 import org.gbif.crawler.exception.FatalCrawlException;
@@ -7,17 +22,18 @@ import javax.annotation.concurrent.NotThreadSafe;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 
-import com.google.common.base.Optional;
 import org.codehaus.stax2.XMLStreamReader2;
+
+import com.google.common.base.Optional;
 
 /**
  * This class is not thread-safe.
- * <p/>
- * The latest <a href="http://digir.sourceforge.net/schema/protocol/2003/1.0/digir.xsd">DiGIR XSD</a> does not require
- * any content or diagnostics elements.
- * <p/>
- * So with DiGIR it could be that we successfully parse a page and are in a valid state but don't know if we're at the
- * end of the records or how many we got.
+ *
+ * <p>The latest <a href="http://digir.sourceforge.net/schema/protocol/2003/1.0/digir.xsd">DiGIR
+ * XSD</a> does not require any content or diagnostics elements.
+ *
+ * <p>So with DiGIR it could be that we successfully parse a page and are in a valid state but don't
+ * know if we're at the end of the records or how many we got.
  */
 @NotThreadSafe
 public class DigirResponseHandler extends AbstractResponseHandler {
@@ -64,12 +80,15 @@ public class DigirResponseHandler extends AbstractResponseHandler {
     if (isElement(reader, INFO_ELEMENT, true)) {
       if (reader.getAttributeValue(null, DIAGNOSITC_ELEMENT_ATTRIBUTE_NAME).equals(RECORD_COUNT)) {
         setRecordCount(Optional.of(reader.getElementAsInt()));
-      } else if (reader.getAttributeValue(null, DIAGNOSITC_ELEMENT_ATTRIBUTE_NAME).equals(END_OF_RECORDS)) {
+      } else if (reader
+          .getAttributeValue(null, DIAGNOSITC_ELEMENT_ATTRIBUTE_NAME)
+          .equals(END_OF_RECORDS)) {
         setEndOfRecords(Optional.of(reader.getElementAsBoolean()));
-      } else if (reader.getAttributeValue(null, DIAGNOSITC_ELEMENT_ATTRIBUTE_NAME).equals(RESOURCE_NOT_FOUND)) {
+      } else if (reader
+          .getAttributeValue(null, DIAGNOSITC_ELEMENT_ATTRIBUTE_NAME)
+          .equals(RESOURCE_NOT_FOUND)) {
         throw new FatalCrawlException("Requested resource could not be found");
       }
     }
   }
-
 }

@@ -1,3 +1,18 @@
+/*
+ * Copyright 2020 Global Biodiversity Information Facility (GBIF)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.gbif.crawler.emlpusher;
 
 import org.gbif.api.service.registry.DatasetService;
@@ -22,7 +37,8 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
 /**
- * A utility that will inspect a crawling filesystem and push all metadata documents found into the registry.
+ * A utility that will inspect a crawling filesystem and push all metadata documents found into the
+ * registry.
  */
 public class EmlPusher {
 
@@ -40,7 +56,8 @@ public class EmlPusher {
   private EmlPusher(PushEmlConfiguration cfg) {
     LOG.info("Connecting to registry {} as user {}", cfg.registryWsUrl, cfg.registryUser);
 
-    ClientFactory clientFactory = new ClientFactory(cfg.registryUser, cfg.registryPassword, cfg.registryWsUrl);
+    ClientFactory clientFactory =
+        new ClientFactory(cfg.registryUser, cfg.registryPassword, cfg.registryWsUrl);
     datasetService = clientFactory.newInstance(DatasetClient.class);
 
     rootDirectory = cfg.unpackedRepository;
@@ -54,8 +71,11 @@ public class EmlPusher {
     for (File f : archiveFiles) {
       push(f);
     }
-    LOG.info("Done. {} metadata documents from {} archives pushed to registry, {} failed", pushCounter,
-      archiveFiles.length, failCounter);
+    LOG.info(
+        "Done. {} metadata documents from {} archives pushed to registry, {} failed",
+        pushCounter,
+        archiveFiles.length,
+        failCounter);
   }
 
   private void pushEMl(UUID key, File eml) throws IOException {
@@ -116,7 +136,7 @@ public class EmlPusher {
 
   // gets the list of archives
   private File[] findArchives(File rootDirectory) {
-    return rootDirectory.listFiles((FileFilter) new SuffixFileFilter(dwcaSuffix, IOCase.INSENSITIVE));
+    return rootDirectory.listFiles(
+        (FileFilter) new SuffixFileFilter(dwcaSuffix, IOCase.INSENSITIVE));
   }
-
 }

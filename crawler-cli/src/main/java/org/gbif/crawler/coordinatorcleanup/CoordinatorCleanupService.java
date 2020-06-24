@@ -1,9 +1,12 @@
 /*
- * Copyright 2013 Global Biodiversity Information Facility (GBIF)
+ * Copyright 2020 Global Biodiversity Information Facility (GBIF)
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -12,10 +15,6 @@
  */
 package org.gbif.crawler.coordinatorcleanup;
 
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.google.common.util.concurrent.AbstractScheduledService;
-import org.apache.curator.framework.CuratorFramework;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.gbif.api.exception.ServiceUnavailableException;
 import org.gbif.api.model.crawler.DatasetProcessStatus;
 import org.gbif.api.model.crawler.ProcessState;
@@ -26,18 +25,21 @@ import org.gbif.crawler.ws.client.DatasetProcessClient;
 import org.gbif.registry.ws.client.DatasetProcessStatusClient;
 import org.gbif.ws.client.ClientFactory;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
-
 import java.io.IOException;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-/**
- * This services starts the Crawler Coordinator by listening for messages.
- */
+import org.apache.curator.framework.CuratorFramework;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.google.common.util.concurrent.AbstractScheduledService;
+
+/** This services starts the Crawler Coordinator by listening for messages. */
 @SuppressWarnings("UnstableApiUsage")
 public class CoordinatorCleanupService extends AbstractScheduledService {
 
@@ -57,11 +59,13 @@ public class CoordinatorCleanupService extends AbstractScheduledService {
     try {
       runOnce();
     } catch (Exception e) {
-      LOG.error("Unexpected exception running loop to clean ZK cause by [{}].  Restarting curator, and continuing...",
-                e.getMessage(), e);
+      LOG.error(
+          "Unexpected exception running loop to clean ZK cause by [{}].  Restarting curator, and continuing...",
+          e.getMessage(),
+          e);
       try {
         initializeCurator();
-      } catch(Exception e2) {
+      } catch (Exception e2) {
         LOG.error("Unexpected exception initializing curator.  Continuing...", e);
       }
     }
@@ -79,10 +83,10 @@ public class CoordinatorCleanupService extends AbstractScheduledService {
     }
 
     for (DatasetProcessStatus status : statuses) {
-      try (
-        MDC.MDCCloseable ignored1 = MDC.putCloseable("datasetKey", status.getDatasetKey().toString());
-        MDC.MDCCloseable ignored2 = MDC.putCloseable("attempt", String.valueOf(status.getCrawlJob().getAttempt()))
-      ) {
+      try (MDC.MDCCloseable ignored1 =
+              MDC.putCloseable("datasetKey", status.getDatasetKey().toString());
+          MDC.MDCCloseable ignored2 =
+              MDC.putCloseable("attempt", String.valueOf(status.getCrawlJob().getAttempt()))) {
         LOG.info("Checking DatasetProcessStatus with UUID [{}] now", status.getDatasetKey());
 
         try {
@@ -92,11 +96,14 @@ public class CoordinatorCleanupService extends AbstractScheduledService {
             continue;
           }
 
-          // If all of these things are true we can delete this dataset from ZK and dump info to disc
+          // If all of these things are true we can delete this dataset from ZK and dump info to
+          // disc
           updateRegistry(status);
           delete(status);
         } catch (Exception e) {
-          LOG.error("Unable to callback and update the registry. Aborting this cleanup round, will try again later.", e);
+          LOG.error(
+              "Unable to callback and update the registry. Aborting this cleanup round, will try again later.",
+              e);
           return;
         }
       }
@@ -106,10 +113,11 @@ public class CoordinatorCleanupService extends AbstractScheduledService {
 
   @Override
   protected void startUp() throws Exception {
-    ClientFactory clientFactory = new ClientFactory(
-        configuration.registry.user,
-        configuration.registry.password,
-        configuration.registry.wsUrl);
+    ClientFactory clientFactory =
+        new ClientFactory(
+            configuration.registry.user,
+            configuration.registry.password,
+            configuration.registry.wsUrl);
     service = clientFactory.newInstance(DatasetProcessClient.class);
     registryService = clientFactory.newInstance(DatasetProcessStatusClient.class);
     curator = initializeCurator();
@@ -148,7 +156,8 @@ public class CoordinatorCleanupService extends AbstractScheduledService {
   /**
    * Updates the registry with up to date information about the status of processing this dataset.
    *
-   * @throws Exception when there was an error updating the registry. This can happen when it's offline.
+   * @throws Exception when there was an error updating the registry. This can happen when it's
+   *     offline.
    */
   private void updateRegistry(DatasetProcessStatus status) throws Exception {
     UUID datasetKey = status.getDatasetKey();
@@ -163,10 +172,10 @@ public class CoordinatorCleanupService extends AbstractScheduledService {
   }
 
   /**
-   * This method checks whether a certain Dataset has been fully processed (crawled, occurrences processed etc.)
+   * This method checks whether a certain Dataset has been fully processed (crawled, occurrences
+   * processed etc.)
    *
    * @param status of the dataset in question to check
-   *
    * @return {@code true} if we are done processing, {@code false} otherwise
    */
   private boolean checkDoneProcessing(DatasetProcessStatus status) {
@@ -177,35 +186,38 @@ public class CoordinatorCleanupService extends AbstractScheduledService {
     }
 
     // if metadata only, these are set to empty by the metasyncer
-    if (ProcessState.EMPTY == status.getProcessStateOccurrence() &&
-            ProcessState.EMPTY == status.getProcessStateChecklist() &&
-            ProcessState.EMPTY == status.getProcessStateSample()) {
+    if (ProcessState.EMPTY == status.getProcessStateOccurrence()
+        && ProcessState.EMPTY == status.getProcessStateChecklist()
+        && ProcessState.EMPTY == status.getProcessStateSample()) {
       LOG.debug("DONE: Empty dataset is finished.");
       return true;
     }
 
     // no processing started yet
-    if (status.getProcessStateChecklist() == null &&
-            status.getProcessStateOccurrence() == null &&
-            status.getProcessStateSample() == null) {
+    if (status.getProcessStateChecklist() == null
+        && status.getProcessStateOccurrence() == null
+        && status.getProcessStateSample() == null) {
       LOG.debug("Waiting for validation to start.");
       return false;
     }
 
     // checklist indexing running?
-    if (status.getProcessStateChecklist() != null && status.getProcessStateChecklist() == ProcessState.RUNNING) {
+    if (status.getProcessStateChecklist() != null
+        && status.getProcessStateChecklist() == ProcessState.RUNNING) {
       LOG.debug("Waiting for checklist processing to finish.");
       return false;
     }
 
     // occurrence (pipeline) indexing running?
-    if (status.getProcessStateOccurrence() != null && status.getProcessStateOccurrence() == ProcessState.RUNNING) {
+    if (status.getProcessStateOccurrence() != null
+        && status.getProcessStateOccurrence() == ProcessState.RUNNING) {
       LOG.debug("Waiting for occurrence processing to finish.");
       return false;
     }
 
     // the crawl is finally done!
-    LOG.debug("DONE: crawling, checklist and occurrence processing is completed. (Metadata sync is/was independent.)");
+    LOG.debug(
+        "DONE: crawling, checklist and occurrence processing is completed. (Metadata sync is/was independent.)");
 
     // Set the sample processing to completed.
     if (status.getProcessStateSample() == ProcessState.RUNNING) {
@@ -227,14 +239,24 @@ public class CoordinatorCleanupService extends AbstractScheduledService {
     LOG.info("Done with [{}]. Status: {}", status.getDatasetKey(), statusString);
 
     try {
-      // This will retry since we provide guaranteed() which could potentially cause issues on race conditions.
-      // However, this is seen as highly unlikely, and a cleaned ZK will be operationally easier to manage then
-      // the alternative.  Any failed crawls due to some unlikely race condition (which includes a failure to delete)
+      // This will retry since we provide guaranteed() which could potentially cause issues on race
+      // conditions.
+      // However, this is seen as highly unlikely, and a cleaned ZK will be operationally easier to
+      // manage then
+      // the alternative.  Any failed crawls due to some unlikely race condition (which includes a
+      // failure to delete)
       // will be picked up quickly in a scheduled recrawl anyway.
       LOG.debug("Deleting ZK path {}", CrawlerNodePaths.getCrawlInfoPath(status.getDatasetKey()));
-      curator.delete().guaranteed().deletingChildrenIfNeeded().forPath(CrawlerNodePaths.getCrawlInfoPath(status.getDatasetKey()));
+      curator
+          .delete()
+          .guaranteed()
+          .deletingChildrenIfNeeded()
+          .forPath(CrawlerNodePaths.getCrawlInfoPath(status.getDatasetKey()));
     } catch (Exception e) {
-      LOG.error("Couldn't delete [{}] - note that a background thread will retry this", status.getDatasetKey(), e);
+      LOG.error(
+          "Couldn't delete [{}] - note that a background thread will retry this",
+          status.getDatasetKey(),
+          e);
     }
   }
 }

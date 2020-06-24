@@ -1,3 +1,18 @@
+/*
+ * Copyright 2020 Global Biodiversity Information Facility (GBIF)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.gbif.crawler.pipelines.search;
 
 import java.io.Closeable;
@@ -21,9 +36,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Embeddable Search Index to perform simple full text search in a simple index of key value string elements.
- * Documents in the index are represented as a Map<String,String>.
- * This implementation does not provide a way uniquely identify a document, all deletions a updates are done following a "byQuery" approach.
+ * Embeddable Search Index to perform simple full text search in a simple index of key value string
+ * elements. Documents in the index are represented as a Map<String,String>. This implementation
+ * does not provide a way uniquely identify a document, all deletions a updates are done following a
+ * "byQuery" approach.
  */
 public class SimpleSearchIndex implements Closeable {
 
@@ -45,71 +61,77 @@ public class SimpleSearchIndex implements Closeable {
    */
   private SimpleSearchIndex(Path dirPath) throws IOException {
     mMapDirectory = new MMapDirectory(dirPath);
-    //Builds an analyzer with the default stop words
+    // Builds an analyzer with the default stop words
     analyzer = new StandardAnalyzer();
 
     // IndexWriter Configuration
     IndexWriterConfig iwc = new IndexWriterConfig(analyzer);
     iwc.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
 
-    //IndexWriter writes new index files to the directory
+    // IndexWriter writes new index files to the directory
     indexWriter = new IndexWriter(mMapDirectory, iwc);
   }
 
-  /**Creates a search index in the specified path*/
+  /** Creates a search index in the specified path */
   public static SimpleSearchIndex create(String dirPath) throws IOException {
     return new SimpleSearchIndex(Paths.get(dirPath));
   }
 
-  /**Creates a search index in the specified path*/
+  /** Creates a search index in the specified path */
   public static SimpleSearchIndex create(Path dirPath) throws IOException {
     return new SimpleSearchIndex(dirPath);
   }
 
   /**
-   * @return a IndexReader, it reuses the same instance of no changes are detected, otherwise ir creates a new reader
+   * @return a IndexReader, it reuses the same instance of no changes are detected, otherwise ir
+   *     creates a new reader
    * @throws IOException in case of error reading files
    */
   private IndexReader getIndexReader() throws IOException {
-    if(Objects.isNull(indexReader)) { //first instance
+    if (Objects.isNull(indexReader)) { // first instance
       indexReader = DirectoryReader.open(indexWriter, true, true);
-    } else { //Checked if changes are made
+    } else { // Checked if changes are made
       DirectoryReader newDirectoryReader = DirectoryReader.openIfChanged(indexReader, indexWriter);
-      indexReader = Objects.isNull(newDirectoryReader)? indexReader :newDirectoryReader;
+      indexReader = Objects.isNull(newDirectoryReader) ? indexReader : newDirectoryReader;
     }
     return indexReader;
   }
 
-  /** Gets a searcher using a index reader aware of changes*/
+  /** Gets a searcher using a index reader aware of changes */
   private IndexSearcher getIndexSearcher() throws IOException {
-    //Create index reader and searcher
+    // Create index reader and searcher
     IndexSearcher indexSearcher = new IndexSearcher(getIndexReader());
-    indexSearcher.setQueryCachingPolicy(new QueryCachingPolicy() {
-      @Override
-      public void onUse(Query query) {
-        // do nothing
-      }
+    indexSearcher.setQueryCachingPolicy(
+        new QueryCachingPolicy() {
+          @Override
+          public void onUse(Query query) {
+            // do nothing
+          }
 
-      @Override
-      public boolean shouldCache(Query query) throws IOException {
-        return false;
-      }
-    });
+          @Override
+          public boolean shouldCache(Query query) throws IOException {
+            return false;
+          }
+        });
     return indexSearcher;
   }
 
-  /** Adds a document to the  index. Duplication of content is not checked bu this index.*/
+  /** Adds a document to the index. Duplication of content is not checked bu this index. */
   public long index(Document document) throws IOException {
     return indexWriter.addDocument(document);
   }
 
-  /** Gets a document by its Lucene docId. This method must be used for search results only since ids can change after each commit.*/
+  /**
+   * Gets a document by its Lucene docId. This method must be used for search results only since ids
+   * can change after each commit.
+   */
   private Document getDocument(int docId) throws IOException {
     return getIndexSearcher().doc(docId);
   }
 
   /**
    * Deletes documents by using a field and a exact match against that field.
+   *
    * @param field to be used to find documents
    * @param value to be used as exact match
    * @return number of deleted documents
@@ -123,6 +145,7 @@ public class SimpleSearchIndex implements Closeable {
 
   /**
    * Updates documents by using a field and a exact match against that field.
+   *
    * @param field to be used to find documents
    * @param value to be used as exact match
    * @param fields fields to be updated
@@ -135,17 +158,20 @@ public class SimpleSearchIndex implements Closeable {
     return updated;
   }
 
-  /**Converts a Lucene {@link Document} into a Map<String,String>.*/
-  private static Map<String,String> docToMap(Document document) {
-    return document.getFields().stream().collect(Collectors.toMap(IndexableField::name, IndexableField::stringValue));
+  /** Converts a Lucene {@link Document} into a Map<String,String>. */
+  private static Map<String, String> docToMap(Document document) {
+    return document.getFields().stream()
+        .collect(Collectors.toMap(IndexableField::name, IndexableField::stringValue));
   }
 
-  /** Transforms a fieldName and q pair into Lucene query.
+  /**
+   * Transforms a fieldName and q pair into Lucene query.
+   *
    * @throws IllegalArgumentException in case there are errors parsing the query
    */
   private Query toQuery(String fieldName, String q) throws IllegalArgumentException {
     try {
-      //Build query
+      // Build query
       QueryParser qp = new QueryParser(fieldName, analyzer);
       return qp.parse(q);
     } catch (ParseException ex) {
@@ -153,9 +179,7 @@ public class SimpleSearchIndex implements Closeable {
     }
   }
 
-  /**
-   * Utility method to convert results into a search.
-   */
+  /** Utility method to convert results into a search. */
   private SearchResult doSearch(Query query) throws IOException {
     TopScoreDocCollector collector = TopScoreDocCollector.create(MAX_RESULTS);
 
@@ -164,7 +188,7 @@ public class SimpleSearchIndex implements Closeable {
     TopDocs topDocs = collector.topDocs(0, MAX_RESULTS);
 
     if (Objects.nonNull(topDocs.scoreDocs) && topDocs.scoreDocs.length > 0) {
-      List<Map<String,String>> results = new ArrayList<>();
+      List<Map<String, String>> results = new ArrayList<>();
       Arrays.stream(topDocs.scoreDocs)
           .forEach(
               scoreDoc -> {
@@ -180,11 +204,12 @@ public class SimpleSearchIndex implements Closeable {
         return SearchResult.of(topDocs.scoreDocs.length, results);
       }
     }
-    return  SearchResult.empty();
+    return SearchResult.empty();
   }
 
   /**
    * Performs a exact term search on a field value.
+   *
    * @param fieldName to be used for the search
    * @return a {@link SearchResult}, a SearchResults.result empty if no results.
    * @throws IOException in case lof low-level errors.
@@ -195,13 +220,14 @@ public class SimpleSearchIndex implements Closeable {
 
   /**
    * Performs a search on a field value.
+   *
    * @param fieldName to be used for the search
    * @param q term query
    * @return a {@link SearchResult}, a SearchResults.result empty if no results.
    * @throws IOException in case lof low-level errors.
    */
   public SearchResult search(String fieldName, String q) throws IOException {
-    return doSearch(toQuery(fieldName,q));
+    return doSearch(toQuery(fieldName, q));
   }
 
   /**
@@ -213,9 +239,7 @@ public class SimpleSearchIndex implements Closeable {
    * @throws IOException in case lof low-level errors.
    */
   public SearchResult multiTermSearch(
-      Map<String, Set<String>> termQueries,
-      Map<String, String> searchQueries)
-      throws IOException {
+      Map<String, Set<String>> termQueries, Map<String, String> searchQueries) throws IOException {
     BooleanQuery.Builder queryBuilder =
         new BooleanQuery.Builder()
             .setMinimumNumberShouldMatch(termQueries.size() + searchQueries.size());
@@ -236,48 +260,46 @@ public class SimpleSearchIndex implements Closeable {
         });
 
     searchQueries.forEach(
-      (k, v) ->
-        queryBuilder.add(
-          new BooleanClause(toQuery(k, v), BooleanClause.Occur.SHOULD)));
+        (k, v) -> queryBuilder.add(new BooleanClause(toQuery(k, v), BooleanClause.Occur.SHOULD)));
 
     return doSearch(queryBuilder.build());
   }
 
-  /**Close all used resources*/
+  /** Close all used resources */
   @Override
   public void close() {
-    Stream.of(indexWriter, indexReader, analyzer, mMapDirectory).forEach(closeable -> {
-      if (Objects.nonNull(closeable)) {
-        try {
-          closeable.close();
-        } catch (IOException ex) {
-          LOG.error("Error closing search index", ex);
-        }
-      }
-    });
+    Stream.of(indexWriter, indexReader, analyzer, mMapDirectory)
+        .forEach(
+            closeable -> {
+              if (Objects.nonNull(closeable)) {
+                try {
+                  closeable.close();
+                } catch (IOException ex) {
+                  LOG.error("Error closing search index", ex);
+                }
+              }
+            });
   }
 
-  /**
-   * Wraps the search results.
-   */
+  /** Wraps the search results. */
   static class SearchResult {
 
     private final long totalHits;
 
-    private final List<Map<String,String>> results;
+    private final List<Map<String, String>> results;
 
-    private SearchResult(long totalHits, List<Map<String,String>> results) {
+    private SearchResult(long totalHits, List<Map<String, String>> results) {
       this.totalHits = totalHits;
       this.results = results;
     }
 
-    /** @return a empty result with empty list of results and 0 totalHits.*/
+    /** @return a empty result with empty list of results and 0 totalHits. */
     static SearchResult empty() {
       return new SearchResult(0, new ArrayList<>());
     }
 
-    /** Factory method.*/
-    static SearchResult of(long totalHits, List<Map<String,String>> results) {
+    /** Factory method. */
+    static SearchResult of(long totalHits, List<Map<String, String>> results) {
       return new SearchResult(totalHits, results);
     }
 
@@ -287,13 +309,13 @@ public class SimpleSearchIndex implements Closeable {
     }
 
     /** @return results/documents found */
-    public List<Map<String,String>> getResults() {
+    public List<Map<String, String>> getResults() {
       return results;
     }
 
     @Override
     public boolean equals(Object o) {
-      if (this == o)  {
+      if (this == o) {
         return true;
       }
       if (o == null || getClass() != o.getClass()) {
@@ -308,5 +330,4 @@ public class SimpleSearchIndex implements Closeable {
       return Objects.hash(totalHits, results);
     }
   }
-
 }
