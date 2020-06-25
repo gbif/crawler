@@ -38,8 +38,7 @@ public interface DatasetProcessClient extends DatasetProcessService {
       produces = MediaType.APPLICATION_JSON_VALUE)
   @ResponseBody
   @Override
-  DatasetProcessStatus getDatasetProcessStatus(
-    @PathVariable("datasetKey") UUID datasetKey);
+  DatasetProcessStatus getDatasetProcessStatus(@PathVariable("datasetKey") UUID datasetKey);
 
   @RequestMapping(
       method = RequestMethod.GET,
