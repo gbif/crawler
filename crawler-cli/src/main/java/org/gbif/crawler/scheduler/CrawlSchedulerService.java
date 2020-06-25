@@ -282,7 +282,7 @@ public class CrawlSchedulerService extends AbstractScheduledService {
 
     try {
       PagingResponse<DatasetProcessStatus> list =
-          registryService.listDatasetProcessStatus(dataset.getKey(), null);
+          registryService.listDatasetProcessStatus(dataset.getKey(), new PagingRequest());
 
       // We accumulate datasets that have NEVER been successfully crawled
       if (list.getResults().isEmpty()) {
