@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 @RequestMapping("dataset/process")
 public interface DatasetProcessClient extends DatasetProcessService {
 
-  @RequestMapping(method = RequestMethod.GET, value = "detail", produces = MediaType.APPLICATION_JSON_VALUE)
+  @RequestMapping(method = RequestMethod.GET, value = "detail/{datasetKey}", produces = MediaType.APPLICATION_JSON_VALUE)
   @ResponseBody
   @Override
   DatasetProcessStatus getDatasetProcessStatus(@PathVariable("datasetKey") UUID datasetKey);
