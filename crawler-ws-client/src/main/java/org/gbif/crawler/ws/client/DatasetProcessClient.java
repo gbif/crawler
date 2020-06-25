@@ -34,7 +34,7 @@ public interface DatasetProcessClient extends DatasetProcessService {
 
   @RequestMapping(
       method = RequestMethod.GET,
-      value = "detail",
+      value = "detail/{datasetKey}",
       produces = MediaType.APPLICATION_JSON_VALUE)
   @ResponseBody
   @Override
