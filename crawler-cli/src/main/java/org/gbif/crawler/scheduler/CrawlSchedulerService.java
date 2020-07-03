@@ -169,7 +169,7 @@ public class CrawlSchedulerService extends AbstractScheduledService {
           try (MDC.MDCCloseable closeable = MDC.putCloseable("datasetKey", dataset.getKey().toString())) {
             startCrawl(dataset);
             neverCrawledDatasets.remove(random);
-            LOG.debug("Crawling dataset [{}] of type [{}] - has never been successfully crawled",
+            LOG.info("Crawling dataset [{}] of type [{}] - has never been successfully crawled",
                 dataset.getKey(), dataset.getType());
           }
           numberInitiated++;
@@ -275,7 +275,7 @@ public class CrawlSchedulerService extends AbstractScheduledService {
         return false;
       }
 
-      LOG.debug("Crawling dataset [{}] of type [{}]", dataset.getKey(), dataset.getType());
+      LOG.info("Crawling dataset [{}] of type [{}]", dataset.getKey(), dataset.getType());
       return true;
 
     } catch (RuntimeException e) {
