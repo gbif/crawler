@@ -16,7 +16,11 @@
 package org.gbif.crawler.pipelines;
 
 import org.gbif.api.exception.ServiceUnavailableException;
-import org.gbif.api.model.pipelines.*;
+import org.gbif.api.model.pipelines.PipelineExecution;
+import org.gbif.api.model.pipelines.PipelineProcess;
+import org.gbif.api.model.pipelines.PipelineStep;
+import org.gbif.api.model.pipelines.StepRunner;
+import org.gbif.api.model.pipelines.StepType;
 import org.gbif.api.model.registry.Dataset;
 import org.gbif.api.service.registry.DatasetService;
 import org.gbif.crawler.constants.CrawlerNodePaths;
@@ -28,8 +32,14 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.*;
-import java.util.function.BiFunction;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -46,6 +56,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -68,8 +79,6 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
 
   private static final ObjectMapper OBJECT_MAPPER =
       new ObjectMapper().disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
-  private static final BiFunction<UUID, Integer, String> CRAWL_ID_GENERATOR =
-      (datasetKey, attempt) -> datasetKey + "_" + attempt;
 
   private final CuratorFramework curator;
   private final DatasetService datasetService;
@@ -273,7 +282,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
 
       // ALL_STEPS - static set of all pipelines steps: DWCA_TO_AVRO, VERBATIM_TO_INTERPRETED and
       // etc.
-      getExecutions(crawlId).forEach(process::addExecution);
+      getExecutions(crawlId, process).forEach(process::addExecution);
 
       if (process.getExecutions().isEmpty()) {
         return Optional.empty();
@@ -297,7 +306,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
   }
 
   /** Gets step info from ZK */
-  private Set<PipelineExecution> getExecutions(String crawlId) {
+  private Set<PipelineExecution> getExecutions(String crawlId, PipelineProcess process) {
     Map<Long, PipelineExecution> executionsMap = new HashMap<>();
 
     for (StepType stepType : StepType.values()) {
@@ -344,7 +353,10 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
         }
 
         // assign the step to an execution
-        Long executionId = OBJECT_MAPPER.readTree(step.getMessage()).get("executionId").asLong();
+        JsonNode msgTree = OBJECT_MAPPER.readTree(step.getMessage());
+        process.setAttempt(msgTree.get("attempt").asInt());
+
+        Long executionId = msgTree.get("executionId").asLong();
         PipelineExecution execution =
             executionsMap.computeIfAbsent(executionId, id -> new PipelineExecution().setKey(id));
         execution.addStep(step);
@@ -384,7 +396,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
     try {
       return data.map(x -> LocalDateTime.parse(x, DateTimeFormatter.ISO_LOCAL_DATE_TIME));
     } catch (DateTimeParseException ex) {
-      LOG.warn("Date was not parsed successfully: [{}]: {}", data.orElse(crawlId), ex);
+      LOG.warn("Date was not parsed successfully: [{}]: {}", data, crawlId, ex);
       return Optional.empty();
     }
   }
@@ -395,7 +407,7 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
     try {
       return data.map(Boolean::parseBoolean);
     } catch (DateTimeParseException ex) {
-      LOG.warn("Boolean was not parsed successfully: [{}]: {}", data.orElse(crawlId), ex);
+      LOG.warn("Boolean was not parsed successfully: [{}]: {}", data, crawlId, ex);
       return Optional.empty();
     }
   }
