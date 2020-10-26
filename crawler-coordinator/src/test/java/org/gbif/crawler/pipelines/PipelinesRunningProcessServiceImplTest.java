@@ -54,7 +54,7 @@ import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 public class PipelinesRunningProcessServiceImplTest {
 
   private static final long EXECUTION_ID = 1L;
-  private static final String MESSAGE = "{\"executionId\": \"" + EXECUTION_ID + "\"}";
+  private static final String MESSAGE = "{\"executionId\": \"" + EXECUTION_ID + "\",\"attempt\": 1 }";
 
   private static final BiConsumer<Set<PipelineProcess>, Set<String>> ASSERT_FN =
       (s, ids) -> {

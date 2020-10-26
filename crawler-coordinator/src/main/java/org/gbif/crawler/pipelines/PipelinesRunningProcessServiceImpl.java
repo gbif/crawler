@@ -273,7 +273,6 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
     checkNotNull(crawlId, "crawlId can't be null");
 
     try {
-
       if (!checkExists(getPipelinesInfoPath(crawlId))) {
         return Optional.empty();
       }
