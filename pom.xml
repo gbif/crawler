@@ -106,6 +106,8 @@
     <!-- this version has to match with the one of pipelines -->
     <resilience4j.version>1.1.0</resilience4j.version>
 
+    <spring-boot-admin.version>2.2.4</spring-boot-admin.version>
+
     <!-- Plugin versions -->
     <spring-boot-maven-plugin.version>${spring-boot.version}</spring-boot-maven-plugin.version>
   </properties>
@@ -658,6 +660,13 @@
         <groupId>io.github.resilience4j</groupId>
         <artifactId>resilience4j-retry</artifactId>
         <version>${resilience4j.version}</version>
+      </dependency>
+
+      <!-- Spring Boot Admin -->
+      <dependency>
+        <groupId>de.codecentric</groupId>
+        <artifactId>spring-boot-admin-starter-client</artifactId>
+        <version>${spring-boot-admin.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
