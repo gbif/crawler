@@ -63,10 +63,10 @@ public class PipelinesRunningProcessResource {
   /** Searchs for the received parameters. */
   @GetMapping("query")
   public PipelinesRunningProcessServiceImpl.PipelineProcessSearchResult search(
-      @RequestParam("datasetTitle") String datasetTitle,
-      @RequestParam("datasetKey") UUID datasetKey,
-      @RequestParam("status") List<PipelineStep.Status> statuses,
-      @RequestParam("step") List<StepType> stepTypes,
+      @RequestParam(value = "datasetTitle", required = false) String datasetTitle,
+      @RequestParam(value = "datasetKey", required = false) UUID datasetKey,
+      @RequestParam(value = "status", required = false) List<PipelineStep.Status> statuses,
+      @RequestParam(value = "step", required = false) List<StepType> stepTypes,
       @Nullable @RequestParam(value = "offset", required = false) Integer offset,
       @Nullable @RequestParam(value = "limit", required = false) Integer limit) {
     return service.search(
