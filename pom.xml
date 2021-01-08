@@ -45,9 +45,9 @@
     <dwc-api.version>1.27</dwc-api.version>
     <dwca-io.version>2.8</dwca-io.version>
     <gbif-api.version>0.112</gbif-api.version>
-    <gbif-cli.version>0.14</gbif-cli.version>
+    <gbif-cli.version>1.0</gbif-cli.version>
     <gbif-common-service.version>0.17</gbif-common-service.version>
-    <gbif-common-ws.version>1.2</gbif-common-ws.version>
+    <gbif-common-ws.version>1.12</gbif-common-ws.version>
     <gbif-common.version>0.50</gbif-common.version>
     <gbif-httputils.version>0.14</gbif-httputils.version>
     <gbif-occurrence.version>0.122</gbif-occurrence.version>
@@ -57,20 +57,19 @@
     <gbif-pipelines.version>2.4.2</gbif-pipelines.version>
     <gbif-metrics.version>0.36</gbif-metrics.version>
 
-    <spring-boot.version>2.2.6.RELEASE</spring-boot.version>
-    <spring-cloud-zookeeper.version>2.2.0.RELEASE</spring-cloud-zookeeper.version>
-    <spring-cloud-openfeign.version>2.2.1.RELEASE</spring-cloud-openfeign.version>
+    <spring-boot.version>2.3.7.RELEASE</spring-boot.version>
+    <spring-cloud-zookeeper.version>2.2.4.RELEASE</spring-cloud-zookeeper.version>
+    <spring-cloud-openfeign.version>2.2.6.RELEASE</spring-cloud-openfeign.version>
     <mybatis-spring-boot-starter.version>2.0.1</mybatis-spring-boot-starter.version>
 
-    <feign.version>10.4.0</feign.version>
+    <feign.version>10.11</feign.version>
     <guava.version>18.0</guava.version>
     <!-- Match the GBIF http-client! -->
     <httpclient.version>4.5.6</httpclient.version>
     <!-- Match the GBIF http-client! -->
     <httpcore.version>4.4.10</httpcore.version>
     <!-- Match the version used by gbif-cli -->
-    <jackson2.version>2.10.3</jackson2.version>
-    <jackson-datatype-guava.version>1.9.2</jackson-datatype-guava.version>
+    <jackson.version>2.11.3</jackson.version>
     <jcommander.version>1.58</jcommander.version>
     <jersey.version>1.19</jersey.version>
     <joda-time.version>2.9.6</joda-time.version>
@@ -86,7 +85,7 @@
     <slf4j.version>1.7.21</slf4j.version>
     <stax.version>1.0-2</stax.version>
     <stax2.version>4.0.0</stax2.version>
-    <validation-api.version>1.1.0.Final</validation-api.version>
+    <validation-api.version>2.0.1.Final</validation-api.version>
     <woodstox.version>4.4.1</woodstox.version>
     <yammer-metrics.version>2.2.0</yammer-metrics.version>
     <zookeeper.version>3.4.5</zookeeper.version>
@@ -205,8 +204,8 @@
         <version>${gbif-postal-service.version}</version>
         <exclusions>
           <exclusion>
-            <artifactId>jackson-datatype-guava</artifactId>
             <groupId>com.fasterxml.jackson</groupId>
+            <artifactId>jackson-datatype-guava</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -330,22 +329,22 @@
       <dependency>
         <groupId>com.fasterxml.jackson.datatype</groupId>
         <artifactId>jackson-datatype-guava</artifactId>
-        <version>${jackson2.version}</version>
+        <version>${jackson.version}</version>
       </dependency>
       <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
         <artifactId>jackson-core</artifactId>
-        <version>${jackson2.version}</version>
+        <version>${jackson.version}</version>
       </dependency>
       <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
         <artifactId>jackson-databind</artifactId>
-        <version>${jackson2.version}</version>
+        <version>${jackson.version}</version>
       </dependency>
       <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
         <artifactId>jackson-annotations</artifactId>
-        <version>${jackson2.version}</version>
+        <version>${jackson.version}</version>
       </dependency>
       <dependency>
         <groupId>joda-time</groupId>
