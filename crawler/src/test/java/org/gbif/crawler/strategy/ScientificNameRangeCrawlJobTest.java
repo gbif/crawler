@@ -15,10 +15,12 @@
  */
 package org.gbif.crawler.strategy;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.fest.assertions.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ScientificNameRangeCrawlJobTest {
 
@@ -26,9 +28,10 @@ public class ScientificNameRangeCrawlJobTest {
   public void testDefaultConstructor() {
     ScientificNameRangeCrawlContext job = new ScientificNameRangeCrawlContext();
 
-    assertThat(job.getLowerBound().isPresent()).isFalse();
-    assertThat(job.getUpperBound().get()).isEqualTo("Aaa");
-    assertThat(job.getOffset()).isZero();
+    assertFalse(job.getLowerBound().isPresent());
+    assertTrue(job.getUpperBound().isPresent());
+    assertEquals("Aaa", job.getUpperBound().get());
+    assertEquals(0, job.getOffset());
   }
 
   @Test
@@ -36,40 +39,25 @@ public class ScientificNameRangeCrawlJobTest {
     ScientificNameRangeCrawlContext job;
 
     job = new ScientificNameRangeCrawlContext(0, null, null);
-    assertThat(job.getLowerBound().isPresent()).isFalse();
-    assertThat(job.getUpperBound().isPresent()).isFalse();
-    assertThat(job.getOffset()).isZero();
+    assertFalse(job.getLowerBound().isPresent());
+    assertFalse(job.getUpperBound().isPresent());
+    assertEquals(0, job.getOffset());
 
     job = new ScientificNameRangeCrawlContext(0, "aaa", null);
-    assertThat(job.getLowerBound().isPresent()).isTrue();
-    assertThat(job.getLowerBound().get()).isEqualTo("aaa");
-    assertThat(job.getUpperBound().isPresent()).isFalse();
-    assertThat(job.getOffset()).isZero();
+    assertTrue(job.getLowerBound().isPresent());
+    assertEquals("aaa", job.getLowerBound().get());
+    assertFalse(job.getUpperBound().isPresent());
+    assertEquals(0, job.getOffset());
 
     job = new ScientificNameRangeCrawlContext(10, "aaa", "zzz");
-    assertThat(job.getLowerBound().isPresent()).isTrue();
-    assertThat(job.getLowerBound().get()).isEqualTo("aaa");
-    assertThat(job.getUpperBound().isPresent()).isTrue();
-    assertThat(job.getUpperBound().get()).isEqualTo("zzz");
-    assertThat(job.getOffset()).isEqualTo(10);
-
-    try {
-      new ScientificNameRangeCrawlContext(0, "", null);
-      fail();
-    } catch (IllegalArgumentException e) {
-    }
-
-    try {
-      new ScientificNameRangeCrawlContext(-10, null, null);
-      fail();
-    } catch (IllegalArgumentException e) {
-    }
-
-    try {
-      new ScientificNameRangeCrawlContext(0, null, "abcd");
-      fail();
-    } catch (IllegalArgumentException e) {
-    }
+    assertTrue(job.getLowerBound().isPresent());
+    assertEquals("aaa", job.getLowerBound().get());
+    assertTrue(job.getUpperBound().isPresent());
+    assertEquals("zzz", job.getUpperBound().get());
+    assertEquals(10, job.getOffset());
+    assertThrows(IllegalArgumentException.class, () -> new ScientificNameRangeCrawlContext(0, "", null));
+    assertThrows(IllegalArgumentException.class, () -> new ScientificNameRangeCrawlContext(-10, null, null));
+    assertThrows(IllegalArgumentException.class, () -> new ScientificNameRangeCrawlContext(0, null, "abcd"));
   }
 
   @Test
@@ -77,11 +65,11 @@ public class ScientificNameRangeCrawlJobTest {
     ScientificNameRangeCrawlContext job = new ScientificNameRangeCrawlContext(0, "aaa", "zzz");
 
     job.setLowerBoundAbsent();
-    assertThat(job.getLowerBound().isPresent()).isFalse();
-    assertThat(job.getUpperBound().isPresent()).isTrue();
+    assertFalse(job.getLowerBound().isPresent());
+    assertTrue(job.getUpperBound().isPresent());
 
     job.setUpperBoundAbsent();
-    assertThat(job.getLowerBound().isPresent()).isFalse();
-    assertThat(job.getUpperBound().isPresent()).isFalse();
+    assertFalse(job.getLowerBound().isPresent());
+    assertFalse(job.getUpperBound().isPresent());
   }
 }

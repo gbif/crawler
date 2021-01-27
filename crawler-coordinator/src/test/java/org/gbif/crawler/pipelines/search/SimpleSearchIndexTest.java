@@ -23,13 +23,13 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import com.google.common.io.Files;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /** Tests cases for class {@link SimpleSearchIndex}. */
 public class SimpleSearchIndexTest {
@@ -37,14 +37,14 @@ public class SimpleSearchIndexTest {
   // instance initialized after each test
   private static SimpleSearchIndex simpleSearchIndex;
 
-  @Before
+  @BeforeEach
   public void init() throws IOException {
     File tmpDir = Files.createTempDir();
     tmpDir.deleteOnExit();
     simpleSearchIndex = SimpleSearchIndex.create(tmpDir.toPath());
   }
 
-  @After
+  @AfterEach
   public void tearDown() {
     if (Objects.nonNull(simpleSearchIndex)) {
       simpleSearchIndex.close();

@@ -15,35 +15,20 @@
  */
 package org.gbif.crawler.protocol.biocase;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.fest.assertions.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
+@SuppressWarnings("ResultOfMethodCallIgnored")
 public class BiocaseResponseHandlerTest {
 
   @Test
   public void testConstructor() {
     BiocaseResponseHandler handler = new BiocaseResponseHandler();
-
-    assertThat(handler.isValidState()).isFalse();
-
-    try {
-      handler.isEndOfRecords();
-      fail();
-    } catch (IllegalStateException e) {
-    }
-
-    try {
-      handler.getContentHash();
-      fail();
-    } catch (IllegalStateException e) {
-    }
-
-    try {
-      handler.getRecordCount();
-      fail();
-    } catch (IllegalStateException e) {
-    }
+    assertFalse(handler.isValidState());
+    assertThrows(IllegalStateException.class, handler::isEndOfRecords);
+    assertThrows(IllegalStateException.class, handler::getContentHash);
+    assertThrows(IllegalStateException.class, handler::getRecordCount);
   }
 }

@@ -18,10 +18,11 @@ package org.gbif.crawler.protocol.biocase;
 import java.net.URI;
 import java.util.UUID;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.fest.assertions.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class BiocaseCrawlConfigurationTest {
 
@@ -43,11 +44,11 @@ public class BiocaseCrawlConfigurationTest {
     BiocaseCrawlConfiguration job =
         new BiocaseCrawlConfiguration(uuid, 1, targetUrl, contentNamespace, datasetTitle);
 
-    assertThat(job.getContentNamespace()).isEqualTo(contentNamespace);
-    assertThat(job.getUrl()).isEqualTo(targetUrl);
-    assertThat(job.getAttempt()).isEqualTo(1);
-    assertThat(job.getDatasetKey()).isEqualTo(uuid);
-    assertThat(job.getDatasetTitle()).isEqualTo(datasetTitle);
+    assertEquals(contentNamespace, job.getContentNamespace());
+    assertEquals(targetUrl, job.getUrl());
+    assertEquals(1, job.getAttempt());
+    assertEquals(uuid, job.getDatasetKey());
+    assertEquals(datasetTitle, job.getDatasetTitle());
   }
 
   private void testFailure(
@@ -57,11 +58,9 @@ public class BiocaseCrawlConfigurationTest {
       String contentNamespace,
       String datasetTitle,
       String expectedString) {
-    try {
-      new BiocaseCrawlConfiguration(uuid, attempt, url, contentNamespace, datasetTitle);
-      fail();
-    } catch (Exception ex) {
-      assertThat(ex).hasMessageContaining(expectedString);
-    }
+    Exception exception =
+        assertThrows(Exception.class,
+            () -> new BiocaseCrawlConfiguration(uuid, attempt, url, contentNamespace, datasetTitle));
+    assertTrue(exception.getMessage().contains(expectedString));
   }
 }

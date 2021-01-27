@@ -20,10 +20,10 @@ import org.gbif.crawler.strategy.ScientificNameRangeCrawlContext;
 import java.net.URI;
 import java.util.UUID;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.fest.assertions.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class BiocaseScientificNameRangeRequestHandlerTest {
 
@@ -49,37 +49,28 @@ public class BiocaseScientificNameRangeRequestHandlerTest {
         new BiocaseScientificNameRangeRequestHandler(job);
 
     ScientificNameRangeCrawlContext context = new ScientificNameRangeCrawlContext();
-    assertThat(handler.buildRequestUrl(context)).isEqualTo(FIRST_URL);
+    assertEquals(FIRST_URL, handler.buildRequestUrl(context));
 
     context.setLowerBound("Aaa");
     context.setUpperBound("Aba");
-    assertThat(handler.buildRequestUrl(context)).isEqualTo(SECOND_URL);
+    assertEquals(SECOND_URL, handler.buildRequestUrl(context));
 
     context.setLowerBound("Zza");
     context.setUpperBoundAbsent();
     context.setOffset(1000);
-    assertThat(handler.buildRequestUrl(context)).isEqualTo(THIRD_URL);
+    assertEquals(THIRD_URL, handler.buildRequestUrl(context));
 
     context.setLowerBoundAbsent();
     context.setUpperBoundAbsent();
     context.setOffset(0);
-    assertThat(handler.buildRequestUrl(context)).isEqualTo(LAST_URL);
+    assertEquals(LAST_URL, handler.buildRequestUrl(context));
 
     // Null jobs are not allowed
-    try {
-      handler.buildRequestUrl(null);
-      fail();
-    } catch (Exception e) {
-
-    }
+    assertThrows(Exception.class, () -> handler.buildRequestUrl(null));
   }
 
   @Test
   public void testConstructor() {
-    try {
-      new BiocaseScientificNameRangeRequestHandler(null);
-      fail();
-    } catch (Exception e) {
-    }
+    assertThrows(Exception.class, () -> new BiocaseScientificNameRangeRequestHandler(null));
   }
 }

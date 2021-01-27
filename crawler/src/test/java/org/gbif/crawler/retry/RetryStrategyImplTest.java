@@ -17,9 +17,10 @@ package org.gbif.crawler.retry;
 
 import org.gbif.crawler.RetryPolicy;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.fest.assertions.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class RetryStrategyImplTest {
 
@@ -27,65 +28,64 @@ public class RetryStrategyImplTest {
   public void testTotalProtocolExceptions() {
     RetryPolicy retry = new LimitedRetryPolicy(2, 10, 10, 10);
 
-    assertThat(retry.allowAfterProtocolException()).isTrue();
-    assertThat(retry.allowAfterProtocolException()).isTrue();
+    assertTrue(retry.allowAfterProtocolException());
+    assertTrue(retry.allowAfterProtocolException());
     retry.successfulRequest();
-    assertThat(retry.allowAfterProtocolException()).isFalse();
+    assertFalse(retry.allowAfterProtocolException());
   }
 
   @Test
   public void testConsecutiveProtocolExceptions() {
     RetryPolicy retry = new LimitedRetryPolicy(10, 2, 10, 10);
 
-    assertThat(retry.allowAfterProtocolException()).isTrue();
+    assertTrue(retry.allowAfterProtocolException());
     retry.successfulRequest();
-    assertThat(retry.allowAfterProtocolException()).isTrue();
-    assertThat(retry.allowAfterProtocolException()).isTrue();
-    assertThat(retry.allowAfterProtocolException()).isFalse();
+    assertTrue(retry.allowAfterProtocolException());
+    assertTrue(retry.allowAfterProtocolException());
+    assertFalse(retry.allowAfterProtocolException());
   }
 
   @Test
   public void testTotalTransportExceptions() {
     RetryPolicy retry = new LimitedRetryPolicy(10, 10, 2, 10);
 
-    assertThat(retry.allowAfterTransportException()).isTrue();
-    assertThat(retry.allowAfterTransportException()).isTrue();
+    assertTrue(retry.allowAfterTransportException());
+    assertTrue(retry.allowAfterTransportException());
     retry.successfulRequest();
-    assertThat(retry.allowAfterTransportException()).isFalse();
+    assertFalse(retry.allowAfterTransportException());
   }
 
   @Test
   public void testConsecutiveTransportExceptions() {
     RetryPolicy retry = new LimitedRetryPolicy(10, 10, 10, 2);
 
-    assertThat(retry.allowAfterTransportException()).isTrue();
+    assertTrue(retry.allowAfterTransportException());
     retry.successfulRequest();
-    assertThat(retry.allowAfterTransportException()).isTrue();
-    assertThat(retry.allowAfterTransportException()).isTrue();
-    assertThat(retry.allowAfterTransportException()).isFalse();
+    assertTrue(retry.allowAfterTransportException());
+    assertTrue(retry.allowAfterTransportException());
+    assertFalse(retry.allowAfterTransportException());
   }
 
   @Test
   public void testMixed() {
     RetryPolicy retry = new LimitedRetryPolicy(5, 2, 5, 2);
 
-    assertThat(retry.allowAfterTransportException()).isTrue(); // TE 1
-    assertThat(retry.allowAfterTransportException()).isTrue(); // TE 2
-    assertThat(retry.allowAfterTransportException())
-        .isFalse(); // TE 3 - consecutive exceptions reached
+    assertTrue(retry.allowAfterTransportException()); // TE 1
+    assertTrue(retry.allowAfterTransportException()); // TE 2
+    assertFalse(retry.allowAfterTransportException()); // TE 3 - consecutive exceptions reached
     retry.giveUpRequest();
-    assertThat(retry.allowAfterProtocolException()).isTrue(); // PE 1
+    assertTrue(retry.allowAfterProtocolException()); // PE 1
     retry.successfulRequest();
     retry.successfulRequest();
-    assertThat(retry.allowAfterTransportException()).isTrue(); // TE 4
-    assertThat(retry.allowAfterProtocolException()).isTrue(); // PE 2
-    assertThat(retry.allowAfterTransportException()).isTrue(); // TE 5 - total exceptions reached
+    assertTrue(retry.allowAfterTransportException()); // TE 4
+    assertTrue(retry.allowAfterProtocolException()); // PE 2
+    assertTrue(retry.allowAfterTransportException()); // TE 5 - total exceptions reached
     retry.successfulRequest();
-    assertThat(retry.allowAfterTransportException()).isFalse(); // TE 6
-    assertThat(retry.allowAfterTransportException()).isFalse(); // TE 7
-    assertThat(retry.allowAfterProtocolException()).isFalse(); // PE 3
+    assertFalse(retry.allowAfterTransportException()); // TE 6
+    assertFalse(retry.allowAfterTransportException()); // TE 7
+    assertFalse(retry.allowAfterProtocolException()); // PE 3
     retry.successfulRequest();
-    assertThat(retry.allowAfterTransportException()).isFalse(); // TE 8
-    assertThat(retry.allowAfterProtocolException()).isFalse(); // PE 4
+    assertFalse(retry.allowAfterTransportException()); // TE 8
+    assertFalse(retry.allowAfterProtocolException()); // PE 4
   }
 }

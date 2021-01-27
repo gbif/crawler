@@ -37,20 +37,23 @@ import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.RetryOneTime;
 import org.apache.curator.test.TestingServer;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.Sets;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class PipelinesRunningProcessServiceImplTest {
 
   private static final long EXECUTION_ID = 1L;
@@ -60,18 +63,18 @@ public class PipelinesRunningProcessServiceImplTest {
       (s, ids) -> {
         Consumer<PipelineStep> checkFn =
             step -> {
-              Assert.assertTrue(Arrays.asList(StepType.values()).contains(step.getType()));
-              Assert.assertNotNull(step.getStarted());
-              Assert.assertNotNull(step.getFinished());
-              Assert.assertEquals(PipelineStep.Status.COMPLETED, step.getState());
-              Assert.assertEquals(MESSAGE, step.getMessage());
+              assertTrue(Arrays.asList(StepType.values()).contains(step.getType()));
+              assertNotNull(step.getStarted());
+              assertNotNull(step.getFinished());
+              assertEquals(PipelineStep.Status.COMPLETED, step.getState());
+              assertEquals(MESSAGE, step.getMessage());
             };
 
         s.forEach(
             status -> {
-              Assert.assertNotNull(status);
-              Assert.assertEquals(6, status.getExecutions().iterator().next().getSteps().size());
-              Assert.assertTrue(ids.contains(status.getDatasetKey().toString()));
+              assertNotNull(status);
+              assertEquals(6, status.getExecutions().iterator().next().getSteps().size());
+              assertTrue(ids.contains(status.getDatasetKey().toString()));
               status
                   .getExecutions()
                   .iterator()
@@ -86,19 +89,19 @@ public class PipelinesRunningProcessServiceImplTest {
                           checkFn.accept(step);
                         }
                         if (step.getType() == StepType.HDFS_VIEW) {
-                          Assert.assertTrue(
+                          assertTrue(
                               Arrays.asList(StepType.values()).contains(step.getType()));
-                          Assert.assertNotNull(step.getStarted());
-                          Assert.assertNull(step.getFinished());
-                          Assert.assertEquals(PipelineStep.Status.FAILED, step.getState());
-                          Assert.assertEquals(MESSAGE, step.getMessage());
+                          assertNotNull(step.getStarted());
+                          assertNull(step.getFinished());
+                          assertEquals(PipelineStep.Status.FAILED, step.getState());
+                          assertEquals(MESSAGE, step.getMessage());
                         }
                         if (step.getType() == StepType.INTERPRETED_TO_INDEX) {
-                          Assert.assertTrue(
+                          assertTrue(
                               Arrays.asList(StepType.values()).contains(step.getType()));
-                          Assert.assertNotNull(step.getStarted());
-                          Assert.assertNull(step.getFinished());
-                          Assert.assertEquals(PipelineStep.Status.RUNNING, step.getState());
+                          assertNotNull(step.getStarted());
+                          assertNull(step.getFinished());
+                          assertEquals(PipelineStep.Status.RUNNING, step.getState());
                         }
                       });
             });
@@ -108,7 +111,7 @@ public class PipelinesRunningProcessServiceImplTest {
   private TestingServer server;
   private PipelinesRunningProcessServiceImpl service;
 
-  @Before
+  @BeforeEach
   public void setup() throws Exception {
     server = new TestingServer();
     curator =
@@ -121,7 +124,7 @@ public class PipelinesRunningProcessServiceImplTest {
     service = new PipelinesRunningProcessServiceImpl(curator, Mockito.mock(DatasetService.class));
   }
 
-  @After
+  @AfterEach
   public void tearDown() throws IOException, InterruptedException {
     // we wait for the ZK TreeCache to finish since it's executed async and needs curator to be open
     TimeUnit.MILLISECONDS.sleep(350);
@@ -135,7 +138,7 @@ public class PipelinesRunningProcessServiceImplTest {
     Set<PipelineProcess> set = service.getPipelineProcesses();
 
     // Should
-    Assert.assertEquals(0, set.size());
+    assertEquals(0, set.size());
   }
 
   @Test
@@ -147,7 +150,7 @@ public class PipelinesRunningProcessServiceImplTest {
     PipelineProcess status = service.getPipelineProcess(datasetKey);
 
     // Should
-    Assert.assertNull(status);
+    assertNull(status);
   }
 
   @Test
@@ -156,7 +159,7 @@ public class PipelinesRunningProcessServiceImplTest {
     Set<PipelineProcess> set = service.getPipelineProcesses();
 
     // Should
-    Assert.assertEquals(0, set.size());
+    assertEquals(0, set.size());
   }
 
   @Test
@@ -176,7 +179,7 @@ public class PipelinesRunningProcessServiceImplTest {
     Set<PipelineProcess> set = service.getPipelineProcesses();
 
     // Should
-    Assert.assertEquals(2, set.size());
+    assertEquals(2, set.size());
     ASSERT_FN.accept(set, crawlIds);
 
     // Postprocess
@@ -199,7 +202,7 @@ public class PipelinesRunningProcessServiceImplTest {
     PipelineProcess status = service.getPipelineProcess(datasetKey);
 
     // Should
-    Assert.assertNotNull(status);
+    assertNotNull(status);
     ASSERT_FN.accept(Collections.singleton(status), Collections.singleton(crawlId));
 
     // Postprocess

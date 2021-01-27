@@ -37,11 +37,10 @@ import org.apache.curator.framework.recipes.atomic.DistributedAtomicLong;
 import org.apache.curator.framework.recipes.queue.QueueSerializer;
 import org.apache.curator.retry.RetryOneTime;
 import org.apache.curator.test.TestingServer;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
@@ -50,14 +49,34 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
 import com.google.common.collect.Sets;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.apache.curator.framework.recipes.queue.QueueHelper.serialize;
-import static org.gbif.crawler.constants.CrawlerNodePaths.*;
-import static org.hamcrest.core.IsCollectionContaining.hasItem;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
+import static org.gbif.crawler.constants.CrawlerNodePaths.CRAWL_CONTEXT;
+import static org.gbif.crawler.constants.CrawlerNodePaths.DECLARED_COUNT;
+import static org.gbif.crawler.constants.CrawlerNodePaths.DWCA_CRAWL;
+import static org.gbif.crawler.constants.CrawlerNodePaths.FRAGMENTS_EMITTED;
+import static org.gbif.crawler.constants.CrawlerNodePaths.FRAGMENTS_PROCESSED;
+import static org.gbif.crawler.constants.CrawlerNodePaths.FRAGMENTS_RECEIVED;
+import static org.gbif.crawler.constants.CrawlerNodePaths.INTERPRETED_OCCURRENCES_PERSISTED_ERROR;
+import static org.gbif.crawler.constants.CrawlerNodePaths.INTERPRETED_OCCURRENCES_PERSISTED_SUCCESSFUL;
+import static org.gbif.crawler.constants.CrawlerNodePaths.PAGES_CRAWLED;
+import static org.gbif.crawler.constants.CrawlerNodePaths.PAGES_FRAGMENTED_ERROR;
+import static org.gbif.crawler.constants.CrawlerNodePaths.PAGES_FRAGMENTED_SUCCESSFUL;
+import static org.gbif.crawler.constants.CrawlerNodePaths.RAW_OCCURRENCES_PERSISTED_ERROR;
+import static org.gbif.crawler.constants.CrawlerNodePaths.RAW_OCCURRENCES_PERSISTED_NEW;
+import static org.gbif.crawler.constants.CrawlerNodePaths.RAW_OCCURRENCES_PERSISTED_UNCHANGED;
+import static org.gbif.crawler.constants.CrawlerNodePaths.RAW_OCCURRENCES_PERSISTED_UPDATED;
+import static org.gbif.crawler.constants.CrawlerNodePaths.STARTED_CRAWLING;
+import static org.gbif.crawler.constants.CrawlerNodePaths.VERBATIM_OCCURRENCES_PERSISTED_ERROR;
+import static org.gbif.crawler.constants.CrawlerNodePaths.VERBATIM_OCCURRENCES_PERSISTED_SUCCESSFUL;
+import static org.gbif.crawler.constants.CrawlerNodePaths.XML_CRAWL;
+import static org.gbif.crawler.constants.CrawlerNodePaths.buildPath;
+import static org.gbif.crawler.constants.CrawlerNodePaths.getCrawlInfoPath;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class DatasetProcessServiceImplTest {
 
   private static TestingServer server;
@@ -79,7 +98,7 @@ public class DatasetProcessServiceImplTest {
             curator, new ObjectMapper(), Executors.newSingleThreadExecutor());
   }
 
-  @BeforeClass
+  @BeforeAll
   public static void setup() throws Exception {
     server = new TestingServer();
     curator =
@@ -116,7 +135,7 @@ public class DatasetProcessServiceImplTest {
     }
   }
 
-  @AfterClass
+  @AfterAll
   public static void tearDown() throws IOException {
     curator.close();
     server.stop();
@@ -292,7 +311,7 @@ public class DatasetProcessServiceImplTest {
   public void testGetQueuedDatasetCrawls() {
     List<DatasetProcessStatus> crawls = service.getPendingXmlDatasetProcesses();
     for (DatasetProcessStatus datasetProcessStatus : QUEUED_CRAWLS) {
-      assertThat(crawls, hasItem(datasetProcessStatus));
+      assertTrue(crawls.contains(datasetProcessStatus));
     }
   }
 

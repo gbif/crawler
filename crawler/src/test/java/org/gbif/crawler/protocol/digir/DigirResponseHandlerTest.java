@@ -15,35 +15,21 @@
  */
 package org.gbif.crawler.protocol.digir;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.fest.assertions.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
+@SuppressWarnings("ResultOfMethodCallIgnored")
 public class DigirResponseHandlerTest {
 
   @Test
   public void testConstructor() {
     DigirResponseHandler handler = new DigirResponseHandler();
 
-    assertThat(handler.isValidState()).isFalse();
-
-    try {
-      handler.isEndOfRecords();
-      fail();
-    } catch (IllegalStateException e) {
-    }
-
-    try {
-      handler.getContentHash();
-      fail();
-    } catch (IllegalStateException e) {
-    }
-
-    try {
-      handler.getRecordCount();
-      fail();
-    } catch (IllegalStateException e) {
-    }
+    assertFalse(handler.isValidState());
+    assertThrows(IllegalStateException.class, handler::isEndOfRecords);
+    assertThrows(IllegalStateException.class, handler::getContentHash);
+    assertThrows(IllegalStateException.class, handler::getRecordCount);
   }
 }

@@ -28,20 +28,20 @@ import java.net.URI;
 import java.util.UUID;
 
 import org.apache.commons.io.FileUtils;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class DwcaValidatorTest {
 
   private Dataset dataset;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     dataset = new Dataset();
     dataset.setKey(UUID.randomUUID());
@@ -49,7 +49,7 @@ public class DwcaValidatorTest {
   }
 
   @Test
-  @Ignore("manual test to validate archives")
+  @Disabled("manual test to validate archives")
   public void manualUrlTest() throws IOException {
     URI dwca = URI.create("http://pensoft.net/dwc/bdj/checklist_980.zip");
 
@@ -274,7 +274,7 @@ public class DwcaValidatorTest {
     dataset.setType(DatasetType.CHECKLIST);
     Archive archive = DwcaTestUtil.openArchive("/dwca/checklist_good_taxonid.zip");
     DwcaValidationReport report = DwcaValidator.validate(dataset, archive);
-    assertTrue("Validation failed: " + report.getInvalidationReason(), report.isValid());
+    assertTrue(report.isValid(), "Validation failed: " + report.getInvalidationReason());
     assertEquals(15, report.getGenericReport().getCheckedRecords());
     assertTrue(report.getGenericReport().getDuplicateIds().isEmpty());
     assertTrue(report.getGenericReport().getRowNumbersMissingId().isEmpty());
@@ -287,7 +287,7 @@ public class DwcaValidatorTest {
     dataset.setType(DatasetType.CHECKLIST);
     Archive archive = DwcaTestUtil.openArchive("/dwca/checklist_good_coreid.zip");
     DwcaValidationReport report = DwcaValidator.validate(dataset, archive);
-    assertTrue("Validation failed: " + report.getInvalidationReason(), report.isValid());
+    assertTrue(report.isValid(), "Validation failed: " + report.getInvalidationReason());
     assertEquals(15, report.getGenericReport().getCheckedRecords());
     assertEquals(0, report.getGenericReport().getDuplicateIds().size());
     assertEquals(0, report.getGenericReport().getRowNumbersMissingId().size());
@@ -300,7 +300,7 @@ public class DwcaValidatorTest {
     dataset.setType(DatasetType.CHECKLIST);
     Archive archive = DwcaTestUtil.openArchive("/dwca/checklist_missing_taxonid.zip");
     DwcaValidationReport report = DwcaValidator.validate(dataset, archive);
-    assertFalse("Validation succeeded", report.isValid());
+    assertFalse(report.isValid(), "Validation succeeded");
     assertEquals(15, report.getGenericReport().getCheckedRecords());
     assertEquals(0, report.getGenericReport().getDuplicateIds().size());
     assertEquals(2, report.getGenericReport().getRowNumbersMissingId().size());
@@ -313,7 +313,7 @@ public class DwcaValidatorTest {
     dataset.setType(DatasetType.CHECKLIST);
     Archive archive = DwcaTestUtil.openArchive("/dwca/checklist_dupl_coreid.zip");
     DwcaValidationReport report = DwcaValidator.validate(dataset, archive);
-    assertFalse("Validation succeeded", report.isValid());
+    assertFalse(report.isValid(), "Validation succeeded");
     assertEquals(15, report.getGenericReport().getCheckedRecords());
     assertEquals(1, report.getGenericReport().getDuplicateIds().size());
     assertEquals(0, report.getGenericReport().getRowNumbersMissingId().size());

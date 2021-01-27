@@ -3,18 +3,21 @@
     "file_name": "org/gbif/crawler/protocol/digir/complete_results.xml",
     "record_count": 9,
     "end_of_records": true,
-    "hash": -3063089640727150474
+    "hash": -3063089640727150474,
+    "comment": "Complete results"
   },
   {
     "file_name": "org/gbif/crawler/protocol/digir/no_results.xml",
     "record_count": 0,
-    "end_of_records": true
+    "end_of_records": true,
+    "comment": "No results"
   },
   {
     "file_name": "org/gbif/crawler/protocol/digir/partial_results.xml",
     "record_count": 9,
     "end_of_records": false,
-    "hash": -3063089640727150474
+    "hash": -3063089640727150474,
+    "comment": "Partial results"
   },
   {
     "file_name": "org/gbif/crawler/protocol/digir/response_arizona.xml",
@@ -24,12 +27,14 @@
     "file_name": "org/gbif/crawler/protocol/digir/response_danbif.xml",
     "record_count": 900,
     "end_of_records": false,
-    "hash": 3592551018309548208
+    "hash": 3592551018309548208,
+    "comment": "Response danbif"
   },
   {
     "file_name": "org/gbif/crawler/protocol/digir/response_no_records.xml",
     "record_count": 0,
-    "end_of_records": true
+    "end_of_records": true,
+    "comment": "Response no records"
   },
   {
     "file_name": "org/gbif/crawler/protocol/digir/response_wrong_code.xml",

@@ -18,10 +18,11 @@ package org.gbif.crawler.protocol.digir;
 import java.net.URI;
 import java.util.UUID;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.fest.assertions.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class DigirCrawlConfigurationTest {
 
@@ -41,20 +42,17 @@ public class DigirCrawlConfigurationTest {
     DigirCrawlConfiguration job =
         new DigirCrawlConfiguration(uuid, 1, targetUrl, resourceCode, true);
 
-    assertThat(job.getResourceCode()).isEqualTo(resourceCode);
-    assertThat(job.getUrl()).isEqualTo(targetUrl);
-    assertThat(job.getAttempt()).isEqualTo(1);
-    assertThat(job.getDatasetKey()).isEqualTo(uuid);
-    assertThat(job.isManis()).isTrue();
+    assertEquals(resourceCode, job.getResourceCode());
+    assertEquals(targetUrl, job.getUrl());
+    assertEquals(1, job.getAttempt());
+    assertEquals(uuid, job.getDatasetKey());
+    assertTrue(job.isManis());
   }
 
   private void testFailure(
       UUID uuid, int attempt, URI url, String resourceCode, boolean manis, String expectedString) {
-    try {
-      new DigirCrawlConfiguration(uuid, attempt, url, resourceCode, manis);
-      fail();
-    } catch (Exception ex) {
-      assertThat(ex).hasMessageContaining(expectedString);
-    }
+    Exception exception =
+        assertThrows(Exception.class, () -> new DigirCrawlConfiguration(uuid, attempt, url, resourceCode, manis));
+    assertTrue(exception.getMessage().contains(expectedString));
   }
 }

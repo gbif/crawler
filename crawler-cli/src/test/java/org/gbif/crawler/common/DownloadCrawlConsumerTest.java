@@ -27,13 +27,11 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.UUID;
 
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
-import junit.framework.TestCase;
-
-@Ignore("Manual tests check download behaviour")
-public class DownloadCrawlConsumerTest extends TestCase {
+@Disabled("Manual tests check download behaviour")
+public class DownloadCrawlConsumerTest {
 
   // please adapt to personal needs when running the tests manually!
   static final File DWCA_REPO = new File("/tmp/dwcacrawlconsumertest");
