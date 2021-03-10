@@ -18,27 +18,25 @@ package org.gbif.crawler.protocol.tapir;
 import org.gbif.crawler.ResponseHandler;
 import org.gbif.crawler.protocol.BaseParameterizedResponseHandlerTest;
 
-import java.io.IOException;
-import java.util.Collection;
-
 import org.apache.http.HttpResponse;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
-import com.google.common.base.Optional;
+import java.util.stream.Stream;
 
-import static org.junit.runners.Parameterized.Parameters;
-
-@RunWith(Parameterized.class)
 public class ParameterizedTapirResponseHandlerTest extends BaseParameterizedResponseHandlerTest {
 
-  public ParameterizedTapirResponseHandlerTest(
+  @ParameterizedTest(name = "{index}: {0}")
+  @MethodSource("data")
+  public void testHandlingResponsesTapir(
+      String comment,
       String fileName,
-      Optional<Integer> recordCount,
-      Optional<Long> contentHash,
-      Optional<Boolean> endOfRecords,
-      boolean expectedException) {
-    super(fileName, recordCount, contentHash, endOfRecords, expectedException);
+      Integer recordCount,
+      Long contentHash,
+      Boolean endOfRecords,
+      boolean exceptionExpected) throws Exception {
+    super.testHandlingResponses(fileName, recordCount, contentHash, endOfRecords, exceptionExpected);
   }
 
   @Override
@@ -46,8 +44,7 @@ public class ParameterizedTapirResponseHandlerTest extends BaseParameterizedResp
     return new TapirResponseHandler();
   }
 
-  @Parameters(name = "{index}: {0}")
-  public static Collection<Object[]> data() throws IOException {
+  public static Stream<Arguments> data() throws Exception {
     return getTestData("org/gbif/crawler/protocol/tapir/responses.json");
   }
 }

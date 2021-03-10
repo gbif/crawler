@@ -2,11 +2,13 @@
   {
     "file_name": "org/gbif/crawler/protocol/tapir/complete_results.xml",
     "record_count": 2,
-    "hash": 6641502265780367411
+    "hash": 6641502265780367411,
+    "comment": "Complete results"
   },
   {
     "file_name": "org/gbif/crawler/protocol/tapir/no_results.xml",
-    "record_count": 0
+    "record_count": 0,
+    "comment": "No results"
   },
   {
     "file_name": "org/gbif/crawler/protocol/tapir/partial_results.xml",

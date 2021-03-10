@@ -20,10 +20,10 @@ import org.gbif.crawler.strategy.ScientificNameRangeCrawlContext;
 import java.net.URI;
 import java.util.UUID;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.fest.assertions.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class DigirScientificNameRangeRequestHandlerTest {
 
@@ -47,13 +47,13 @@ public class DigirScientificNameRangeRequestHandlerTest {
     ScientificNameRangeCrawlContext context = new ScientificNameRangeCrawlContext();
     String request = handler.buildRequestUrl(context);
     request = request.replaceAll("sendTime.*sendTime", "");
-    assertThat(request).isEqualTo(FIRST_URL);
+    assertEquals(FIRST_URL, request);
 
     context.setLowerBound("Aaa");
     context.setUpperBound("Aba");
     request = handler.buildRequestUrl(context);
     request = request.replaceAll("sendTime.*sendTime", "");
-    assertThat(request).isEqualTo(SECOND_URL);
+    assertEquals(SECOND_URL, request);
 
     context.setLowerBound("Zza");
     context.setUpperBoundAbsent();
@@ -61,23 +61,14 @@ public class DigirScientificNameRangeRequestHandlerTest {
     request = handler.buildRequestUrl(context);
     System.out.println(request);
     request = request.replaceAll("sendTime.*sendTime", "");
-    assertThat(request).isEqualTo(LAST_URL);
+    assertEquals(LAST_URL, request);
 
     // Null jobs are not allowed
-    try {
-      handler.buildRequestUrl(null);
-      fail();
-    } catch (Exception e) {
-
-    }
+    assertThrows(Exception.class, () -> handler.buildRequestUrl(null));
   }
 
   @Test
   public void testConstructor() {
-    try {
-      new DigirScientificNameRangeRequestHandler(null);
-      fail();
-    } catch (Exception e) {
-    }
+    assertThrows(Exception.class, () -> new DigirScientificNameRangeRequestHandler(null));
   }
 }

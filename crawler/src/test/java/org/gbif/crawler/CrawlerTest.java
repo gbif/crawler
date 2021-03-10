@@ -32,27 +32,27 @@ import java.util.Random;
 import java.util.UUID;
 
 import org.apache.http.HttpResponse;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.stubbing.Answer;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.Iterables;
 
-import static org.fest.assertions.api.Assertions.assertThat;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class CrawlerTest {
 
   // * Test a normal always successful crawl from beginning to end
@@ -65,6 +65,7 @@ public class CrawlerTest {
    * encountered a random long is returned. So the passed in sequence serves as a pattern which is
    * cycled over.
    */
+  @SuppressWarnings("unchecked")
   private static class CyclingHashAnswer implements Answer<Optional<Long>> {
 
     private final Random rnd = new Random();
@@ -117,9 +118,8 @@ public class CrawlerTest {
   @Mock private CrawlListener<ScientificNameRangeCrawlContext, String, List<Byte>> crawlListener;
 
   private Crawler<ScientificNameRangeCrawlContext, String, HttpResponse, List<Byte>> crawler;
-
-  @Before
-  public void setUp() throws Exception {
+  @BeforeEach
+  public void setUp() {
     context = new ScientificNameRangeCrawlContext();
     strategy = new ScientificNameRangeStrategy(context);
     retryPolicy = new LimitedRetryPolicy(1, 1, 1, 1);
@@ -136,7 +136,7 @@ public class CrawlerTest {
   }
 
   /** Necessary to avoid running out of RAM. */
-  @After
+  @AfterEach
   public void tearDown() {
     Mockito.reset(responseHandler, client, crawlListener);
   }
@@ -151,23 +151,23 @@ public class CrawlerTest {
 
   @Test
   public void testRetryAbortProtocolException() throws Exception {
-    when(responseHandler.isEndOfRecords()).thenReturn(Optional.<Boolean>absent());
-    when(responseHandler.getRecordCount()).thenReturn(Optional.<Integer>absent());
-    when(responseHandler.getContentHash()).thenReturn(Optional.<Long>absent());
+    when(responseHandler.isEndOfRecords()).thenReturn(Optional.absent());
+    when(responseHandler.getRecordCount()).thenReturn(Optional.absent());
+    when(responseHandler.getContentHash()).thenReturn(Optional.absent());
     when(client.execute(anyString(), eq(responseHandler))).thenThrow(new ProtocolException("foo"));
     crawler.crawl();
-    assertThat(retryPolicy.abortCrawl()).isTrue();
+    assertTrue(retryPolicy.abortCrawl());
     verify(client, times(2)).execute(anyString(), eq(responseHandler));
   }
 
   @Test
   public void testRetryAbortTransportException() throws Exception {
-    when(responseHandler.isEndOfRecords()).thenReturn(Optional.<Boolean>absent());
-    when(responseHandler.getRecordCount()).thenReturn(Optional.<Integer>absent());
-    when(responseHandler.getContentHash()).thenReturn(Optional.<Long>absent());
+    when(responseHandler.isEndOfRecords()).thenReturn(Optional.absent());
+    when(responseHandler.getRecordCount()).thenReturn(Optional.absent());
+    when(responseHandler.getContentHash()).thenReturn(Optional.absent());
     when(client.execute(anyString(), eq(responseHandler))).thenThrow(new TransportException("foo"));
     crawler.crawl();
-    assertThat(retryPolicy.abortCrawl()).isTrue();
+    assertTrue(retryPolicy.abortCrawl());
     verify(client, times(2)).execute(anyString(), eq(responseHandler));
   }
 
@@ -221,8 +221,8 @@ public class CrawlerTest {
    */
   @Test
   public void testScenario1And2And14() throws Exception {
-    when(responseHandler.isEndOfRecords()).thenReturn(Optional.<Boolean>absent());
-    when(responseHandler.getRecordCount()).thenReturn(Optional.<Integer>absent());
+    when(responseHandler.isEndOfRecords()).thenReturn(Optional.absent());
+    when(responseHandler.getRecordCount()).thenReturn(Optional.absent());
     when(responseHandler.getContentHash()).thenAnswer(new CyclingHashAnswer());
     crawler.crawl();
     verify(client, times(3 * NUM_RANGES)).execute(anyString(), eq(responseHandler));
@@ -236,7 +236,7 @@ public class CrawlerTest {
    */
   @Test
   public void testScenario3And4And14() throws Exception {
-    when(responseHandler.isEndOfRecords()).thenReturn(Optional.<Boolean>absent());
+    when(responseHandler.isEndOfRecords()).thenReturn(Optional.absent());
     when(responseHandler.getRecordCount()).thenReturn(Optional.of(123));
     when(responseHandler.getContentHash()).thenAnswer(new CyclingHashAnswer());
     crawler.crawl();
@@ -252,7 +252,7 @@ public class CrawlerTest {
    */
   @Test
   public void testScenario3And4And14Error() throws Exception {
-    when(responseHandler.isEndOfRecords()).thenReturn(Optional.<Boolean>absent());
+    when(responseHandler.isEndOfRecords()).thenReturn(Optional.absent());
     when(responseHandler.getRecordCount()).thenReturn(Optional.of(0));
     when(responseHandler.getContentHash()).thenAnswer(new CyclingHashAnswer());
     crawler.crawl();
@@ -264,7 +264,7 @@ public class CrawlerTest {
   @Test
   public void testScenario5() throws Exception {
     when(responseHandler.isEndOfRecords()).thenReturn(Optional.of(true));
-    when(responseHandler.getRecordCount()).thenReturn(Optional.<Integer>absent());
+    when(responseHandler.getRecordCount()).thenReturn(Optional.absent());
     when(responseHandler.getContentHash()).thenAnswer(new CyclingHashAnswer(Optional.of(1L)));
     crawler.crawl();
     verify(client, times(NUM_RANGES)).execute(anyString(), eq(responseHandler));
@@ -274,8 +274,8 @@ public class CrawlerTest {
   @Test
   public void testScenario6() throws Exception {
     when(responseHandler.isEndOfRecords()).thenReturn(Optional.of(true));
-    when(responseHandler.getRecordCount()).thenReturn(Optional.<Integer>absent());
-    when(responseHandler.getContentHash()).thenReturn(Optional.<Long>absent());
+    when(responseHandler.getRecordCount()).thenReturn(Optional.absent());
+    when(responseHandler.getContentHash()).thenReturn(Optional.absent());
     crawler.crawl();
     verify(client, times(NUM_RANGES)).execute(anyString(), eq(responseHandler));
   }
@@ -306,7 +306,7 @@ public class CrawlerTest {
   public void testScenario8() throws Exception {
     when(responseHandler.isEndOfRecords()).thenReturn(Optional.of(true));
     when(responseHandler.getRecordCount()).thenReturn(Optional.of(0));
-    when(responseHandler.getContentHash()).thenReturn(Optional.<Long>absent());
+    when(responseHandler.getContentHash()).thenReturn(Optional.absent());
     crawler.crawl();
     verify(client, times(NUM_RANGES)).execute(anyString(), eq(responseHandler));
   }
@@ -316,7 +316,7 @@ public class CrawlerTest {
   public void testScenario8Error() throws Exception {
     when(responseHandler.isEndOfRecords()).thenReturn(Optional.of(true));
     when(responseHandler.getRecordCount()).thenReturn(Optional.of(123));
-    when(responseHandler.getContentHash()).thenReturn(Optional.<Long>absent());
+    when(responseHandler.getContentHash()).thenReturn(Optional.absent());
     crawler.crawl();
     verify(client, times(NUM_RANGES)).execute(anyString(), eq(responseHandler));
     verify(crawlListener, times(NUM_RANGES)).error(anyString());
@@ -331,7 +331,7 @@ public class CrawlerTest {
   @Test
   public void testScenario9And10And14() throws Exception {
     when(responseHandler.isEndOfRecords()).thenReturn(Optional.of(false));
-    when(responseHandler.getRecordCount()).thenReturn(Optional.<Integer>absent());
+    when(responseHandler.getRecordCount()).thenReturn(Optional.absent());
     when(responseHandler.getContentHash()).thenAnswer(new CyclingHashAnswer());
     crawler.crawl();
     verify(client, times(3 * NUM_RANGES)).execute(anyString(), eq(responseHandler));
@@ -340,8 +340,8 @@ public class CrawlerTest {
   @Test
   public void testSuccessfulSimpleCrawl() throws Exception {
     when(responseHandler.isEndOfRecords()).thenReturn(Optional.of(true));
-    when(responseHandler.getRecordCount()).thenReturn(Optional.<Integer>absent());
-    when(responseHandler.getContentHash()).thenReturn(Optional.<Long>absent());
+    when(responseHandler.getRecordCount()).thenReturn(Optional.absent());
+    when(responseHandler.getContentHash()).thenReturn(Optional.absent());
     crawler.crawl();
     verify(client, times(NUM_RANGES)).execute(anyString(), eq(responseHandler));
   }

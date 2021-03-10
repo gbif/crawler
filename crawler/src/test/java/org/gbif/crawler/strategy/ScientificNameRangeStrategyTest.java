@@ -17,10 +17,12 @@ package org.gbif.crawler.strategy;
 
 import java.util.NoSuchElementException;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.fest.assertions.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ScientificNameRangeStrategyTest {
 
@@ -31,58 +33,58 @@ public class ScientificNameRangeStrategyTest {
     ScientificNameRangeCrawlContext next = strategy.next();
 
     // Test if ...Aaa works
-    assertThat(next.getOffset()).isZero();
-    assertThat(next.getLowerBound().isPresent()).isFalse();
-    assertThat(next.getUpperBound().isPresent()).isTrue();
-    assertThat(next.getUpperBound().get()).isEqualTo("Aaa");
+    assertEquals(0, next.getOffset());
+    assertFalse(next.getLowerBound().isPresent());
+    assertTrue(next.getUpperBound().isPresent());
+    assertEquals("Aaa", next.getUpperBound().get());
 
     // Aaa...Aba
-    assertThat(strategy.hasNext()).isTrue();
+    assertTrue(strategy.hasNext());
     next = strategy.next();
-    assertThat(next.getOffset()).isZero();
-    assertThat(next.getLowerBound().isPresent()).isTrue();
-    assertThat(next.getLowerBound().get()).isEqualTo("Aaa");
-    assertThat(next.getUpperBound().isPresent()).isTrue();
-    assertThat(next.getUpperBound().get()).isEqualTo("Aba");
+    assertEquals(0, next.getOffset());
+    assertTrue(next.getLowerBound().isPresent());
+    assertEquals("Aaa", next.getLowerBound().get());
+    assertTrue(next.getUpperBound().isPresent());
+    assertEquals("Aba", next.getUpperBound().get());
 
     // Aza...Baa
     next.setLowerBound("Aya");
     next.setUpperBound("Aza");
-    assertThat(strategy.hasNext()).isTrue();
+    assertTrue(strategy.hasNext());
     next = strategy.next();
-    assertThat(next.getOffset()).isZero();
-    assertThat(next.getLowerBound().isPresent()).isTrue();
-    assertThat(next.getLowerBound().get()).isEqualTo("Aza");
-    assertThat(next.getUpperBound().isPresent()).isTrue();
-    assertThat(next.getUpperBound().get()).isEqualTo("Baa");
+    assertEquals(0, next.getOffset());
+    assertTrue(next.getLowerBound().isPresent());
+    assertEquals("Aza", next.getLowerBound().get());
+    assertTrue(next.getUpperBound().isPresent());
+    assertEquals("Baa", next.getUpperBound().get());
 
     // Zxa...Zya, Zya...Zza
     next.setLowerBound("Zxa");
     next.setUpperBound("Zya");
-    assertThat(strategy.hasNext()).isTrue();
+    assertTrue(strategy.hasNext());
     next = strategy.next();
-    assertThat(next.getOffset()).isZero();
-    assertThat(next.getLowerBound().isPresent()).isTrue();
-    assertThat(next.getLowerBound().get()).isEqualTo("Zya");
-    assertThat(next.getUpperBound().isPresent()).isTrue();
-    assertThat(next.getUpperBound().get()).isEqualTo("Zza");
+    assertEquals(0, next.getOffset());
+    assertTrue(next.getLowerBound().isPresent());
+    assertEquals("Zya", next.getLowerBound().get());
+    assertTrue(next.getUpperBound().isPresent());
+    assertEquals("Zza", next.getUpperBound().get());
 
     // Zza...
-    assertThat(strategy.hasNext()).isTrue();
+    assertTrue(strategy.hasNext());
     next = strategy.next();
-    assertThat(next.getOffset()).isZero();
-    assertThat(next.getLowerBound().isPresent()).isTrue();
-    assertThat(next.getLowerBound().get()).isEqualTo("Zza");
-    assertThat(next.getUpperBound().isPresent()).isFalse();
+    assertEquals(0, next.getOffset());
+    assertTrue(next.getLowerBound().isPresent());
+    assertEquals("Zza", next.getLowerBound().get());
+    assertFalse(next.getUpperBound().isPresent());
 
     // Zza...
-    assertThat(strategy.hasNext()).isTrue();
+    assertTrue(strategy.hasNext());
     next = strategy.next();
-    assertThat(next.getOffset()).isZero();
-    assertThat(next.getLowerBound().isPresent()).isFalse();
-    assertThat(next.getUpperBound().isPresent()).isFalse();
+    assertEquals(0, next.getOffset());
+    assertFalse(next.getLowerBound().isPresent());
+    assertFalse(next.getUpperBound().isPresent());
 
-    assertThat(strategy.hasNext()).isFalse();
+    assertFalse(strategy.hasNext());
   }
 
   /**
@@ -97,47 +99,47 @@ public class ScientificNameRangeStrategyTest {
     ScientificNameRangeCrawlContext next = strategy.next();
 
     // Test if ...Aaa works
-    assertThat(next.getOffset()).isZero();
-    assertThat(next.getLowerBound().isPresent()).isFalse();
-    assertThat(next.getUpperBound().isPresent()).isTrue();
-    assertThat(next.getUpperBound().get()).isEqualTo("Aaa");
+    assertEquals(0, next.getOffset());
+    assertFalse(next.getLowerBound().isPresent());
+    assertTrue(next.getUpperBound().isPresent());
+    assertEquals("Aaa", next.getUpperBound().get());
 
     // Aaa...Baa
-    assertThat(strategy.hasNext()).isTrue();
+    assertTrue(strategy.hasNext());
     next = strategy.next();
-    assertThat(next.getOffset()).isZero();
-    assertThat(next.getLowerBound().isPresent()).isTrue();
-    assertThat(next.getLowerBound().get()).isEqualTo("Aaa");
-    assertThat(next.getUpperBound().isPresent()).isTrue();
-    assertThat(next.getUpperBound().get()).isEqualTo("Baa");
+    assertEquals(0, next.getOffset());
+    assertTrue(next.getLowerBound().isPresent());
+    assertEquals("Aaa", next.getLowerBound().get());
+    assertTrue(next.getUpperBound().isPresent());
+    assertEquals("Baa", next.getUpperBound().get());
 
     // Xaa...Yaa, Yaa...Zaa
     next.setLowerBound("Xaa");
     next.setUpperBound("Yaa");
-    assertThat(strategy.hasNext()).isTrue();
+    assertTrue(strategy.hasNext());
     next = strategy.next();
-    assertThat(next.getOffset()).isZero();
-    assertThat(next.getLowerBound().isPresent()).isTrue();
-    assertThat(next.getLowerBound().get()).isEqualTo("Yaa");
-    assertThat(next.getUpperBound().isPresent()).isTrue();
-    assertThat(next.getUpperBound().get()).isEqualTo("Zaa");
+    assertEquals(0, next.getOffset());
+    assertTrue(next.getLowerBound().isPresent());
+    assertEquals("Yaa", next.getLowerBound().get());
+    assertTrue(next.getUpperBound().isPresent());
+    assertEquals("Zaa", next.getUpperBound().get());
 
     // Zaa...
-    assertThat(strategy.hasNext()).isTrue();
+    assertTrue(strategy.hasNext());
     next = strategy.next();
-    assertThat(next.getOffset()).isZero();
-    assertThat(next.getLowerBound().isPresent()).isTrue();
-    assertThat(next.getLowerBound().get()).isEqualTo("Zaa");
-    assertThat(next.getUpperBound().isPresent()).isFalse();
+    assertEquals(0, next.getOffset());
+    assertTrue(next.getLowerBound().isPresent());
+    assertEquals("Zaa", next.getLowerBound().get());
+    assertFalse(next.getUpperBound().isPresent());
 
     // null
-    assertThat(strategy.hasNext()).isTrue();
+    assertTrue(strategy.hasNext());
     next = strategy.next();
-    assertThat(next.getOffset()).isZero();
-    assertThat(next.getLowerBound().isPresent()).isFalse();
-    assertThat(next.getUpperBound().isPresent()).isFalse();
+    assertEquals(0, next.getOffset());
+    assertFalse(next.getLowerBound().isPresent());
+    assertFalse(next.getUpperBound().isPresent());
 
-    assertThat(strategy.hasNext()).isFalse();
+    assertFalse(strategy.hasNext());
   }
 
   /**
@@ -152,36 +154,36 @@ public class ScientificNameRangeStrategyTest {
     ScientificNameRangeCrawlContext next = strategy.next();
 
     // Test if ...Aaa works
-    assertThat(next.getOffset()).isZero();
-    assertThat(next.getLowerBound().isPresent()).isFalse();
-    assertThat(next.getUpperBound().isPresent()).isTrue();
-    assertThat(next.getUpperBound().get()).isEqualTo("Aaa");
+    assertEquals(0, next.getOffset());
+    assertFalse(next.getLowerBound().isPresent());
+    assertTrue(next.getUpperBound().isPresent());
+    assertEquals("Aaa", next.getUpperBound().get());
 
     // Aaa...Zaa
-    assertThat(strategy.hasNext()).isTrue();
+    assertTrue(strategy.hasNext());
     next = strategy.next();
-    assertThat(next.getOffset()).isZero();
-    assertThat(next.getLowerBound().isPresent()).isTrue();
-    assertThat(next.getLowerBound().get()).isEqualTo("Aaa");
-    assertThat(next.getUpperBound().isPresent()).isTrue();
-    assertThat(next.getUpperBound().get()).isEqualTo("Zaa");
+    assertEquals(0, next.getOffset());
+    assertTrue(next.getLowerBound().isPresent());
+    assertEquals("Aaa", next.getLowerBound().get());
+    assertTrue(next.getUpperBound().isPresent());
+    assertEquals("Zaa", next.getUpperBound().get());
 
     // Zaa...
-    assertThat(strategy.hasNext()).isTrue();
+    assertTrue(strategy.hasNext());
     next = strategy.next();
-    assertThat(next.getOffset()).isZero();
-    assertThat(next.getLowerBound().isPresent()).isTrue();
-    assertThat(next.getLowerBound().get()).isEqualTo("Zaa");
-    assertThat(next.getUpperBound().isPresent()).isFalse();
+    assertEquals(0, next.getOffset());
+    assertTrue(next.getLowerBound().isPresent());
+    assertEquals("Zaa", next.getLowerBound().get());
+    assertFalse(next.getUpperBound().isPresent());
 
     // null
-    assertThat(strategy.hasNext()).isTrue();
+    assertTrue(strategy.hasNext());
     next = strategy.next();
-    assertThat(next.getOffset()).isZero();
-    assertThat(next.getLowerBound().isPresent()).isFalse();
-    assertThat(next.getUpperBound().isPresent()).isFalse();
+    assertEquals(0, next.getOffset());
+    assertFalse(next.getLowerBound().isPresent());
+    assertFalse(next.getUpperBound().isPresent());
 
-    assertThat(strategy.hasNext()).isFalse();
+    assertFalse(strategy.hasNext());
   }
 
   @Test
@@ -193,12 +195,7 @@ public class ScientificNameRangeStrategyTest {
     next.setLowerBoundAbsent();
     next.setUpperBoundAbsent();
     // Make sure there are no more
-    assertThat(strategy.hasNext()).isFalse();
-
-    try {
-      strategy.next();
-      fail();
-    } catch (NoSuchElementException e) {
-    }
+    assertFalse(strategy.hasNext());
+    assertThrows(NoSuchElementException.class, strategy::next);
   }
 }

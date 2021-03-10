@@ -15,102 +15,69 @@
  */
 package org.gbif.crawler.protocol;
 
+import com.google.common.base.Optional;
 import org.gbif.crawler.ResponseHandler;
-import org.gbif.crawler.exception.FatalCrawlException;
-import org.gbif.crawler.exception.ProtocolException;
 
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.List;
+import java.util.stream.Stream;
 
 import org.apache.http.HttpResponse;
-import org.junit.Test;
+import org.junit.jupiter.params.provider.Arguments;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Optional;
 import com.google.common.io.Resources;
 
-import static org.fest.assertions.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+@SuppressWarnings("UnstableApiUsage")
 public abstract class BaseParameterizedResponseHandlerTest {
 
   private static final Logger LOG =
       LoggerFactory.getLogger(BaseParameterizedResponseHandlerTest.class);
 
-  /**
-   * This loads test data from JSON files and returns them in a way suitable for JUnit's {@link
-   * org.junit.runners.Parameterized} runner.
-   *
-   * <p>All JSON files must consist of a top level array of objects with the following fields:
-   *
-   * <ul>
-   *   <li>file_name (string)
-   *   <li>record_count (number), optional
-   *   <li>hash (number), optional
-   *   <li>end_of_records (boolean), optional
-   *   <li>exception_expected (boolean), optional
-   * </ul>
-   *
-   * @param fileName to read the test data from
-   * @return a collection of Object arrays containing the test data
-   */
-  public static Collection<Object[]> getTestData(String fileName) throws IOException {
-    Collection<Object[]> objects = new ArrayList<Object[]>();
-    ObjectMapper mapper = new ObjectMapper();
-    JsonNode root = mapper.readValue(Resources.getResource(fileName), JsonNode.class);
-
-    for (JsonNode node : root) {
-      objects.add(
-          new Object[] {
-            node.get("file_name").textValue(),
-            node.get("record_count") == null
-                ? Optional.absent()
-                : Optional.of(node.get("record_count").asInt()),
-            node.get("hash") == null ? Optional.absent() : Optional.of(node.get("hash").asLong()),
-            node.get("end_of_records") == null
-                ? Optional.absent()
-                : Optional.of(node.get("end_of_records").asBoolean()),
-            node.path("exception_expected").asBoolean(false)
-          });
-    }
-
-    return objects;
-  }
-
-  public BaseParameterizedResponseHandlerTest(
-      String fileName,
-      Optional<Integer> recordCount,
-      Optional<Long> contentHash,
-      Optional<Boolean> endOfRecords,
-      boolean exceptionExpected) {
-    this.fileName = fileName;
-    this.recordCount = recordCount;
-    this.contentHash = contentHash;
-    this.endOfRecords = endOfRecords;
-    this.exceptionExpected = exceptionExpected;
-  }
-
-  private final String fileName;
-  private final Optional<Integer> recordCount;
-  private final Optional<Long> contentHash;
-  private final Optional<Boolean> endOfRecords;
-  private final boolean exceptionExpected;
-
   protected abstract ResponseHandler<HttpResponse, ?> getResponseHandler();
 
-  @Test
-  public void testHandlingResponses() throws Exception {
+  public static Stream<Arguments> getTestData(String fileName) throws IOException {
+    List<Arguments> argumentsList = new ArrayList<>();
+    ObjectMapper objectMapper = new ObjectMapper();
+    JsonNode root = objectMapper.readValue(Resources.getResource(fileName), JsonNode.class);
+
+    for (JsonNode node : root) {
+      argumentsList.add(
+          Arguments.of(
+              node.get("comment").textValue(),
+              node.get("file_name").textValue(),
+              node.get("record_count") != null ? node.get("record_count").asInt() : null,
+              node.get("hash") != null ? node.get("hash").asLong() : null,
+              node.get("end_of_records") != null ? node.get("end_of_records").asBoolean() : null,
+              node.get("exception_expected") != null && node.get("exception_expected").asBoolean()));
+    }
+
+    return argumentsList.stream();
+  }
+
+  @SuppressWarnings("Guava")
+  public void testHandlingResponses(
+      String fileName,
+      Integer recordCount,
+      Long contentHash,
+      Boolean endOfRecords,
+      boolean exceptionExpected) throws Exception {
     LOG.info(
         "Testing [{}]. Expecting [{}] records, [{}] hash, [{}] end of records",
-        new Object[] {fileName, recordCount, contentHash, endOfRecords});
+        fileName, recordCount, contentHash, endOfRecords);
 
     HttpResponse response = mock(HttpResponse.class, RETURNS_DEEP_STUBS);
 
@@ -119,31 +86,16 @@ public abstract class BaseParameterizedResponseHandlerTest {
 
     ResponseHandler<HttpResponse, ?> handler = getResponseHandler();
 
-    try {
+    if (exceptionExpected) {
+      // FatalCrawlException or ProtocolException
+      assertThrows(Exception.class, () -> handler.handleResponse(response));
+      assertFalse(handler.isValidState());
+    } else {
       handler.handleResponse(response);
-      if (exceptionExpected) {
-        assertThat(handler.isValidState()).isFalse();
-        fail();
-      }
-    } catch (ProtocolException e) {
-      if (exceptionExpected) {
-        assertThat(handler.isValidState()).isFalse();
-        return;
-      }
-
-      throw e;
-    } catch (FatalCrawlException e) {
-      if (exceptionExpected) {
-        assertThat(handler.isValidState()).isFalse();
-        return;
-      }
-
-      throw e;
+      assertTrue(handler.isValidState());
+      assertEquals(Optional.fromNullable(contentHash), handler.getContentHash());
+      assertEquals(Optional.fromNullable(recordCount), handler.getRecordCount());
+      assertEquals(Optional.fromNullable(endOfRecords), handler.isEndOfRecords());
     }
-
-    assertThat(handler.isValidState()).as("Valid state").isTrue();
-    assertThat(handler.getContentHash()).as("Content hash").isEqualTo(contentHash);
-    assertThat(handler.getRecordCount()).as("Record count").isEqualTo(recordCount);
-    assertThat(handler.isEndOfRecords()).as("End of records").isEqualTo(endOfRecords);
   }
 }

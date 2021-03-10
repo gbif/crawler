@@ -26,12 +26,12 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** Test class for {@link PipelinesRunningProcessSearchService}. */
 public class PipelinesRunningProcessSearchServiceTest {
@@ -58,13 +58,13 @@ public class PipelinesRunningProcessSearchServiceTest {
   }
 
   /** Initializes the cache and test data. */
-  @Before
+  @BeforeEach
   public void init() {
     searchService = new PipelinesRunningProcessSearchService();
   }
 
   /** Close the search service. */
-  @After
+  @AfterEach
   public void tearDown() {
     if (Objects.nonNull(searchService)) {
       searchService.close();

@@ -19,9 +19,9 @@ import org.gbif.wrangler.lock.Lock;
 import org.gbif.wrangler.lock.LockFactory;
 import org.gbif.wrangler.lock.NoLockFactory;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.fest.assertions.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class DelayingLockFactoryTest {
 
@@ -37,7 +37,7 @@ public class DelayingLockFactoryTest {
     lock.lock();
     lock.unlock();
     long end = System.currentTimeMillis();
-    assertThat(end).isGreaterThan(start);
-    assertThat(start + 2000).isLessThanOrEqualTo(end);
+    assertTrue(end > start);
+    assertTrue(start + 200 <= end);
   }
 }

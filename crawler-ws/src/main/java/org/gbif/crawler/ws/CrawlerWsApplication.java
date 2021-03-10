@@ -20,18 +20,16 @@ import org.springframework.boot.actuate.autoconfigure.elasticsearch.ElasticSearc
 import org.springframework.boot.actuate.autoconfigure.security.servlet.ManagementWebSecurityAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration;
-import org.springframework.boot.autoconfigure.data.elasticsearch.ElasticsearchAutoConfiguration;
-import org.springframework.boot.autoconfigure.elasticsearch.rest.RestClientAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
+import org.springframework.boot.autoconfigure.elasticsearch.ElasticsearchRestClientAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.ComponentScan;
 
 @SpringBootApplication(
     exclude = {
-      ElasticsearchAutoConfiguration.class,
       ElasticSearchRestHealthContributorAutoConfiguration.class,
-      RestClientAutoConfiguration.class,
+      ElasticsearchRestClientAutoConfiguration.class,
       DataSourceAutoConfiguration.class,
       ManagementWebSecurityAutoConfiguration.class,
       SecurityAutoConfiguration.class,

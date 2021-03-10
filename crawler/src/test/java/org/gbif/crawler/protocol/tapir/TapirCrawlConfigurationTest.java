@@ -18,10 +18,11 @@ package org.gbif.crawler.protocol.tapir;
 import java.net.URI;
 import java.util.UUID;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.fest.assertions.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class TapirCrawlConfigurationTest {
 
@@ -40,19 +41,16 @@ public class TapirCrawlConfigurationTest {
 
     TapirCrawlConfiguration job = new TapirCrawlConfiguration(uuid, 1, targetUrl, contentNamespace);
 
-    assertThat(job.getContentNamespace()).isEqualTo(contentNamespace);
-    assertThat(job.getUrl()).isEqualTo(targetUrl);
-    assertThat(job.getAttempt()).isEqualTo(1);
-    assertThat(job.getDatasetKey()).isEqualTo(uuid);
+    assertEquals(contentNamespace, job.getContentNamespace());
+    assertEquals(targetUrl, job.getUrl());
+    assertEquals(1, job.getAttempt());
+    assertEquals(uuid, job.getDatasetKey());
   }
 
   private void testFailure(
       UUID uuid, int attempt, URI url, String contentNamespace, String expectedString) {
-    try {
-      new TapirCrawlConfiguration(uuid, attempt, url, contentNamespace);
-      fail();
-    } catch (Exception ex) {
-      assertThat(ex).hasMessageContaining(expectedString);
-    }
+    Exception exception =
+        assertThrows(Exception.class, () -> new TapirCrawlConfiguration(uuid, attempt, url, contentNamespace));
+    assertTrue(exception.getMessage().contains(expectedString));
   }
 }

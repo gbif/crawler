@@ -37,32 +37,30 @@ import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.RetryOneTime;
 import org.apache.curator.test.TestingServer;
 import org.apache.curator.utils.ZKPaths;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.gbif.api.vocabulary.TagName.CONCEPTUAL_SCHEMA;
 import static org.gbif.api.vocabulary.TagName.CRAWL_ATTEMPT;
 import static org.gbif.api.vocabulary.TagName.DECLARED_COUNT;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.equalTo;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class CrawlerCoordinatorServiceImplTest {
 
-  @Rule public ExpectedException thrown = ExpectedException.none();
   @Mock private DatasetService datasetService;
   @Mock private MetadataSynchroniser metadataSynchroniser;
   private CuratorFramework curator;
@@ -71,10 +69,8 @@ public class CrawlerCoordinatorServiceImplTest {
   private Dataset dataset = new Dataset();
   private TestingServer server;
 
-  @Before
+  @BeforeEach
   public void setup() throws Exception {
-    when(metadataSynchroniser.getDatasetCount(any(), any())).thenReturn(null);
-
     server = new TestingServer();
     curator =
         CuratorFrameworkFactory.builder()
@@ -87,10 +83,9 @@ public class CrawlerCoordinatorServiceImplTest {
 
     service = new CrawlerCoordinatorServiceImpl(curator, datasetService, metadataSynchroniser);
     dataset.setType(DatasetType.OCCURRENCE);
-    when(datasetService.get(uuid)).thenReturn(dataset);
   }
 
-  @After
+  @AfterEach
   public void tearDown() throws IOException {
     server.stop();
     curator.close();
@@ -126,11 +121,11 @@ public class CrawlerCoordinatorServiceImplTest {
 
     List<Endpoint> sortedEndpoints = service.prioritySortEndpoints(endpoints);
 
-    assertThat(sortedEndpoints.size(), equalTo(5));
+    assertEquals(5, sortedEndpoints.size());
     assertThat(sortedEndpoints, contains(endpoint1, endpoint6, endpoint4, endpoint3, endpoint5));
     assertTrue(
-        "Priority of DwC-A is higher than its EML",
-        sortedEndpoints.indexOf(endpoint1) < sortedEndpoints.indexOf(endpoint5));
+        sortedEndpoints.indexOf(endpoint1) < sortedEndpoints.indexOf(endpoint5),
+        "Priority of DwC-A is higher than its EML");
   }
 
   @Test
@@ -147,9 +142,9 @@ public class CrawlerCoordinatorServiceImplTest {
 
     List<Endpoint> sortedEndpoints = service.prioritySortEndpoints(endpoints);
 
-    assertThat(sortedEndpoints.size(), equalTo(2));
+    assertEquals(2, sortedEndpoints.size());
     assertThat(sortedEndpoints, contains(endpoint1, endpoint2));
-    assertThat(sortedEndpoints.get(0), equalTo(endpoint1));
+    assertEquals(endpoint1, sortedEndpoints.get(0));
 
     // now add created dates
     long now = System.currentTimeMillis();
@@ -157,70 +152,72 @@ public class CrawlerCoordinatorServiceImplTest {
     endpoint2.setCreated(new Date(now - 100000));
 
     sortedEndpoints = service.prioritySortEndpoints(endpoints);
-    assertThat(sortedEndpoints.size(), equalTo(2));
+    assertEquals(2, sortedEndpoints.size());
     assertThat(sortedEndpoints, contains(endpoint2, endpoint1));
-    assertThat(sortedEndpoints.get(0), equalTo(endpoint2));
+    assertEquals(endpoint2, sortedEndpoints.get(0));
 
     // now add created dates
     endpoint1.setCreated(new Date(now - 200000));
     sortedEndpoints = service.prioritySortEndpoints(endpoints);
     assertThat(sortedEndpoints, contains(endpoint1, endpoint2));
-    assertThat(sortedEndpoints.get(0), equalTo(endpoint1));
+    assertEquals(endpoint1, sortedEndpoints.get(0));
   }
 
   @Test
-  public void testValidation1() throws Exception {
-    thrown.expect(IllegalArgumentException.class);
-    thrown.expectMessage("does not exist");
-
+  public void testValidation1() {
+    when(datasetService.get(uuid)).thenReturn(dataset);
     when(datasetService.get(uuid)).thenReturn(null);
-    service.initiateCrawl(uuid, 5, Platform.ALL);
+    IllegalArgumentException exception =
+        assertThrows(IllegalArgumentException.class, () -> service.initiateCrawl(uuid, 5, Platform.ALL));
+    assertTrue(exception.getMessage().contains("does not exist"));
   }
 
   @Test
   public void testValidation2() throws Exception {
-    thrown.expect(AlreadyCrawlingException.class);
-    thrown.expectMessage("already scheduled");
-
+    when(datasetService.get(uuid)).thenReturn(dataset);
     curator.create().forPath("/crawls/" + uuid.toString());
-    service.initiateCrawl(uuid, 5, Platform.ALL);
+    AlreadyCrawlingException exception =
+        assertThrows(AlreadyCrawlingException.class, () -> service.initiateCrawl(uuid, 5, Platform.ALL));
+    assertTrue(exception.getMessage().contains("already scheduled"));
   }
 
   @Test
-  public void testValidation3() throws Exception {
-    thrown.expect(IllegalArgumentException.class);
-    thrown.expectMessage("endpoints");
-
-    service.initiateCrawl(uuid, 5, Platform.ALL);
+  public void testValidation3() {
+    when(datasetService.get(uuid)).thenReturn(dataset);
+    IllegalArgumentException exception =
+        assertThrows(IllegalArgumentException.class, () -> service.initiateCrawl(uuid, 5, Platform.ALL));
+    assertTrue(exception.getMessage().contains("endpoints"));
   }
 
   @Test
   public void testValidation4() {
-    thrown.expect(IllegalArgumentException.class);
-    thrown.expectMessage("conceptualSchema");
-
+    when(datasetService.get(uuid)).thenReturn(dataset);
     Endpoint endpoint = new Endpoint();
     endpoint.setType(EndpointType.TAPIR);
     dataset.getEndpoints().add(endpoint);
 
-    service.initiateCrawl(uuid, 5, Platform.ALL);
+    IllegalArgumentException exception =
+        assertThrows(IllegalArgumentException.class, () -> service.initiateCrawl(uuid, 5, Platform.ALL));
+    assertTrue(exception.getMessage().contains("conceptualSchema"));
   }
 
   @Test
   public void testValidation5() {
-    thrown.expect(IllegalArgumentException.class);
-    thrown.expectMessage("deleted");
-
+    when(datasetService.get(uuid)).thenReturn(dataset);
     Endpoint endpoint = new Endpoint();
     endpoint.setType(EndpointType.TAPIR);
     dataset.getEndpoints().add(endpoint);
     dataset.setDeleted(new Date());
 
-    service.initiateCrawl(uuid, 5, Platform.ALL);
+    IllegalArgumentException exception =
+        assertThrows(IllegalArgumentException.class, () -> service.initiateCrawl(uuid, 5, Platform.ALL));
+    assertTrue(exception.getMessage().contains("deleted"));
   }
 
   @Test
   public void testSchedule() throws Exception {
+    when(metadataSynchroniser.getDatasetCount(any(), any())).thenReturn(null);
+    when(datasetService.get(uuid)).thenReturn(dataset);
     URI url = URI.create("http://gbif.org/index.html");
     Endpoint endpoint = new Endpoint();
     endpoint.setType(EndpointType.TAPIR);
@@ -235,17 +232,17 @@ public class CrawlerCoordinatorServiceImplTest {
     service.initiateCrawl(uuid, 5, Platform.ALL);
 
     List<String> children = curator.getChildren().forPath("/crawls");
-    assertThat(children.size(), equalTo(1));
-    assertThat(children.get(0), equalTo(uuid.toString()));
+    assertEquals(1, children.size());
+    assertEquals(uuid.toString(), children.get(0));
 
     byte[] bytes = curator.getData().forPath("/crawls/" + uuid);
     ObjectMapper mapper = new ObjectMapper();
     Map<?, ?> map = mapper.readValue(bytes, Map.class);
 
     Integer attempt = (Integer) map.get("attempt");
-    assertThat(attempt, equalTo(11));
+    assertEquals(11, attempt);
 
     bytes = curator.getData().forPath("/crawls/" + uuid + "/" + CrawlerNodePaths.DECLARED_COUNT);
-    assertThat(new String(bytes), equalTo("1234"));
+    assertEquals("1234", new String(bytes));
   }
 }
