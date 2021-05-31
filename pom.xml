@@ -51,7 +51,7 @@
     <gbif-httputils.version>0.14</gbif-httputils.version>
     <gbif-occurrence.version>0.122</gbif-occurrence.version>
     <gbif-postal-service.version>0.45</gbif-postal-service.version>
-    <gbif-registry.version>3.6</gbif-registry.version>
+    <gbif-registry.version>3.62</gbif-registry.version>
     <gbif-wrangler.version>0.4</gbif-wrangler.version>
     <gbif-pipelines.version>2.4.2</gbif-pipelines.version>
     <gbif-metrics.version>0.36</gbif-metrics.version>
