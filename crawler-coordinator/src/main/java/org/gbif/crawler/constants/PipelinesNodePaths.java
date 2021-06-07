@@ -25,6 +25,7 @@ public class PipelinesNodePaths {
 
   public static final String DELIMITER = "/";
   public static final String PIPELINES_ROOT = "pipelines";
+  public static final String VALIDATOR_ROOT = "validator";
   public static final String OK = "successful";
   public static final String ERR = "error";
   public static final String MQ = "mq";
@@ -85,7 +86,19 @@ public class PipelinesNodePaths {
    * @return ZK path to crawl info
    */
   public static String getPipelinesInfoPath(@Nullable String id, @Nullable String path) {
-    String resultPath = DELIMITER + PIPELINES_ROOT;
+    return getPipelinesInfoPath(id, path, false);
+  }
+
+  /**
+   * Helper method to retrieve a path under the root node.
+   *
+   * @param id of the dataset to get the path for
+   * @param path if null we retrieve the path of the root node itself otherwise we append this path
+   * @param useValidatorRoot use {@link #VALIDATOR_ROOT} as a root, otherwise root path is {@link #PIPELINES_ROOT}
+   * @return ZK path to crawl info
+   */
+  public static String getPipelinesInfoPath(@Nullable String id, @Nullable String path, boolean useValidatorRoot) {
+    String resultPath = useValidatorRoot ? DELIMITER + VALIDATOR_ROOT : DELIMITER + PIPELINES_ROOT;
     if (id != null) {
       resultPath += DELIMITER + id;
     }
