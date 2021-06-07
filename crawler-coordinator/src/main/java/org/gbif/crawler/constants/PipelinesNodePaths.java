@@ -90,6 +90,19 @@ public class PipelinesNodePaths {
   }
 
   /**
+   * Helper method to retrieve the path in ZooKeeper where all information about a specific dataset
+   * can be found.
+   *
+   * @param id to retrieve path for
+   * @param useValidatorRoot use {@link #VALIDATOR_ROOT} as a root, otherwise root path is {@link #PIPELINES_ROOT}
+   * @return crawl info path for dataset
+   */
+  public static String getPipelinesInfoPath(@Nullable String id, boolean useValidatorRoot) {
+    return getPipelinesInfoPath(id, null, useValidatorRoot);
+  }
+
+
+  /**
    * Helper method to retrieve a path under the root node.
    *
    * @param id of the dataset to get the path for
