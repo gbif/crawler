@@ -59,6 +59,8 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import org.springframework.cache.config.CacheManagementConfigUtils;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.apache.curator.framework.recipes.cache.TreeCacheEvent.Type.INITIALIZED;
 import static org.apache.curator.framework.recipes.cache.TreeCacheEvent.Type.NODE_ADDED;
@@ -86,7 +88,6 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
   private final Cache<String, PipelineProcess> processCache =
       Cache2kBuilder.of(String.class, PipelineProcess.class)
           .entryCapacity(Long.MAX_VALUE)
-          .suppressExceptions(false)
           .eternal(true)
           .build();
 
@@ -177,7 +178,8 @@ public class PipelinesRunningProcessServiceImpl implements PipelinesRunningProce
             new Thread(
                 () -> {
                   cache.close();
-                  processCache.clearAndClose();
+
+                  processCache.close();
                 }));
   }
 
