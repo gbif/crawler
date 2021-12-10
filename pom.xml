@@ -92,7 +92,7 @@
     <commons-io.version>2.5</commons-io.version>
     <avro.version>1.8.2</avro.version>
     <elasticsearch.version>7.10.0</elasticsearch.version>
-    <log4j-api.version>2.3</log4j-api.version>
+    <log4j-api.version>2.15.0</log4j-api.version>
     <log4j-to-slf4j.version>2.3</log4j-to-slf4j.version>
 
     <!-- Embedded simple search -->
