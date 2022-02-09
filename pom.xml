@@ -87,7 +87,7 @@
     <yammer-metrics.version>2.2.0</yammer-metrics.version>
     <zookeeper.version>3.4.5</zookeeper.version>
     <hadoop-core.version>2.6.0-mr1-cdh5.16.2</hadoop-core.version>
-    <hadoop-common.version>2.6.0-cdh5.16.2</hadoop-common.version>
+    <hadoop-common.version>2.10.1</hadoop-common.version>
     <commons-lang.version>2.6</commons-lang.version>
     <commons-io.version>2.5</commons-io.version>
     <avro.version>1.8.2</avro.version>
