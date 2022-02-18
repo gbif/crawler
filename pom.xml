@@ -10,7 +10,7 @@
 
   <groupId>org.gbif.crawler</groupId>
   <artifactId>crawler-motherpom</artifactId>
-  <version>1.11-SNAPSHOT</version>
+  <version>1.11</version>
   <packaging>pom</packaging>
 
   <name>Crawler :: Mother POM</name>
@@ -21,7 +21,7 @@
     <connection>scm:git:git@github.com:gbif/crawler.git</connection>
     <url>https://github.com/gbif/crawler</url>
     <developerConnection>scm:git:git@github.com:gbif/crawler.git</developerConnection>
-    <tag>HEAD</tag>
+    <tag>crawler-1.11</tag>
   </scm>
 
   <distributionManagement>
