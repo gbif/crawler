@@ -29,20 +29,22 @@ import org.gbif.registry.ws.client.DatasetClient;
 import org.gbif.registry.ws.client.DatasetProcessStatusClient;
 import org.gbif.ws.client.ClientFactory;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import com.google.common.base.Joiner;
-import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.AbstractScheduledService;
 import org.joda.time.DateTime;
 import org.joda.time.Days;
 import org.joda.time.ReadableInstant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+
+import com.google.common.base.Joiner;
+import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.AbstractScheduledService;
 
 /**
  * This service scans the registry at a configurable interval and schedules a crawl for Datasets that fulfill a few
@@ -75,7 +77,7 @@ public class CrawlSchedulerService extends AbstractScheduledService {
   }
 
   @Override
-  protected void runOneIteration() throws Exception {
+  protected void runOneIteration() {
     LOG.info("Starting checks for datasets eligible to be crawled");
 
     // first determine if the crawler is already heavily loaded
@@ -106,9 +108,9 @@ public class CrawlSchedulerService extends AbstractScheduledService {
     }
 
     ReadableInstant now = new DateTime();
-
     PagingRequest pageable = new PagingRequest();
-    PagingResponse<Dataset> datasets;
+    boolean isEnd = false;
+
     int numberInitiated = 0;
     int numberConsidered = 0;
     // datasets that have never been crawled are attempted on each run, but only if there is spare capacity.
@@ -117,16 +119,25 @@ public class CrawlSchedulerService extends AbstractScheduledService {
     // Remember that new datasets are always attempted on first registration and should be crawled then, so this
     // really represents a list of "bad" datasets.
     List<Dataset> neverCrawledDatasets = Lists.newArrayList();
-    do {
+    while (!isEnd){
       if (numberInitiated >= availableCapacity) {
         LOG.info("Reached limit of how many crawls to initiate per iteration - capacity was calculated at [{}]",
                  availableCapacity);
         break;
       }
-      datasets = datasetService.list(pageable);
 
-      for (Dataset dataset : datasets.getResults()) {
-        try (MDC.MDCCloseable closeable = MDC.putCloseable("datasetKey", dataset.getKey().toString())) {
+      List<Dataset> datasetList = Collections.emptyList();
+
+      try {
+        PagingResponse<Dataset> datasets = datasetService.list(pageable);
+        datasetList = datasets.getResults();
+        isEnd = datasets.isEndOfRecords();
+      } catch (Exception ex) {
+        LOG.error(ex.getMessage(), ex);
+      }
+
+      for (Dataset dataset : datasetList) {
+        try (MDC.MDCCloseable ignored = MDC.putCloseable("datasetKey", dataset.getKey().toString())) {
           numberConsidered++;
           boolean eligibleToCrawl = false;
           try {
@@ -153,27 +164,25 @@ public class CrawlSchedulerService extends AbstractScheduledService {
       }
 
       pageable.nextPage();
-    } while (!datasets.isEndOfRecords() && numberInitiated < availableCapacity);
+    }
 
-    if (!neverCrawledDatasets.isEmpty()) {
-      if (numberInitiated < availableCapacity) {
-        int remainingSlots = availableCapacity-numberInitiated;
-        LOG.info("There remain {} available slots having crawled all eligible datasets.  Attempting crawls "
-                 + "which have never been crawled before [total {}]", remainingSlots, neverCrawledDatasets.size());
+    if (!neverCrawledDatasets.isEmpty() && numberInitiated < availableCapacity) {
+      int remainingSlots = availableCapacity - numberInitiated;
+      LOG.info("There remain {} available slots having crawled all eligible datasets.  Attempting crawls "
+        + "which have never been crawled before [total {}]", remainingSlots, neverCrawledDatasets.size());
 
-        // launch them randomly until we are exhausted
-        for (int i=0; i<remainingSlots && i<neverCrawledDatasets.size(); i++) {
-          // randomly select a dataset to ensure all are attempted over time
-          int random = RANDOM.nextInt(neverCrawledDatasets.size());
-          Dataset dataset = neverCrawledDatasets.get(random);
-          try (MDC.MDCCloseable closeable = MDC.putCloseable("datasetKey", dataset.getKey().toString())) {
-            startCrawl(dataset);
-            neverCrawledDatasets.remove(random);
-            LOG.info("Crawling dataset [{}] of type [{}] - has never been successfully crawled",
-                dataset.getKey(), dataset.getType());
-          }
-          numberInitiated++;
+      // launch them randomly until we are exhausted
+      for (int i = 0; i < remainingSlots && i < neverCrawledDatasets.size(); i++) {
+        // randomly select a dataset to ensure all are attempted over time
+        int random = RANDOM.nextInt(neverCrawledDatasets.size());
+        Dataset dataset = neverCrawledDatasets.get(random);
+        try (MDC.MDCCloseable ignored = MDC.putCloseable("datasetKey", dataset.getKey().toString())) {
+          startCrawl(dataset);
+          neverCrawledDatasets.remove(random);
+          LOG.info("Crawling dataset [{}] of type [{}] - has never been successfully crawled",
+            dataset.getKey(), dataset.getType());
         }
+        numberInitiated++;
       }
     }
 
@@ -188,6 +197,12 @@ public class CrawlSchedulerService extends AbstractScheduledService {
     datasetService = clientFactory.newInstance(DatasetClient.class);
     crawlService = clientFactory.newInstance(DatasetProcessClient.class);
     registryService = clientFactory.newInstance(DatasetProcessStatusClient.class);
+  }
+
+  @Override
+  protected void shutDown() throws Exception {
+    LOG.info("Shut down the iteration");
+    super.shutDown();
   }
 
   @Override
