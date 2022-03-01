@@ -15,13 +15,16 @@
  */
 package org.gbif.crawler.coordinator;
 
+import org.gbif.api.model.registry.Organization;
 import org.gbif.api.service.registry.DatasetService;
 import org.gbif.api.service.registry.InstallationService;
+import org.gbif.api.service.registry.OrganizationService;
 import org.gbif.common.messaging.MessageListener;
 import org.gbif.common.messaging.api.MessageCallback;
 import org.gbif.common.messaging.api.messages.StartCrawlMessage;
 import org.gbif.crawler.CrawlerCoordinatorService;
 import org.gbif.crawler.CrawlerCoordinatorServiceImpl;
+import org.gbif.crawler.RestrictionsHandler;
 import org.gbif.crawler.StartCrawlMessageCallback;
 import org.gbif.registry.metasync.MetadataSynchroniserImpl;
 import org.gbif.registry.metasync.protocols.biocase.BiocaseMetadataSynchroniser;
@@ -30,6 +33,7 @@ import org.gbif.registry.metasync.protocols.tapir.TapirMetadataSynchroniser;
 import org.gbif.registry.metasync.util.HttpClientFactory;
 import org.gbif.registry.ws.client.DatasetClient;
 import org.gbif.registry.ws.client.InstallationClient;
+import org.gbif.registry.ws.client.OrganizationClient;
 import org.gbif.ws.client.ClientFactory;
 
 import java.util.concurrent.TimeUnit;
@@ -59,6 +63,7 @@ public class CoordinatorService extends AbstractIdleService {
     // Create Registry WS Client
     ClientFactory wsClientFactory = configuration.registry.newClientFactory();
     DatasetService datasetService = wsClientFactory.newInstance(DatasetClient.class);
+    OrganizationService organizationService = wsClientFactory.newInstance(OrganizationClient.class);
     InstallationService installationService = wsClientFactory.newInstance(InstallationClient.class);
 
     HttpClientFactory clientFactory = new HttpClientFactory(30, TimeUnit.SECONDS);
@@ -72,7 +77,8 @@ public class CoordinatorService extends AbstractIdleService {
         new BiocaseMetadataSynchroniser(clientFactory.provideHttpClient()));
 
     CrawlerCoordinatorService coord =
-        new CrawlerCoordinatorServiceImpl(curator, datasetService, metadataSynchroniser);
+        new CrawlerCoordinatorServiceImpl(curator, datasetService, metadataSynchroniser,
+                                          new RestrictionsHandler(configuration.denyCountries, organizationService));
     MessageCallback<StartCrawlMessage> callback = new StartCrawlMessageCallback(coord);
 
     listener = new MessageListener(configuration.messaging.getConnectionParameters());

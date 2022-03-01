@@ -103,6 +103,8 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
   private final MetadataSynchroniser metadataSynchroniser;
   private final CrawlerCoordinatorServiceMetrics metrics = new CrawlerCoordinatorServiceMetrics();
 
+  private final RestrictionsHandler restrictionsHandler;
+
   /**
    * Creates a CrawlerCoordinatorService for a specific ZooKeeper instance, pointing to a remote
    * Registry WS.
@@ -114,11 +116,13 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
   public CrawlerCoordinatorServiceImpl(
       CuratorFramework curator,
       DatasetService datasetService,
-      MetadataSynchroniser metadataSynchroniser) {
+      MetadataSynchroniser metadataSynchroniser,
+      RestrictionsHandler restrictionsHandler) {
     this.curator = checkNotNull(curator, "curator can't be null");
     this.datasetService = checkNotNull(datasetService, "datasetService can't be null");
     this.metadataSynchroniser =
         checkNotNull(metadataSynchroniser, "metadataSynchroniser can't be null");
+    this.restrictionsHandler = restrictionsHandler;
 
     xmlQueue = buildQueue(curator, XML_CRAWL);
     dwcaQueue = buildQueue(curator, DWCA_CRAWL);
@@ -339,6 +343,8 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
     if (Constants.NUB_DATASET_KEY.equals(dataset.getKey())) {
       throw new IllegalArgumentException("Backbone dataset [" + datasetKey + "] cannot be indexed");
     }
+
+    restrictionsHandler.checkDenyPublisher(dataset.getPublishingOrganizationKey());
 
     // Is the dataset already scheduled to be crawled or currently being crawled?
     Stat crawlNode;
