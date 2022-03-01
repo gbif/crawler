@@ -19,6 +19,9 @@ import org.gbif.common.messaging.config.MessagingConfiguration;
 import org.gbif.crawler.common.RegistryConfiguration;
 import org.gbif.crawler.common.ZooKeeperConfiguration;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
@@ -45,6 +48,9 @@ public class CoordinatorConfiguration {
   @Parameter(names = "--queue-name")
   @NotNull
   public String queueName = "crawler_coordinator";
+
+  @Parameter(names = "--deny-countries")
+  public List<String> denyCountries = new ArrayList<>();
 
   @Override
   public String toString() {
