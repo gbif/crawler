@@ -22,6 +22,7 @@ import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.DatasetBasedMessage;
 import org.gbif.crawler.abcda.downloader.DownloaderService;
 import org.gbif.crawler.constants.CrawlerNodePaths;
+import org.gbif.utils.HttpClient;
 import org.gbif.utils.HttpUtil;
 
 import java.io.File;
@@ -56,7 +57,7 @@ public abstract class DownloadCrawlConsumer extends CrawlConsumer {
   private final Counter failedDownloads =
       Metrics.newCounter(DownloaderService.class, "failedDownloads");
   private final Counter notModified = Metrics.newCounter(DownloaderService.class, "notModified");
-  private final HttpUtil client;
+  private final HttpClient client;
 
   public DownloadCrawlConsumer(
       CuratorFramework curator,
@@ -75,7 +76,7 @@ public abstract class DownloadCrawlConsumer extends CrawlConsumer {
           "Archive repository directory not writable: " + archiveRepository.getAbsolutePath());
     }
 
-    client = new HttpUtil(HttpUtil.newMultithreadedClient(httpTimeout, 25, 2));
+    client = HttpUtil.newMultithreadedClient(httpTimeout, 25, 2);
   }
 
   @Override
@@ -103,7 +104,7 @@ public abstract class DownloadCrawlConsumer extends CrawlConsumer {
       try {
         LOG.info("Start download of archive from {} to {}", crawlJob.getTargetUrl(), localFile);
         StatusLine status =
-            client.downloadIfModifiedSince(crawlJob.getTargetUrl().toURL(), localFile);
+            client.downloadIfModifiedSince(crawlJob.getTargetUrl().toURL(), null, localFile, true);
 
         if (status.getStatusCode() == HttpStatus.SC_NOT_MODIFIED) {
           notModified(datasetKey);

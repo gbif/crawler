@@ -86,7 +86,7 @@ public class DownloadCrawlConsumerTest {
             datasetKey,
             attempt,
             EndpointType.DWC_ARCHIVE,
-            URI.create("https://hosted-datasets.gbif.org/datasets/usda_archive.zip"));
+            URI.create("https://hosted-datasets.gbif.org/datasets/eunis.zip"));
     cc.crawl(datasetKey, test);
   }
 }
