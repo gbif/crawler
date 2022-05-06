@@ -284,7 +284,9 @@ public class DatasetProcessServiceImpl implements DatasetProcessService {
       try {
         Future<DatasetProcessStatus> future = completionService.take();
         DatasetProcessStatus status = future.get();
-        processStatuses.add(status);
+        if (status != null) {
+          processStatuses.add(status);
+        }
       } catch (InterruptedException ignored) {
         Thread.currentThread().interrupt();
       } catch (ExecutionException e) {
