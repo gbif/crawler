@@ -75,7 +75,7 @@
     <jsr305.version>3.0.1</jsr305.version>
     <junit.version>5.6.3</junit.version>
     <hamcrest.version>2.2</hamcrest.version>
-    <logback.version>1.2.3</logback.version>
+    <logback.version>1.2.9</logback.version>
     <janino-logback.version>2.5.10</janino-logback.version>
     <logstash-logback-encoder.version>4.11</logstash-logback-encoder.version>
     <metainf-services.version>1.7</metainf-services.version>
@@ -92,7 +92,7 @@
     <commons-beanutils.version>1.9.2</commons-beanutils.version>
     <commons-digester.version>3.2</commons-digester.version>
     <commons-lang.version>2.6</commons-lang.version>
-    <commons-io.version>2.5</commons-io.version>
+    <commons-io.version>2.7</commons-io.version>
     <avro.version>1.8.2</avro.version>
     <elasticsearch.version>7.10.0</elasticsearch.version>
     <log4j-api.version>2.16.0</log4j-api.version>
