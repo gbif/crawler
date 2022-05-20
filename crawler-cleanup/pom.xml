@@ -12,19 +12,18 @@
 
   <name>Crawler :: Cleanup</name>
   <description>This tool deletes crawls in ZooKeeper.</description>
-  <url>http://sites.gbif.org/crawler/crawler-cleanup</url>
 
   <distributionManagement>
     <site>
       <id>gh-pages</id>
-      <url>http://gbif.github.io/crawler/${project.artifactId}/</url>
+      <url>https://gbif.github.io/crawler/${project.artifactId}/</url>
     </site>
   </distributionManagement>
 
   <repositories>
     <repository>
       <id>gbif-all</id>
-      <url>http://repository.gbif.org/content/groups/gbif</url>
+      <url>https://repository.gbif.org/content/groups/gbif</url>
     </repository>
   </repositories>
 

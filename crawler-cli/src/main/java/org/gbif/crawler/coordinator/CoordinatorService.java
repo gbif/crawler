@@ -23,11 +23,11 @@ import org.gbif.common.messaging.api.messages.StartCrawlMessage;
 import org.gbif.crawler.CrawlerCoordinatorService;
 import org.gbif.crawler.CrawlerCoordinatorServiceImpl;
 import org.gbif.crawler.StartCrawlMessageCallback;
-import org.gbif.registry.metasync.MetadataSynchroniserImpl;
-import org.gbif.registry.metasync.protocols.biocase.BiocaseMetadataSynchroniser;
-import org.gbif.registry.metasync.protocols.digir.DigirMetadataSynchroniser;
-import org.gbif.registry.metasync.protocols.tapir.TapirMetadataSynchroniser;
-import org.gbif.registry.metasync.util.HttpClientFactory;
+import org.gbif.crawler.metasync.MetadataSynchronizerImpl;
+import org.gbif.crawler.metasync.protocols.biocase.BiocaseMetadataSynchronizer;
+import org.gbif.crawler.metasync.protocols.digir.DigirMetadataSynchronizer;
+import org.gbif.crawler.metasync.protocols.tapir.TapirMetadataSynchronizer;
+import org.gbif.crawler.metasync.util.HttpClientFactory;
 import org.gbif.registry.ws.client.DatasetClient;
 import org.gbif.registry.ws.client.InstallationClient;
 import org.gbif.ws.client.ClientFactory;
@@ -62,17 +62,17 @@ public class CoordinatorService extends AbstractIdleService {
     InstallationService installationService = wsClientFactory.newInstance(InstallationClient.class);
 
     HttpClientFactory clientFactory = new HttpClientFactory(30, TimeUnit.SECONDS);
-    MetadataSynchroniserImpl metadataSynchroniser =
-        new MetadataSynchroniserImpl(installationService);
-    metadataSynchroniser.registerProtocolHandler(
-        new DigirMetadataSynchroniser(clientFactory.provideHttpClient()));
-    metadataSynchroniser.registerProtocolHandler(
-        new TapirMetadataSynchroniser(clientFactory.provideHttpClient()));
-    metadataSynchroniser.registerProtocolHandler(
-        new BiocaseMetadataSynchroniser(clientFactory.provideHttpClient()));
+    MetadataSynchronizerImpl metadataSynchronizer =
+        new MetadataSynchronizerImpl(installationService);
+    metadataSynchronizer.registerProtocolHandler(
+        new DigirMetadataSynchronizer(clientFactory.provideHttpClient()));
+    metadataSynchronizer.registerProtocolHandler(
+        new TapirMetadataSynchronizer(clientFactory.provideHttpClient()));
+    metadataSynchronizer.registerProtocolHandler(
+        new BiocaseMetadataSynchronizer(clientFactory.provideHttpClient()));
 
     CrawlerCoordinatorService coord =
-        new CrawlerCoordinatorServiceImpl(curator, datasetService, metadataSynchroniser);
+        new CrawlerCoordinatorServiceImpl(curator, datasetService, metadataSynchronizer);
     MessageCallback<StartCrawlMessage> callback = new StartCrawlMessageCallback(coord);
 
     listener = new MessageListener(configuration.messaging.getConnectionParameters());

@@ -23,7 +23,7 @@ import org.gbif.api.vocabulary.DatasetType;
 import org.gbif.api.vocabulary.EndpointType;
 import org.gbif.common.messaging.api.messages.Platform;
 import org.gbif.crawler.constants.CrawlerNodePaths;
-import org.gbif.registry.metasync.api.MetadataSynchroniser;
+import org.gbif.crawler.metasync.api.MetadataSynchronizer;
 
 import java.io.IOException;
 import java.net.URI;
@@ -62,7 +62,7 @@ import static org.mockito.Mockito.when;
 public class CrawlerCoordinatorServiceImplTest {
 
   @Mock private DatasetService datasetService;
-  @Mock private MetadataSynchroniser metadataSynchroniser;
+  @Mock private MetadataSynchronizer metadataSynchronizer;
   private CuratorFramework curator;
   private CrawlerCoordinatorServiceImpl service;
   private UUID uuid = UUID.randomUUID();
@@ -81,7 +81,7 @@ public class CrawlerCoordinatorServiceImplTest {
     curator.start();
     ZKPaths.mkdirs(curator.getZookeeperClient().getZooKeeper(), "/crawler/crawls");
 
-    service = new CrawlerCoordinatorServiceImpl(curator, datasetService, metadataSynchroniser);
+    service = new CrawlerCoordinatorServiceImpl(curator, datasetService, metadataSynchronizer);
     dataset.setType(DatasetType.OCCURRENCE);
   }
 
@@ -216,7 +216,7 @@ public class CrawlerCoordinatorServiceImplTest {
 
   @Test
   public void testSchedule() throws Exception {
-    when(metadataSynchroniser.getDatasetCount(any(), any())).thenReturn(null);
+    when(metadataSynchronizer.getDatasetCount(any(), any())).thenReturn(null);
     when(datasetService.get(uuid)).thenReturn(dataset);
     URI url = URI.create("http://gbif.org/index.html");
     Endpoint endpoint = new Endpoint();

@@ -21,15 +21,15 @@ import org.gbif.api.service.registry.MetasyncHistoryService;
 import org.gbif.common.messaging.AbstractMessageCallback;
 import org.gbif.common.messaging.MessageListener;
 import org.gbif.common.messaging.api.messages.StartMetasyncMessage;
-import org.gbif.registry.metasync.MetadataSynchroniserImpl;
-import org.gbif.registry.metasync.api.MetadataSynchroniser;
-import org.gbif.registry.metasync.api.SyncResult;
-import org.gbif.registry.metasync.protocols.biocase.BiocaseMetadataSynchroniser;
-import org.gbif.registry.metasync.protocols.digir.DigirMetadataSynchroniser;
-import org.gbif.registry.metasync.protocols.tapir.TapirMetadataSynchroniser;
-import org.gbif.registry.metasync.resulthandler.DebugHandler;
-import org.gbif.registry.metasync.resulthandler.RegistryUpdater;
-import org.gbif.registry.metasync.util.HttpClientFactory;
+import org.gbif.crawler.metasync.MetadataSynchronizerImpl;
+import org.gbif.crawler.metasync.api.MetadataSynchronizer;
+import org.gbif.crawler.metasync.api.SyncResult;
+import org.gbif.crawler.metasync.protocols.biocase.BiocaseMetadataSynchronizer;
+import org.gbif.crawler.metasync.protocols.digir.DigirMetadataSynchronizer;
+import org.gbif.crawler.metasync.protocols.tapir.TapirMetadataSynchronizer;
+import org.gbif.crawler.metasync.resulthandler.DebugHandler;
+import org.gbif.crawler.metasync.resulthandler.RegistryUpdater;
+import org.gbif.crawler.metasync.util.HttpClientFactory;
 import org.gbif.registry.ws.client.DatasetClient;
 import org.gbif.registry.ws.client.InstallationClient;
 import org.gbif.ws.client.ClientFactory;
@@ -86,25 +86,25 @@ public class MetasyncService extends AbstractIdleService {
 
   /** Handles the synchronization, but only logs debug information. */
   private static class DebugMetasyncCallback extends AbstractMessageCallback<StartMetasyncMessage> {
-    private final MetadataSynchroniser synchroniser;
+    private final MetadataSynchronizer Synchronizer;
 
     private DebugMetasyncCallback(InstallationService installationService) {
       HttpClientFactory clientFactory = new HttpClientFactory(120, TimeUnit.MINUTES);
 
-      MetadataSynchroniserImpl newSynchroniser = new MetadataSynchroniserImpl(installationService);
+      MetadataSynchronizerImpl newSynchronizer = new MetadataSynchronizerImpl(installationService);
 
-      newSynchroniser.registerProtocolHandler(
-          new DigirMetadataSynchroniser(clientFactory.provideHttpClient()));
-      newSynchroniser.registerProtocolHandler(
-          new TapirMetadataSynchroniser(clientFactory.provideHttpClient()));
-      newSynchroniser.registerProtocolHandler(
-          new BiocaseMetadataSynchroniser(clientFactory.provideHttpClient()));
-      this.synchroniser = newSynchroniser;
+      newSynchronizer.registerProtocolHandler(
+          new DigirMetadataSynchronizer(clientFactory.provideHttpClient()));
+      newSynchronizer.registerProtocolHandler(
+          new TapirMetadataSynchronizer(clientFactory.provideHttpClient()));
+      newSynchronizer.registerProtocolHandler(
+          new BiocaseMetadataSynchronizer(clientFactory.provideHttpClient()));
+      this.Synchronizer = newSynchronizer;
     }
 
     @Override
     public void handleMessage(StartMetasyncMessage message) {
-      SyncResult syncResult = synchroniser.synchroniseInstallation(message.getInstallationKey());
+      SyncResult syncResult = Synchronizer.synchronizeInstallation(message.getInstallationKey());
       LOG.info("Done syncing. Processing result.");
       handleSyncResult(syncResult);
     }

@@ -28,7 +28,7 @@ import org.gbif.api.util.comparators.EndpointPriorityComparator;
 import org.gbif.api.vocabulary.EndpointType;
 import org.gbif.common.messaging.api.messages.Platform;
 import org.gbif.crawler.constants.CrawlerNodePaths;
-import org.gbif.registry.metasync.api.MetadataSynchroniser;
+import org.gbif.crawler.metasync.api.MetadataSynchronizer;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -100,7 +100,7 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
   private final DistributedPriorityQueue<UUID> dwcaQueue;
   private final DistributedPriorityQueue<UUID> abcdaQueue;
   private final DatasetService datasetService;
-  private final MetadataSynchroniser metadataSynchroniser;
+  private final MetadataSynchronizer metadataSynchronizer;
   private final CrawlerCoordinatorServiceMetrics metrics = new CrawlerCoordinatorServiceMetrics();
 
   /**
@@ -114,11 +114,11 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
   public CrawlerCoordinatorServiceImpl(
       CuratorFramework curator,
       DatasetService datasetService,
-      MetadataSynchroniser metadataSynchroniser) {
+      MetadataSynchronizer metadataSynchronizer) {
     this.curator = checkNotNull(curator, "curator can't be null");
     this.datasetService = checkNotNull(datasetService, "datasetService can't be null");
-    this.metadataSynchroniser =
-        checkNotNull(metadataSynchroniser, "metadataSynchroniser can't be null");
+    this.metadataSynchronizer =
+        checkNotNull(metadataSynchronizer, "metadataSynchronizer can't be null");
 
     xmlQueue = buildQueue(curator, XML_CRAWL);
     dwcaQueue = buildQueue(curator, DWCA_CRAWL);
@@ -248,7 +248,7 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
 
     try {
       LOG.debug("Attempting update of declared count");
-      Long newDeclaredCount = metadataSynchroniser.getDatasetCount(dataset, endpoint);
+      Long newDeclaredCount = metadataSynchronizer.getDatasetCount(dataset, endpoint);
 
       if (newDeclaredCount != null) {
         datasetService.deleteMachineTags(datasetKey, DECLARED_COUNT);

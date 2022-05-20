@@ -15,7 +15,7 @@
   <distributionManagement>
     <site>
       <id>gh-pages</id>
-      <url>http://gbif.github.io/crawler/${project.artifactId}/</url>
+      <url>https://gbif.github.io/crawler/${project.artifactId}/</url>
     </site>
   </distributionManagement>
 
@@ -220,8 +220,8 @@
       <artifactId>crawler-ws-client</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.gbif.registry</groupId>
-      <artifactId>registry-metasync</artifactId>
+      <groupId>org.gbif.crawler</groupId>
+      <artifactId>crawler-metasync</artifactId>
     </dependency>
     <dependency>
       <groupId>org.gbif.occurrence</groupId>
