@@ -29,15 +29,15 @@ import org.gbif.crawler.metasync.api.MetadataException;
 import org.gbif.crawler.metasync.api.SyncResult;
 import org.gbif.crawler.metasync.protocols.BaseProtocolHandler;
 import org.gbif.crawler.metasync.protocols.biocase.model.BiocaseArchive;
+import org.gbif.crawler.metasync.protocols.biocase.model.BiocaseCount;
 import org.gbif.crawler.metasync.protocols.biocase.model.InventoryDataset;
 import org.gbif.crawler.metasync.protocols.biocase.model.NewDatasetInventory;
+import org.gbif.crawler.metasync.protocols.biocase.model.OldDatasetInventory;
 import org.gbif.crawler.metasync.protocols.biocase.model.abcd12.SimpleAbcd12Metadata;
 import org.gbif.crawler.metasync.protocols.biocase.model.abcd206.SimpleAbcd206Metadata;
 import org.gbif.crawler.metasync.protocols.biocase.model.capabilities.Capabilities;
 import org.gbif.crawler.metasync.util.Constants;
 import org.gbif.dwc.terms.DwcTerm;
-import org.gbif.crawler.metasync.protocols.biocase.model.BiocaseCount;
-import org.gbif.crawler.metasync.protocols.biocase.model.OldDatasetInventory;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -358,6 +358,7 @@ public class BiocaseMetadataSynchronizer extends BaseProtocolHandler {
     // Add DWC-A and ABCD-A endpoints.
     if (inventoryDataset != null) {
       for (BiocaseArchive archive : inventoryDataset.getArchives()) {
+        final boolean valid;
         Endpoint archiveEndpoint = new Endpoint();
         archiveEndpoint.setUrl(archive.getArchiveUrl());
         archiveEndpoint.addMachineTag(
@@ -368,11 +369,21 @@ public class BiocaseMetadataSynchronizer extends BaseProtocolHandler {
             && archive.getRowType().toString().equals(DwcTerm.Occurrence.qualifiedName())) {
           LOG.info("Found BioCASe occurrence DWCA {}", archive);
           archiveEndpoint.setType(EndpointType.DWC_ARCHIVE);
+          valid = true;
         } else {
-          LOG.info("Found BioCASe XML archive (or non-occurrence DWCA) {}", archive);
-          archiveEndpoint.setType(EndpointType.BIOCASE_XML_ARCHIVE);
+          if (archive.getNamespace() != null && archive.getNamespace().toASCIIString().equals(Constants.ABCD_206_SCHEMA)) {
+            archiveEndpoint.setType(EndpointType.BIOCASE_XML_ARCHIVE);
+            archiveEndpoint.addMachineTag(MachineTag.newInstance(TagName.CONCEPTUAL_SCHEMA, archive.getNamespace().toASCIIString()));
+            LOG.info("Found BioCASe XML archive (or non-occurrence DWCA) {}", archive);
+            valid = true;
+          } else {
+            LOG.info("Ignoring BioCASe XML archive (or non-occurrence DWCA) with unknown or missing schema namespace {}", archive);
+            valid = false;
+          }
         }
-        dataset.addEndpoint(archiveEndpoint);
+        if (valid) {
+          dataset.addEndpoint(archiveEndpoint);
+        }
       }
     }
 
