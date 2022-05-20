@@ -89,7 +89,7 @@
     <zookeeper.version>3.4.5</zookeeper.version>
     <hadoop-core.version>2.6.0-mr1-cdh5.16.2</hadoop-core.version>
     <hadoop-common.version>2.6.0-cdh5.16.2</hadoop-common.version>
-    <commons-beanutils.version>1.9.2</commons-beanutils.version>
+    <commons-beanutils.version>1.9.4</commons-beanutils.version>
     <commons-digester.version>3.2</commons-digester.version>
     <commons-lang.version>2.6</commons-lang.version>
     <commons-io.version>2.7</commons-io.version>
