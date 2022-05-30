@@ -4,30 +4,29 @@
   <parent>
     <groupId>org.gbif.crawler</groupId>
     <artifactId>crawler-motherpom</artifactId>
-    <version>1.13-SNAPSHOT</version>
+    <version>1.14-SNAPSHOT</version>
   </parent>
 
   <artifactId>crawler</artifactId>
   <packaging>jar</packaging>
 
   <name>Crawler :: Crawler</name>
-  <url>http://sites.gbif.org/crawler/crawler</url>
 
   <distributionManagement>
     <site>
       <id>gh-pages</id>
-      <url>http://gbif.github.io/crawler/${project.artifactId}/</url>
+      <url>https://gbif.github.io/crawler/${project.artifactId}/</url>
     </site>
   </distributionManagement>
 
   <repositories>
     <repository>
       <id>gbif-thirdparty</id>
-      <url>http://repository.gbif.org/content/repositories/thirdparty</url>
+      <url>https://repository.gbif.org/content/repositories/thirdparty</url>
     </repository>
     <repository>
       <id>gbif-all</id>
-      <url>http://repository.gbif.org/content/groups/gbif</url>
+      <url>https://repository.gbif.org/content/groups/gbif</url>
     </repository>
   </repositories>
 

@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.gbif.crawler</groupId>
     <artifactId>crawler-motherpom</artifactId>
-    <version>1.13-SNAPSHOT</version>
+    <version>1.14-SNAPSHOT</version>
   </parent>
 
   <artifactId>crawler-coordinator</artifactId>
@@ -13,12 +13,11 @@
   <name>Crawler :: Coordinator</name>
   <description>This tool listens to messages containing UUIDs of Datasets to crawl and adds them to ZooKeeper. It also
   watches for finished crawls and sends notifications.</description>
-  <url>http://sites.gbif.org/crawler/crawler-coordinator</url>
 
   <distributionManagement>
     <site>
       <id>gh-pages</id>
-      <url>http://gbif.github.io/crawler/${project.artifactId}/</url>
+      <url>https://gbif.github.io/crawler/${project.artifactId}/</url>
     </site>
   </distributionManagement>
 
@@ -29,7 +28,7 @@
   <repositories>
     <repository>
       <id>gbif-all</id>
-      <url>http://repository.gbif.org/content/groups/gbif</url>
+      <url>https://repository.gbif.org/content/groups/gbif</url>
     </repository>
   </repositories>
 
@@ -93,8 +92,8 @@
       <artifactId>gbif-postal-service</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.gbif.registry</groupId>
-      <artifactId>registry-metasync</artifactId>
+      <groupId>org.gbif.crawler</groupId>
+      <artifactId>crawler-metasync</artifactId>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>

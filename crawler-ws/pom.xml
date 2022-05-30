@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.gbif.crawler</groupId>
     <artifactId>crawler-motherpom</artifactId>
-    <version>1.13-SNAPSHOT</version>
+    <version>1.14-SNAPSHOT</version>
   </parent>
 
   <artifactId>crawler-ws</artifactId>
@@ -14,7 +14,7 @@
   <distributionManagement>
     <site>
       <id>gh-pages</id>
-      <url>http://gbif.github.io/crawler/${project.artifactId}/</url>
+      <url>https://gbif.github.io/crawler/${project.artifactId}/</url>
     </site>
   </distributionManagement>
 
