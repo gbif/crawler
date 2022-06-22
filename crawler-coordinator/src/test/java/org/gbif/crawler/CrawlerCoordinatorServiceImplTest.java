@@ -27,6 +27,7 @@ import org.gbif.crawler.metasync.api.MetadataSynchronizer;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -243,6 +244,6 @@ public class CrawlerCoordinatorServiceImplTest {
     assertEquals(11, attempt);
 
     bytes = curator.getData().forPath("/crawls/" + uuid + "/" + CrawlerNodePaths.DECLARED_COUNT);
-    assertEquals("1234", new String(bytes));
+    assertEquals("1234", new String(bytes, StandardCharsets.UTF_8));
   }
 }

@@ -15,7 +15,7 @@
  */
 package org.gbif.crawler;
 
-import com.google.common.base.Optional;
+import java.util.Optional;
 
 /**
  * Simple abstract base listener so that you can only have to implement the methods you're

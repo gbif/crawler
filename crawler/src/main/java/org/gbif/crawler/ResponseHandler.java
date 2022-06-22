@@ -19,7 +19,7 @@ import org.gbif.crawler.exception.FatalCrawlException;
 import org.gbif.crawler.exception.ProtocolException;
 import org.gbif.crawler.exception.TransportException;
 
-import com.google.common.base.Optional;
+import java.util.Optional;
 
 /**
  * Implementations of this interface will handle the response received by {@link CrawlClient}s and

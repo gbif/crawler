@@ -15,7 +15,7 @@
  */
 package org.gbif.crawler;
 
-import com.google.common.base.Optional;
+import java.util.Optional;
 
 /**
  * Used to listen for crawl events.

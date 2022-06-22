@@ -15,7 +15,6 @@
  */
 package org.gbif.crawler.protocol;
 
-import com.google.common.base.Optional;
 import org.gbif.crawler.ResponseHandler;
 
 import java.io.IOException;
@@ -93,9 +92,9 @@ public abstract class BaseParameterizedResponseHandlerTest {
     } else {
       handler.handleResponse(response);
       assertTrue(handler.isValidState());
-      assertEquals(Optional.fromNullable(contentHash), handler.getContentHash());
-      assertEquals(Optional.fromNullable(recordCount), handler.getRecordCount());
-      assertEquals(Optional.fromNullable(endOfRecords), handler.isEndOfRecords());
+      assertEquals(contentHash, handler.getContentHash().orElse(null));
+      assertEquals(recordCount, handler.getRecordCount().orElse(null));
+      assertEquals(endOfRecords, handler.isEndOfRecords().orElse(null));
     }
   }
 }

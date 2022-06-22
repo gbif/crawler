@@ -15,9 +15,10 @@
  */
 package org.gbif.crawler;
 
+import java.util.Optional;
+
 import javax.validation.constraints.Min;
 
-import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -37,7 +38,7 @@ public class CrawlContext {
 
   private boolean speculative;
 
-  private Optional<Long> lastContentHash = Optional.absent();
+  private Optional<Long> lastContentHash = Optional.empty();
 
   // Volatile because it might be set and read from different threads
   private volatile boolean aborted;

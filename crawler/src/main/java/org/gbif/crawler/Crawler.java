@@ -36,6 +36,7 @@ import org.gbif.wrangler.lock.NoLockFactory;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -45,7 +46,6 @@ import org.apache.http.HttpResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Optional;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Lists;
 
@@ -352,7 +352,7 @@ public class Crawler<CTX extends CrawlContext, REQ, RESP, RES> {
     // the diagnostics messages the providers provide us with and act on those. Best would be to
     // start a crawl with a
     // very conservative number and then increase the number of requested records dynamically.
-    int offset = responseHandler.getRecordCount().or(requestHandler.getLimit());
+    int offset = responseHandler.getRecordCount().orElse(requestHandler.getLimit());
     context.setOffset(context.getOffset() + offset);
   }
 
@@ -669,7 +669,7 @@ public class Crawler<CTX extends CrawlContext, REQ, RESP, RES> {
     }
 
     Optional<Integer> recordCount = responseHandler.getRecordCount();
-    if (responseHandler.isEndOfRecords().or(false)) {
+    if (responseHandler.isEndOfRecords().orElse(false)) {
 
       // 5, 6, 7 & 8
       nextRange(context);

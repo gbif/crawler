@@ -25,6 +25,7 @@ import org.gbif.crawler.constants.CrawlerNodePaths;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 
 import javax.annotation.concurrent.NotThreadSafe;
 
@@ -37,7 +38,6 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
-import com.google.common.base.Optional;
 
 import static org.gbif.crawler.common.ZookeeperUtils.createOrUpdate;
 import static org.gbif.crawler.common.ZookeeperUtils.updateDate;
@@ -106,7 +106,7 @@ public class CrawlerZooKeeperUpdatingListener<CTX extends CrawlContext>
       long duration,
       Optional<Integer> recordCount,
       Optional<Boolean> endOfRecords) {
-    totalRecordCount += recordCount.or(0);
+    totalRecordCount += recordCount.orElse(0);
     String crawlPath =
         CrawlerNodePaths.getCrawlInfoPath(configuration.getDatasetKey(), PAGES_CRAWLED);
     DistributedAtomicLong dal =

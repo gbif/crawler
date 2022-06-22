@@ -22,13 +22,12 @@ import org.gbif.crawler.CrawlListener;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
-
-import com.google.common.base.Optional;
 
 /**
  * This class uses SLF4J to log events that occur during crawling. It logs everything at INFO level
@@ -80,7 +79,7 @@ public class LoggingCrawlListener<CTX extends CrawlContext>
       long duration,
       Optional<Integer> recordCount,
       Optional<Boolean> endOfRecords) {
-    totalRecordCount += recordCount.or(0);
+    totalRecordCount += recordCount.orElse(0);
     LOG.info(
         "Got response for [{}], records [{}], endOfRecords [{}], retry [{}], took [{}s]",
         lastContext,
