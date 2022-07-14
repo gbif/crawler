@@ -43,7 +43,7 @@
 
     <dwc-api.version>1.37-SNAPSHOT</dwc-api.version>
     <dwca-io.version>2.12</dwca-io.version>
-    <gbif-api.version>0.167-SNAPSHOT</gbif-api.version>
+    <gbif-api.version>0.168</gbif-api.version>
     <gbif-cli.version>1.0</gbif-cli.version>
     <gbif-common-service.version>0.17</gbif-common-service.version>
     <gbif-common-ws.version>1.12</gbif-common-ws.version>
