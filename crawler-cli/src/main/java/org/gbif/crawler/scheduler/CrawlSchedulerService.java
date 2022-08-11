@@ -71,6 +71,9 @@ public class CrawlSchedulerService extends AbstractScheduledService {
   private DatasetProcessService crawlService;
   private DatasetProcessStatusService registryService;
 
+  // Current paging offset, so we don't have to start from 0 every time.
+  // (It takes about 30 minutes to go through 70,000 datasets.)
+  private PagingRequest pageable = new PagingRequest();
 
   public CrawlSchedulerService(CrawlSchedulerConfiguration configuration) {
     this.configuration = configuration;
@@ -108,9 +111,11 @@ public class CrawlSchedulerService extends AbstractScheduledService {
     }
 
     ReadableInstant now = new DateTime();
-    PagingRequest pageable = new PagingRequest();
+
     boolean isEnd = false;
 
+    long startingOffset = pageable.getOffset();
+    LOG.info("Considering datasets starting from offset {}", startingOffset);
     int numberInitiated = 0;
     int numberConsidered = 0;
     // datasets that have never been crawled are attempted on each run, but only if there is spare capacity.
@@ -119,10 +124,13 @@ public class CrawlSchedulerService extends AbstractScheduledService {
     // Remember that new datasets are always attempted on first registration and should be crawled then, so this
     // really represents a list of "bad" datasets.
     List<Dataset> neverCrawledDatasets = Lists.newArrayList();
-    while (!isEnd){
+    while (!isEnd) {
       if (numberInitiated >= availableCapacity) {
         LOG.info("Reached limit of how many crawls to initiate per iteration - capacity was calculated at [{}]",
                  availableCapacity);
+        // Could remove limit from the page to ensure not leaving any gaps
+        // although probably good enough as it is.
+        pageable.setOffset(startingOffset+numberConsidered);
         break;
       }
 
@@ -153,17 +161,23 @@ public class CrawlSchedulerService extends AbstractScheduledService {
             if (numberInitiated >= availableCapacity) {
               LOG.info("Reached limit of how many crawls to initiate per iteration - capacity was calculated at [{}]",
                   availableCapacity);
+              pageable.setOffset(startingOffset+numberConsidered);
               break;
             }
           }
 
           if (numberConsidered % 1000 == 0) {
-            LOG.info("Considered {} datasets so far", numberConsidered);
+            LOG.info("Considered {} datasets (at offset {}-{}) so far", numberConsidered, startingOffset, startingOffset+numberConsidered);
           }
         }
       }
 
       pageable.nextPage();
+    }
+
+    if (isEnd) {
+      LOG.info("Considered all {} datasets.", startingOffset+numberConsidered);
+      pageable = new PagingRequest();
     }
 
     if (!neverCrawledDatasets.isEmpty() && numberInitiated < availableCapacity) {
@@ -186,8 +200,8 @@ public class CrawlSchedulerService extends AbstractScheduledService {
       }
     }
 
-    LOG.info("Finished checking for datasets, having considered {} datasets and initiated {} crawls", numberConsidered,
-        numberInitiated);
+    LOG.info("Finished checking for datasets, having considered {} datasets (at offset {}-{}) and initiated {} crawls", numberConsidered,
+        startingOffset, startingOffset+numberConsidered, numberInitiated);
   }
 
   @Override
