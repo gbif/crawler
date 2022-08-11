@@ -18,13 +18,13 @@ package org.gbif.crawler.protocol.tapir;
 import org.gbif.crawler.exception.ProtocolException;
 import org.gbif.crawler.protocol.AbstractResponseHandler;
 
+import java.util.Optional;
+
 import javax.annotation.concurrent.NotThreadSafe;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 
 import org.codehaus.stax2.XMLStreamReader2;
-
-import com.google.common.base.Optional;
 
 /**
  * This class handles a TAPIR response.
@@ -91,13 +91,13 @@ public class TapirResponseHandler extends AbstractResponseHandler {
     if (isElement(reader, INFO_ELEMENT, true)) {
       int index = reader.getAttributeIndex(null, "totalReturned");
       if (index == -1) {
-        setRecordCount(Optional.<Integer>absent());
+        setRecordCount(Optional.empty());
       } else {
         setRecordCount(Optional.of(reader.getAttributeAsInt(index)));
       }
 
       if (reader.getAttributeIndex(null, "next") == -1) {
-        setEndOfRecords(Optional.<Boolean>absent());
+        setEndOfRecords(Optional.empty());
       } else {
         setEndOfRecords(Optional.of(false));
       }

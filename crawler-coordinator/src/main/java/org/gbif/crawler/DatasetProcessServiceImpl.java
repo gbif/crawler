@@ -22,6 +22,7 @@ import org.gbif.api.model.crawler.FinishReason;
 import org.gbif.api.model.crawler.ProcessState;
 import org.gbif.api.service.crawler.DatasetProcessService;
 
+import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
@@ -150,7 +151,7 @@ public class DatasetProcessServiceImpl implements DatasetProcessService {
       path = getCrawlInfoPath(datasetKey, DECLARED_COUNT);
       if (curator.checkExists().forPath(path) != null) {
         byte[] responseData = curator.getData().forPath(path);
-        builder.declaredCount(Long.valueOf(new String(responseData)));
+        builder.declaredCount(Long.valueOf(new String(responseData, StandardCharsets.UTF_8)));
       }
 
       // should there be no started crawling, nothing else is read for now, later we might have to

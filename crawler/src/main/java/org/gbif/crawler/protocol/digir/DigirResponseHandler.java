@@ -18,13 +18,14 @@ package org.gbif.crawler.protocol.digir;
 import org.gbif.crawler.exception.FatalCrawlException;
 import org.gbif.crawler.protocol.AbstractResponseHandler;
 
+import java.util.Optional;
+
 import javax.annotation.concurrent.NotThreadSafe;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 
 import org.codehaus.stax2.XMLStreamReader2;
 
-import com.google.common.base.Optional;
 
 /**
  * This class is not thread-safe.

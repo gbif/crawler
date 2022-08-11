@@ -23,6 +23,7 @@ import org.gbif.crawler.exception.TransportException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.NotThreadSafe;
@@ -41,7 +42,6 @@ import org.codehaus.stax2.XMLStreamWriter2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Optional;
 import com.google.common.hash.Funnels;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
@@ -74,8 +74,8 @@ public abstract class AbstractResponseHandler implements ResponseHandler<HttpRes
   private static final XMLInputFactory2 XIF = (XMLInputFactory2) XMLInputFactory.newInstance();
   private static final XMLOutputFactory2 XOF = (XMLOutputFactory2) XMLOutputFactory.newInstance();
 
-  private Optional<Integer> recordCount = Optional.absent();
-  private Optional<Boolean> endOfRecords = Optional.absent();
+  private Optional<Integer> recordCount = Optional.empty();
+  private Optional<Boolean> endOfRecords = Optional.empty();
   private Optional<Long> contentHash;
 
   private boolean validState = false;
@@ -108,9 +108,9 @@ public abstract class AbstractResponseHandler implements ResponseHandler<HttpRes
   }
 
   private void initializeInternal() {
-    recordCount = Optional.absent();
-    endOfRecords = Optional.absent();
-    contentHash = Optional.absent();
+    recordCount = Optional.empty();
+    endOfRecords = Optional.empty();
+    contentHash = Optional.empty();
     validState = false;
   }
 

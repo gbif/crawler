@@ -22,11 +22,11 @@ import org.gbif.crawler.strategy.ScientificNameRangeCrawlContext;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Optional;
 import com.google.common.io.Files;
 import com.google.common.primitives.Bytes;
 

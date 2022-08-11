@@ -18,6 +18,8 @@ package org.gbif.crawler.protocol.biocase;
 import org.gbif.crawler.exception.ProtocolException;
 import org.gbif.crawler.protocol.AbstractResponseHandler;
 
+import java.util.Optional;
+
 import javax.annotation.concurrent.NotThreadSafe;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
@@ -25,8 +27,6 @@ import javax.xml.stream.XMLStreamException;
 import org.codehaus.stax2.XMLStreamReader2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.base.Optional;
 
 /**
  * This class handles a BioCASe response.
@@ -120,13 +120,13 @@ public class BiocaseResponseHandler extends AbstractResponseHandler {
           "Found "
               + CONTENT_ELEMENT
               + " element. [{}] records, [{}] records dropped, [{}] record start, [{}] total search hits",
-          new Object[] {recordCount, recordDropped, recordStart, totalHits});
+          recordCount, recordDropped, recordStart, totalHits);
     }
   }
 
   /**
    * This tries to read an attribute of an element as an integer and returns it if found, {@link
-   * Optional#absent()} otherwise.
+   * Optional#empty()} otherwise.
    *
    * @param reader to read the attribute from, needs to be set to an element
    * @param attribute to read from the element
@@ -136,7 +136,7 @@ public class BiocaseResponseHandler extends AbstractResponseHandler {
       throws XMLStreamException {
     int index = reader.getAttributeIndex(null, attribute);
     if (index == -1) {
-      return Optional.absent();
+      return Optional.empty();
     }
 
     return Optional.of(reader.getAttributeAsInt(index));

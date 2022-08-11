@@ -26,12 +26,12 @@ import org.gbif.crawler.CrawlListener;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Charsets;
-import com.google.common.base.Optional;
 import com.google.common.primitives.Bytes;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -100,9 +100,7 @@ public class MessagingCrawlListener<CTX extends CrawlContext>
       long duration,
       Optional<Integer> recordCount,
       Optional<Boolean> endOfRecords) {
-    if (recordCount.isPresent()) {
-      totalRecordCount += recordCount.get();
-    }
+    recordCount.ifPresent(v -> totalRecordCount += v);
     this.retry = retry;
     this.duration = duration;
 
@@ -114,7 +112,7 @@ public class MessagingCrawlListener<CTX extends CrawlContext>
               retry,
               Bytes.toArray(response),
               duration,
-              recordCount,
+              recordCount.orElse(null),
               lastContext.toString(),
               platform);
       sendMessageSilently(msg);

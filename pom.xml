@@ -41,20 +41,20 @@
     <!-- Fixed to the version Curator uses, problems otherwise -->
     <freemarker.version>2.3.23</freemarker.version>
 
-    <dwc-api.version>1.27</dwc-api.version>
-    <dwca-io.version>2.8</dwca-io.version>
-    <gbif-api.version>0.167-SNAPSHOT</gbif-api.version>
+    <dwc-api.version>1.37-SNAPSHOT</dwc-api.version>
+    <dwca-io.version>2.12</dwca-io.version>
+    <gbif-api.version>0.168</gbif-api.version>
     <gbif-cli.version>1.0</gbif-cli.version>
     <gbif-common-service.version>0.17</gbif-common-service.version>
     <gbif-common-ws.version>1.12</gbif-common-ws.version>
-    <gbif-common.version>0.50</gbif-common.version>
+    <gbif-common.version>0.53</gbif-common.version>
     <gbif-httputils.version>1.3</gbif-httputils.version>
     <gbif-occurrence.version>0.122</gbif-occurrence.version>
     <gbif-parsers.version>0.59</gbif-parsers.version>
-    <gbif-postal-service.version>1.1</gbif-postal-service.version>
-    <gbif-registry.version>3.62</gbif-registry.version>
+    <gbif-postal-service.version>1.4-SNAPSHOT</gbif-postal-service.version>
+    <gbif-registry.version>3.82</gbif-registry.version>
     <gbif-wrangler.version>0.4</gbif-wrangler.version>
-    <gbif-pipelines.version>2.8.8</gbif-pipelines.version>
+    <gbif-pipelines.version>2.12.0-SNAPSHOT</gbif-pipelines.version>
     <gbif-metrics.version>0.36</gbif-metrics.version>
 
     <spring-boot.version>2.3.12.RELEASE</spring-boot.version>
@@ -114,11 +114,11 @@
   <repositories>
     <repository>
       <id>gbif-all</id>
-      <url>http://repository.gbif.org/content/groups/gbif</url>
+      <url>https://repository.gbif.org/content/groups/gbif</url>
     </repository>
     <repository>
       <id>thirdparty</id>
-      <url>http://repository.gbif.org/content/repositories/thirdparty</url>
+      <url>https://repository.gbif.org/content/repositories/thirdparty</url>
     </repository>
     <repository>
       <id>repository.cloudera.com</id>

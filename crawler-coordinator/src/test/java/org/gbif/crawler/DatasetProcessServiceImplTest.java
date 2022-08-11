@@ -22,6 +22,7 @@ import org.gbif.crawler.constants.CrawlerNodePaths;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -347,7 +348,7 @@ public class DatasetProcessServiceImplTest {
    */
   private static byte[] stringToBytes(String value) {
     if (value != null) {
-      return value.getBytes();
+      return value.getBytes(StandardCharsets.UTF_8);
     }
     return null;
   }
