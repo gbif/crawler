@@ -15,9 +15,13 @@
  */
 package org.gbif.crawler;
 
+import org.gbif.api.model.common.paging.PagingResponse;
+import org.gbif.api.model.crawler.CrawlJob;
+import org.gbif.api.model.crawler.DatasetProcessStatus;
 import org.gbif.api.model.registry.Dataset;
 import org.gbif.api.model.registry.Endpoint;
 import org.gbif.api.model.registry.MachineTag;
+import org.gbif.api.service.registry.DatasetProcessStatusService;
 import org.gbif.api.service.registry.DatasetService;
 import org.gbif.api.vocabulary.DatasetType;
 import org.gbif.api.vocabulary.EndpointType;
@@ -28,6 +32,7 @@ import org.gbif.crawler.metasync.api.MetadataSynchronizer;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -63,6 +68,7 @@ import static org.mockito.Mockito.when;
 public class CrawlerCoordinatorServiceImplTest {
 
   @Mock private DatasetService datasetService;
+  @Mock private DatasetProcessStatusService datasetProcessStatusService;
   @Mock private MetadataSynchronizer metadataSynchronizer;
   private CuratorFramework curator;
   private CrawlerCoordinatorServiceImpl service;
@@ -82,7 +88,7 @@ public class CrawlerCoordinatorServiceImplTest {
     curator.start();
     ZKPaths.mkdirs(curator.getZookeeperClient().getZooKeeper(), "/crawler/crawls");
 
-    service = new CrawlerCoordinatorServiceImpl(curator, datasetService, metadataSynchronizer);
+    service = new CrawlerCoordinatorServiceImpl(curator, datasetService, datasetProcessStatusService, metadataSynchronizer);
     dataset.setType(DatasetType.OCCURRENCE);
   }
 
@@ -218,6 +224,10 @@ public class CrawlerCoordinatorServiceImplTest {
   @Test
   public void testSchedule() throws Exception {
     when(metadataSynchronizer.getDatasetCount(any(), any())).thenReturn(null);
+    PagingResponse<DatasetProcessStatus> mockResponse = new PagingResponse<>();
+    CrawlJob mockJob = new CrawlJob(uuid, 10, EndpointType.BIOCASE, URI.create("https://gbi.org/"));
+    mockResponse.setResults(Collections.singletonList(DatasetProcessStatus.builder().datasetKey(uuid).crawlJob(mockJob).build()));
+    when(datasetProcessStatusService.listDatasetProcessStatus(any(), any())).thenReturn(mockResponse);
     when(datasetService.get(uuid)).thenReturn(dataset);
     URI url = URI.create("http://gbif.org/index.html");
     Endpoint endpoint = new Endpoint();
@@ -226,9 +236,6 @@ public class CrawlerCoordinatorServiceImplTest {
 
     dataset.getEndpoints().add(endpoint);
     dataset.getMachineTags().add(MachineTag.newInstance(CONCEPTUAL_SCHEMA, "foo"));
-    MachineTag tag = MachineTag.newInstance(CRAWL_ATTEMPT, "10");
-    tag.setKey(123);
-    dataset.getMachineTags().add(tag);
     dataset.getMachineTags().add(MachineTag.newInstance(DECLARED_COUNT, "1234"));
     service.initiateCrawl(uuid, 5, Platform.ALL);
 

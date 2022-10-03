@@ -15,6 +15,8 @@
  */
 package org.gbif.crawler.coordinator;
 
+import org.gbif.api.service.crawler.DatasetProcessService;
+import org.gbif.api.service.registry.DatasetProcessStatusService;
 import org.gbif.api.service.registry.DatasetService;
 import org.gbif.api.service.registry.InstallationService;
 import org.gbif.common.messaging.MessageListener;
@@ -28,7 +30,9 @@ import org.gbif.crawler.metasync.protocols.biocase.BiocaseMetadataSynchronizer;
 import org.gbif.crawler.metasync.protocols.digir.DigirMetadataSynchronizer;
 import org.gbif.crawler.metasync.protocols.tapir.TapirMetadataSynchronizer;
 import org.gbif.crawler.metasync.util.HttpClientFactory;
+import org.gbif.crawler.ws.client.DatasetProcessClient;
 import org.gbif.registry.ws.client.DatasetClient;
+import org.gbif.registry.ws.client.DatasetProcessStatusClient;
 import org.gbif.registry.ws.client.InstallationClient;
 import org.gbif.ws.client.ClientFactory;
 
@@ -59,6 +63,7 @@ public class CoordinatorService extends AbstractIdleService {
     // Create Registry WS Client
     ClientFactory wsClientFactory = configuration.registry.newClientFactory();
     DatasetService datasetService = wsClientFactory.newInstance(DatasetClient.class);
+    DatasetProcessStatusService datasetProcessStatusService = wsClientFactory.newInstance(DatasetProcessStatusClient.class);
     InstallationService installationService = wsClientFactory.newInstance(InstallationClient.class);
 
     HttpClientFactory clientFactory = new HttpClientFactory(30, TimeUnit.SECONDS);
@@ -72,7 +77,7 @@ public class CoordinatorService extends AbstractIdleService {
         new BiocaseMetadataSynchronizer(clientFactory.provideHttpClient()));
 
     CrawlerCoordinatorService coord =
-        new CrawlerCoordinatorServiceImpl(curator, datasetService, metadataSynchronizer);
+        new CrawlerCoordinatorServiceImpl(curator, datasetService, datasetProcessStatusService, metadataSynchronizer);
     MessageCallback<StartCrawlMessage> callback = new StartCrawlMessageCallback(coord);
 
     listener = new MessageListener(configuration.messaging.getConnectionParameters());
