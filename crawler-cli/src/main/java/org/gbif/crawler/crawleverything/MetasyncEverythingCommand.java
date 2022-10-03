@@ -28,7 +28,7 @@ import org.gbif.common.messaging.api.Message;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.StartMetasyncMessage;
 import org.gbif.registry.ws.client.InstallationClient;
-import org.gbif.ws.client.ClientFactory;
+import org.gbif.ws.client.ClientBuilder;
 
 import java.io.IOException;
 import java.util.Iterator;
@@ -36,6 +36,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import org.gbif.ws.json.JacksonJsonObjectMapperProvider;
 
 import org.kohsuke.MetaInfServices;
 import org.slf4j.Logger;
@@ -72,13 +74,14 @@ public class MetasyncEverythingCommand extends BaseCommand {
           new DefaultMessagePublisher(config.messaging.getConnectionParameters());
 
       // Create Registry WS Client
-      ClientFactory clientFactory = new ClientFactory(config.registryWsUrl);
+      ClientBuilder clientBuilder = new ClientBuilder().withObjectMapper(JacksonJsonObjectMapperProvider.getObjectMapperWithBuilderSupport());
+      InstallationService installationService = clientBuilder.withUrl(config.registryWsUrl).build(InstallationClient.class);
+
       int offset = 0;
       boolean endOfRecords = true;
       ExecutorService executor = Executors.newFixedThreadPool(20);
       AtomicInteger totalCount = new AtomicInteger();
       AtomicInteger scheduledCount = new AtomicInteger();
-      InstallationService installationService = clientFactory.newInstance(InstallationClient.class);
       do {
         Pageable request = new PagingRequest(offset, LIMIT);
         Stopwatch stopwatch = Stopwatch.createStarted();

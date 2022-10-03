@@ -27,13 +27,15 @@ import org.gbif.common.messaging.api.messages.StartCrawlMessage;
 import org.gbif.crawler.ws.client.DatasetProcessClient;
 import org.gbif.registry.ws.client.DatasetClient;
 import org.gbif.registry.ws.client.DatasetProcessStatusClient;
-import org.gbif.ws.client.ClientFactory;
+import org.gbif.ws.client.ClientBuilder;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+
+import org.gbif.ws.json.JacksonJsonObjectMapperProvider;
 
 import org.joda.time.DateTime;
 import org.joda.time.Days;
@@ -206,11 +208,11 @@ public class CrawlSchedulerService extends AbstractScheduledService {
 
   @Override
   protected void startUp() throws Exception {
+    ClientBuilder clientBuilder = new ClientBuilder().withObjectMapper(JacksonJsonObjectMapperProvider.getObjectMapperWithBuilderSupport());
     publisher = new DefaultMessagePublisher(configuration.messaging.getConnectionParameters());
-    ClientFactory clientFactory = new ClientFactory(configuration.registryWsUrl);
-    datasetService = clientFactory.newInstance(DatasetClient.class);
-    crawlService = clientFactory.newInstance(DatasetProcessClient.class);
-    registryService = clientFactory.newInstance(DatasetProcessStatusClient.class);
+    datasetService = clientBuilder.withUrl(configuration.registryWsUrl).build(DatasetClient.class);
+    crawlService = clientBuilder.withUrl(configuration.registryWsUrl).build(DatasetProcessClient.class);
+    registryService = clientBuilder.withUrl(configuration.registryWsUrl).build(DatasetProcessStatusClient.class);
   }
 
   @Override

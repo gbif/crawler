@@ -32,7 +32,6 @@ import org.gbif.crawler.metasync.resulthandler.RegistryUpdater;
 import org.gbif.crawler.metasync.util.HttpClientFactory;
 import org.gbif.registry.ws.client.DatasetClient;
 import org.gbif.registry.ws.client.InstallationClient;
-import org.gbif.ws.client.ClientFactory;
 
 import java.util.concurrent.TimeUnit;
 
@@ -55,14 +54,8 @@ public class MetasyncService extends AbstractIdleService {
 
   @Override
   protected void startUp() throws Exception {
-    ClientFactory clientFactory =
-        new ClientFactory(
-            configuration.registry.user,
-            configuration.registry.password,
-            configuration.registry.wsUrl);
-
-    DatasetService datasetService = clientFactory.newInstance(DatasetClient.class);
-    InstallationService installationService = clientFactory.newInstance(InstallationClient.class);
+    DatasetService datasetService = configuration.registry.newClientBuilder().build(DatasetClient.class);
+    InstallationService installationService = configuration.registry.newClientBuilder().build(InstallationClient.class);
 
     AbstractMessageCallback<StartMetasyncMessage> metasyncCallback;
 

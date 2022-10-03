@@ -16,13 +16,15 @@
 package org.gbif.crawler.common;
 
 import org.gbif.cli.PropertyName;
-import org.gbif.ws.client.ClientFactory;
+import org.gbif.ws.client.ClientBuilder;
 
 import javax.validation.constraints.NotNull;
 
 import com.beust.jcommander.Parameter;
 import com.google.common.base.Objects;
 import com.google.common.base.Strings;
+
+import org.gbif.ws.json.JacksonJsonObjectMapperProvider;
 
 /**
  * A configuration class which can be used to get all the details needed to create a writable
@@ -58,8 +60,8 @@ public class RegistryConfiguration {
    *
    * @return writable client factory
    */
-  public ClientFactory newClientFactory() {
+  public ClientBuilder newClientBuilder() {
     // setup writable registry client
-    return new ClientFactory(user, password, wsUrl);
+    return new ClientBuilder().withObjectMapper(JacksonJsonObjectMapperProvider.getObjectMapperWithBuilderSupport()).withUrl(wsUrl).withCredentials(user, password);
   }
 }

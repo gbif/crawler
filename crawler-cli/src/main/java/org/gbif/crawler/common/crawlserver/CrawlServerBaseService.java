@@ -72,8 +72,7 @@ public abstract class CrawlServerBaseService<T extends CrawlServerConfiguration>
     UuidSerializer serializer = new UuidSerializer();
 
     // Here we are starting as many queue listeners as specified in the configuration, each will
-    // process one queue
-    // item at a time but they will all call the same QueueConsumer instance for this
+    // process one queue item at a time but they will all call the same QueueConsumer instance for this
     for (int i = 0; i < config.poolSize; i++) {
       QueueBuilder<UUID> builder =
           QueueBuilder.builder(curator, consumer, serializer, queuedCrawls);

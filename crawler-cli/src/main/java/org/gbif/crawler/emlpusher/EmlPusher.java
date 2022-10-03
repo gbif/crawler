@@ -20,7 +20,6 @@ import org.gbif.dwc.Archive;
 import org.gbif.dwc.DwcFiles;
 import org.gbif.dwc.UnsupportedArchiveException;
 import org.gbif.registry.ws.client.DatasetClient;
-import org.gbif.ws.client.ClientFactory;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -54,11 +53,8 @@ public class EmlPusher {
   }
 
   private EmlPusher(PushEmlConfiguration cfg) {
-    LOG.info("Connecting to registry {} as user {}", cfg.registryWsUrl, cfg.registryUser);
-
-    ClientFactory clientFactory =
-        new ClientFactory(cfg.registryUser, cfg.registryPassword, cfg.registryWsUrl);
-    datasetService = clientFactory.newInstance(DatasetClient.class);
+    LOG.info("Connecting to registry {} as user {}", cfg.registry.wsUrl, cfg.registry.user);
+    datasetService = cfg.registry.newClientBuilder().build(DatasetClient.class);
 
     rootDirectory = cfg.unpackedRepository;
   }

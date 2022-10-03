@@ -26,7 +26,7 @@ import org.gbif.common.messaging.api.Message;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.StartCrawlMessage;
 import org.gbif.registry.ws.client.DatasetClient;
-import org.gbif.ws.client.ClientFactory;
+import org.gbif.ws.client.ClientBuilder;
 
 import java.io.IOException;
 import java.util.Random;
@@ -34,6 +34,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import org.gbif.ws.json.JacksonJsonObjectMapperProvider;
 
 import org.kohsuke.MetaInfServices;
 import org.slf4j.Logger;
@@ -70,8 +72,8 @@ public class CrawlEverythingCommand extends BaseCommand {
           new DefaultMessagePublisher(config.messaging.getConnectionParameters());
 
       // Create Registry WS Client
-      ClientFactory clientFactory = new ClientFactory(config.registryWsUrl);
-      DatasetService datasetService = clientFactory.newInstance(DatasetClient.class);
+      ClientBuilder clientBuilder = new ClientBuilder().withObjectMapper(JacksonJsonObjectMapperProvider.getObjectMapperWithBuilderSupport());
+      DatasetService datasetService = clientBuilder.withUrl(config.registryWsUrl).build(DatasetClient.class);
 
       ExecutorService executor = Executors.newFixedThreadPool(20);
 

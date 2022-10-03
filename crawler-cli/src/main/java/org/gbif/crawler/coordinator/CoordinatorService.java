@@ -15,7 +15,6 @@
  */
 package org.gbif.crawler.coordinator;
 
-import org.gbif.api.service.crawler.DatasetProcessService;
 import org.gbif.api.service.registry.DatasetProcessStatusService;
 import org.gbif.api.service.registry.DatasetService;
 import org.gbif.api.service.registry.InstallationService;
@@ -30,11 +29,9 @@ import org.gbif.crawler.metasync.protocols.biocase.BiocaseMetadataSynchronizer;
 import org.gbif.crawler.metasync.protocols.digir.DigirMetadataSynchronizer;
 import org.gbif.crawler.metasync.protocols.tapir.TapirMetadataSynchronizer;
 import org.gbif.crawler.metasync.util.HttpClientFactory;
-import org.gbif.crawler.ws.client.DatasetProcessClient;
 import org.gbif.registry.ws.client.DatasetClient;
 import org.gbif.registry.ws.client.DatasetProcessStatusClient;
 import org.gbif.registry.ws.client.InstallationClient;
-import org.gbif.ws.client.ClientFactory;
 
 import java.util.concurrent.TimeUnit;
 
@@ -61,10 +58,9 @@ public class CoordinatorService extends AbstractIdleService {
     curator = configuration.zooKeeper.getCuratorFramework();
 
     // Create Registry WS Client
-    ClientFactory wsClientFactory = configuration.registry.newClientFactory();
-    DatasetService datasetService = wsClientFactory.newInstance(DatasetClient.class);
-    DatasetProcessStatusService datasetProcessStatusService = wsClientFactory.newInstance(DatasetProcessStatusClient.class);
-    InstallationService installationService = wsClientFactory.newInstance(InstallationClient.class);
+    DatasetService datasetService = configuration.registry.newClientBuilder().build(DatasetClient.class);
+    DatasetProcessStatusService datasetProcessStatusService = configuration.registry.newClientBuilder().build(DatasetProcessStatusClient.class);
+    InstallationService installationService = configuration.registry.newClientBuilder().build(InstallationClient.class);
 
     HttpClientFactory clientFactory = new HttpClientFactory(30, TimeUnit.SECONDS);
     MetadataSynchronizerImpl metadataSynchronizer =
