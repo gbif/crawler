@@ -20,7 +20,7 @@ import org.gbif.crawler.DatasetProcessServiceImpl;
 import org.gbif.crawler.pipelines.PipelinesRunningProcessService;
 import org.gbif.crawler.pipelines.PipelinesRunningProcessServiceImpl;
 import org.gbif.registry.ws.client.DatasetClient;
-import org.gbif.ws.client.ClientFactory;
+import org.gbif.ws.client.ClientBuilder;
 import org.gbif.ws.json.JacksonJsonObjectMapperProvider;
 
 import java.util.concurrent.Executor;
@@ -79,9 +79,9 @@ public class CrawlerConfiguration {
       @Qualifier("zookeeperResource") CuratorWrapper curatorWrapper,
       @Value("${crawler.registry.ws.url}") String url)
       throws Exception {
-    ClientFactory clientFactory = new ClientFactory(url);
+    ClientBuilder clientBuilder = new ClientBuilder().withUrl(url);
     return new PipelinesRunningProcessServiceImpl(
-        curatorWrapper.getCurator(), clientFactory.newInstance(DatasetClient.class));
+        curatorWrapper.getCurator(), clientBuilder.build(DatasetClient.class));
   }
 
   @Bean("zookeeperResource")

@@ -16,7 +16,8 @@
 package org.gbif.crawler.common;
 
 import org.gbif.cli.PropertyName;
-import org.gbif.ws.client.ClientFactory;
+import org.gbif.ws.client.ClientBuilder;
+import org.gbif.ws.json.JacksonJsonObjectMapperProvider;
 
 import javax.validation.constraints.NotNull;
 
@@ -58,8 +59,10 @@ public class RegistryConfiguration {
    *
    * @return writable client factory
    */
-  public ClientFactory newClientFactory() {
+  public ClientBuilder newClientBuilder() {
     // setup writable registry client
-    return new ClientFactory(user, password, wsUrl);
+    return new ClientBuilder().withUrl(wsUrl)
+                .withCredentials(user, password)
+                .withObjectMapper(JacksonJsonObjectMapperProvider.getObjectMapperWithBuilderSupport());
   }
 }

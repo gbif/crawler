@@ -30,7 +30,7 @@ import org.gbif.crawler.metasync.protocols.tapir.TapirMetadataSynchronizer;
 import org.gbif.crawler.metasync.util.HttpClientFactory;
 import org.gbif.registry.ws.client.DatasetClient;
 import org.gbif.registry.ws.client.InstallationClient;
-import org.gbif.ws.client.ClientFactory;
+import org.gbif.ws.client.ClientBuilder;
 
 import java.util.concurrent.TimeUnit;
 
@@ -57,9 +57,9 @@ public class CoordinatorService extends AbstractIdleService {
     curator = configuration.zooKeeper.getCuratorFramework();
 
     // Create Registry WS Client
-    ClientFactory wsClientFactory = configuration.registry.newClientFactory();
-    DatasetService datasetService = wsClientFactory.newInstance(DatasetClient.class);
-    InstallationService installationService = wsClientFactory.newInstance(InstallationClient.class);
+    ClientBuilder wsClientBuilder = configuration.registry.newClientBuilder();
+    DatasetService datasetService = wsClientBuilder.build(DatasetClient.class);
+    InstallationService installationService = wsClientBuilder.build(InstallationClient.class);
 
     HttpClientFactory clientFactory = new HttpClientFactory(30, TimeUnit.SECONDS);
     MetadataSynchronizerImpl metadataSynchronizer =

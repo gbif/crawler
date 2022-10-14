@@ -88,7 +88,7 @@ public abstract class DownloadCrawlConsumer extends CrawlConsumer {
 
     // DWCA downloaded archives are kept as archiveRepository/datasetKey/datasetKey.dwca and
     // datasetKey.attempt.dwca
-    // ABCDA downloaded archives are kept as archiveRepsotiroy/datasetKey.abcda and
+    // ABCDA downloaded archives are kept as archiveRepository/datasetKey.abcda and
     // datasetKey.attempt.abcda
     final File datasetDirectory = getArchiveDirectory(archiveRepository, datasetKey);
     datasetDirectory.mkdirs();

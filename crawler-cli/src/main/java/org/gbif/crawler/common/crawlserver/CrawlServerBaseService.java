@@ -86,7 +86,7 @@ public abstract class CrawlServerBaseService<T extends CrawlServerConfiguration>
 
   /**
    * Called once on startup to generate a consumer for new crawls. The single consumer instance
-   * needs to be threadsafe.
+   * needs to be thread-safe.
    *
    * @return the crawl consumer for this zookeeper queue
    */

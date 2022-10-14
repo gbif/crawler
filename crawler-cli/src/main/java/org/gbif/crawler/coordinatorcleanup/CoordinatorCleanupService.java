@@ -23,7 +23,8 @@ import org.gbif.api.service.registry.DatasetProcessStatusService;
 import org.gbif.crawler.constants.CrawlerNodePaths;
 import org.gbif.crawler.ws.client.DatasetProcessClient;
 import org.gbif.registry.ws.client.DatasetProcessStatusClient;
-import org.gbif.ws.client.ClientFactory;
+import org.gbif.ws.client.ClientBuilder;
+import org.gbif.ws.json.JacksonJsonObjectMapperProvider;
 
 import java.io.IOException;
 import java.util.Set;
@@ -113,13 +114,12 @@ public class CoordinatorCleanupService extends AbstractScheduledService {
 
   @Override
   protected void startUp() throws Exception {
-    ClientFactory clientFactory =
-        new ClientFactory(
-            configuration.registry.user,
-            configuration.registry.password,
-            configuration.registry.wsUrl);
-    service = clientFactory.newInstance(DatasetProcessClient.class);
-    registryService = clientFactory.newInstance(DatasetProcessStatusClient.class);
+    ClientBuilder clientBuilder = new ClientBuilder().withUrl(configuration.registry.wsUrl)
+      .withCredentials(configuration.registry.user, configuration.registry.password)
+      .withObjectMapper(JacksonJsonObjectMapperProvider.getObjectMapperWithBuilderSupport());
+
+    service = clientBuilder.build(DatasetProcessClient.class);
+    registryService = clientBuilder.build(DatasetProcessStatusClient.class);
     curator = initializeCurator();
     MAPPER.enable(SerializationFeature.INDENT_OUTPUT);
   }

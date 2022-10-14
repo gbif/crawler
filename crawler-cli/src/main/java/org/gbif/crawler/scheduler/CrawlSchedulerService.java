@@ -27,7 +27,8 @@ import org.gbif.common.messaging.api.messages.StartCrawlMessage;
 import org.gbif.crawler.ws.client.DatasetProcessClient;
 import org.gbif.registry.ws.client.DatasetClient;
 import org.gbif.registry.ws.client.DatasetProcessStatusClient;
-import org.gbif.ws.client.ClientFactory;
+import org.gbif.ws.client.ClientBuilder;
+import org.gbif.ws.json.JacksonJsonObjectMapperProvider;
 
 import java.util.Collections;
 import java.util.List;
@@ -207,10 +208,11 @@ public class CrawlSchedulerService extends AbstractScheduledService {
   @Override
   protected void startUp() throws Exception {
     publisher = new DefaultMessagePublisher(configuration.messaging.getConnectionParameters());
-    ClientFactory clientFactory = new ClientFactory(configuration.registryWsUrl);
-    datasetService = clientFactory.newInstance(DatasetClient.class);
-    crawlService = clientFactory.newInstance(DatasetProcessClient.class);
-    registryService = clientFactory.newInstance(DatasetProcessStatusClient.class);
+    ClientBuilder clientBuilder = new ClientBuilder().withUrl(configuration.registryWsUrl)
+                                      .withObjectMapper(JacksonJsonObjectMapperProvider.getObjectMapperWithBuilderSupport());
+    datasetService = clientBuilder.build(DatasetClient.class);
+    crawlService = clientBuilder.build(DatasetProcessClient.class);
+    registryService = clientBuilder.build(DatasetProcessStatusClient.class);
   }
 
   @Override
