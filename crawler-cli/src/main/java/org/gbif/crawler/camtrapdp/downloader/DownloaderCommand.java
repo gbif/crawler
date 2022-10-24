@@ -29,7 +29,7 @@ public class DownloaderCommand extends ServiceCommand {
   private final CamtrapDpConfiguration configuration = new CamtrapDpConfiguration();
 
   public DownloaderCommand() {
-    super("cameratrapdpdownloader");
+    super("camtrapdpdownloader");
   }
 
   @Override
