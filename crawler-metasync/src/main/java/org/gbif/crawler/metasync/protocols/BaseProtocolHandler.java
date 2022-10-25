@@ -16,13 +16,13 @@ package org.gbif.crawler.metasync.protocols;
 import org.gbif.api.model.registry.Contact;
 import org.gbif.api.vocabulary.Language;
 import org.gbif.common.parsers.LicenseParser;
-import org.gbif.crawler.metasync.util.converter.DateTimeConverter;
-import org.gbif.crawler.metasync.util.converter.UriConverter;
 import org.gbif.crawler.metasync.api.ErrorCode;
 import org.gbif.crawler.metasync.api.MetadataException;
 import org.gbif.crawler.metasync.api.MetadataProtocolHandler;
+import org.gbif.crawler.metasync.util.converter.DateTimeConverter;
 import org.gbif.crawler.metasync.util.converter.LanguageConverter;
 import org.gbif.crawler.metasync.util.converter.PeriodConverter;
+import org.gbif.crawler.metasync.util.converter.UriConverter;
 
 import java.io.IOException;
 import java.net.URI;

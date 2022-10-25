@@ -1,6 +1,4 @@
 /*
- * Copyright 2020 Global Biodiversity Information Facility (GBIF)
- *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -17,7 +15,7 @@ package org.gbif.crawler.camtrapdp.downloader;
 
 import org.gbif.api.model.crawler.CrawlJob;
 import org.gbif.common.messaging.api.MessagePublisher;
-import org.gbif.common.messaging.api.messages.AbcdaDownloadFinishedMessage;
+import org.gbif.common.messaging.api.messages.CamtrapDpDownloadFinishedMessage;
 import org.gbif.common.messaging.api.messages.DatasetBasedMessage;
 import org.gbif.common.messaging.api.messages.Platform;
 import org.gbif.crawler.camtrapdp.CamtrapDpConfiguration;
@@ -45,7 +43,7 @@ public class CamtrapDpCrawlConsumer extends DownloadCrawlConsumer {
 
   @Override
   protected DatasetBasedMessage createFinishedMessage(CrawlJob crawlJob) {
-    return new AbcdaDownloadFinishedMessage(
+    return new CamtrapDpDownloadFinishedMessage(
         crawlJob.getDatasetKey(),
         crawlJob.getTargetUrl(),
         crawlJob.getAttempt(),

@@ -1,6 +1,4 @@
 /*
- * Copyright 2020 Global Biodiversity Information Facility (GBIF)
- *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -19,9 +17,9 @@ import org.gbif.cli.Command;
 import org.gbif.cli.service.ServiceCommand;
 import org.gbif.crawler.camtrapdp.CamtrapDpConfiguration;
 
-import com.google.common.util.concurrent.Service;
-
 import org.kohsuke.MetaInfServices;
+
+import com.google.common.util.concurrent.Service;
 
 @MetaInfServices(Command.class)
 public class DownloaderCommand extends ServiceCommand {
