@@ -60,6 +60,6 @@ public class CamtrapDpCrawlConsumer extends DownloadCrawlConsumer {
 
   @Override
   protected File getArchiveDirectory(File archiveRepository, UUID datasetKey) {
-    return archiveRepository;
+    return new File(archiveRepository, datasetKey.toString());
   }
 }
