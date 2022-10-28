@@ -445,6 +445,7 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
             true);
         break;
       case DWC_ARCHIVE:
+      case CAMTRAP_DP_v_0_4:
       case EML:
         break;
       default:
