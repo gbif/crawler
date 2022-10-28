@@ -371,13 +371,18 @@ public class BiocaseMetadataSynchronizer extends BaseProtocolHandler {
           archiveEndpoint.setType(EndpointType.DWC_ARCHIVE);
           valid = true;
         } else {
-          if (archive.getNamespace() != null && archive.getNamespace().toASCIIString().equals(Constants.ABCD_206_SCHEMA)) {
+          if (archive.getNamespace() != null
+              && archive.getNamespace().toASCIIString().equals(Constants.ABCD_206_SCHEMA)) {
             archiveEndpoint.setType(EndpointType.BIOCASE_XML_ARCHIVE);
-            archiveEndpoint.addMachineTag(MachineTag.newInstance(TagName.CONCEPTUAL_SCHEMA, archive.getNamespace().toASCIIString()));
+            archiveEndpoint.addMachineTag(
+                MachineTag.newInstance(
+                    TagName.CONCEPTUAL_SCHEMA, archive.getNamespace().toASCIIString()));
             LOG.info("Found BioCASe XML archive (or non-occurrence DWCA) {}", archive);
             valid = true;
           } else {
-            LOG.info("Ignoring BioCASe XML archive (or non-occurrence DWCA) with unknown or missing schema namespace {}", archive);
+            LOG.info(
+                "Ignoring BioCASe XML archive (or non-occurrence DWCA) with unknown or missing schema namespace {}",
+                archive);
             valid = false;
           }
         }

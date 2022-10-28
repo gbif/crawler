@@ -1,6 +1,4 @@
 /*
- * Copyright 2020 Global Biodiversity Information Facility (GBIF)
- *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -18,12 +16,12 @@ package org.gbif.crawler.protocol.biocase;
 import org.gbif.crawler.ResponseHandler;
 import org.gbif.crawler.protocol.BaseParameterizedResponseHandlerTest;
 
+import java.util.stream.Stream;
+
 import org.apache.http.HttpResponse;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-
-import java.util.stream.Stream;
 
 public class ParameterizedBiocaseResponseHandlerTest extends BaseParameterizedResponseHandlerTest {
 

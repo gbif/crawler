@@ -1,6 +1,4 @@
 /*
- * Copyright 2020 Global Biodiversity Information Facility (GBIF)
- *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -17,14 +15,13 @@ package org.gbif.crawler.common;
 
 import org.gbif.cli.PropertyName;
 import org.gbif.ws.client.ClientBuilder;
+import org.gbif.ws.json.JacksonJsonObjectMapperProvider;
 
 import javax.validation.constraints.NotNull;
 
 import com.beust.jcommander.Parameter;
 import com.google.common.base.Objects;
 import com.google.common.base.Strings;
-
-import org.gbif.ws.json.JacksonJsonObjectMapperProvider;
 
 /**
  * A configuration class which can be used to get all the details needed to create a writable
@@ -62,6 +59,8 @@ public class RegistryConfiguration {
    */
   public ClientBuilder newClientBuilder() {
     // setup writable registry client
-    return new ClientBuilder().withObjectMapper(JacksonJsonObjectMapperProvider.getObjectMapperWithBuilderSupport()).withUrl(wsUrl).withCredentials(user, password);
+    return new ClientBuilder().withUrl(wsUrl)
+                .withCredentials(user, password)
+                .withObjectMapper(JacksonJsonObjectMapperProvider.getObjectMapperWithBuilderSupport());
   }
 }

@@ -11,10 +11,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gbif.crawler.dwca.downloader;
+package org.gbif.crawler.camtrapdp.downloader;
 
 import org.gbif.cli.Command;
 import org.gbif.cli.service.ServiceCommand;
+import org.gbif.crawler.camtrapdp.CamtrapDpConfiguration;
 
 import org.kohsuke.MetaInfServices;
 
@@ -23,10 +24,10 @@ import com.google.common.util.concurrent.Service;
 @MetaInfServices(Command.class)
 public class DownloaderCommand extends ServiceCommand {
 
-  private final DownloaderConfiguration configuration = new DownloaderConfiguration();
+  private final CamtrapDpConfiguration configuration = new CamtrapDpConfiguration();
 
   public DownloaderCommand() {
-    super("downloader");
+    super("camtrapdpdownloader");
   }
 
   @Override

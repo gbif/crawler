@@ -1,6 +1,4 @@
 /*
- * Copyright 2020 Global Biodiversity Information Facility (GBIF)
- *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -88,7 +86,7 @@ public abstract class DownloadCrawlConsumer extends CrawlConsumer {
 
     // DWCA downloaded archives are kept as archiveRepository/datasetKey/datasetKey.dwca and
     // datasetKey.attempt.dwca
-    // ABCDA downloaded archives are kept as archiveRepsotiroy/datasetKey.abcda and
+    // ABCDA downloaded archives are kept as archiveRepository/datasetKey.abcda and
     // datasetKey.attempt.abcda
     final File datasetDirectory = getArchiveDirectory(archiveRepository, datasetKey);
     datasetDirectory.mkdirs();

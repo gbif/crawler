@@ -26,13 +26,13 @@ import org.gbif.api.vocabulary.EndpointType;
 import org.gbif.api.vocabulary.InstallationType;
 import org.gbif.api.vocabulary.TagName;
 import org.gbif.api.vocabulary.TagNamespace;
-import org.gbif.crawler.metasync.protocols.digir.model.DigirContact;
-import org.gbif.crawler.metasync.protocols.digir.model.DigirMetadata;
-import org.gbif.crawler.metasync.protocols.digir.model.DigirResource;
 import org.gbif.crawler.metasync.api.ErrorCode;
 import org.gbif.crawler.metasync.api.MetadataException;
 import org.gbif.crawler.metasync.api.SyncResult;
 import org.gbif.crawler.metasync.protocols.BaseProtocolHandler;
+import org.gbif.crawler.metasync.protocols.digir.model.DigirContact;
+import org.gbif.crawler.metasync.protocols.digir.model.DigirMetadata;
+import org.gbif.crawler.metasync.protocols.digir.model.DigirResource;
 import org.gbif.crawler.metasync.util.Constants;
 
 import java.net.URI;

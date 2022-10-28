@@ -11,36 +11,46 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gbif.crawler.dwca.downloader;
+package org.gbif.crawler.camtrapdp;
 
 import org.gbif.cli.PropertyName;
+import org.gbif.crawler.common.RegistryConfiguration;
 import org.gbif.crawler.common.crawlserver.CrawlServerConfiguration;
 
 import java.io.File;
 
+import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
 import com.beust.jcommander.Parameter;
+import com.beust.jcommander.ParametersDelegate;
 import com.google.common.base.Objects;
 
-public class DownloaderConfiguration extends CrawlServerConfiguration {
+public class CamtrapDpConfiguration extends CrawlServerConfiguration {
+
+  public static final String CAMTRAPDP_SUFFIX = ".camtrapdp";
+
+  @ParametersDelegate @Valid @NotNull
+  public RegistryConfiguration registry = new RegistryConfiguration();
 
   @Parameter(names = "--archive-repository")
   @NotNull
   public File archiveRepository;
 
-  // High 30 minute default is to cope with a very slow DWCA webservice.
   @Parameter(names = "--http-timeout", description = "Timeout for HTTP calls, milliseconds")
   @Min(1 * 1000)
   @PropertyName("httpTimeout")
-  public int httpTimeout = 30 * 60 * 1000;
+  public int httpTimeout = 10 * 60 * 1000;
 
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
-        .add("super", super.toString())
+        .add("registry", registry)
+        .add("messaging", messaging)
+        .add("zooKeeper", zooKeeper)
         .add("archiveRepository", archiveRepository)
+        .add("poolSize", poolSize)
         .toString();
   }
 }

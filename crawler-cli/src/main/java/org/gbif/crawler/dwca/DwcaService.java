@@ -1,6 +1,4 @@
 /*
- * Copyright 2020 Global Biodiversity Information Facility (GBIF)
- *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -49,7 +47,7 @@ public abstract class DwcaService extends AbstractIdleService {
   @Override
   protected void startUp() throws Exception {
     publisher = new DefaultMessagePublisher(config.messaging.getConnectionParameters());
-    // dwca messages are rather long running processes. Only prefetch one message at a time
+    // dwca messages are rather long-running processes. Only prefetch one message at a time
     listener = new MessageListener(config.messaging.getConnectionParameters(), 1);
     datasetService = config.registry.newClientBuilder().build(DatasetClient.class);
     bindListeners();

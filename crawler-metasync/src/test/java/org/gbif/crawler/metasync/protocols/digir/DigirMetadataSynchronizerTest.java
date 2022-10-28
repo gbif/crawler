@@ -78,9 +78,7 @@ public class DigirMetadataSynchronizerTest {
     assertTrue(synchronizer.canHandle(installation));
   }
 
-  /**
-   * A simple test to see if multiple datasets are parsed successfully.
-   */
+  /** A simple test to see if multiple datasets are parsed successfully. */
   @Test
   public void testAddedDatasets() throws Exception {
     when(client.execute(any(HttpGet.class))).thenReturn(prepareResponse(200, "digir/test1.xml"));
@@ -156,9 +154,7 @@ public class DigirMetadataSynchronizerTest {
         syncResult.existingDatasets.get(dataset).getTitle());
   }
 
-  /**
-   * Make sure the determination of DiGIR endpoint type is catching DIGIR_MANIS.
-   */
+  /** Make sure the determination of DiGIR endpoint type is catching DIGIR_MANIS. */
   @Test
   public void testDetermineEndpointType() {
     // populate map with namespace (conceptualSchema) / schemaLocation key value pair

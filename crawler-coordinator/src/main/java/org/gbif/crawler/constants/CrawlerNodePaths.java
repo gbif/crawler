@@ -1,6 +1,4 @@
 /*
- * Copyright 2020 Global Biodiversity Information Facility (GBIF)
- *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -35,6 +33,7 @@ public class CrawlerNodePaths {
   public static final String XML_CRAWL = "xml";
   public static final String DWCA_CRAWL = "dwca";
   public static final String ABCDA_CRAWL = "abcda";
+  public static final String CAMETRAPDP_CRAWL = "camtrapdp";
   public static final String STARTED_CRAWLING = "startedCrawling";
   public static final String FINISHED_CRAWLING = "finishedCrawling";
   public static final String FINISHED_REASON = "finishedReason";

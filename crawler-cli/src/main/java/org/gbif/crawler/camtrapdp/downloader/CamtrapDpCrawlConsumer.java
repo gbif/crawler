@@ -11,14 +11,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gbif.crawler.abcda.downloader;
+package org.gbif.crawler.camtrapdp.downloader;
 
 import org.gbif.api.model.crawler.CrawlJob;
 import org.gbif.common.messaging.api.MessagePublisher;
-import org.gbif.common.messaging.api.messages.AbcdaDownloadFinishedMessage;
+import org.gbif.common.messaging.api.messages.CamtrapDpDownloadFinishedMessage;
 import org.gbif.common.messaging.api.messages.DatasetBasedMessage;
 import org.gbif.common.messaging.api.messages.Platform;
-import org.gbif.crawler.abcda.AbcdaConfiguration;
+import org.gbif.crawler.camtrapdp.CamtrapDpConfiguration;
 import org.gbif.crawler.common.DownloadCrawlConsumer;
 
 import java.io.File;
@@ -29,11 +29,11 @@ import org.apache.curator.framework.CuratorFramework;
 
 /**
  * Consumer of the crawler queue that runs the actual ABCD archive download and emits a
- * AbcdaDownloadFinishedMessage when done.
+ * CamtrapDpDownloadFinishedMessage when done.
  */
-public class AbcdaCrawlConsumer extends DownloadCrawlConsumer {
+public class CamtrapDpCrawlConsumer extends DownloadCrawlConsumer {
 
-  public AbcdaCrawlConsumer(
+  public CamtrapDpCrawlConsumer(
       CuratorFramework curator,
       MessagePublisher publisher,
       File archiveRepository,
@@ -43,7 +43,7 @@ public class AbcdaCrawlConsumer extends DownloadCrawlConsumer {
 
   @Override
   protected DatasetBasedMessage createFinishedMessage(CrawlJob crawlJob) {
-    return new AbcdaDownloadFinishedMessage(
+    return new CamtrapDpDownloadFinishedMessage(
         crawlJob.getDatasetKey(),
         crawlJob.getTargetUrl(),
         crawlJob.getAttempt(),
@@ -55,11 +55,11 @@ public class AbcdaCrawlConsumer extends DownloadCrawlConsumer {
 
   @Override
   protected String getSuffix() {
-    return AbcdaConfiguration.ABCDA_SUFFIX;
+    return CamtrapDpConfiguration.CAMTRAPDP_SUFFIX;
   }
 
   @Override
   protected File getArchiveDirectory(File archiveRepository, UUID datasetKey) {
-    return archiveRepository;
+    return new File(archiveRepository, datasetKey.toString());
   }
 }

@@ -1,6 +1,4 @@
 /*
- * Copyright 2020 Global Biodiversity Information Facility (GBIF)
- *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -61,6 +59,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.gbif.api.vocabulary.TagName.CRAWL_ATTEMPT;
 import static org.gbif.api.vocabulary.TagName.DECLARED_COUNT;
 import static org.gbif.crawler.constants.CrawlerNodePaths.ABCDA_CRAWL;
+import static org.gbif.crawler.constants.CrawlerNodePaths.CAMETRAPDP_CRAWL;
 import static org.gbif.crawler.constants.CrawlerNodePaths.CRAWL_INFO;
 import static org.gbif.crawler.constants.CrawlerNodePaths.DWCA_CRAWL;
 import static org.gbif.crawler.constants.CrawlerNodePaths.QUEUED_CRAWLS;
@@ -103,6 +102,7 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
   private final DistributedPriorityQueue<UUID> xmlQueue;
   private final DistributedPriorityQueue<UUID> dwcaQueue;
   private final DistributedPriorityQueue<UUID> abcdaQueue;
+  private final DistributedPriorityQueue<UUID> camtrapDpQueue;
   private final DatasetService datasetService;
   private final DatasetProcessStatusService datasetProcessStatusService;
   private final MetadataSynchronizer metadataSynchronizer;
@@ -130,6 +130,7 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
     xmlQueue = buildQueue(curator, XML_CRAWL);
     dwcaQueue = buildQueue(curator, DWCA_CRAWL);
     abcdaQueue = buildQueue(curator, ABCDA_CRAWL);
+    camtrapDpQueue = buildQueue(curator, CAMETRAPDP_CRAWL);
   }
 
   @Override
@@ -233,6 +234,7 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
         datasetKey,
         isAbcdArchive(endpoint.get()),
         isDarwinCoreArchive(endpoint.get()),
+        isCamtrapDpArchive(endpoint.get()),
         priority,
         dataBytes);
     LOG.info("Crawling endpoint [{}] for dataset [{}]", endpoint.get().getUrl(), datasetKey);
@@ -292,6 +294,16 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
    */
   private static boolean isAbcdArchive(Endpoint endpoint) {
     return EndpointType.BIOCASE_XML_ARCHIVE == endpoint.getType();
+  }
+
+  /**
+   * Determine if an endpoint should be handled as an CamtrapDP archive or not.
+   *
+   * @param endpoint
+   * @return
+   */
+  private static boolean isCamtrapDpArchive(Endpoint endpoint) {
+    return EndpointType.CAMTRAP_DP_v_0_4 == endpoint.getType();
   }
 
   /**
@@ -440,6 +452,7 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
             true);
         break;
       case DWC_ARCHIVE:
+      case CAMTRAP_DP_v_0_4:
       case EML:
         break;
       default:
@@ -582,7 +595,7 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
    * @param dataBytes to put into ZooKeeper
    */
   private void queueCrawlJob(
-      UUID datasetKey, boolean isAbcda, boolean isDwca, int priority, byte[] dataBytes) {
+      UUID datasetKey, boolean isAbcda, boolean isDwca, boolean isCamtrapDp, int priority, byte[] dataBytes) {
     try {
       // This could in theory fail when two coordinators are running at the same time. They'll have
       // confirmed if this
@@ -599,6 +612,8 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
         abcdaQueue.put(datasetKey, priority);
       } else if (isDwca) {
         dwcaQueue.put(datasetKey, priority);
+      } else if (isCamtrapDp) {
+        camtrapDpQueue.put(datasetKey, priority);
       } else {
         xmlQueue.put(datasetKey, priority);
       }
