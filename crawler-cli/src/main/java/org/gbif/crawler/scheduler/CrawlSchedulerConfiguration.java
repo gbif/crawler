@@ -30,6 +30,7 @@ import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
+
 public class CrawlSchedulerConfiguration {
 
   @Parameter(names = "--crawler-ws", description = "URL where the crawler WS is running")

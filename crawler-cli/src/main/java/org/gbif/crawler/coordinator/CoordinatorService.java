@@ -13,6 +13,7 @@
  */
 package org.gbif.crawler.coordinator;
 
+import org.gbif.api.service.registry.DatasetProcessStatusService;
 import org.gbif.api.service.registry.DatasetService;
 import org.gbif.api.service.registry.InstallationService;
 import org.gbif.common.messaging.MessageListener;
@@ -27,8 +28,8 @@ import org.gbif.crawler.metasync.protocols.digir.DigirMetadataSynchronizer;
 import org.gbif.crawler.metasync.protocols.tapir.TapirMetadataSynchronizer;
 import org.gbif.crawler.metasync.util.HttpClientFactory;
 import org.gbif.registry.ws.client.DatasetClient;
+import org.gbif.registry.ws.client.DatasetProcessStatusClient;
 import org.gbif.registry.ws.client.InstallationClient;
-import org.gbif.ws.client.ClientBuilder;
 
 import java.util.concurrent.TimeUnit;
 
@@ -55,9 +56,9 @@ public class CoordinatorService extends AbstractIdleService {
     curator = configuration.zooKeeper.getCuratorFramework();
 
     // Create Registry WS Client
-    ClientBuilder wsClientBuilder = configuration.registry.newClientBuilder();
-    DatasetService datasetService = wsClientBuilder.build(DatasetClient.class);
-    InstallationService installationService = wsClientBuilder.build(InstallationClient.class);
+    DatasetService datasetService = configuration.registry.newClientBuilder().build(DatasetClient.class);
+    DatasetProcessStatusService datasetProcessStatusService = configuration.registry.newClientBuilder().build(DatasetProcessStatusClient.class);
+    InstallationService installationService = configuration.registry.newClientBuilder().build(InstallationClient.class);
 
     HttpClientFactory clientFactory = new HttpClientFactory(30, TimeUnit.SECONDS);
     MetadataSynchronizerImpl metadataSynchronizer =
@@ -70,7 +71,7 @@ public class CoordinatorService extends AbstractIdleService {
         new BiocaseMetadataSynchronizer(clientFactory.provideHttpClient()));
 
     CrawlerCoordinatorService coord =
-        new CrawlerCoordinatorServiceImpl(curator, datasetService, metadataSynchronizer);
+        new CrawlerCoordinatorServiceImpl(curator, datasetService, datasetProcessStatusService, metadataSynchronizer);
     MessageCallback<StartCrawlMessage> callback = new StartCrawlMessageCallback(coord);
 
     listener = new MessageListener(configuration.messaging.getConnectionParameters());

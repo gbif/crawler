@@ -71,14 +71,14 @@ public class MetasyncEverythingCommand extends BaseCommand {
           new DefaultMessagePublisher(config.messaging.getConnectionParameters());
 
       // Create Registry WS Client
-      ClientBuilder clientBuilder = new ClientBuilder().withUrl(config.registryWsUrl)
-                                      .withObjectMapper(JacksonJsonObjectMapperProvider.getObjectMapperWithBuilderSupport());
+      ClientBuilder clientBuilder = new ClientBuilder().withObjectMapper(JacksonJsonObjectMapperProvider.getObjectMapperWithBuilderSupport());
+      InstallationService installationService = clientBuilder.withUrl(config.registryWsUrl).build(InstallationClient.class);
+
       int offset = 0;
       boolean endOfRecords = true;
       ExecutorService executor = Executors.newFixedThreadPool(20);
       AtomicInteger totalCount = new AtomicInteger();
       AtomicInteger scheduledCount = new AtomicInteger();
-      InstallationService installationService = clientBuilder.build(InstallationClient.class);
       do {
         Pageable request = new PagingRequest(offset, LIMIT);
         Stopwatch stopwatch = Stopwatch.createStarted();

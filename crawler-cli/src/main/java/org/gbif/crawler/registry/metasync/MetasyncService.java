@@ -30,8 +30,6 @@ import org.gbif.crawler.metasync.resulthandler.RegistryUpdater;
 import org.gbif.crawler.metasync.util.HttpClientFactory;
 import org.gbif.registry.ws.client.DatasetClient;
 import org.gbif.registry.ws.client.InstallationClient;
-import org.gbif.ws.client.ClientBuilder;
-import org.gbif.ws.json.JacksonJsonObjectMapperProvider;
 
 import java.util.concurrent.TimeUnit;
 
@@ -54,13 +52,8 @@ public class MetasyncService extends AbstractIdleService {
 
   @Override
   protected void startUp() throws Exception {
-
-    ClientBuilder clientBuilder = new ClientBuilder().withUrl(configuration.registry.wsUrl)
-      .withCredentials(configuration.registry.user, configuration.registry.password)
-      .withObjectMapper(JacksonJsonObjectMapperProvider.getObjectMapperWithBuilderSupport());
-
-    DatasetService datasetService = clientBuilder.build(DatasetClient.class);
-    InstallationService installationService = clientBuilder.build(InstallationClient.class);
+    DatasetService datasetService = configuration.registry.newClientBuilder().build(DatasetClient.class);
+    InstallationService installationService = configuration.registry.newClientBuilder().build(InstallationClient.class);
 
     AbstractMessageCallback<StartMetasyncMessage> metasyncCallback;
 

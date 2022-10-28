@@ -69,10 +69,8 @@ public class CrawlEverythingCommand extends BaseCommand {
           new DefaultMessagePublisher(config.messaging.getConnectionParameters());
 
       // Create Registry WS Client
-      ClientBuilder clientBuilder = new ClientBuilder().withUrl(config.registryWsUrl)
-        .withObjectMapper(JacksonJsonObjectMapperProvider.getObjectMapperWithBuilderSupport());
-
-      DatasetService datasetService = clientBuilder.build(DatasetClient.class);
+      ClientBuilder clientBuilder = new ClientBuilder().withObjectMapper(JacksonJsonObjectMapperProvider.getObjectMapperWithBuilderSupport());
+      DatasetService datasetService = clientBuilder.withUrl(config.registryWsUrl).build(DatasetClient.class);
 
       ExecutorService executor = Executors.newFixedThreadPool(20);
 

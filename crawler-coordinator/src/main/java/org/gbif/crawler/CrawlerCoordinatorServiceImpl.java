@@ -15,10 +15,14 @@ package org.gbif.crawler;
 
 import org.gbif.api.exception.ServiceUnavailableException;
 import org.gbif.api.model.Constants;
+import org.gbif.api.model.common.paging.PagingRequest;
+import org.gbif.api.model.common.paging.PagingResponse;
 import org.gbif.api.model.crawler.CrawlJob;
+import org.gbif.api.model.crawler.DatasetProcessStatus;
 import org.gbif.api.model.registry.Dataset;
 import org.gbif.api.model.registry.Endpoint;
 import org.gbif.api.model.registry.MachineTag;
+import org.gbif.api.service.registry.DatasetProcessStatusService;
 import org.gbif.api.service.registry.DatasetService;
 import org.gbif.api.util.MachineTagUtils;
 import org.gbif.api.util.comparators.EndpointCreatedComparator;
@@ -100,6 +104,7 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
   private final DistributedPriorityQueue<UUID> abcdaQueue;
   private final DistributedPriorityQueue<UUID> camtrapDpQueue;
   private final DatasetService datasetService;
+  private final DatasetProcessStatusService datasetProcessStatusService;
   private final MetadataSynchronizer metadataSynchronizer;
   private final CrawlerCoordinatorServiceMetrics metrics = new CrawlerCoordinatorServiceMetrics();
 
@@ -114,9 +119,11 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
   public CrawlerCoordinatorServiceImpl(
       CuratorFramework curator,
       DatasetService datasetService,
+      DatasetProcessStatusService datasetProcessStatusService,
       MetadataSynchronizer metadataSynchronizer) {
     this.curator = checkNotNull(curator, "curator can't be null");
     this.datasetService = checkNotNull(datasetService, "datasetService can't be null");
+    this.datasetProcessStatusService = checkNotNull(datasetProcessStatusService, "datasetProcessStatusService can't be null");
     this.metadataSynchronizer =
         checkNotNull(metadataSynchronizer, "metadataSynchronizer can't be null");
 
@@ -469,7 +476,7 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
 
      There is no easy solution to this: We could first take out a lock by creating the path for this UUID but then
      we'd need to change the DatasetProcessService to ignore everything that doesn't have content which means an extra
-     check for each dataset. Another solution would be to write a dummy attempt number (like 0 or -1)but if a crawler
+     check for each dataset. Another solution would be to write a dummy attempt number (like 0 or -1) but if a crawler
      then picks up this crawl before we can change it to the proper number the crawler will use the wrong number.
      All other solutions I could come up with were relatively complicated as well.
 
@@ -479,7 +486,7 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
 
      This is definitely a design flaw and should be addressed at some point.
     */
-    int attempt = getAttempt(datasetKey, dataset, endpoint);
+    int attempt = getAttempt(datasetKey, endpoint);
 
     return new CrawlJob(datasetKey, endpoint.getType(), endpoint.getUrl(), attempt, properties);
   }
@@ -488,22 +495,20 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
    * This retrieves the current attempt of crawling for this dataset, increments it by one (in the
    * registry) and returns this new number.
    */
-  private int getAttempt(UUID datasetKey, Dataset dataset, Endpoint endpoint) {
+  private int getAttempt(UUID datasetKey, Endpoint endpoint) {
     int attempt = 0;
 
-    // Find the maximum last attempt ID if any exist, deleting all others
-    for (MachineTag tag : MachineTagUtils.list(dataset, CRAWL_ATTEMPT)) {
-      int tagKey = tag.getKey();
-      try {
-        int taggedAttempt = Integer.parseInt(tag.getValue());
-        attempt = Math.max(taggedAttempt, attempt);
-      } catch (NumberFormatException e) {
-        // Swallow it - the tag is corrupt and should be removed
-      }
-      datasetService.deleteMachineTag(datasetKey, tagKey);
+    PagingResponse<DatasetProcessStatus> list = datasetProcessStatusService.listDatasetProcessStatus(datasetKey,
+      new PagingRequest());
+
+    if (!list.getResults().isEmpty() ) {
+      DatasetProcessStatus status = list.getResults().get(0); // last crawl
+      attempt = status.getCrawlJob().getAttempt();
     }
-    // store updated tag
+
     attempt++;
+
+    datasetService.deleteMachineTags(datasetKey, CRAWL_ATTEMPT);
     MachineTag tag =
         new MachineTag(
             CRAWL_ATTEMPT.getNamespace().getNamespace(),

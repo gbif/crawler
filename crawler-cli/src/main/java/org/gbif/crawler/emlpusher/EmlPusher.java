@@ -18,8 +18,6 @@ import org.gbif.dwc.Archive;
 import org.gbif.dwc.DwcFiles;
 import org.gbif.dwc.UnsupportedArchiveException;
 import org.gbif.registry.ws.client.DatasetClient;
-import org.gbif.ws.client.ClientBuilder;
-import org.gbif.ws.json.JacksonJsonObjectMapperProvider;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -53,11 +51,8 @@ public class EmlPusher {
   }
 
   private EmlPusher(PushEmlConfiguration cfg) {
-    LOG.info("Connecting to registry {} as user {}", cfg.registryWsUrl, cfg.registryUser);
-    ClientBuilder clientBuilder = new ClientBuilder().withUrl(cfg.registryWsUrl)
-                                    .withCredentials(cfg.registryUser, cfg.registryPassword)
-                                    .withObjectMapper(JacksonJsonObjectMapperProvider.getObjectMapperWithBuilderSupport());
-    datasetService = clientBuilder.build(DatasetClient.class);
+    LOG.info("Connecting to registry {} as user {}", cfg.registry.wsUrl, cfg.registry.user);
+    datasetService = cfg.registry.newClientBuilder().build(DatasetClient.class);
 
     rootDirectory = cfg.unpackedRepository;
   }

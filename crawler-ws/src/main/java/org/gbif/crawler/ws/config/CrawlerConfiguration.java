@@ -77,9 +77,9 @@ public class CrawlerConfiguration {
       @Qualifier("zookeeperResource") CuratorWrapper curatorWrapper,
       @Value("${crawler.registry.ws.url}") String url)
       throws Exception {
-    ClientBuilder clientBuilder = new ClientBuilder().withUrl(url);
+    ClientBuilder clientBuilder = new ClientBuilder().withObjectMapper(JacksonJsonObjectMapperProvider.getObjectMapperWithBuilderSupport());
     return new PipelinesRunningProcessServiceImpl(
-        curatorWrapper.getCurator(), clientBuilder.build(DatasetClient.class));
+        curatorWrapper.getCurator(), clientBuilder.withUrl(url).build(DatasetClient.class));
   }
 
   @Bean("zookeeperResource")

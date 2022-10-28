@@ -208,12 +208,11 @@ public class CrawlSchedulerService extends AbstractScheduledService {
 
   @Override
   protected void startUp() throws Exception {
+    ClientBuilder clientBuilder = new ClientBuilder().withObjectMapper(JacksonJsonObjectMapperProvider.getObjectMapperWithBuilderSupport());
     publisher = new DefaultMessagePublisher(configuration.messaging.getConnectionParameters());
-    ClientBuilder clientBuilder = new ClientBuilder().withUrl(configuration.registryWsUrl)
-                                      .withObjectMapper(JacksonJsonObjectMapperProvider.getObjectMapperWithBuilderSupport());
-    datasetService = clientBuilder.build(DatasetClient.class);
-    crawlService = clientBuilder.build(DatasetProcessClient.class);
-    registryService = clientBuilder.build(DatasetProcessStatusClient.class);
+    datasetService = clientBuilder.withUrl(configuration.registryWsUrl).build(DatasetClient.class);
+    crawlService = clientBuilder.withUrl(configuration.registryWsUrl).build(DatasetProcessClient.class);
+    registryService = clientBuilder.withUrl(configuration.registryWsUrl).build(DatasetProcessStatusClient.class);
   }
 
   @Override
