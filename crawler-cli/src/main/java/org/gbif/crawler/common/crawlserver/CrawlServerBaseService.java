@@ -17,6 +17,8 @@ import org.gbif.common.messaging.DefaultMessagePublisher;
 import org.gbif.common.messaging.api.MessagePublisher;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
@@ -28,8 +30,6 @@ import org.apache.curator.framework.recipes.queue.QueueBuilder;
 import org.apache.curator.framework.recipes.queue.QueueConsumer;
 import org.apache.curator.framework.recipes.queue.QueueSerializer;
 
-import com.google.common.base.Charsets;
-import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.AbstractIdleService;
 
 /**
@@ -49,7 +49,7 @@ public abstract class CrawlServerBaseService<T extends CrawlServerConfiguration>
 
   private CuratorFramework curator;
   private MessagePublisher publisher;
-  private final Set<DistributedPriorityQueue<UUID>> queues = Sets.newHashSet();
+  private final Set<DistributedPriorityQueue<UUID>> queues = new HashSet<>();
 
   /**
    * @param queuedCrawls zookeeper queue name to watch for new crawls
@@ -112,12 +112,12 @@ public abstract class CrawlServerBaseService<T extends CrawlServerConfiguration>
 
     @Override
     public byte[] serialize(UUID item) {
-      return item.toString().getBytes(Charsets.UTF_8);
+      return item.toString().getBytes(StandardCharsets.UTF_8);
     }
 
     @Override
     public UUID deserialize(byte[] bytes) {
-      return UUID.fromString(new String(bytes, Charsets.UTF_8));
+      return UUID.fromString(new String(bytes, StandardCharsets.UTF_8));
     }
   }
 }

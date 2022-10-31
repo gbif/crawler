@@ -13,6 +13,8 @@
  */
 package org.gbif.crawler.metasync.protocols.biocase.model;
 
+import lombok.ToString;
+
 import org.apache.commons.digester3.annotations.rules.BeanPropertySetter;
 import org.apache.commons.digester3.annotations.rules.ObjectCreate;
 import org.apache.commons.digester3.annotations.rules.SetProperty;
@@ -20,6 +22,7 @@ import org.apache.commons.digester3.annotations.rules.SetProperty;
 import com.google.common.base.Objects;
 
 @ObjectCreate(pattern = "response/content/capabilities/SupportedSchemas/Concept")
+@ToString
 public class BiocaseConcept {
 
   @SetProperty(
@@ -59,12 +62,4 @@ public class BiocaseConcept {
     this.name = name;
   }
 
-  @Override
-  public String toString() {
-    return Objects.toStringHelper(this)
-        .add("searchable", searchable)
-        .add("dataType", dataType)
-        .add("name", name)
-        .toString();
-  }
 }

@@ -15,25 +15,26 @@ package org.gbif.crawler.metasync.protocols.biocase.model.capabilities;
 
 import org.gbif.crawler.metasync.util.Constants;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import lombok.ToString;
 
 import org.apache.commons.digester3.annotations.rules.CallMethod;
 import org.apache.commons.digester3.annotations.rules.CallParam;
 import org.apache.commons.digester3.annotations.rules.ObjectCreate;
 import org.apache.commons.digester3.annotations.rules.SetNext;
 
-import com.google.common.base.Objects;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-
 @ObjectCreate(pattern = "response")
+@ToString
 public class Capabilities {
 
-  private final Map<String, String> versions = Maps.newHashMap();
+  private final Map<String, String> versions = new HashMap<>();
 
-  private final List<SupportedSchema> supportedSchemas = Lists.newArrayList();
+  private final List<SupportedSchema> supportedSchemas = new ArrayList<>();
 
   public Map<String, String> getVersions() {
     return Collections.unmodifiableMap(versions);
@@ -68,11 +69,4 @@ public class Capabilities {
     return abcd12 ? Constants.ABCD_12_SCHEMA : null;
   }
 
-  @Override
-  public String toString() {
-    return Objects.toStringHelper(this)
-        .add("versions", versions)
-        .add("supportedSchemas", supportedSchemas)
-        .toString();
-  }
 }

@@ -18,6 +18,8 @@ import java.io.IOException;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
+import lombok.ToString;
+
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.ExponentialBackoffRetry;
@@ -33,6 +35,7 @@ import com.google.common.base.Objects;
  * fully.
  */
 @SuppressWarnings("PublicField")
+@ToString
 public class ZooKeeperConfiguration {
 
   @Parameter(
@@ -77,13 +80,4 @@ public class ZooKeeperConfiguration {
     return curator;
   }
 
-  @Override
-  public String toString() {
-    return Objects.toStringHelper(this)
-        .add("connectionString", connectionString)
-        .add("namespace", namespace)
-        .add("baseSleepTime", baseSleepTime)
-        .add("maxRetries", maxRetries)
-        .toString();
-  }
 }

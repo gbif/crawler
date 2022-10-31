@@ -17,6 +17,7 @@ import org.gbif.api.model.registry.Contact;
 import org.gbif.api.vocabulary.ContactType;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.digester3.annotations.rules.BeanPropertySetter;
@@ -31,12 +32,12 @@ import com.google.common.collect.Lists;
 public class SimpleAbcd12Metadata {
 
   private static final String BASE_PATH = "response/content/DataSets/DataSet/";
-  private final List<String> termsOfUses = Lists.newArrayList();
-  private final List<String> iprDeclarations = Lists.newArrayList();
-  private final List<String> rightsUrls = Lists.newArrayList();
-  private final List<String> organisationNames = Lists.newArrayList();
-  private final List<String> supplierUrls = Lists.newArrayList();
-  private final List<Contact> contacts = Lists.newArrayList();
+  private final List<String> termsOfUses = new ArrayList<>();
+  private final List<String> iprDeclarations = new ArrayList<>();
+  private final List<String> rightsUrls = new ArrayList<>();
+  private final List<String> organisationNames = new ArrayList<>();
+  private final List<String> supplierUrls = new ArrayList<>();
+  private final List<Contact> contacts = new ArrayList<>();
 
   @BeanPropertySetter(pattern = BASE_PATH + "OriginalSource/SourceName")
   private String code;

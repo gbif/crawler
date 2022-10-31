@@ -20,9 +20,11 @@ import java.io.File;
 import javax.validation.constraints.Min;
 
 import com.beust.jcommander.Parameter;
-import com.google.common.base.Objects;
+
+import lombok.ToString;
 
 @SuppressWarnings("PublicField")
+@ToString(callSuper = true)
 public class XmlCrawlServerConfiguration extends CrawlServerConfiguration {
 
   @Parameter(
@@ -42,13 +44,4 @@ public class XmlCrawlServerConfiguration extends CrawlServerConfiguration {
       description = "An optional directory where all the responses will be saved")
   public File responseArchive;
 
-  @Override
-  public String toString() {
-    return Objects.toStringHelper(this)
-        .add("super", super.toString())
-        .add("minLockDelay", minLockDelay)
-        .add("maxLockDelay", maxLockDelay)
-        .add("responseArchive", responseArchive)
-        .toString();
-  }
 }

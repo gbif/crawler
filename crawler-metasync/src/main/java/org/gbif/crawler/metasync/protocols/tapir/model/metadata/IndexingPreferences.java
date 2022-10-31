@@ -13,6 +13,8 @@
  */
 package org.gbif.crawler.metasync.protocols.tapir.model.metadata;
 
+import lombok.ToString;
+
 import org.apache.commons.digester3.annotations.rules.ObjectCreate;
 import org.apache.commons.digester3.annotations.rules.SetProperty;
 import org.joda.time.DateTime;
@@ -25,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.Objects;
 
 @ObjectCreate(pattern = "response/metadata/indexingPreferences")
+@ToString
 public class IndexingPreferences {
 
   private static final Logger LOG = LoggerFactory.getLogger(IndexingPreferences.class);
@@ -73,12 +76,4 @@ public class IndexingPreferences {
     this.frequency = frequency;
   }
 
-  @Override
-  public String toString() {
-    return Objects.toStringHelper(this)
-        .add("startTime", parsedStartTime)
-        .add("duration", duration)
-        .add("frequency", frequency)
-        .toString();
-  }
 }

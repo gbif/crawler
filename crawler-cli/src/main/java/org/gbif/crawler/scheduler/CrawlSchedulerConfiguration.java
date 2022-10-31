@@ -16,6 +16,8 @@ package org.gbif.crawler.scheduler;
 import org.gbif.cli.PropertyName;
 import org.gbif.common.messaging.config.MessagingConfiguration;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -26,11 +28,10 @@ import javax.validation.constraints.NotNull;
 import com.beust.jcommander.DynamicParameter;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParametersDelegate;
-import com.google.common.base.Objects;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 
+import lombok.ToString;
 
+@ToString
 public class CrawlSchedulerConfiguration {
 
   @Parameter(names = "--crawler-ws", description = "URL where the crawler WS is running")
@@ -74,20 +75,9 @@ public class CrawlSchedulerConfiguration {
           "Unique keys of installations, datasets or publishers which will"
               + "be omitted from crawling.  To aid usability, a sensible "
               + "description is given which each key")
-  public Map<String, String> omittedKeys = Maps.newHashMap();
+  public Map<String, String> omittedKeys = new HashMap<>();
 
   @Parameter(names = "--supportedTypes", description = "Types of dataset that can be crawled")
-  public List<String> supportedTypes = Lists.newArrayList();
+  public List<String> supportedTypes = new ArrayList<>();
 
-  @Override
-  public String toString() {
-    return Objects.toStringHelper(this)
-        .add("crawlerWsUrl", crawlerWsUrl)
-        .add("registryWsUrl", registryWsUrl)
-        .add("interval", interval)
-        .add("maxLastCrawledInDays", maxLastCrawledInDays)
-        .add("maximumCrawls", maximumCrawls)
-        .add("messaging", messaging)
-        .toString();
-  }
 }

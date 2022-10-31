@@ -22,6 +22,8 @@ import javax.annotation.concurrent.ThreadSafe;
 
 import com.google.common.base.Objects;
 
+import lombok.ToString;
+
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -39,6 +41,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * <p>This object is immutable.
  */
 @ThreadSafe
+@ToString(callSuper = true)
 public class DigirCrawlConfiguration extends CrawlConfiguration {
 
   private final String resourceCode;
@@ -83,8 +86,4 @@ public class DigirCrawlConfiguration extends CrawlConfiguration {
     return Objects.hashCode(super.hashCode(), resourceCode, manis);
   }
 
-  @Override
-  public String toString() {
-    return toStringHelper().add("resourceCode", resourceCode).add("manis", manis).toString();
-  }
 }

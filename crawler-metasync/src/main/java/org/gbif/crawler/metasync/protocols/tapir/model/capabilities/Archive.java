@@ -15,6 +15,8 @@ package org.gbif.crawler.metasync.protocols.tapir.model.capabilities;
 
 import java.net.URI;
 
+import lombok.ToString;
+
 import org.apache.commons.digester3.annotations.rules.ObjectCreate;
 import org.apache.commons.digester3.annotations.rules.SetProperty;
 import org.joda.time.DateTime;
@@ -22,6 +24,7 @@ import org.joda.time.DateTime;
 import com.google.common.base.Objects;
 
 @ObjectCreate(pattern = "response/capabilities/archives/archive")
+@ToString
 public class Archive {
 
   private static final String BASE_PATH = "response/capabilities/archives/archive";
@@ -92,15 +95,4 @@ public class Archive {
     this.outputModel = outputModel;
   }
 
-  @Override
-  public String toString() {
-    return Objects.toStringHelper(this)
-        .add("format", format)
-        .add("location", location)
-        .add("creation", creation)
-        .add("compression", compression)
-        .add("numberOfRecords", numberOfRecords)
-        .add("outputModel", outputModel)
-        .toString();
-  }
 }

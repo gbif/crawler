@@ -14,8 +14,12 @@
 package org.gbif.crawler.metasync.protocols.digir.model;
 
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import lombok.ToString;
 
 import org.apache.commons.digester3.annotations.rules.BeanPropertySetter;
 import org.apache.commons.digester3.annotations.rules.CallMethod;
@@ -23,14 +27,11 @@ import org.apache.commons.digester3.annotations.rules.CallParam;
 import org.apache.commons.digester3.annotations.rules.ObjectCreate;
 import org.apache.commons.digester3.annotations.rules.SetNext;
 
-import com.google.common.base.Objects;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
-
 @ObjectCreate(pattern = "response/content/metadata/provider/host")
+@ToString
 public class DigirHost {
 
-  private final Set<URI> relatedInformation = Sets.newHashSet();
+  private final Set<URI> relatedInformation = new HashSet<>();
 
   @BeanPropertySetter(pattern = "response/content/metadata/provider/host/name")
   private String name;
@@ -41,7 +42,7 @@ public class DigirHost {
   @BeanPropertySetter(pattern = "response/content/metadata/provider/host/abstract")
   private String description;
 
-  private final List<DigirContact> contacts = Lists.newArrayList();
+  private final List<DigirContact> contacts = new ArrayList<>();
 
   @CallMethod(pattern = "response/content/metadata/provider/host/relatedInformation")
   public void addRelatedInformation(
@@ -87,13 +88,4 @@ public class DigirHost {
     return contacts;
   }
 
-  @Override
-  public String toString() {
-    return Objects.toStringHelper(this)
-        .add("relatedInformation", relatedInformation)
-        .add("name", name)
-        .add("code", code)
-        .add("description", description)
-        .toString();
-  }
 }

@@ -14,9 +14,14 @@
 package org.gbif.crawler.metasync.protocols.digir.model;
 
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import lombok.ToString;
 
 import org.apache.commons.digester3.annotations.rules.BeanPropertySetter;
 import org.apache.commons.digester3.annotations.rules.CallMethod;
@@ -25,16 +30,12 @@ import org.apache.commons.digester3.annotations.rules.ObjectCreate;
 import org.apache.commons.digester3.annotations.rules.SetNext;
 import org.joda.time.DateTime;
 
-import com.google.common.base.Objects;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
-
 @ObjectCreate(pattern = "response/content/metadata/provider/resource")
+@ToString
 public class DigirResource {
 
-  private final Set<URI> relatedInformation = Sets.newHashSet();
-  private final List<DigirContact> contacts = Lists.newArrayList();
+  private final Set<URI> relatedInformation = new HashSet<>();
+  private final List<DigirContact> contacts = new ArrayList<>();
 
   @BeanPropertySetter(pattern = "response/content/metadata/provider/resource/name")
   private String name;
@@ -54,7 +55,7 @@ public class DigirResource {
   @BeanPropertySetter(pattern = "response/content/metadata/provider/resource/useRestrictions")
   private String useRestrictions;
   /** Maps from namespace to schema location. */
-  private Map<String, URI> conceptualSchemas = Maps.newHashMap();
+  private Map<String, URI> conceptualSchemas = new HashMap<>();
 
   @BeanPropertySetter(pattern = "response/content/metadata/provider/resource/recordIdentifier")
   private String recordIdentifier;
@@ -222,25 +223,4 @@ public class DigirResource {
     this.maxInventoryResponseRecords = maxInventoryResponseRecords;
   }
 
-  @Override
-  public String toString() {
-    return Objects.toStringHelper(this)
-        .add("name", name)
-        .add("code", code)
-        .add("relatedInformation", relatedInformation)
-        .add("contacts", contacts)
-        .add("description", description)
-        .add("keywords", keywords)
-        .add("citation", citation)
-        .add("useRestrictions", useRestrictions)
-        .add("conceptualSchemas", conceptualSchemas)
-        .add("recordIdentifier", recordIdentifier)
-        .add("recordBasis", recordBasis)
-        .add("numberOfRecords", numberOfRecords)
-        .add("dateLastUpdated", dateLastUpdated)
-        .add("minQueryTermLength", minQueryTermLength)
-        .add("maxSearchResponseRecords", maxSearchResponseRecords)
-        .add("maxInventoryResponseRecords", maxInventoryResponseRecords)
-        .toString();
-  }
 }

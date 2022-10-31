@@ -30,6 +30,7 @@ import org.gbif.common.messaging.api.messages.PipelinesDwcaMessage;
 import org.gbif.common.messaging.api.messages.PipelinesInterpretedMessage;
 import org.gbif.common.messaging.api.messages.PipelinesXmlMessage;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -94,7 +95,7 @@ public class PipelineMessageFactory {
     checkNotNull(endpoints, "endpoints can't be null");
 
     // Filter out all Endpoints that we can't crawl
-    List<Endpoint> result = Lists.newArrayList();
+    List<Endpoint> result = new ArrayList<>();
     for (Endpoint endpoint : endpoints) {
       if (EndpointPriorityComparator.PRIORITIES.contains(endpoint.getType())) {
         result.add(endpoint);

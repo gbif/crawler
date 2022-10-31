@@ -31,6 +31,7 @@ import org.gbif.registry.ws.client.DatasetProcessStatusClient;
 import org.gbif.ws.client.ClientBuilder;
 import org.gbif.ws.json.JacksonJsonObjectMapperProvider;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
@@ -45,7 +46,6 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
 import com.google.common.base.Joiner;
-import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractScheduledService;
 
 /**
@@ -125,7 +125,7 @@ public class CrawlSchedulerService extends AbstractScheduledService {
     // data can be found.  At the end of a run, any available slots will be used on these datasets.
     // Remember that new datasets are always attempted on first registration and should be crawled then, so this
     // really represents a list of "bad" datasets.
-    List<Dataset> neverCrawledDatasets = Lists.newArrayList();
+    List<Dataset> neverCrawledDatasets = new ArrayList<>();
     while (!isEnd) {
       if (numberInitiated >= availableCapacity) {
         LOG.info("Reached limit of how many crawls to initiate per iteration - capacity was calculated at [{}]",

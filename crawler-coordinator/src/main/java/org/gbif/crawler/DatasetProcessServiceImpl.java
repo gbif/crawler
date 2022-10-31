@@ -23,8 +23,10 @@ import org.gbif.api.service.crawler.DatasetProcessService;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -45,9 +47,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Charsets;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -142,7 +141,7 @@ public class DatasetProcessServiceImpl implements DatasetProcessService {
       if (curator.checkExists().forPath(path) != null) {
         byte[] responseData = curator.getData().forPath(path);
         if (responseData != null) {
-          builder.crawlContext(new String(responseData, Charsets.UTF_8));
+          builder.crawlContext(new String(responseData, StandardCharsets.UTF_8));
         }
       }
 
@@ -170,7 +169,7 @@ public class DatasetProcessServiceImpl implements DatasetProcessService {
           builder.finishedCrawling(asDate(responseData));
 
           responseData = curator.getData().forPath(getCrawlInfoPath(datasetKey, FINISHED_REASON));
-          builder.finishReason(FinishReason.valueOf(new String(responseData)));
+          builder.finishReason(FinishReason.valueOf(new String(responseData, StandardCharsets.UTF_8)));
         }
 
         builder.pagesCrawled(getCounter(crawlPath, PAGES_CRAWLED).orElse(0L));
@@ -215,14 +214,14 @@ public class DatasetProcessServiceImpl implements DatasetProcessService {
     List<UUID> pendingUuids = getPendingCrawlUuids(XML_CRAWL);
     pendingUuids.addAll(getPendingCrawlUuids(DWCA_CRAWL));
     List<String> allCrawls = getChildren(buildPath(CRAWL_INFO), false);
-    List<UUID> allCrawlUuids = Lists.newArrayList();
+    List<UUID> allCrawlUuids = new ArrayList<>();
     for (String crawl : allCrawls) {
       allCrawlUuids.add(UUID.fromString(crawl));
     }
 
     allCrawlUuids.removeAll(pendingUuids);
 
-    return Sets.newHashSet(getDatasetProcessStatuses(allCrawlUuids));
+    return new HashSet<>(getDatasetProcessStatuses(allCrawlUuids));
   }
 
   @Override
@@ -277,7 +276,7 @@ public class DatasetProcessServiceImpl implements DatasetProcessService {
       completionService.submit(() -> getDatasetProcessStatus(queueKey));
     }
 
-    List<DatasetProcessStatus> processStatuses = Lists.newArrayList();
+    List<DatasetProcessStatus> processStatuses = new ArrayList<>();
 
     for (int i = 0; i < queueKeys.size(); i++) {
       try {
@@ -322,7 +321,7 @@ public class DatasetProcessServiceImpl implements DatasetProcessService {
       String path = getCrawlInfoPath(datasetKey, statePath);
       if (curator.checkExists().forPath(path) != null) {
         byte[] responseData = curator.getData().forPath(path);
-        return ProcessState.valueOf(new String(responseData));
+        return ProcessState.valueOf(new String(responseData, StandardCharsets.UTF_8));
       }
     } catch (Exception e) {
     }
@@ -341,7 +340,7 @@ public class DatasetProcessServiceImpl implements DatasetProcessService {
    */
   private List<UUID> getQueueKeys(final String path, Iterable<String> queueIdentifiers) {
     CompletionService<UUID> completionService = new ExecutorCompletionService<UUID>(executor);
-    List<Future<UUID>> futures = Lists.newArrayList();
+    List<Future<UUID>> futures = new ArrayList<>();
     for (final String queueIdentifier : queueIdentifiers) {
       Future<UUID> future =
           completionService.submit(
@@ -352,7 +351,7 @@ public class DatasetProcessServiceImpl implements DatasetProcessService {
       futures.add(future);
     }
 
-    List<UUID> keys = Lists.newArrayList();
+    List<UUID> keys = new ArrayList<>();
     for (Future<UUID> future : futures) {
       try {
         keys.add(future.get());
@@ -399,7 +398,7 @@ public class DatasetProcessServiceImpl implements DatasetProcessService {
       return null;
     }
 
-    String dateAsString = new String(dateAsBytes, Charsets.UTF_8);
+    String dateAsString = new String(dateAsBytes, StandardCharsets.UTF_8);
     try {
       // TODO: is the timezone right? Check with real data coming from zookeeper.
       SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");

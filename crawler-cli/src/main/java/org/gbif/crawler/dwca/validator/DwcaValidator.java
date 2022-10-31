@@ -26,7 +26,9 @@ import org.gbif.dwc.terms.Term;
 import org.gbif.utils.file.ClosableIterator;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -36,10 +38,8 @@ import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.beust.jcommander.internal.Lists;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Sets;
 
 /**
  * This performs the validity checking for DwC-A for the purposes <em>of deciding if the archive is
@@ -83,9 +83,9 @@ public class DwcaValidator {
   private int recordsWithInvalidTriplets;
   private int recordsMissingOccurrenceId;
   // unique occurrenceIds
-  private Set<String> uniqueOccurrenceIds = Sets.newHashSet();
+  private Set<String> uniqueOccurrenceIds = new HashSet<>();
   // unique triplets
-  private Set<String> uniqueTriplets = Sets.newHashSet();
+  private Set<String> uniqueTriplets = new HashSet<>();
 
   private DwcaValidator() {}
 
@@ -167,9 +167,9 @@ public class DwcaValidator {
   private GenericValidationReport validateGenericCore(Archive archive, Term term)
       throws IOException {
     int records = 0;
-    List<String> duplicateIds = Lists.newArrayList();
-    List<Integer> linesMissingIds = Lists.newArrayList();
-    Set<String> ids = Sets.newHashSet();
+    List<String> duplicateIds = new ArrayList<>();
+    List<Integer> linesMissingIds = new ArrayList<>();
+    Set<String> ids = new HashSet<>();
     final boolean useCoreID = !archive.getCore().hasTerm(term);
 
     try (ClosableIterator<Record> it = archive.getCore().iterator(true, true)) {

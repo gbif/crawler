@@ -23,6 +23,9 @@ import javax.annotation.concurrent.ThreadSafe;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 
+import lombok.Getter;
+import lombok.ToString;
+
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -40,6 +43,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * <p>This object is immutable.
  */
 @ThreadSafe
+@ToString(callSuper = true)
+@Getter
 public class BiocaseCrawlConfiguration extends CrawlConfiguration {
 
   public static final ImmutableList<String> VALID_SCHEMAS =
@@ -63,14 +68,6 @@ public class BiocaseCrawlConfiguration extends CrawlConfiguration {
     checkArgument(!datasetTitle.isEmpty(), "datasetTitle can't be empty");
   }
 
-  public String getContentNamespace() {
-    return contentNamespace;
-  }
-
-  public String getDatasetTitle() {
-    return datasetTitle;
-  }
-
   @Override
   public boolean equals(Object obj) {
     if (obj == this) {
@@ -91,11 +88,4 @@ public class BiocaseCrawlConfiguration extends CrawlConfiguration {
     return Objects.hashCode(super.hashCode(), contentNamespace, datasetTitle);
   }
 
-  @Override
-  public String toString() {
-    return toStringHelper()
-        .add("contentNamespace", contentNamespace)
-        .add("datasetTitle", datasetTitle)
-        .toString();
-  }
 }

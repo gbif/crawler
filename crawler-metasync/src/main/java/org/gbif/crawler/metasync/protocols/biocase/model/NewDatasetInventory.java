@@ -14,14 +14,14 @@
 package org.gbif.crawler.metasync.protocols.biocase.model;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
+
+import lombok.ToString;
 
 import org.apache.commons.digester3.annotations.rules.BeanPropertySetter;
 import org.apache.commons.digester3.annotations.rules.ObjectCreate;
 import org.apache.commons.digester3.annotations.rules.SetNext;
-
-import com.google.common.base.Objects;
-import com.google.common.collect.Lists;
 
 /**
  * This object represents the data received when doing an inventory request using the new
@@ -32,6 +32,7 @@ import com.google.common.collect.Lists;
  *     Version History</a>
  */
 @ObjectCreate(pattern = "inventory")
+@ToString
 public class NewDatasetInventory {
 
   @BeanPropertySetter(pattern = "inventory/status")
@@ -40,7 +41,7 @@ public class NewDatasetInventory {
   @BeanPropertySetter(pattern = "inventory/service_url")
   private URI serviceUrl;
 
-  private List<InventoryDataset> datasets = Lists.newArrayList();
+  private List<InventoryDataset> datasets = new ArrayList<>();
 
   public String getStatus() {
     return status;
@@ -71,12 +72,4 @@ public class NewDatasetInventory {
     datasets.add(dataset);
   }
 
-  @Override
-  public String toString() {
-    return Objects.toStringHelper(this)
-        .add("status", status)
-        .add("serviceUrl", serviceUrl)
-        .add("datasets", datasets)
-        .toString();
-  }
 }

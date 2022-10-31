@@ -13,20 +13,21 @@
  */
 package org.gbif.crawler.metasync.protocols.tapir.model.metadata;
 
+import java.util.HashSet;
 import java.util.Set;
+
+import lombok.ToString;
 
 import org.apache.commons.digester3.annotations.rules.BeanPropertySetter;
 import org.apache.commons.digester3.annotations.rules.CallMethod;
 import org.apache.commons.digester3.annotations.rules.CallParam;
 import org.apache.commons.digester3.annotations.rules.ObjectCreate;
 
-import com.google.common.base.Objects;
-import com.google.common.collect.Sets;
-
 @ObjectCreate(pattern = "response/metadata/relatedEntity/entity/hasContact")
+@ToString
 public class TapirContact {
 
-  private Set<String> roles = Sets.newHashSet();
+  private Set<String> roles = new HashSet<>();
 
   @BeanPropertySetter(pattern = "response/metadata/relatedEntity/entity/hasContact/VCARD/FN")
   private String fullName;
@@ -86,14 +87,4 @@ public class TapirContact {
     this.email = email;
   }
 
-  @Override
-  public String toString() {
-    return Objects.toStringHelper(this)
-        .add("roles", roles)
-        .add("fullName", fullName)
-        .add("title", title)
-        .add("telephone", telephone)
-        .add("email", email)
-        .toString();
-  }
 }

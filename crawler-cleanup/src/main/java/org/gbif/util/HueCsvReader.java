@@ -17,13 +17,13 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.beust.jcommander.internal.Lists;
 import com.google.common.collect.ImmutableSet;
 
 /** A simple file reader for CSV files that are the result of Hue queries. */
@@ -42,7 +42,7 @@ public class HueCsvReader {
    * @return the keys as Strings
    */
   public static List<String> readKeys(String keyFileName) {
-    List<String> keys = Lists.newArrayList();
+    List<String> keys = new ArrayList<>();
     BufferedReader br = null;
     try {
       br = new BufferedReader(new FileReader(keyFileName));

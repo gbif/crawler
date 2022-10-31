@@ -22,8 +22,10 @@ import javax.validation.constraints.NotNull;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParametersDelegate;
-import com.google.common.base.Objects;
 
+import lombok.ToString;
+
+@ToString
 public class MetasyncConfiguration {
 
   @ParametersDelegate @NotNull @Valid
@@ -45,13 +47,4 @@ public class MetasyncConfiguration {
   @Parameter(names = "--dry-run", description = "Run the metasync, but discard the results")
   public boolean dryRun = false;
 
-  @Override
-  public String toString() {
-    return Objects.toStringHelper(this)
-        .add("messaging", messaging)
-        .add("threadCount", threadCount)
-        .add("queueName", queueName)
-        .add("registry", registry)
-        .toString();
-  }
 }

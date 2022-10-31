@@ -26,6 +26,7 @@ import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
@@ -171,8 +172,8 @@ public class PipelinesRunningProcessSearchService implements Closeable {
   @Override
   public void close() {
     datasetSimpleSearchIndex.close();
-    try {
-      Files.walk(tmpDir).sorted(Comparator.reverseOrder()).map(Path::toFile).forEach(File::delete);
+    try (Stream<Path> walk = Files.walk(tmpDir)) {
+      walk.sorted(Comparator.reverseOrder()).map(Path::toFile).forEach(File::delete);
     } catch (IOException e) {
       throw new IllegalStateException("Couldn't delete tmp search dir", e);
     }

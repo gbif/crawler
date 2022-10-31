@@ -22,8 +22,10 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
 import com.beust.jcommander.Parameter;
-import com.google.common.base.Objects;
 
+import lombok.ToString;
+
+@ToString(callSuper = true)
 public class DownloaderConfiguration extends CrawlServerConfiguration {
 
   @Parameter(names = "--archive-repository")
@@ -36,11 +38,4 @@ public class DownloaderConfiguration extends CrawlServerConfiguration {
   @PropertyName("httpTimeout")
   public int httpTimeout = 30 * 60 * 1000;
 
-  @Override
-  public String toString() {
-    return Objects.toStringHelper(this)
-        .add("super", super.toString())
-        .add("archiveRepository", archiveRepository)
-        .toString();
-  }
 }

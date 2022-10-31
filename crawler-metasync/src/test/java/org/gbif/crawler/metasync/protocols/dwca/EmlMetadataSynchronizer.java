@@ -23,6 +23,8 @@ import org.gbif.crawler.metasync.api.MetadataException;
 import org.gbif.crawler.metasync.api.MetadataProtocolHandler;
 import org.gbif.crawler.metasync.api.SyncResult;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -30,9 +32,6 @@ import javax.annotation.Nullable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -76,9 +75,9 @@ public class EmlMetadataSynchronizer implements MetadataProtocolHandler {
         installation.getKey());
 
     // return empty SyncResult. Datasets are updated in the database already when augmented
-    List<Dataset> added = Lists.newArrayList();
-    List<Dataset> deleted = Lists.newArrayList();
-    Map<Dataset, Dataset> updated = Maps.newHashMap();
+    List<Dataset> added = new ArrayList<>();
+    List<Dataset> deleted = new ArrayList<>();
+    Map<Dataset, Dataset> updated = new HashMap<>();
     return new SyncResult(updated, added, deleted, installation);
   }
 

@@ -14,16 +14,17 @@
 package org.gbif.crawler.metasync.protocols.tapir.model.capabilities;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
+
+import lombok.ToString;
 
 import org.apache.commons.digester3.annotations.rules.ObjectCreate;
 import org.apache.commons.digester3.annotations.rules.SetNext;
 import org.apache.commons.digester3.annotations.rules.SetProperty;
 
-import com.google.common.base.Objects;
-import com.google.common.collect.Lists;
-
 @ObjectCreate(pattern = "response/capabilities/concepts/schema")
+@ToString
 public class Schema {
 
   private static final String BASE_PATH = "response/capabilities/concepts/schema";
@@ -37,7 +38,7 @@ public class Schema {
   @SetProperty(pattern = BASE_PATH, attributeName = "alias")
   private String alias;
 
-  private final List<MappedConcept> concepts = Lists.newArrayList();
+  private final List<MappedConcept> concepts = new ArrayList<>();
 
   public URI getNamespace() {
     return namespace;
@@ -72,13 +73,4 @@ public class Schema {
     concepts.add(concept);
   }
 
-  @Override
-  public String toString() {
-    return Objects.toStringHelper(this)
-        .add("namespace", namespace)
-        .add("location", location)
-        .add("alias", alias)
-        .add("concepts", concepts)
-        .toString();
-  }
 }

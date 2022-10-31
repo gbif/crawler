@@ -13,17 +13,18 @@
  */
 package org.gbif.crawler.metasync.protocols.biocase.model;
 
+import java.util.ArrayList;
 import java.util.List;
+
+import lombok.ToString;
 
 import org.apache.commons.digester3.annotations.rules.BeanPropertySetter;
 import org.apache.commons.digester3.annotations.rules.ObjectCreate;
 import org.apache.commons.digester3.annotations.rules.SetNext;
 
-import com.google.common.base.Objects;
-import com.google.common.collect.Lists;
-
 /** This is information about datasets retrieved using an inventory request as of BioCASe 3.4. */
 @ObjectCreate(pattern = "inventory/datasets/dataset")
+@ToString
 public class InventoryDataset {
 
   @BeanPropertySetter(pattern = "inventory/datasets/dataset/title")
@@ -32,7 +33,7 @@ public class InventoryDataset {
   @BeanPropertySetter(pattern = "inventory/datasets/dataset/id")
   private String id;
 
-  private List<BiocaseArchive> archives = Lists.newArrayList();
+  private List<BiocaseArchive> archives = new ArrayList<>();
 
   public String getTitle() {
     return title;
@@ -63,12 +64,4 @@ public class InventoryDataset {
     archives.add(archive);
   }
 
-  @Override
-  public String toString() {
-    return Objects.toStringHelper(this)
-        .add("title", title)
-        .add("id", id)
-        .add("archives", archives)
-        .toString();
-  }
 }

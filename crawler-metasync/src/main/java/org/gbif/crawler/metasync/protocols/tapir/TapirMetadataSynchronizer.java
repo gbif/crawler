@@ -38,6 +38,9 @@ import org.gbif.crawler.metasync.protocols.tapir.model.search.TapirSearch;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -49,8 +52,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.LinkedListMultimap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -130,9 +131,9 @@ public class TapirMetadataSynchronizer extends BaseProtocolHandler {
         installation.getType() == InstallationType.TAPIR_INSTALLATION,
         "Only supports TAPIR Installations");
 
-    List<Dataset> added = Lists.newArrayList();
-    List<Dataset> deleted = Lists.newArrayList();
-    Map<Dataset, Dataset> updated = Maps.newHashMap();
+    List<Dataset> added = new ArrayList<>();
+    List<Dataset> deleted = new ArrayList<>();
+    Map<Dataset, Dataset> updated = new HashMap<>();
 
     // This metadata will be used to update the Installation itself
     TapirMetadata updaterMetadata = null;
@@ -264,7 +265,7 @@ public class TapirMetadataSynchronizer extends BaseProtocolHandler {
       dataset.setDoi(new DOI(metadata.getIdentifier()));
     }
 
-    List<Contact> contacts = Lists.newArrayList();
+    List<Contact> contacts = new ArrayList<>();
     for (TapirRelatedEntity tapirRelatedEntity : metadata.getRelatedEntities()) {
       for (TapirContact tapirContact : tapirRelatedEntity.getContacts()) {
         Contact contact = new Contact();
@@ -362,7 +363,7 @@ public class TapirMetadataSynchronizer extends BaseProtocolHandler {
    *     testing) used only to return the count.
    */
   private Map<String, String> buildTapirSearchRequestParameters(String outputModelTemplate) {
-    Map<String, String> params = Maps.newLinkedHashMap();
+    Map<String, String> params = new LinkedHashMap<>();
     params.put("op", "s");
     params.put("t", outputModelTemplate);
     params.put("count", "true");

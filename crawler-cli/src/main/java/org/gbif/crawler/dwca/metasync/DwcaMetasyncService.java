@@ -197,7 +197,7 @@ public class DwcaMetasyncService extends DwcaService {
     }
 
     private Map<String, UUID> processConstituents(Dataset parent, Archive archive) {
-      Map<String, UUID> constituents = Maps.newHashMap();
+      Map<String, UUID> constituents = new HashMap<>();
       // we don't expect to reach more than a few hundred constituents - so ignore paging here by
       // using a 2000 p size
       Pageable page = new PagingRequest(0, 2000);

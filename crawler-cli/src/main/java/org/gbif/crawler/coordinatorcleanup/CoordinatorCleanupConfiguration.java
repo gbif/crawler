@@ -23,8 +23,10 @@ import javax.validation.constraints.NotNull;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParametersDelegate;
-import com.google.common.base.Objects;
 
+import lombok.ToString;
+
+@ToString
 public class CoordinatorCleanupConfiguration {
 
   @ParametersDelegate @Valid @NotNull
@@ -53,13 +55,4 @@ public class CoordinatorCleanupConfiguration {
   @PropertyName("pipelinesOnlyMode")
   public boolean pipelinesOnlyMode = false;
 
-  @Override
-  public String toString() {
-    return Objects.toStringHelper(this)
-        .add("zooKeeper", zooKeeper)
-        .add("interval", interval)
-        .add("wsUrl", wsUrl)
-        .add("httpTimeout", httpTimeout)
-        .toString();
-  }
 }

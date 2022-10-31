@@ -35,6 +35,7 @@ import org.gbif.crawler.metasync.protocols.tapir.TapirMetadataSynchronizer;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -269,7 +270,7 @@ public class RegistryUpdaterTest {
     dataset.setIdentifiers(Lists.newArrayList(identifier));
 
     // add 2 MachineTags 1 with metasync.gbif.org namespace, and another not having it
-    List<MachineTag> machineTags = Lists.newArrayList();
+    List<MachineTag> machineTags = new ArrayList<>();
 
     MachineTag machineTag = MachineTag.newInstance(TagName.DECLARED_COUNT, "1000");
     machineTag.setKey(1);

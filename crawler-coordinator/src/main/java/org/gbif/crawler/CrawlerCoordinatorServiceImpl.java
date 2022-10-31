@@ -33,8 +33,10 @@ import org.gbif.crawler.constants.CrawlerNodePaths;
 import org.gbif.crawler.metasync.api.MetadataSynchronizer;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -52,7 +54,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -171,7 +172,7 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
     checkNotNull(endpoints, "endpoints can't be null");
 
     // Filter out all Endpoints that we can't crawl
-    List<Endpoint> result = Lists.newArrayList();
+    List<Endpoint> result = new ArrayList<>();
     for (Endpoint endpoint : endpoints) {
       if (EndpointPriorityComparator.PRIORITIES.contains(endpoint.getType())) {
         result.add(endpoint);
@@ -420,7 +421,7 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
     checkNotNull(dataset, "dataset can't be null");
     checkNotNull(endpoint, "endpoint can't be null");
 
-    Map<String, String> properties = Maps.newHashMap();
+    Map<String, String> properties = new HashMap<>();
     switch (endpoint.getType()) {
       case DIGIR:
         fillPropertyFromTags(

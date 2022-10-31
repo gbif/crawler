@@ -13,16 +13,17 @@
  */
 package org.gbif.crawler.metasync.protocols.tapir.model.capabilities;
 
+import java.util.ArrayList;
 import java.util.List;
+
+import lombok.ToString;
 
 import org.apache.commons.digester3.annotations.rules.BeanPropertySetter;
 import org.apache.commons.digester3.annotations.rules.ObjectCreate;
 import org.apache.commons.digester3.annotations.rules.SetNext;
 
-import com.google.common.base.Objects;
-import com.google.common.collect.Lists;
-
 @ObjectCreate(pattern = "response/capabilities")
+@ToString
 public class Capabilities {
 
   @BeanPropertySetter(pattern = "response/capabilities/settings/minQueryTermLength")
@@ -40,9 +41,9 @@ public class Capabilities {
   @BeanPropertySetter(pattern = "response/capabilities/settings/maxResponseSize")
   private int maxResponseSize;
 
-  private final List<Schema> schemas = Lists.newArrayList();
+  private final List<Schema> schemas = new ArrayList<>();
 
-  private final List<Archive> archives = Lists.newArrayList();
+  private final List<Archive> archives = new ArrayList<>();
 
   public int getMinQueryTermLength() {
     return minQueryTermLength;
@@ -102,16 +103,4 @@ public class Capabilities {
     archives.add(archive);
   }
 
-  @Override
-  public String toString() {
-    return Objects.toStringHelper(this)
-        .add("minQueryTermLength", minQueryTermLength)
-        .add("maxElementRepetitions", maxElementRepetitions)
-        .add("maxElementLevels", maxElementLevels)
-        .add("maxResponseTags", maxResponseTags)
-        .add("maxResponseSize", maxResponseSize)
-        .add("schemas", schemas)
-        .add("archives", archives)
-        .toString();
-  }
 }

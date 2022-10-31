@@ -36,15 +36,14 @@ import org.gbif.crawler.metasync.protocols.digir.model.DigirResource;
 import org.gbif.crawler.metasync.util.Constants;
 
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.http.client.HttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static org.apache.commons.lang3.StringUtils.trimToNull;
@@ -158,12 +157,12 @@ public class DigirMetadataSynchronizer extends BaseProtocolHandler {
    */
   private SyncResult mapToDatasets(
       DigirMetadata metadata, Iterable<Dataset> datasets, URI url, Installation installation) {
-    List<Dataset> added = Lists.newArrayList();
-    List<Dataset> deleted = Lists.newArrayList();
-    Map<Dataset, Dataset> updated = Maps.newHashMap();
+    List<Dataset> added = new ArrayList<>();
+    List<Dataset> deleted = new ArrayList<>();
+    Map<Dataset, Dataset> updated = new HashMap<>();
 
     // Maps currently existing DiGIR codes to the Datasets from our Registry that use those codes
-    Map<String, Dataset> codeMap = Maps.newHashMap();
+    Map<String, Dataset> codeMap = new HashMap<>();
     for (Dataset dataset : datasets) {
       MachineTagUtils.firstTag(
           dataset, TagName.DIGIR_CODE, (mt) -> codeMap.put(mt.getValue(), dataset));
@@ -265,7 +264,7 @@ public class DigirMetadataSynchronizer extends BaseProtocolHandler {
 
   /** Converts a list of DiGIR contacts to GBIF {@link Contact} objects. */
   private List<Contact> convertToRegistryContacts(Iterable<DigirContact> contacts) {
-    List<Contact> resultList = Lists.newArrayList();
+    List<Contact> resultList = new ArrayList<>();
     for (DigirContact contact : contacts) {
       resultList.add(convertToRegistryContact(contact));
     }

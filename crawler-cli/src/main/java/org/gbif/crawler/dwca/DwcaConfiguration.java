@@ -25,8 +25,10 @@ import javax.validation.constraints.NotNull;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParametersDelegate;
-import com.google.common.base.Objects;
 
+import lombok.ToString;
+
+@ToString
 public class DwcaConfiguration {
 
   public static final String DWCA_SUFFIX = ".dwca";
@@ -50,14 +52,4 @@ public class DwcaConfiguration {
   @NotNull
   public File unpackedRepository;
 
-  @Override
-  public String toString() {
-    return Objects.toStringHelper(this)
-        .add("registry", registry)
-        .add("messaging", messaging)
-        .add("poolSize", poolSize)
-        .add("archiveRepository", archiveRepository)
-        .add("unpackedRepository", unpackedRepository)
-        .toString();
-  }
 }

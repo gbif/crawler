@@ -20,13 +20,14 @@ import org.gbif.ws.json.JacksonJsonObjectMapperProvider;
 import javax.validation.constraints.NotNull;
 
 import com.beust.jcommander.Parameter;
-import com.google.common.base.Objects;
-import com.google.common.base.Strings;
+
+import lombok.ToString;
 
 /**
  * A configuration class which can be used to get all the details needed to create a writable
  * connection to the GBIF registry.
  */
+@ToString
 public class RegistryConfiguration {
 
   @Parameter(names = "--registry-ws")
@@ -41,15 +42,6 @@ public class RegistryConfiguration {
   @Parameter(names = "--registry-password", password = true)
   @NotNull
   public String password;
-
-  @Override
-  public String toString() {
-    return Objects.toStringHelper(this)
-        .add("registryWsUrl", wsUrl)
-        .add("registryUser", user)
-        .add("registryPassword", Strings.repeat("*", Strings.nullToEmpty(password).length()))
-        .toString();
-  }
 
   /**
    * Convenience method to provide a ws client factory. The factory will be used to create writable

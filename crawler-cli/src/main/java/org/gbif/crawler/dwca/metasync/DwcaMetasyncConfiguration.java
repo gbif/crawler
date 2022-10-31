@@ -22,20 +22,12 @@ import javax.validation.constraints.NotNull;
 import com.beust.jcommander.ParametersDelegate;
 import com.google.common.base.Objects;
 
+import lombok.ToString;
+
+@ToString(callSuper = true)
 public class DwcaMetasyncConfiguration extends DwcaConfiguration {
 
   @ParametersDelegate @Valid @NotNull
   public ZooKeeperConfiguration zooKeeper = new ZooKeeperConfiguration();
 
-  @Override
-  public String toString() {
-    return Objects.toStringHelper(this)
-        .add("registry", registry)
-        .add("messaging", messaging)
-        .add("zooKeeper", zooKeeper)
-        .add("archiveRepository", archiveRepository)
-        .add("unpackedRepository", unpackedRepository)
-        .add("poolSize", poolSize)
-        .toString();
-  }
 }

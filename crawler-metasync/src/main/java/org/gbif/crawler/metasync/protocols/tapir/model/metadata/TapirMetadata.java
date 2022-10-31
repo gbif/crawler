@@ -16,10 +16,14 @@ package org.gbif.crawler.metasync.protocols.tapir.model.metadata;
 import org.gbif.api.vocabulary.Language;
 
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import javax.validation.constraints.NotNull;
+
+import lombok.ToString;
 
 import org.apache.commons.digester3.annotations.rules.BeanPropertySetter;
 import org.apache.commons.digester3.annotations.rules.CallMethod;
@@ -29,18 +33,15 @@ import org.apache.commons.digester3.annotations.rules.SetNext;
 import org.apache.commons.digester3.annotations.rules.SetProperty;
 import org.joda.time.DateTime;
 
-import com.google.common.base.Objects;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
-
 @ObjectCreate(pattern = "response")
+@ToString
 public class TapirMetadata {
 
-  private final List<TapirRelatedEntity> relatedEntities = Lists.newArrayList();
+  private final List<TapirRelatedEntity> relatedEntities = new ArrayList<>();
   // TODO: Validation
   private final LocalizedString titles = new LocalizedString();
   private final LocalizedString descriptions = new LocalizedString();
-  private final Set<Language> languages = Sets.newHashSet();
+  private final Set<Language> languages = new HashSet<>();
   private final LocalizedString bibliographicCitations = new LocalizedString();
   private final LocalizedString rights = new LocalizedString();
 
@@ -222,28 +223,6 @@ public class TapirMetadata {
 
   public void setModified(DateTime modified) {
     this.modified = modified;
-  }
-
-  @Override
-  public String toString() {
-    return Objects.toStringHelper(this)
-        .add("relatedEntities", relatedEntities)
-        .add("titles", titles)
-        .add("descriptions", descriptions)
-        .add("languages", languages)
-        .add("bibliographicCitations", bibliographicCitations)
-        .add("rights", rights)
-        .add("softwareName", softwareName)
-        .add("softwareVersion", softwareVersion)
-        .add("defaultLanguage", defaultLanguage)
-        .add("type", type)
-        .add("accessPoint", accessPoint)
-        .add("subjects", subjects)
-        .add("created", created)
-        .add("identifier", identifier)
-        .add("indexingPreferences", indexingPreferences)
-        .add("modified", modified)
-        .toString();
   }
 
   public String getIdentifier() {

@@ -152,7 +152,7 @@ public class MetadataSynchronizerImpl implements MetadataSynchronizer {
     } while (!results.isEndOfRecords());
 
     // Wait for all to finish and collect results
-    List<SyncResult> syncResults = Lists.newArrayList();
+    List<SyncResult> syncResults = new ArrayList<>();
     for (int i = 0; i < count; i++) {
       try {
         Future<SyncResult> future = completionService.take();
@@ -229,7 +229,7 @@ public class MetadataSynchronizerImpl implements MetadataSynchronizer {
   private List<Dataset> getHostedDatasets(UUID key) {
     PagingRequest page = new PagingRequest(0, PAGING_LIMIT);
     PagingResponse<Dataset> results = null;
-    List<Dataset> hostedDatasets = Lists.newArrayList();
+    List<Dataset> hostedDatasets = new ArrayList<>();
     do {
       try {
         results = installationService.getHostedDatasets(key, page);

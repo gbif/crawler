@@ -13,6 +13,8 @@
  */
 package org.gbif.crawler.metasync.protocols.digir.model;
 
+import lombok.ToString;
+
 import org.apache.commons.digester3.annotations.rules.BeanPropertySetter;
 import org.apache.commons.digester3.annotations.rules.ObjectCreate;
 import org.apache.commons.digester3.annotations.rules.SetProperty;
@@ -20,6 +22,7 @@ import org.apache.commons.digester3.annotations.rules.SetProperty;
 import com.google.common.base.Objects;
 
 @ObjectCreate(pattern = "response/content/metadata/provider/host/contact")
+@ToString
 public class DigirHostContact implements DigirContact {
 
   @BeanPropertySetter(pattern = "response/content/metadata/provider/host/contact/name")
@@ -87,14 +90,4 @@ public class DigirHostContact implements DigirContact {
     this.type = type;
   }
 
-  @Override
-  public String toString() {
-    return Objects.toStringHelper(this)
-        .add("name", name)
-        .add("title", title)
-        .add("email", email)
-        .add("phone", phone)
-        .add("type", type)
-        .toString();
-  }
 }

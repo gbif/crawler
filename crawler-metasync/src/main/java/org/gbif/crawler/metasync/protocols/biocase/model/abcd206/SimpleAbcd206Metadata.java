@@ -17,6 +17,8 @@ import org.gbif.api.model.registry.Contact;
 import org.gbif.api.vocabulary.ContactType;
 
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.commons.digester3.annotations.rules.BeanPropertySetter;
@@ -24,19 +26,18 @@ import org.apache.commons.digester3.annotations.rules.CallMethod;
 import org.apache.commons.digester3.annotations.rules.CallParam;
 import org.apache.commons.digester3.annotations.rules.ObjectCreate;
 
-import com.google.common.collect.Lists;
 
 /** This object extracts the same information from ABCD 2.06 as the "old" registry did. */
 @ObjectCreate(pattern = "response/content/DataSets/DataSet")
 public class SimpleAbcd206Metadata {
 
   private static final String BASE_PATH = "response/content/DataSets/DataSet/";
-  private final List<String> termsOfUses = Lists.newArrayList();
-  private final List<String> iprDeclarations = Lists.newArrayList();
-  private final List<String> disclaimers = Lists.newArrayList();
-  private final List<String> organisations = Lists.newArrayList();
-  private final List<String> ownerUrls = Lists.newArrayList();
-  private final List<Contact> contacts = Lists.newArrayList();
+  private final List<String> termsOfUses = new ArrayList<>();
+  private final List<String> iprDeclarations = new ArrayList<>();
+  private final List<String> disclaimers = new ArrayList<>();
+  private final List<String> organisations = new ArrayList<>();
+  private final List<String> ownerUrls = new ArrayList<>();
+  private final List<Contact> contacts = new ArrayList<>();
 
   @BeanPropertySetter(pattern = BASE_PATH + "Metadata/Description/Representation/Title")
   private String name;
@@ -249,9 +250,9 @@ public class SimpleAbcd206Metadata {
           String address) {
     Contact contact = new Contact();
     contact.setFirstName(name);
-    contact.setEmail(Lists.newArrayList(email));
-    contact.setPhone(Lists.newArrayList(phone));
-    contact.setAddress(Lists.newArrayList(address));
+    contact.setEmail(Collections.singletonList(email));
+    contact.setPhone(Collections.singletonList(phone));
+    contact.setAddress(Collections.singletonList(address));
     contact.setType(ContactType.TECHNICAL_POINT_OF_CONTACT);
     contacts.add(contact);
   }
@@ -264,9 +265,9 @@ public class SimpleAbcd206Metadata {
       @CallParam(pattern = BASE_PATH + "ContentContacts/ContentContact/Address") String address) {
     Contact contact = new Contact();
     contact.setFirstName(name);
-    contact.setEmail(Lists.newArrayList(email));
-    contact.setPhone(Lists.newArrayList(phone));
-    contact.setAddress(Lists.newArrayList(address));
+    contact.setEmail(Collections.singletonList(email));
+    contact.setPhone(Collections.singletonList(phone));
+    contact.setAddress(Collections.singletonList(address));
     contact.setType(ContactType.ADMINISTRATIVE_POINT_OF_CONTACT);
     contacts.add(contact);
   }

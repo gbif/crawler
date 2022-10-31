@@ -33,6 +33,7 @@ import org.gbif.wrangler.lock.Lock;
 import org.gbif.wrangler.lock.NoLockFactory;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -45,7 +46,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Stopwatch;
-import com.google.common.collect.Lists;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -75,7 +75,7 @@ public class Crawler<CTX extends CrawlContext, REQ, RESP, RES> {
   private final RetryPolicy retryPolicy;
   private final Lock lock;
   private final Stopwatch stopwatch = Stopwatch.createUnstarted();
-  private final List<CrawlListener<CTX, REQ, RES>> listeners = Lists.newArrayList();
+  private final List<CrawlListener<CTX, REQ, RES>> listeners = new ArrayList<>();
 
   public Crawler(
       CrawlStrategy<CTX> strategy,

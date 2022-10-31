@@ -30,6 +30,7 @@ import org.gbif.crawler.metasync.api.MetadataSynchronizer;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -49,7 +50,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.Lists;
 
 import static org.gbif.api.vocabulary.TagName.CONCEPTUAL_SCHEMA;
 import static org.gbif.api.vocabulary.TagName.DECLARED_COUNT;
@@ -97,7 +97,7 @@ public class CrawlerCoordinatorServiceImplTest {
 
   @Test
   public void testPrioritySort() {
-    List<Endpoint> endpoints = Lists.newArrayList();
+    List<Endpoint> endpoints = new ArrayList<>();
 
     Endpoint endpoint1 = new Endpoint();
     endpoint1.setType(EndpointType.DWC_ARCHIVE);
@@ -134,7 +134,7 @@ public class CrawlerCoordinatorServiceImplTest {
 
   @Test
   public void testPrioritySortMultipleDwca() {
-    List<Endpoint> endpoints = Lists.newArrayList();
+    List<Endpoint> endpoints = new ArrayList<>();
 
     Endpoint endpoint1 = new Endpoint();
     endpoint1.setType(EndpointType.DWC_ARCHIVE);

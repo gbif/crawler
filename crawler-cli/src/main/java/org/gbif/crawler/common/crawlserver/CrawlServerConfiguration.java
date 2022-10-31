@@ -22,9 +22,11 @@ import javax.validation.constraints.NotNull;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParametersDelegate;
-import com.google.common.base.Objects;
+
+import lombok.ToString;
 
 @SuppressWarnings("PublicField")
+@ToString
 public class CrawlServerConfiguration {
 
   @ParametersDelegate @Valid @NotNull
@@ -39,12 +41,4 @@ public class CrawlServerConfiguration {
   @Min(1)
   public int poolSize = 1;
 
-  @Override
-  public String toString() {
-    return Objects.toStringHelper(this)
-        .add("messaging", messaging)
-        .add("zooKeeper", zooKeeper)
-        .add("poolSize", poolSize)
-        .toString();
-  }
 }

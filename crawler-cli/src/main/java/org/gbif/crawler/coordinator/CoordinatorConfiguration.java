@@ -23,8 +23,10 @@ import javax.validation.constraints.NotNull;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParametersDelegate;
-import com.google.common.base.Objects;
 
+import lombok.ToString;
+
+@ToString
 public class CoordinatorConfiguration {
 
   @ParametersDelegate @Valid @NotNull
@@ -44,14 +46,4 @@ public class CoordinatorConfiguration {
   @NotNull
   public String queueName = "crawler_coordinator";
 
-  @Override
-  public String toString() {
-    return Objects.toStringHelper(this)
-        .add("messaging", messaging)
-        .add("zooKeeper", zooKeeper)
-        .add("registry", registry)
-        .add("poolSize", poolSize)
-        .add("queueName", queueName)
-        .toString();
-  }
 }

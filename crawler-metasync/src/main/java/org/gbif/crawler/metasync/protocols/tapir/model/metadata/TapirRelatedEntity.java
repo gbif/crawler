@@ -15,8 +15,12 @@ package org.gbif.crawler.metasync.protocols.tapir.model.metadata;
 
 import org.gbif.api.vocabulary.Language;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import lombok.ToString;
 
 import org.apache.commons.digester3.annotations.rules.BeanPropertySetter;
 import org.apache.commons.digester3.annotations.rules.CallMethod;
@@ -25,17 +29,14 @@ import org.apache.commons.digester3.annotations.rules.ObjectCreate;
 import org.apache.commons.digester3.annotations.rules.SetNext;
 import org.apache.commons.digester3.annotations.rules.SetProperty;
 
-import com.google.common.base.Objects;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
-
 @ObjectCreate(pattern = "response/metadata/relatedEntity")
+@ToString
 public class TapirRelatedEntity {
 
   @SetProperty(pattern = "response/metadata", attributeName = "lang")
   private Language defaultLanguage;
 
-  private Set<String> roles = Sets.newHashSet();
+  private Set<String> roles = new HashSet<>();
 
   @SetProperty(pattern = "response/metadata/relatedEntity/entity", attributeName = "type")
   private String type;
@@ -65,8 +66,8 @@ public class TapirRelatedEntity {
   @BeanPropertySetter(pattern = "response/metadata/relatedEntity/entity/zipCode")
   private String zipCode;
 
-  private Set<String> relatedInformation = Sets.newHashSet();
-  private List<TapirContact> contacts = Lists.newArrayList();
+  private Set<String> relatedInformation = new HashSet<>();
+  private List<TapirContact> contacts = new ArrayList<>();
 
   @CallMethod(pattern = "response/metadata/relatedEntity/role")
   public void addRole(@CallParam(pattern = "response/metadata/relatedEntity/role") String role) {
@@ -217,23 +218,4 @@ public class TapirRelatedEntity {
     this.contacts.add(contact);
   }
 
-  @Override
-  public String toString() {
-    return Objects.toStringHelper(this)
-        .add("defaultLanguage", defaultLanguage)
-        .add("roles", roles)
-        .add("type", type)
-        .add("identifier", identifier)
-        .add("names", names)
-        .add("acronym", acronym)
-        .add("logoUrl", logoUrl)
-        .add("descriptions", descriptions)
-        .add("address", address)
-        .add("regionCode", regionCode)
-        .add("countryCode", countryCode)
-        .add("zipCode", zipCode)
-        .add("relatedInformation", relatedInformation)
-        .add("contacts", contacts)
-        .toString();
-  }
 }

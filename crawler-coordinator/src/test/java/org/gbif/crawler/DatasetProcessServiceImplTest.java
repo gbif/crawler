@@ -22,7 +22,10 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -45,10 +48,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.base.Strings;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
-import com.google.common.collect.Sets;
 
 import static org.apache.curator.framework.recipes.queue.QueueHelper.serialize;
 import static org.gbif.crawler.constants.CrawlerNodePaths.CRAWL_CONTEXT;
@@ -80,10 +80,10 @@ public class DatasetProcessServiceImplTest {
 
   private static TestingServer server;
   private static CuratorFramework curator;
-  private static final Map<DatasetProcessStatus, String> QUEUE_MAP = Maps.newHashMap();
-  private static final Set<DatasetProcessStatus> ALL_CRAWLS = Sets.newHashSet();
-  private static final Set<DatasetProcessStatus> RUNNING_CRAWLS = Sets.newHashSet();
-  private static List<DatasetProcessStatus> QUEUED_CRAWLS = Lists.newArrayList();
+  private static final Map<DatasetProcessStatus, String> QUEUE_MAP = new HashMap<>();
+  private static final Set<DatasetProcessStatus> ALL_CRAWLS = new HashSet<>();
+  private static final Set<DatasetProcessStatus> RUNNING_CRAWLS = new HashSet<>();
+  private static List<DatasetProcessStatus> QUEUED_CRAWLS = new ArrayList<>();
 
   private static final String DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
   private static final String CRAWL_NAMESPACE = "crawler";
@@ -333,7 +333,7 @@ public class DatasetProcessServiceImplTest {
     if (date != null) {
       SimpleDateFormat sdf = new SimpleDateFormat(DATE_FORMAT);
       String dateAsString = sdf.format(date);
-      return dateAsString.getBytes();
+      return dateAsString.getBytes(StandardCharsets.UTF_8);
     }
     return null;
   }

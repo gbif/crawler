@@ -22,7 +22,7 @@ import com.google.common.collect.ForwardingObject;
 
 public abstract class ForwardingLockFactory extends ForwardingObject implements LockFactory {
 
-  public abstract class ForwardingLock extends ForwardingObject implements Lock {
+  public static abstract class ForwardingLock extends ForwardingObject implements Lock {
 
     protected ForwardingLock() {}
 

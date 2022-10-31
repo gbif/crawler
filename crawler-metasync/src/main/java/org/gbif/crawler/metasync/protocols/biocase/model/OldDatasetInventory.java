@@ -13,14 +13,14 @@
  */
 package org.gbif.crawler.metasync.protocols.biocase.model;
 
+import java.util.ArrayList;
 import java.util.List;
+
+import lombok.ToString;
 
 import org.apache.commons.digester3.annotations.rules.CallMethod;
 import org.apache.commons.digester3.annotations.rules.CallParam;
 import org.apache.commons.digester3.annotations.rules.ObjectCreate;
-
-import com.google.common.base.Objects;
-import com.google.common.collect.Lists;
 
 /**
  * This is the inventory retrieved by issuing a {@code scan} request used prior to BioCASe 3.4.
@@ -28,9 +28,10 @@ import com.google.common.collect.Lists;
  * @see NewDatasetInventory
  */
 @ObjectCreate(pattern = "response/content")
+@ToString
 public class OldDatasetInventory {
 
-  private List<String> datasets = Lists.newArrayList();
+  private List<String> datasets = new ArrayList<>();
 
   public List<String> getDatasets() {
     return datasets;
@@ -45,8 +46,4 @@ public class OldDatasetInventory {
     datasets.add(dataset);
   }
 
-  @Override
-  public String toString() {
-    return Objects.toStringHelper(this).add("datasets", datasets).toString();
-  }
 }

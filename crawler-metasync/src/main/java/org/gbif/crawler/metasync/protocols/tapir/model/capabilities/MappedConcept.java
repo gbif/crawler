@@ -13,12 +13,15 @@
  */
 package org.gbif.crawler.metasync.protocols.tapir.model.capabilities;
 
+import lombok.ToString;
+
 import org.apache.commons.digester3.annotations.rules.ObjectCreate;
 import org.apache.commons.digester3.annotations.rules.SetProperty;
 
 import com.google.common.base.Objects;
 
 @ObjectCreate(pattern = "response/capabilities/concepts/schema/mappedConcept")
+@ToString
 public class MappedConcept {
 
   private static final String BASE_PATH = "response/capabilities/concepts/schema/mappedConcept";
@@ -78,14 +81,4 @@ public class MappedConcept {
     this.id = id;
   }
 
-  @Override
-  public String toString() {
-    return Objects.toStringHelper(this)
-        .add("id", id)
-        .add("searchable", searchable)
-        .add("required", required)
-        .add("alias", alias)
-        .add("dataType", dataType)
-        .toString();
-  }
 }

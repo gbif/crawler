@@ -41,6 +41,7 @@ import org.gbif.dwc.terms.DwcTerm;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,9 +54,6 @@ import org.apache.http.client.utils.URIBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
-
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -100,9 +98,9 @@ public class BiocaseMetadataSynchronizer extends BaseProtocolHandler {
           installation.getType() == InstallationType.BIOCASE_INSTALLATION,
           "Only supports BioCASe Installations");
 
-      List<Dataset> added = Lists.newArrayList();
-      List<Dataset> deleted = Lists.newArrayList();
-      Map<Dataset, Dataset> updated = Maps.newHashMap();
+      List<Dataset> added = new ArrayList<>();
+      List<Dataset> deleted = new ArrayList<>();
+      Map<Dataset, Dataset> updated = new HashMap<>();
 
       for (Endpoint endpoint : installation.getEndpoints()) {
         try (MDC.MDCCloseable mdc2 =

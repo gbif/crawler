@@ -25,6 +25,7 @@ import org.gbif.crawler.metasync.api.SyncResult;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.http.HttpResponse;
@@ -158,7 +159,7 @@ public class DigirMetadataSynchronizerTest {
   @Test
   public void testDetermineEndpointType() {
     // populate map with namespace (conceptualSchema) / schemaLocation key value pair
-    Map<String, URI> schemas = Maps.newHashMap();
+    Map<String, URI> schemas = new HashMap<>();
     schemas.put(
         "http://digir.net/schema/conceptual/darwin/2003/1.0",
         URI.create("http://bnhm.berkeley.museum/manis/DwC/darwin2jrw030315.xsd"));

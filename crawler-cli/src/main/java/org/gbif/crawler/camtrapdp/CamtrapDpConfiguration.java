@@ -27,6 +27,9 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParametersDelegate;
 import com.google.common.base.Objects;
 
+import lombok.ToString;
+
+@ToString(callSuper = true)
 public class CamtrapDpConfiguration extends CrawlServerConfiguration {
 
   public static final String CAMTRAPDP_SUFFIX = ".camtrapdp";
@@ -43,14 +46,4 @@ public class CamtrapDpConfiguration extends CrawlServerConfiguration {
   @PropertyName("httpTimeout")
   public int httpTimeout = 10 * 60 * 1000;
 
-  @Override
-  public String toString() {
-    return Objects.toStringHelper(this)
-        .add("registry", registry)
-        .add("messaging", messaging)
-        .add("zooKeeper", zooKeeper)
-        .add("archiveRepository", archiveRepository)
-        .add("poolSize", poolSize)
-        .toString();
-  }
 }

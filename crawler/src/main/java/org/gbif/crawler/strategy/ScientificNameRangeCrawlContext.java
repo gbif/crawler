@@ -22,6 +22,8 @@ import com.google.common.base.Objects;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 
+import lombok.Data;
+
 /**
  * A context object used by {@link ScientificNameRangeStrategy} to encode lower and upper bounds for
  * scientific name ranges. At the moment either range has to be either absent/null or a three

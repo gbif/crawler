@@ -23,6 +23,8 @@ import javax.annotation.concurrent.ThreadSafe;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 
+import lombok.ToString;
+
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -40,6 +42,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * <p>This object is immutable.
  */
 @ThreadSafe
+@ToString(callSuper = true)
 public class TapirCrawlConfiguration extends CrawlConfiguration {
 
   public static final ImmutableList<String> VALID_SCHEMAS =
@@ -87,8 +90,4 @@ public class TapirCrawlConfiguration extends CrawlConfiguration {
     return Objects.hashCode(super.hashCode(), contentNamespace);
   }
 
-  @Override
-  public String toString() {
-    return toStringHelper().add("contentNamespace", contentNamespace).toString();
-  }
 }

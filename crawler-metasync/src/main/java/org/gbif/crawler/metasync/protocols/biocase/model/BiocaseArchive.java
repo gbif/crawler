@@ -15,6 +15,8 @@ package org.gbif.crawler.metasync.protocols.biocase.model;
 
 import java.net.URI;
 
+import lombok.ToString;
+
 import org.apache.commons.digester3.annotations.rules.BeanPropertySetter;
 import org.apache.commons.digester3.annotations.rules.ObjectCreate;
 import org.apache.commons.digester3.annotations.rules.SetProperty;
@@ -27,6 +29,7 @@ import com.google.common.base.Objects;
  * should be either ABCD or DwC.
  */
 @ObjectCreate(pattern = "inventory/datasets/dataset/archives/archive")
+@ToString
 public class BiocaseArchive {
 
   @SetProperty(pattern = "inventory/datasets/dataset/archives/archive", attributeName = "modified")
@@ -95,15 +98,4 @@ public class BiocaseArchive {
     this.archiveUrl = archiveUrl;
   }
 
-  @Override
-  public String toString() {
-    return Objects.toStringHelper(this)
-        .add("modified", modified)
-        .add("fileSize", fileSize)
-        .add("rcount", rcount)
-        .add("rowType", rowType)
-        .add("namespace", namespace)
-        .add("archiveUrl", archiveUrl)
-        .toString();
-  }
 }

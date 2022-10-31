@@ -26,6 +26,7 @@ import org.gbif.crawler.metasync.util.converter.UriConverter;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.beanutils.ConvertUtils;
@@ -43,8 +44,6 @@ import org.joda.time.Period;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
-
-import com.google.common.collect.Lists;
 
 import static org.apache.commons.digester3.binder.DigesterLoader.newLoader;
 
@@ -72,7 +71,7 @@ public abstract class BaseProtocolHandler implements MetadataProtocolHandler {
    */
   protected List<Contact> matchContacts(
       Iterable<Contact> existingContacts, Iterable<Contact> newContacts) {
-    List<Contact> resultList = Lists.newArrayList();
+    List<Contact> resultList = new ArrayList<>();
     for (Contact newContact : newContacts) {
       boolean found = false;
       for (Contact existingContact : existingContacts) {

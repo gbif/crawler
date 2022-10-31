@@ -40,7 +40,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 @Configuration
 public class CrawlerConfiguration {
 
-  public class CuratorWrapper {
+  public static class CuratorWrapper {
 
     private CuratorFramework curator;
 

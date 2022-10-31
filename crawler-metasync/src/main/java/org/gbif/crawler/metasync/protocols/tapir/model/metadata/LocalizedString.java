@@ -16,14 +16,13 @@ package org.gbif.crawler.metasync.protocols.tapir.model.metadata;
 import org.gbif.api.vocabulary.Language;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.google.common.collect.Maps;
-
 public class LocalizedString {
 
-  private final Map<Language, String> values = Maps.newHashMap();
+  private final Map<Language, String> values = new HashMap<>();
 
   public void addValue(Language language, String value) {
     values.put(language, value);
