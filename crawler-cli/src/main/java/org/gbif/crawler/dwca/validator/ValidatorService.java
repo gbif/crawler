@@ -131,8 +131,9 @@ public class ValidatorService extends DwcaService {
                 .toPath();
         final Path destinationDir = new File(unpackDirectory, datasetKey.toString()).toPath();
 
+        //Use the destinationDir assuming it was decompressed already
         DwcaValidationReport validationReport =
-            prepareAndRunValidation(dataset, dwcaFile, destinationDir);
+            prepareAndRunValidation(dataset, dwcaFile.toFile().exists()? dwcaFile : destinationDir, destinationDir);
         if (validationReport.isValid()) {
           updateProcessState(dataset, validationReport, ProcessState.RUNNING);
 
@@ -191,7 +192,7 @@ public class ValidatorService extends DwcaService {
           String metadata = new String(Files.readAllBytes(destinationPath), StandardCharsets.UTF_8);
           validationReport = DwcaValidator.validate(dataset, metadata);
         } else {
-          Archive archive = downloadedFile.toFile().exists()? DwcFiles.fromCompressed(downloadedFile, destinationFolder) : DwcFiles.fromLocation(downloadedFile.getParent());
+          Archive archive = downloadedFile.toFile().isFile()? DwcFiles.fromCompressed(downloadedFile, destinationFolder) : DwcFiles.fromLocation(downloadedFile);
           validationReport = DwcaValidator.validate(dataset, archive);
         }
       } catch (UnsupportedArchiveException e) {
