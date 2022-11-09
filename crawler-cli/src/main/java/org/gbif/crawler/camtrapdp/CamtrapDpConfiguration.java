@@ -25,7 +25,6 @@ import javax.validation.constraints.NotNull;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParametersDelegate;
-import com.google.common.base.Objects;
 
 import lombok.ToString;
 
@@ -37,13 +36,18 @@ public class CamtrapDpConfiguration extends CrawlServerConfiguration {
   @ParametersDelegate @Valid @NotNull
   public RegistryConfiguration registry = new RegistryConfiguration();
 
+  @Parameter(names = "--queue-name")
+  public String queueName;
+
   @Parameter(names = "--archive-repository")
   @NotNull
   public File archiveRepository;
 
   @Parameter(names = "--http-timeout", description = "Timeout for HTTP calls, milliseconds")
-  @Min(1 * 1000)
+  @Min(1_000)
   @PropertyName("httpTimeout")
-  public int httpTimeout = 10 * 60 * 1000;
+  public int httpTimeout = 10 * 60 * 1_000;
 
+  @Parameter(names = "--camtraptor-ws-url")
+  public String camtraptorWsUrl;
 }
