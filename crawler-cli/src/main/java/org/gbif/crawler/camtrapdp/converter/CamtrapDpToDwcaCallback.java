@@ -43,6 +43,7 @@ public class CamtrapDpToDwcaCallback
       toDwca(message);
       notifyNextStep(message);
     } catch (Exception ex) {
+      log.warn("Mark datasetKey {} as FINISHED and finish reason is ABORT", message.getDatasetUuid());
       createOrUpdate(curator, message.getDatasetUuid(), FINISHED_REASON, FinishReason.ABORT);
       createOrUpdate(curator, message.getDatasetUuid(), PROCESS_STATE_OCCURRENCE, ProcessState.FINISHED);
     }

@@ -27,7 +27,7 @@ public class CamtraptorWsClient {
       Retry.of(
           "camtraptorCall",
           RetryConfig.custom()
-              .maxAttempts(5)
+              .maxAttempts(3)
               .intervalFunction(IntervalFunction.ofExponentialBackoff(Duration.ofSeconds(5)))
               .build());
 
@@ -49,7 +49,7 @@ public class CamtraptorWsClient {
     HttpURLConnection con = (HttpURLConnection) url.openConnection();
     con.setRequestMethod("GET");
     if (HttpURLConnection.HTTP_OK != con.getResponseCode()) {
-      log.error("Camtraptor service GET request error: HTTP {}, {}", con.getResponseMessage(), con.getErrorStream());
+      log.error("Camtraptor service GET request error: HTTP {}, {}", con.getResponseCode(), con.getResponseMessage());
       throw new RuntimeException("Error contacting Camtraptor service " + con.getResponseMessage());
     }
     con.disconnect();
