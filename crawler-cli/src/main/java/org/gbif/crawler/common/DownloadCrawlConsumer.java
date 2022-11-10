@@ -105,17 +105,17 @@ public abstract class DownloadCrawlConsumer extends CrawlConsumer {
             client.downloadIfModifiedSince(crawlJob.getTargetUrl().toURL(), null, localFile, true);
 
         if (status.getStatusCode() == HttpStatus.SC_NOT_MODIFIED) {
+          Files.createLink(
+              new File(datasetDirectory, datasetKey + "." + crawlJob.getAttempt() + getSuffix())
+                  .toPath(),
+              localFile.toPath());
           notModified(datasetKey);
-          Files.createLink(
-              new File(datasetDirectory, datasetKey + "." + crawlJob.getAttempt() + getSuffix())
-                  .toPath(),
-              localFile.toPath());
         } else if (HttpUtil.success(status)) {
-          success(datasetKey, crawlJob);
           Files.createLink(
               new File(datasetDirectory, datasetKey + "." + crawlJob.getAttempt() + getSuffix())
                   .toPath(),
               localFile.toPath());
+          success(datasetKey, crawlJob);
         } else {
           failed(datasetKey);
           throw new IllegalStateException(
