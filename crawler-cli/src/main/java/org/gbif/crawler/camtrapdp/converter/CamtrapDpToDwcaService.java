@@ -8,6 +8,8 @@ import org.gbif.registry.ws.client.DatasetClient;
 import org.gbif.ws.client.ClientBuilder;
 import org.gbif.ws.json.JacksonJsonObjectMapperProvider;
 
+import org.apache.curator.framework.CuratorFramework;
+
 import com.google.common.util.concurrent.AbstractIdleService;
 
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +25,7 @@ public class CamtrapDpToDwcaService extends AbstractIdleService {
   private final CamtrapDpConfiguration config;
   private MessageListener listener;
   private MessagePublisher publisher;
+  private CuratorFramework curator;
 
   public CamtrapDpToDwcaService(CamtrapDpConfiguration config) {
     this.config = config;
@@ -34,6 +37,7 @@ public class CamtrapDpToDwcaService extends AbstractIdleService {
     // Prefetch is one, since this is a long-running process.
     listener = new MessageListener(config.messaging.getConnectionParameters(), 1);
     publisher = new DefaultMessagePublisher(config.messaging.getConnectionParameters());
+    curator = config.zooKeeper.getCuratorFramework();
 
     DatasetClient datasetClient =
         new ClientBuilder()
@@ -41,8 +45,10 @@ public class CamtrapDpToDwcaService extends AbstractIdleService {
             .withObjectMapper(JacksonJsonObjectMapperProvider.getObjectMapperWithBuilderSupport())
             .build(DatasetClient.class);
 
+
     CamtrapDpToDwcaCallback callback =
-        new CamtrapDpToDwcaCallback(config, publisher, datasetClient);
+        new CamtrapDpToDwcaCallback(config, curator, publisher, datasetClient);
+
 
     listener.listen(config.queueName, callback.getRouting(), config.poolSize, callback);
   }
@@ -51,6 +57,7 @@ public class CamtrapDpToDwcaService extends AbstractIdleService {
   protected void shutDown() {
     publisher.close();
     listener.close();
+    curator.close();
     log.info("Stopping crawler-camtrapdp-to-dwca service");
   }
 }

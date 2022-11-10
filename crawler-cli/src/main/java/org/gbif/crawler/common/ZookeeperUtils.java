@@ -15,6 +15,7 @@ package org.gbif.crawler.common;
 
 import org.gbif.crawler.constants.CrawlerNodePaths;
 
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
@@ -27,8 +28,6 @@ import org.apache.curator.retry.RetryNTimes;
 import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.base.Charsets;
 
 import static org.gbif.crawler.constants.CrawlerNodePaths.getCrawlInfoPath;
 
@@ -62,7 +61,7 @@ public class ZookeeperUtils {
 
   public static void createOrUpdate(
       CuratorFramework curator, UUID datasetKey, String subPath, Enum<?> data) {
-    createOrUpdate(curator, datasetKey, subPath, data.name().getBytes(Charsets.UTF_8));
+    createOrUpdate(curator, datasetKey, subPath, data.name().getBytes(StandardCharsets.UTF_8));
   }
 
   /**
@@ -77,7 +76,7 @@ public class ZookeeperUtils {
 
     SimpleDateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
     dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-    byte[] data = dateFormat.format(date).getBytes(Charsets.UTF_8);
+    byte[] data = dateFormat.format(date).getBytes(StandardCharsets.UTF_8);
     createOrUpdate(curator, crawlPath, data);
   }
 

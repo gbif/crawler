@@ -46,7 +46,7 @@ public class DwcaCrawlConsumer extends DownloadCrawlConsumer {
 
   @Override
   protected void success(UUID datasetKey, CrawlJob crawlJob) {
-    updateCounter(curator, datasetKey, PAGES_CRAWLED, 1l);
+    updateCounter(curator, datasetKey, PAGES_CRAWLED, 1L);
     super.success(datasetKey, crawlJob);
   }
 
