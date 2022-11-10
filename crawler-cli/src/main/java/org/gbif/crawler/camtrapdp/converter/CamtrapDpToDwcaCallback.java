@@ -43,7 +43,7 @@ public class CamtrapDpToDwcaCallback
       toDwca(message);
       notifyNextStep(message);
     } catch (Exception ex) {
-      log.warn("Mark datasetKey {} as FINISHED and finish reason is ABORT", message.getDatasetUuid());
+      log.warn("Mark datasetKey {} as FINISHED and finish reason is ABORT. {}", message.getDatasetUuid(), ex.getMessage());
       createOrUpdate(curator, message.getDatasetUuid(), FINISHED_REASON, FinishReason.ABORT);
       createOrUpdate(curator, message.getDatasetUuid(), PROCESS_STATE_OCCURRENCE, ProcessState.FINISHED);
     }
@@ -51,6 +51,7 @@ public class CamtrapDpToDwcaCallback
 
   @SneakyThrows
   private void decompress(CamtrapDpDownloadFinishedMessage message) {
+    log.info("Decompress arhive for datasetKey {}", message.getDatasetUuid());
     String datasetKey = message.getDatasetUuid().toString();
     Path source =
         Paths.get(
