@@ -43,11 +43,20 @@ public class CamtrapDpConfiguration extends CrawlServerConfiguration {
   @NotNull
   public File archiveRepository;
 
+  @Parameter(names = "--unpacked-dp-repository")
+  @NotNull
+  public File unpackedDpRepository;
+
+  @Parameter(names = "--unpacked-dwca-repository")
+  @NotNull
+  public File unpackedDwcaRepository;
+
+  @Parameter(names = "--docker-image")
+  @NotNull
+  public String dockerImage;
+
   @Parameter(names = "--http-timeout", description = "Timeout for HTTP calls, milliseconds")
   @Min(1_000)
   @PropertyName("httpTimeout")
   public int httpTimeout = 10 * 60 * 1_000;
-
-  @Parameter(names = "--camtraptor-ws-url")
-  public String camtraptorWsUrl;
 }
