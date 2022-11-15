@@ -18,15 +18,14 @@ import java.io.IOException;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
-import lombok.ToString;
-
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 
 import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.google.common.base.Objects;
+
+import lombok.ToString;
 
 /**
  * A configuration class which can be used to get all the details needed to create a connection to

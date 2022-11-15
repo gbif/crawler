@@ -20,14 +20,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import lombok.ToString;
-
 import org.apache.commons.digester3.annotations.rules.BeanPropertySetter;
 import org.apache.commons.digester3.annotations.rules.CallMethod;
 import org.apache.commons.digester3.annotations.rules.CallParam;
 import org.apache.commons.digester3.annotations.rules.ObjectCreate;
 import org.apache.commons.digester3.annotations.rules.SetNext;
 import org.apache.commons.digester3.annotations.rules.SetProperty;
+
+import lombok.ToString;
 
 @ObjectCreate(pattern = "response/metadata/relatedEntity")
 @ToString

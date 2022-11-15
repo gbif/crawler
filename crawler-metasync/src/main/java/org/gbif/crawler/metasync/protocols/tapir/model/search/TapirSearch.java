@@ -13,10 +13,10 @@
  */
 package org.gbif.crawler.metasync.protocols.tapir.model.search;
 
-import lombok.ToString;
-
 import org.apache.commons.digester3.annotations.rules.ObjectCreate;
 import org.apache.commons.digester3.annotations.rules.SetProperty;
+
+import lombok.ToString;
 
 /**
  * Class used to represent the response from a TAPIR search request, sent in order to discover the

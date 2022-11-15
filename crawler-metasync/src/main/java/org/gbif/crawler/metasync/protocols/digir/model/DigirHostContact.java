@@ -13,13 +13,12 @@
  */
 package org.gbif.crawler.metasync.protocols.digir.model;
 
-import lombok.ToString;
-
 import org.apache.commons.digester3.annotations.rules.BeanPropertySetter;
 import org.apache.commons.digester3.annotations.rules.ObjectCreate;
 import org.apache.commons.digester3.annotations.rules.SetProperty;
 
-import com.google.common.base.Objects;
+import lombok.ToString;
+
 
 @ObjectCreate(pattern = "response/content/metadata/provider/host/contact")
 @ToString

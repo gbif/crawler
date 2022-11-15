@@ -15,13 +15,12 @@ package org.gbif.crawler.metasync.protocols.tapir.model.capabilities;
 
 import java.net.URI;
 
-import lombok.ToString;
-
 import org.apache.commons.digester3.annotations.rules.ObjectCreate;
 import org.apache.commons.digester3.annotations.rules.SetProperty;
 import org.joda.time.DateTime;
 
-import com.google.common.base.Objects;
+import lombok.ToString;
+
 
 @ObjectCreate(pattern = "response/capabilities/archives/archive")
 @ToString
