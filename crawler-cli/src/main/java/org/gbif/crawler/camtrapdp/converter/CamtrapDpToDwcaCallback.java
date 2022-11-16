@@ -98,10 +98,11 @@ public class CamtrapDpToDwcaCallback
   }
 
   /** Deletes a directory recursively if it exists.*/
-  private static void deleteDirectoryIfExist(File directory) {
+  private static void recreateDirectory(File directory) {
     if (directory.exists()) {
       FileUtils.deleteDirectoryRecursively(directory);
     }
+    directory.mkdirs();
   }
 
   /** Line-by-line consumes a InputStream.*/
@@ -162,7 +163,7 @@ public class CamtrapDpToDwcaCallback
       Path dpInput = unpackedDpPath(datasetKey);
       Path dwcaOutput = unpackedDwcaRepository(datasetKey);
 
-      deleteDirectoryIfExist(dwcaOutput.toFile());
+      recreateDirectory(dwcaOutput.toFile());
 
       executeCamtraptorToDwc(dpInput, dwcaOutput, dataset);
     }
