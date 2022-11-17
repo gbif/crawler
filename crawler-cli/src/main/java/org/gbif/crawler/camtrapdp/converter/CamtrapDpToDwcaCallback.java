@@ -174,6 +174,7 @@ public class CamtrapDpToDwcaCallback
   /** Creates and sends a message to the next step: DwC-A validation. */
   @SneakyThrows
   private void notifyNextStep(CamtrapDpDownloadFinishedMessage message) {
+    log.info("Notify next step");
     publisher.send(createOutgoingMessage(message));
   }
 
