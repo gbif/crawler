@@ -90,11 +90,12 @@ public class CamtrapDpToDwcaCallback
   /** Unpacks the CamtrapDP into the target directory.*/
   @SneakyThrows
   private void decompress(CamtrapDpDownloadFinishedMessage message) {
-    log.info("Decompress archive for datasetKey {}", message.getDatasetUuid());
+    log.info("Decompressing archive for datasetKey {} ...", message.getDatasetUuid());
     String datasetKey = message.getDatasetUuid().toString();
     File compressedFile = compressedFilePath(datasetKey, message.getAttempt()).toFile();
     File target = unpackedDpPath(datasetKey).toFile();
     CompressionUtil.decompressFile(target, compressedFile, true);
+    log.info("Decompressing is finihed, datasetKey {} ...", message.getDatasetUuid());
   }
 
   /** Deletes a directory recursively if it exists.*/
@@ -117,6 +118,7 @@ public class CamtrapDpToDwcaCallback
 
   /** Execute the Camtraptor from the Docker Container.*/
   private void executeCamtraptorToDwc(Path dpInput, Path dwcaOutput, Dataset dataset) {
+    log.info("Executing camtraptor-to-dwca image...");
     try {
       Integer uid = (Integer) Files.getAttribute(dpInput.toAbsolutePath(), "unix:uid");
 
