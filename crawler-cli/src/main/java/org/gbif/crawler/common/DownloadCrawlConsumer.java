@@ -145,7 +145,7 @@ public abstract class DownloadCrawlConsumer extends CrawlConsumer {
   protected void failed(UUID datasetKey) {
     failedDownloads.inc();
     createOrUpdate(curator, datasetKey, FINISHED_REASON, FinishReason.ABORT);
-    // we don't know the kind of dataset so we just put all states to finish
+    // we don't know the kind of dataset, so we just put all states to finish
     createOrUpdate(curator, datasetKey, PROCESS_STATE_OCCURRENCE, ProcessState.FINISHED);
     createOrUpdate(curator, datasetKey, PROCESS_STATE_CHECKLIST, ProcessState.FINISHED);
     createOrUpdate(curator, datasetKey, PROCESS_STATE_SAMPLE, ProcessState.FINISHED);
@@ -154,10 +154,19 @@ public abstract class DownloadCrawlConsumer extends CrawlConsumer {
   protected void notModified(UUID datasetKey) {
     notModified.inc();
     LOG.info("Archive for dataset [{}] not modified. Crawl finished", datasetKey);
-    // If the archive wasn't modified we are done processing so we need to update ZooKeeper to
+    // If the archive wasn't modified we are done processing, so we need to update ZooKeeper to
     // reflect this
     createOrUpdate(curator, datasetKey, FINISHED_REASON, FinishReason.NOT_MODIFIED);
-    // we don't know the kind of dataset so we just put all states to finish
+    // we don't know the kind of dataset, so we just put all states to finish
+    createOrUpdate(curator, datasetKey, PROCESS_STATE_OCCURRENCE, ProcessState.FINISHED);
+    createOrUpdate(curator, datasetKey, PROCESS_STATE_CHECKLIST, ProcessState.FINISHED);
+    createOrUpdate(curator, datasetKey, PROCESS_STATE_SAMPLE, ProcessState.FINISHED);
+  }
+
+  /** Use for ABCD/XML arhive mark as finished after downloading and avoid pipelines ZK issue */
+  protected void finishedNormal(UUID datasetKey) {
+    LOG.info("Mark dataset [{}] as finished. Crawl finished", datasetKey);
+    // we don't know the kind of dataset, so we just put all states to finish
     createOrUpdate(curator, datasetKey, PROCESS_STATE_OCCURRENCE, ProcessState.FINISHED);
     createOrUpdate(curator, datasetKey, PROCESS_STATE_CHECKLIST, ProcessState.FINISHED);
     createOrUpdate(curator, datasetKey, PROCESS_STATE_SAMPLE, ProcessState.FINISHED);

@@ -135,13 +135,13 @@ public class ValidatorService extends DwcaService {
         DwcaValidationReport validationReport =
             prepareAndRunValidation(dataset, dwcaFile.toFile().exists()? dwcaFile : destinationDir, destinationDir);
         if (validationReport.isValid()) {
-          updateProcessState(dataset, validationReport, ProcessState.RUNNING);
-
+          createOrUpdate(curator, datasetKey, FINISHED_REASON, FinishReason.NORMAL);
         } else {
           failedValidations.inc();
           createOrUpdate(curator, datasetKey, FINISHED_REASON, FinishReason.ABORT);
-          updateProcessState(dataset, validationReport, ProcessState.FINISHED);
         }
+
+        updateProcessState(dataset, validationReport, ProcessState.FINISHED);
 
         LOG.info(
             "Finished validating DwC-A for dataset [{}], valid? is [{}]. Full report [{}]",
@@ -169,11 +169,6 @@ public class ValidatorService extends DwcaService {
 
     /**
      * Prepare the file(s) and run the validation on the resulting file(s).
-     *
-     * @param dataset
-     * @param downloadedFile
-     * @param destinationFolder
-     * @return
      */
     private DwcaValidationReport prepareAndRunValidation(
         Dataset dataset, Path downloadedFile, Path destinationFolder) {

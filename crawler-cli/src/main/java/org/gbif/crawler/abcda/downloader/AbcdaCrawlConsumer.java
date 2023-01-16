@@ -42,6 +42,12 @@ public class AbcdaCrawlConsumer extends DownloadCrawlConsumer {
   }
 
   @Override
+  protected void success(UUID datasetKey, CrawlJob crawlJob) {
+    super.finishedNormal(datasetKey);
+    super.success(datasetKey, crawlJob);
+  }
+
+  @Override
   protected DatasetBasedMessage createFinishedMessage(CrawlJob crawlJob) {
     return new AbcdaDownloadFinishedMessage(
         crawlJob.getDatasetKey(),
