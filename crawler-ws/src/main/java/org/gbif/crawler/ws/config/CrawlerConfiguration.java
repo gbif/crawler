@@ -15,10 +15,6 @@ package org.gbif.crawler.ws.config;
 
 import org.gbif.api.service.crawler.DatasetProcessService;
 import org.gbif.crawler.DatasetProcessServiceImpl;
-import org.gbif.crawler.pipelines.PipelinesRunningProcessService;
-import org.gbif.crawler.pipelines.PipelinesRunningProcessServiceImpl;
-import org.gbif.registry.ws.client.DatasetClient;
-import org.gbif.ws.client.ClientBuilder;
 import org.gbif.ws.json.JacksonJsonObjectMapperProvider;
 
 import java.util.concurrent.Executor;
@@ -70,16 +66,6 @@ public class CrawlerConfiguration {
       @Qualifier("crawlerObjectMapper") ObjectMapper objectMapper,
       @Qualifier("crawlerExecutor") Executor executor) {
     return new DatasetProcessServiceImpl(curatorWrapper.getCurator(), objectMapper, executor);
-  }
-
-  @Bean
-  public PipelinesRunningProcessService pipelinesRunningProcessService(
-      @Qualifier("zookeeperResource") CuratorWrapper curatorWrapper,
-      @Value("${crawler.registry.ws.url}") String url)
-      throws Exception {
-    ClientBuilder clientBuilder = new ClientBuilder().withObjectMapper(JacksonJsonObjectMapperProvider.getObjectMapperWithBuilderSupport());
-    return new PipelinesRunningProcessServiceImpl(
-        curatorWrapper.getCurator(), clientBuilder.withUrl(url).build(DatasetClient.class));
   }
 
   @Bean("zookeeperResource")
