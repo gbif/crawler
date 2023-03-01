@@ -1,6 +1,6 @@
 # GBIF Crawler Webservice
 
-The Crawler Web Service provides the [Crawling Monitor](https://crawler.gbif.org/) which shows running crawls, their status, and gives links to logs in Kibana. All of the count data comes from Zookeeper.
+The Crawler Web Service provides the API calls for the [Crawling Monitor](https://registry.gbif.org/running-crawls/) which shows running crawls, their status, and gives links to logs in Kibana. All of the count data comes from Zookeeper.
 
 ## To build the project
 

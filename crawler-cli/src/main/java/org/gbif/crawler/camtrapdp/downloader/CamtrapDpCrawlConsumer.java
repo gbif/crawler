@@ -28,7 +28,7 @@ import java.util.UUID;
 import org.apache.curator.framework.CuratorFramework;
 
 /**
- * Consumer of the crawler queue that runs the actual ABCD archive download and emits a
+ * Consumer of the crawler queue that runs the actual CamtrapDP archive download and emits a
  * CamtrapDpDownloadFinishedMessage when done.
  */
 public class CamtrapDpCrawlConsumer extends DownloadCrawlConsumer {

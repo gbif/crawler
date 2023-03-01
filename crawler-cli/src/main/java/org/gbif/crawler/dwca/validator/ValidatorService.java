@@ -141,7 +141,50 @@ public class ValidatorService extends DwcaService {
           createOrUpdate(curator, datasetKey, FINISHED_REASON, FinishReason.ABORT);
         }
 
-        updateProcessState(dataset, validationReport, ProcessState.FINISHED);
+        //updateProcessState(dataset, validationReport, ProcessState.FINISHED);
+        DwcaValidationReport report = validationReport;
+
+        // Override state to EMPTY if there are no occurrences.
+        ProcessState occurrenceState =
+          (report.getOccurrenceReport() != null
+            && report.getOccurrenceReport().getCheckedRecords() > 0)
+            ? ProcessState.FINISHED
+            : ProcessState.EMPTY;
+
+        ProcessState coreState = report.getGenericReport() == null ? ProcessState.EMPTY : ProcessState.FINISHED;
+
+        // For metadata, occurrence and sampling event datasets, there is no further processing by crawler.
+        //    Mark them as finished.
+        //
+        // For checklist datasets, processing (with the Zookeeper state) continues with Checklistbank.
+        switch (dataset.getType()) {
+          case METADATA:
+            createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_OCCURRENCE, ProcessState.EMPTY);
+            createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_CHECKLIST, ProcessState.EMPTY);
+            createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_SAMPLE, ProcessState.EMPTY);
+            LOG.info("Marked metadata-only dataset as empty [{}]", datasetKey);
+            break;
+          case OCCURRENCE:
+            createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_OCCURRENCE, occurrenceState);
+            createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_CHECKLIST, ProcessState.EMPTY);
+            createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_SAMPLE, ProcessState.EMPTY);
+            break;
+          case SAMPLING_EVENT:
+            createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_OCCURRENCE, occurrenceState);
+            createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_CHECKLIST, ProcessState.EMPTY);
+            createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_SAMPLE, occurrenceState);
+            break;
+          case CHECKLIST:
+            createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_OCCURRENCE, occurrenceState);
+            createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_CHECKLIST, ProcessState.RUNNING);
+            createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_SAMPLE, occurrenceState);
+            break;
+          default:
+            LOG.error(
+              "Can't updateProcessState dataset [{}]: unknown type -> {}",
+              datasetKey,
+              dataset.getType());
+        }
 
         LOG.info(
             "Finished validating DwC-A for dataset [{}], valid? is [{}]. Full report [{}]",
@@ -207,60 +250,5 @@ public class ValidatorService extends DwcaService {
       return validationReport;
     }
 
-    /**
-     * Set the process state. For existing dataset types (that contains data) this sets the process
-     * state as given. For METADATA, this method sets the state to EMPTY.
-     */
-    private void updateProcessState(
-        Dataset dataset, DwcaValidationReport report, ProcessState state) {
-      // Override state to EMPTY if there are no occurrences.
-      ProcessState occurrenceState =
-          (report.getOccurrenceReport() != null
-                  && report.getOccurrenceReport().getCheckedRecords() > 0)
-              ? state
-              : ProcessState.EMPTY;
-
-      switch (dataset.getType()) {
-        case OCCURRENCE:
-          createOrUpdate(
-              curator, report.getDatasetKey(), PROCESS_STATE_OCCURRENCE, occurrenceState);
-          break;
-        case CHECKLIST:
-        case SAMPLING_EVENT:
-          // we might have a mixed dataset with taxa or events and optionally also occurrences
-
-          // update core status
-          // if there is no report, we record empty, otherwise we record the given state
-          ProcessState coreState = report.getGenericReport() == null ? ProcessState.EMPTY : state;
-          createOrUpdate(
-              curator,
-              report.getDatasetKey(),
-              dataset.getType() == DatasetType.CHECKLIST
-                  ? PROCESS_STATE_CHECKLIST
-                  : PROCESS_STATE_SAMPLE,
-              coreState);
-
-          // update occurrence status
-          createOrUpdate(
-              curator, report.getDatasetKey(), PROCESS_STATE_OCCURRENCE, occurrenceState);
-          break;
-        case METADATA:
-          // for metadata only dataset this is the last step
-          // explicitly declare that no content is expected so the CoordinatorCleanup can pick it
-          // up.
-          createOrUpdate(
-              curator, report.getDatasetKey(), PROCESS_STATE_OCCURRENCE, ProcessState.EMPTY);
-          createOrUpdate(
-              curator, report.getDatasetKey(), PROCESS_STATE_CHECKLIST, ProcessState.EMPTY);
-          createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_SAMPLE, ProcessState.EMPTY);
-          LOG.info("Marked metadata-only dataset as empty [{}]", datasetKey);
-          break;
-        default:
-          LOG.error(
-              "Can't updateProcessState dataset [{}]: unknown type -> {}",
-              datasetKey,
-              dataset.getType());
-      }
-    }
   }
 }

@@ -65,4 +65,16 @@ public class DatasetProcessResource implements DatasetProcessService {
   public List<DatasetProcessStatus> getPendingDwcaDatasetProcesses() {
     return service.getPendingDwcaDatasetProcesses();
   }
+
+  @GetMapping("abcda/pending")
+  @Override
+  public List<DatasetProcessStatus> getPendingAbcdaDatasetProcesses() {
+    return service.getPendingAbcdaDatasetProcesses();
+  }
+
+  @GetMapping("camtrapdp/pending")
+  @Override
+  public List<DatasetProcessStatus> getPendingCamtrapDpDatasetProcesses() {
+    return service.getPendingCamtrapDpDatasetProcesses();
+  }
 }

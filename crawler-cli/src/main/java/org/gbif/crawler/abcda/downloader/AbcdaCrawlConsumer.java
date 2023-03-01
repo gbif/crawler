@@ -43,7 +43,7 @@ public class AbcdaCrawlConsumer extends DownloadCrawlConsumer {
 
   @Override
   protected void success(UUID datasetKey, CrawlJob crawlJob) {
-    super.finishedNormal(datasetKey);
+    super.finishedWithoutFurtherProcessing(datasetKey);
     super.success(datasetKey, crawlJob);
   }
 

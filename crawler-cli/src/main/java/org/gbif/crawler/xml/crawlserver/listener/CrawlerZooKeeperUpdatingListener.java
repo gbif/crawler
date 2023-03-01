@@ -132,10 +132,13 @@ public class CrawlerZooKeeperUpdatingListener<CTX extends CrawlContext>
   public void finishCrawlNormally() {
     finishCrawl(FinishReason.NORMAL);
 
-    if (totalRecordCount == 0 || !Platform.OCCURRENCE.equivalent(platform)) {
+    if (totalRecordCount == 0) {
       // Empty dataset, this is the end of processing.
       createOrUpdate(
           curator, configuration.getDatasetKey(), PROCESS_STATE_OCCURRENCE, ProcessState.EMPTY);
+    } else {
+      createOrUpdate(
+        curator, configuration.getDatasetKey(), PROCESS_STATE_OCCURRENCE, ProcessState.FINISHED);
     }
   }
 

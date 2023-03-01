@@ -50,6 +50,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.gbif.crawler.constants.CrawlerNodePaths.ABCDA_CRAWL;
+import static org.gbif.crawler.constants.CrawlerNodePaths.CAMETRAPDP_CRAWL;
 import static org.gbif.crawler.constants.CrawlerNodePaths.CRAWL_CONTEXT;
 import static org.gbif.crawler.constants.CrawlerNodePaths.CRAWL_INFO;
 import static org.gbif.crawler.constants.CrawlerNodePaths.DECLARED_COUNT;
@@ -233,6 +235,18 @@ public class DatasetProcessServiceImpl implements DatasetProcessService {
   @Override
   public List<DatasetProcessStatus> getPendingDwcaDatasetProcesses() {
     List<UUID> pendingCrawlUuids = getPendingCrawlUuids(DWCA_CRAWL);
+    return getDatasetProcessStatuses(pendingCrawlUuids);
+  }
+
+  @Override
+  public List<DatasetProcessStatus> getPendingAbcdaDatasetProcesses() {
+    List<UUID> pendingCrawlUuids = getPendingCrawlUuids(ABCDA_CRAWL);
+    return getDatasetProcessStatuses(pendingCrawlUuids);
+  }
+
+  @Override
+  public List<DatasetProcessStatus> getPendingCamtrapDpDatasetProcesses() {
+    List<UUID> pendingCrawlUuids = getPendingCrawlUuids(CAMETRAPDP_CRAWL);
     return getDatasetProcessStatuses(pendingCrawlUuids);
   }
 

@@ -27,11 +27,8 @@ import java.util.UUID;
 
 import org.apache.curator.framework.CuratorFramework;
 
-import static org.gbif.crawler.common.ZookeeperUtils.updateCounter;
-import static org.gbif.crawler.constants.CrawlerNodePaths.PAGES_CRAWLED;
-
 /**
- * Consumer of the crawler queue that runs the actual dwc archive download and emits a
+ * Consumer of the crawler queue that runs the actual DWC archive download and emits a
  * DwcaDownloadFinishedMessage when done.
  */
 public class DwcaCrawlConsumer extends DownloadCrawlConsumer {
@@ -46,7 +43,6 @@ public class DwcaCrawlConsumer extends DownloadCrawlConsumer {
 
   @Override
   protected void success(UUID datasetKey, CrawlJob crawlJob) {
-    updateCounter(curator, datasetKey, PAGES_CRAWLED, 1L);
     super.success(datasetKey, crawlJob);
   }
 

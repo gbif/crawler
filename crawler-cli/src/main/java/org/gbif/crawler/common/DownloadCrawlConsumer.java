@@ -39,6 +39,7 @@ import com.yammer.metrics.Metrics;
 import com.yammer.metrics.core.Counter;
 
 import static org.gbif.crawler.common.ZookeeperUtils.createOrUpdate;
+import static org.gbif.crawler.common.ZookeeperUtils.updateCounter;
 import static org.gbif.crawler.common.ZookeeperUtils.updateDate;
 import static org.gbif.crawler.constants.CrawlerNodePaths.*;
 
@@ -163,9 +164,9 @@ public abstract class DownloadCrawlConsumer extends CrawlConsumer {
     createOrUpdate(curator, datasetKey, PROCESS_STATE_SAMPLE, ProcessState.FINISHED);
   }
 
-  /** Use for ABCD/XML arhive mark as finished after downloading and avoid pipelines ZK issue */
-  protected void finishedNormal(UUID datasetKey) {
-    LOG.info("Mark dataset [{}] as finished. Crawl finished", datasetKey);
+  /** For archive types we don't (yet) validate or otherwise process, the crawl process is now complete. */
+  protected void finishedWithoutFurtherProcessing(UUID datasetKey) {
+    LOG.info("Mark dataset [{}] as finished (no further processing here). Crawl finished", datasetKey);
     // we don't know the kind of dataset, so we just put all states to finish
     createOrUpdate(curator, datasetKey, PROCESS_STATE_OCCURRENCE, ProcessState.FINISHED);
     createOrUpdate(curator, datasetKey, PROCESS_STATE_CHECKLIST, ProcessState.FINISHED);
@@ -173,6 +174,7 @@ public abstract class DownloadCrawlConsumer extends CrawlConsumer {
   }
 
   protected void success(UUID datasetKey, CrawlJob crawlJob) {
+    updateCounter(curator, datasetKey, PAGES_CRAWLED, 1L);
     LOG.info("Successfully downloaded new archive for dataset [{}]", datasetKey);
     // send download success message
     try {

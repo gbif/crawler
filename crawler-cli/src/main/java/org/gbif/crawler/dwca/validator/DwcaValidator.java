@@ -116,8 +116,8 @@ public class DwcaValidator {
   }
 
   /**
-   * Internal non static working method that does the validation. If an occurrence core is found
-   * this is what gets validated. Otherwise extension records from either dwc:Occurrence or
+   * Internal non-static working method that does the validation. If an occurrence core is found
+   * this is what gets validated. Otherwise, extension records from either dwc:Occurrence or
    * gbif:TypesAndSpecimen are validated with Occurrence being the preferred extension.
    */
   private DwcaValidationReport check(Dataset dataset, Archive archive) throws IOException {
