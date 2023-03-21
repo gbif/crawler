@@ -263,12 +263,23 @@ public class SimpleAbcd206Metadata {
       @CallParam(pattern = BASE_PATH + "ContentContacts/ContentContact/Email") String email,
       @CallParam(pattern = BASE_PATH + "ContentContacts/ContentContact/Phone") String phone,
       @CallParam(pattern = BASE_PATH + "ContentContacts/ContentContact/Address") String address) {
-    Contact contact = new Contact();
-    contact.setFirstName(name);
-    contact.setEmail(Collections.singletonList(email));
-    contact.setPhone(Collections.singletonList(phone));
-    contact.setAddress(Collections.singletonList(address));
-    contact.setType(ContactType.ADMINISTRATIVE_POINT_OF_CONTACT);
-    contacts.add(contact);
+
+    // Add as both an administrative contact and an originator, the latter to
+    // ensure inclusion in the generated citation, see #59.
+    Contact adminContact = new Contact();
+    adminContact.setFirstName(name);
+    adminContact.setEmail(Collections.singletonList(email));
+    adminContact.setPhone(Collections.singletonList(phone));
+    adminContact.setAddress(Collections.singletonList(address));
+    adminContact.setType(ContactType.ADMINISTRATIVE_POINT_OF_CONTACT);
+    contacts.add(adminContact);
+
+    Contact originatingContact = new Contact();
+    originatingContact.setFirstName(name);
+    originatingContact.setEmail(Collections.singletonList(email));
+    originatingContact.setPhone(Collections.singletonList(phone));
+    originatingContact.setAddress(Collections.singletonList(address));
+    originatingContact.setType(ContactType.ORIGINATOR);
+    contacts.add(originatingContact);
   }
 }

@@ -18,14 +18,13 @@ import org.gbif.api.vocabulary.ContactType;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.commons.digester3.annotations.rules.BeanPropertySetter;
 import org.apache.commons.digester3.annotations.rules.CallMethod;
 import org.apache.commons.digester3.annotations.rules.CallParam;
 import org.apache.commons.digester3.annotations.rules.ObjectCreate;
-
-import com.google.common.collect.Lists;
 
 /** This object extracts the same information from ABCD 1.2 as the "old" registry did. */
 @ObjectCreate(pattern = "response/content/DataSets/DataSet")
@@ -239,9 +238,9 @@ public class SimpleAbcd12Metadata {
           String address) {
     Contact contact = new Contact();
     contact.setFirstName(name);
-    contact.setEmail(Lists.newArrayList(email));
-    contact.setPhone(Lists.newArrayList(phone));
-    contact.setAddress(Lists.newArrayList(address));
+    contact.setEmail(Collections.singletonList(email));
+    contact.setPhone(Collections.singletonList(phone));
+    contact.setAddress(Collections.singletonList(address));
     contact.setType(ContactType.TECHNICAL_POINT_OF_CONTACT);
     contacts.add(contact);
   }
@@ -268,12 +267,23 @@ public class SimpleAbcd12Metadata {
                   BASE_PATH
                       + "DatasetDerivations/DatasetDerivation/Rights/LegalOwner/Addresses/Address")
           String address) {
-    Contact contact = new Contact();
-    contact.setFirstName(name);
-    contact.setEmail(Lists.newArrayList(email));
-    contact.setPhone(Lists.newArrayList(phone));
-    contact.setAddress(Lists.newArrayList(address));
-    contact.setType(ContactType.ADMINISTRATIVE_POINT_OF_CONTACT);
-    contacts.add(contact);
+
+    // Add as both an administrative contact and an originator, the latter to
+    // ensure inclusion in the generated citation, see #59.
+    Contact adminContact = new Contact();
+    adminContact.setFirstName(name);
+    adminContact.setEmail(Collections.singletonList(email));
+    adminContact.setPhone(Collections.singletonList(phone));
+    adminContact.setAddress(Collections.singletonList(address));
+    adminContact.setType(ContactType.ADMINISTRATIVE_POINT_OF_CONTACT);
+    contacts.add(adminContact);
+
+    Contact originatingContact = new Contact();
+    originatingContact.setFirstName(name);
+    originatingContact.setEmail(Collections.singletonList(email));
+    originatingContact.setPhone(Collections.singletonList(phone));
+    originatingContact.setAddress(Collections.singletonList(address));
+    originatingContact.setType(ContactType.ORIGINATOR);
+    contacts.add(originatingContact);
   }
 }
