@@ -18,6 +18,7 @@ import org.gbif.crawler.metasync.util.Constants;
 import java.io.StringWriter;
 import java.util.Properties;
 
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.context.Context;
@@ -65,7 +66,7 @@ final class TemplateUtils {
   public static String getBiocaseMetadataRequest(String contentNamespace, String datasetTitle) {
     Context context = new VelocityContext();
     context.put("contentNamespace", contentNamespace);
-    context.put("datasetTitle", datasetTitle);
+    context.put("datasetTitle", escapeXml(datasetTitle));
     context.put("titleConcept", getTitlePath(contentNamespace));
 
     if (contentNamespace.equals(Constants.ABCD_12_SCHEMA)) {
@@ -87,7 +88,7 @@ final class TemplateUtils {
   public static String getBiocaseCountRequest(String contentNamespace, String datasetTitle) {
     Context context = new VelocityContext();
     context.put("contentNamespace", contentNamespace);
-    context.put("datasetTitle", datasetTitle);
+    context.put("datasetTitle", escapeXml(datasetTitle));
     context.put("titleConcept", getTitlePath(contentNamespace));
 
     if (contentNamespace.equals(Constants.ABCD_12_SCHEMA)) {
@@ -109,6 +110,14 @@ final class TemplateUtils {
       return "/DataSets/DataSet/Metadata/Description/Representation/Title";
     }
     return null;
+  }
+
+  private static String escapeXml(String text) {
+    if (text == null) {
+      return null;
+    }
+
+    return StringEscapeUtils.escapeXml(text);
   }
 
   private TemplateUtils() {
