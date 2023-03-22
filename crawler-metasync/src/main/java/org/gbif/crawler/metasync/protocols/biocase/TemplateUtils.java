@@ -18,7 +18,6 @@ import org.gbif.crawler.metasync.util.Constants;
 import java.io.StringWriter;
 import java.util.Properties;
 
-import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.context.Context;
@@ -117,7 +116,9 @@ final class TemplateUtils {
       return null;
     }
 
-    return StringEscapeUtils.escapeXml(text);
+    // Just the minimum we need.  BioCASe has many German datasets with ÄÖÜẞ etc, and at this point (2023)
+    // starting to entity-encode them seems unwise.
+    return text.replaceAll("&", "&amp;");
   }
 
   private TemplateUtils() {

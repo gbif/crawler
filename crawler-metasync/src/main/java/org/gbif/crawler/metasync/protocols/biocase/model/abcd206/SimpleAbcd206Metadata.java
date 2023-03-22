@@ -15,6 +15,7 @@ package org.gbif.crawler.metasync.protocols.biocase.model.abcd206;
 
 import org.gbif.api.model.registry.Contact;
 import org.gbif.api.vocabulary.ContactType;
+import org.gbif.api.vocabulary.Language;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -25,7 +26,7 @@ import org.apache.commons.digester3.annotations.rules.BeanPropertySetter;
 import org.apache.commons.digester3.annotations.rules.CallMethod;
 import org.apache.commons.digester3.annotations.rules.CallParam;
 import org.apache.commons.digester3.annotations.rules.ObjectCreate;
-
+import org.apache.commons.lang3.StringUtils;
 
 /** This object extracts the same information from ABCD 2.06 as the "old" registry did. */
 @ObjectCreate(pattern = "response/content/DataSets/DataSet")
@@ -39,11 +40,18 @@ public class SimpleAbcd206Metadata {
   private final List<String> ownerUrls = new ArrayList<>();
   private final List<Contact> contacts = new ArrayList<>();
 
+  private Language language;
+
   @BeanPropertySetter(pattern = BASE_PATH + "Metadata/Description/Representation/Title")
   private String name;
+
   // description
   @BeanPropertySetter(pattern = BASE_PATH + "Metadata/Description/Representation/Details")
   private String details;
+
+  // coverage description
+  @BeanPropertySetter(pattern = BASE_PATH + "Metadata/Description/Representation/Coverage")
+  private String coverage;
 
   @BeanPropertySetter(pattern = BASE_PATH + "Metadata/Description/Representation/URI")
   private URI homepage;
@@ -111,6 +119,14 @@ public class SimpleAbcd206Metadata {
     this.citationText = citationText;
   }
 
+  public String getCoverage() {
+    return coverage;
+  }
+
+  public void setCoverage(String coverage) {
+    this.coverage = coverage;
+  }
+
   public String getRights() {
     return rights;
   }
@@ -141,6 +157,14 @@ public class SimpleAbcd206Metadata {
 
   public void setAddress(String address) {
     this.address = address;
+  }
+
+  public Language getLanguage() {
+    return language;
+  }
+
+  public void setLanguage(Language language) {
+    this.language = language;
   }
 
   public URI getLogoUrl() {
@@ -281,5 +305,22 @@ public class SimpleAbcd206Metadata {
     originatingContact.setAddress(Collections.singletonList(address));
     originatingContact.setType(ContactType.ORIGINATOR);
     contacts.add(originatingContact);
+  }
+
+  @CallMethod(pattern = BASE_PATH + "Metadata/Description/Representation")
+  public void setLanguage(
+    @CallParam(pattern = BASE_PATH + "Metadata/Description/Representation", attributeName = "language") String language) {
+    if (StringUtils.isNotEmpty(language)) {
+      try {
+        String[] tokens = language.split("\\s+");
+        if (tokens.length > 0) {
+          Language l = Language.fromIsoCode(tokens[0]);
+          if (l != Language.UNKNOWN) {
+            this.language = l;
+          }
+        }
+      } catch (Exception e) {
+      }
+    }
   }
 }
