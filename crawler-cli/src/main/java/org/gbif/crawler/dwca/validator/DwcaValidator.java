@@ -71,7 +71,8 @@ public class DwcaValidator {
   private static final Map<DatasetType, DwcTerm> DATASET_TYPE_CORE_ID =
       ImmutableMap.of(
           DatasetType.CHECKLIST, DwcTerm.taxonID,
-          DatasetType.SAMPLING_EVENT, DwcTerm.eventID);
+          DatasetType.SAMPLING_EVENT, DwcTerm.eventID,
+          DatasetType.MATERIAL_ENTITY, DwcTerm.materialEntityID);
 
   // limit the number of checked records to protect against memory exhaustion
   private static final int MAX_RECORDS = 2000000;
@@ -123,7 +124,6 @@ public class DwcaValidator {
   private DwcaValidationReport check(Dataset dataset, Archive archive) throws IOException {
     if (dataset.getType() == DatasetType.OCCURRENCE) {
       return new DwcaValidationReport(dataset.getKey(), validateOccurrenceCore(archive));
-
     } else if (DATASET_TYPE_CORE_ID.keySet().contains(dataset.getType())) {
       GenericValidationReport report =
           validateGenericCore(archive, DATASET_TYPE_CORE_ID.get(dataset.getType()));
