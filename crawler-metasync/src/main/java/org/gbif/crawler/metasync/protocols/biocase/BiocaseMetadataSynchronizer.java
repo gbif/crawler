@@ -17,9 +17,11 @@ import org.gbif.api.model.common.DOI;
 import org.gbif.api.model.registry.Citation;
 import org.gbif.api.model.registry.Dataset;
 import org.gbif.api.model.registry.Endpoint;
+import org.gbif.api.model.registry.Identifier;
 import org.gbif.api.model.registry.Installation;
 import org.gbif.api.model.registry.MachineTag;
 import org.gbif.api.vocabulary.EndpointType;
+import org.gbif.api.vocabulary.IdentifierType;
 import org.gbif.api.vocabulary.InstallationType;
 import org.gbif.api.vocabulary.License;
 import org.gbif.api.vocabulary.TagName;
@@ -49,6 +51,7 @@ import java.util.Optional;
 
 import javax.annotation.Nullable;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.utils.URIBuilder;
 import org.slf4j.Logger;
@@ -74,7 +77,7 @@ import static com.google.common.base.Preconditions.checkArgument;
  *       and greater) support a separate inventory request.
  * </ul>
  *
- * <p>Unfortunately BioCASe does not have good (stable) identifiers for Datasets so we need to rely
+ * <p>Unfortunately BioCASe does not have good (stable) identifiers for Datasets, so we need to rely
  * on the Dataset title.
  */
 public class BiocaseMetadataSynchronizer extends BaseProtocolHandler {
@@ -296,6 +299,7 @@ public class BiocaseMetadataSynchronizer extends BaseProtocolHandler {
       Endpoint endpoint, String dataset, Capabilities capabilities) throws MetadataException {
     String requestParameter =
         TemplateUtils.getBiocaseMetadataRequest(capabilities.getPreferredSchema(), dataset);
+    LOG.debug("ABCD 2.06 request: {}", "\n" + requestParameter);
     URI uri = buildUri(endpoint.getUrl(), "request", requestParameter);
     return doHttpRequest(uri, newDigester(SimpleAbcd206Metadata.class));
   }
@@ -305,6 +309,7 @@ public class BiocaseMetadataSynchronizer extends BaseProtocolHandler {
       Endpoint endpoint, String dataset, Capabilities capabilities) throws MetadataException {
     String requestParameter =
         TemplateUtils.getBiocaseMetadataRequest(capabilities.getPreferredSchema(), dataset);
+    LOG.debug("ABCD 1.2 request: {}", "\n" + requestParameter);
     URI uri = buildUri(endpoint.getUrl(), "request", requestParameter);
     return doHttpRequest(uri, newDigester(SimpleAbcd12Metadata.class));
   }
@@ -316,35 +321,46 @@ public class BiocaseMetadataSynchronizer extends BaseProtocolHandler {
       InventoryDataset inventoryDataset) {
     Dataset dataset = new Dataset();
     dataset.setTitle(metadata.getName());
-    dataset.setDescription(metadata.getDetails());
+
+    if (metadata.getCoverage() == null) {
+      dataset.setDescription(metadata.getDetails());
+    } else {
+      dataset.setDescription(metadata.getDetails() + "\n\n" + metadata.getCoverage());
+    }
+
     dataset.setHomepage(metadata.getHomepage());
     dataset.setLogoUrl(metadata.getLogoUrl());
 
     // Respect publisher issued dataset license.
-    // Best practice is to supply a machine readable license specifying license URI and Text
+    // Best practice is to supply a machine-readable license specifying license URI and Text
     License license =
         getLicenseParser().parseUriThenTitle(metadata.getLicenseUri(), metadata.getLicenseText());
     if (!license.equals(License.UNSPECIFIED)) {
       LOG.info(
-          "Machine readable license {} parsed from License/URI {} & License/Text {}",
+          "Machine-readable license {} parsed from License/URI {} & License/Text {}",
           license,
           metadata.getLicenseUri(),
           metadata.getLicenseText());
     }
-    // ..alternatively, a machine readable license can be detected in rights
+    // ...alternatively, a machine-readable license can be detected in rights
     else {
       ParseResult<License> licenseFromRights = getLicenseParser().parse(metadata.getRights());
       if (licenseFromRights.isSuccessful()) {
         license = licenseFromRights.getPayload();
         LOG.info(
-            "Machine readable license {} parsed from rights {}", license, metadata.getRights());
+            "Machine-readable license {} parsed from rights {}", license, metadata.getRights());
       }
     }
     dataset.setLicense(license);
 
-    // Respect publisher issued DOIs if provided.
+    // Respect publisher-issued DOIs if provided.
     if (DOI.isParsable(metadata.getDatasetGUID())) {
       dataset.setDoi(new DOI(metadata.getDatasetGUID()));
+    } else if (StringUtils.isNotEmpty(metadata.getDatasetGUID())) {
+      Identifier identifier = new Identifier();
+      identifier.setIdentifier(metadata.getDatasetGUID());
+      identifier.setType(IdentifierType.UNKNOWN);
+      dataset.getIdentifiers().add(identifier);
     }
 
     Citation citation = new Citation();
@@ -413,7 +429,7 @@ public class BiocaseMetadataSynchronizer extends BaseProtocolHandler {
     ParseResult<License> licenseFromRights = getLicenseParser().parse(metadata.getRights());
     if (licenseFromRights.isSuccessful()) {
       License license = licenseFromRights.getPayload();
-      LOG.info("Machine readable license {} parsed from rights {}", license, metadata.getRights());
+      LOG.info("Machine-readable license {} parsed from rights {}", license, metadata.getRights());
       dataset.setLicense(license);
     }
 
