@@ -52,7 +52,6 @@ import static org.gbif.crawler.constants.CrawlerNodePaths.FINISHED_REASON;
 import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_CHECKLIST;
 import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_OCCURRENCE;
 import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_SAMPLE;
-import static org.gbif.dwc.terms.GbifTerm.datasetKey;
 
 public class ValidatorService extends DwcaService {
 
@@ -165,6 +164,7 @@ public class ValidatorService extends DwcaService {
             LOG.info("Marked metadata-only dataset as empty [{}]", datasetKey);
             break;
           case OCCURRENCE:
+          case MATERIAL_ENTITY:
             createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_OCCURRENCE, occurrenceState);
             createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_CHECKLIST, ProcessState.EMPTY);
             createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_SAMPLE, ProcessState.EMPTY);
