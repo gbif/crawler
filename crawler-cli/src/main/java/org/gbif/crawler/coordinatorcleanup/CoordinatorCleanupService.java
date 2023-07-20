@@ -23,6 +23,7 @@ import org.gbif.crawler.ws.client.DatasetProcessClient;
 import org.gbif.registry.ws.client.DatasetProcessStatusClient;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -204,6 +205,11 @@ public class CoordinatorCleanupService extends AbstractScheduledService {
     if (status.getProcessStateOccurrence() != null
         && status.getProcessStateOccurrence() == ProcessState.RUNNING) {
       LOG.debug("Waiting for occurrence processing to finish.");
+      return false;
+    }
+
+    if ((new Date().getTime() - status.getFinishedCrawling().getTime()) < 2*60*1000) {
+      LOG.debug("Waiting until 2 minutes have elapsed due to https://github.com/gbif/pipelines/issues/875");
       return false;
     }
 
