@@ -32,7 +32,7 @@ public class ZookeeperCleanup {
   /**
    * First and only arg needs to be the node whose content should be deleted, e.g. "/dev_crawler".
    */
-  public static void main(String[] args) throws IOException, KeeperException, InterruptedException {
+  public static void main(String[] args) throws IOException, InterruptedException {
     if (args.length != 2) {
       LOG.error(
           "Usage: ZookeeperCleanup <node name> <zk path e.g. c1n8.gbif.org:2181,c1n9.gbif.org:2181,c1n10.gbif.org:2181>");

@@ -28,20 +28,24 @@ public class ZookeeperCleanupFromFile {
   private static final String PROD = "prod";
   private static final String UAT = "uat";
   private static final String DEV = "dev";
+  private static final String DEV2 = "dev2";
   private static final String PROD_PATH = "/prod_crawler/crawls/";
   private static final String UAT_PATH = "/uat_crawler/crawls/";
   private static final String DEV_PATH = "/dev_crawler/crawls/";
+  private static final String DEV2_PATH = "/dev2_crawler/crawls/";
   private static final String PROD_ZK =
       "c5zk1.gbif.org:2181,c5zk2.gbif.org:2181,c5zk3.gbif.org:2181";
   private static final String UAT_ZK =
       "c4zk1.gbif-uat.org:2181,c4zk2.gbif-uat.org:2181,c4zk3.gbif-uat.org:2181";
   private static final String DEV_ZK =
       "c3zk1.gbif-dev.org:2181,c3zk2.gbif-dev.org:2181,c3zk3.gbif-dev.org:2181";
+  private static final String DEV2_ZK =
+      "sc4n1.gbif.org:31228,sc4n2.gbif.org:31228,sc4n3.gbif.org:31228";
 
   private ZookeeperCleanupFromFile() {}
 
   /** Delete crawls specified in file from given environment */
-  public static void main(String[] args) throws IOException, KeeperException, InterruptedException {
+  public static void main(String[] args) throws IOException, InterruptedException {
     LOG.debug("ZookeeperCleanupFromFile starting");
     if (args.length != 2) {
       LOG.error("Usage: ZookeeperCleanupFromFile <filename> <environment: prod, uat, or dev>");
@@ -59,6 +63,9 @@ public class ZookeeperCleanupFromFile {
     } else if (args[1].equals(DEV)) {
       path = DEV_PATH;
       zkPath = DEV_ZK;
+    } else if (args[1].equals(DEV2)) {
+      path = DEV2_PATH;
+      zkPath = DEV2_ZK;
     }
 
     if (path == null) {
