@@ -304,7 +304,7 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
    * @return
    */
   private static boolean isCamtrapDpArchive(Endpoint endpoint) {
-    return EndpointType.CAMTRAP_DP_v_0_4 == endpoint.getType();
+    return EndpointType.CAMTRAP_DP == endpoint.getType();
   }
 
   /**
@@ -453,7 +453,7 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
             true);
         break;
       case DWC_ARCHIVE:
-      case CAMTRAP_DP_v_0_4:
+      case CAMTRAP_DP:
       case EML:
         break;
       default:
