@@ -13,10 +13,13 @@
  */
 package org.gbif.crawler.camtrapdp.converter;
 
+import jdk.jpackage.internal.Log;
+
 import org.gbif.api.model.crawler.FinishReason;
 import org.gbif.api.model.crawler.ProcessState;
 import org.gbif.api.model.registry.Dataset;
 import org.gbif.api.vocabulary.EndpointType;
+import org.gbif.api.vocabulary.License;
 import org.gbif.common.messaging.AbstractMessageCallback;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.CamtrapDpDownloadFinishedMessage;
@@ -36,10 +39,14 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Date;
 import java.util.LinkedList;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.slf4j.MDC;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
@@ -49,11 +56,15 @@ import static org.gbif.crawler.common.ZookeeperUtils.createOrUpdate;
 import static org.gbif.crawler.constants.CrawlerNodePaths.FINISHED_REASON;
 import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_OCCURRENCE;
 
-/** Callback which is called when the {@link CamtrapDpDownloadFinishedMessage} is received. */
+/**
+ * Callback which is called when the {@link CamtrapDpDownloadFinishedMessage} is received.
+ */
 @Slf4j
 @AllArgsConstructor
 public class CamtrapDpToDwcaCallback
-    extends AbstractMessageCallback<CamtrapDpDownloadFinishedMessage> {
+  extends AbstractMessageCallback<CamtrapDpDownloadFinishedMessage> {
+
+  protected static final ObjectMapper MAPPER = new ObjectMapper();
 
   private final CamtrapDpConfiguration config;
   private final CuratorFramework curator;
@@ -72,22 +83,30 @@ public class CamtrapDpToDwcaCallback
     }
   }
 
-  /** Path/File to the compressed file.*/
+  /**
+   * Path/File to the compressed file.
+   */
   private Path compressedFilePath(String datasetKey, Integer attempt) {
     return Paths.get(config.archiveRepository.toString(), datasetKey, datasetKey + "." + attempt + ".camtrapdp");
   }
 
-  /** Path/Directory where the file is decompressed.*/
+  /**
+   * Path/Directory where the file is decompressed.
+   */
   private Path unpackedDpPath(String datasetKey) {
     return Paths.get(config.unpackedDpRepository.toString(), datasetKey);
   }
 
-  /** Path where the DwC-A ois generated.*/
+  /**
+   * Path where the DwC-A ois generated.
+   */
   private Path unpackedDwcaRepository(String datasetKey) {
     return Paths.get(config.unpackedDwcaRepository.toString(), datasetKey);
   }
 
-  /** Unpacks the CamtrapDP into the target directory.*/
+  /**
+   * Unpacks the CamtrapDP into the target directory.
+   */
   @SneakyThrows
   private void decompress(CamtrapDpDownloadFinishedMessage message) {
     log.info("Decompressing archive for datasetKey {} ...", message.getDatasetUuid());
@@ -98,7 +117,9 @@ public class CamtrapDpToDwcaCallback
     log.info("Decompressing is finihed, datasetKey {} ...", message.getDatasetUuid());
   }
 
-  /** Deletes a directory recursively if it exists.*/
+  /**
+   * Deletes a directory recursively if it exists.
+   */
   private static void recreateDirectory(File directory) {
     if (directory.exists()) {
       FileUtils.deleteDirectoryRecursively(directory);
@@ -106,7 +127,9 @@ public class CamtrapDpToDwcaCallback
     directory.mkdirs();
   }
 
-  /** Line-by-line consumes a InputStream.*/
+  /**
+   * Line-by-line consumes a InputStream.
+   */
   @SneakyThrows
   private void streamInputStream(InputStream inputStream, Consumer<String> consumer) {
     try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
@@ -116,7 +139,9 @@ public class CamtrapDpToDwcaCallback
     }
   }
 
-  /** Execute the Camtraptor from the Docker Container.*/
+  /**
+   * Execute the Camtraptor from the Docker Container.
+   */
   private void executeCamtraptorToDwc(Path dpInput, Path dwcaOutput, Dataset dataset) {
     log.info("Executing camtraptor-to-dwca image...");
     try {
@@ -152,7 +177,9 @@ public class CamtrapDpToDwcaCallback
     }
   }
 
-  /** Calls the Camtraptor Service to transform the data package into DwC-A. */
+  /**
+   * Calls the Camtraptor Service to transform the data package into DwC-A.
+   */
   private void toDwca(CamtrapDpDownloadFinishedMessage message) {
     try (MDC.MDCCloseable ignored1 = MDC.putCloseable("datasetKey", message.getDatasetUuid().toString());
          MDC.MDCCloseable ignored2 = MDC.putCloseable("attempt", String.valueOf(message.getAttempt()))) {
@@ -165,30 +192,59 @@ public class CamtrapDpToDwcaCallback
       Path dpInput = unpackedDpPath(datasetKey);
       Path dwcaOutput = unpackedDwcaRepository(datasetKey);
 
+      // read the license and update it in the dataset
+      License license =
+          readLicense(dpInput)
+              .orElseThrow(
+                  () ->
+                      new IllegalArgumentException(
+                          "License not found for camtrapDP dataset " + datasetKey));
+      log.info("License {} found for camtrapDP dataset {}", license.name(), datasetKey);
+      dataset.setLicense(license);
+      datasetClient.update(dataset);
+
       recreateDirectory(dwcaOutput.toFile());
 
       executeCamtraptorToDwc(dpInput, dwcaOutput, dataset);
     }
   }
 
-  /** Creates and sends a message to the next step: DwC-A validation. */
+  @SneakyThrows
+  private static Optional<License> readLicense(Path unpackedDpPath) {
+    File dataPackage = Paths.get(unpackedDpPath.toString(), "datapackage.json").toFile();
+
+    JsonNode root = MAPPER.readTree(dataPackage);
+    for (JsonNode licenseNode : root.get("licenses")) {
+      if ("data".equals(licenseNode.get("scope").asText())) {
+        return Optional.of(License.valueOf(licenseNode.get("name").asText()));
+      }
+    }
+
+    return Optional.empty();
+  }
+
+  /**
+   * Creates and sends a message to the next step: DwC-A validation.
+   */
   @SneakyThrows
   private void notifyNextStep(CamtrapDpDownloadFinishedMessage message) {
     log.info("Notify next step");
     publisher.send(createOutgoingMessage(message));
   }
 
-  /** Builds the message to be sent to the next processing stage: DwC-A validation. */
+  /**
+   * Builds the message to be sent to the next processing stage: DwC-A validation.
+   */
   private DwcaDownloadFinishedMessage createOutgoingMessage(
-      CamtrapDpDownloadFinishedMessage message) {
+    CamtrapDpDownloadFinishedMessage message) {
     return new DwcaDownloadFinishedMessage(
-        message.getDatasetUuid(),
-        message.getSource(),
-        message.getAttempt(),
-        new Date(),
-        true,
-        EndpointType.DWC_ARCHIVE,
-        message.getPlatform());
+      message.getDatasetUuid(),
+      message.getSource(),
+      message.getAttempt(),
+      new Date(),
+      true,
+      EndpointType.DWC_ARCHIVE,
+      message.getPlatform());
   }
 
   public String getRouting() {
