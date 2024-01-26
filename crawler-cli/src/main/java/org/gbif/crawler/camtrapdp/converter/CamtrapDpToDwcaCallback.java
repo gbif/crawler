@@ -214,7 +214,7 @@ public class CamtrapDpToDwcaCallback
     JsonNode root = MAPPER.readTree(dataPackage);
     for (JsonNode licenseNode : root.get("licenses")) {
       if ("data".equals(licenseNode.get("scope").asText())) {
-        return Optional.of(License.valueOf(licenseNode.get("name").asText()));
+        return License.fromString(licenseNode.get("name").asText());
       }
     }
 
