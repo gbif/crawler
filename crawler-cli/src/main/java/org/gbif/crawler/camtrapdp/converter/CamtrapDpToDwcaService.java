@@ -55,9 +55,9 @@ public class CamtrapDpToDwcaService extends AbstractIdleService {
     DatasetClient datasetClient =
         new ClientBuilder()
             .withUrl(config.registry.wsUrl)
+            .withCredentials(config.registry.user, config.registry.password)
             .withObjectMapper(JacksonJsonObjectMapperProvider.getObjectMapperWithBuilderSupport())
             .build(DatasetClient.class);
-
 
     CamtrapDpToDwcaCallback callback =
         new CamtrapDpToDwcaCallback(config, curator, publisher, datasetClient);
