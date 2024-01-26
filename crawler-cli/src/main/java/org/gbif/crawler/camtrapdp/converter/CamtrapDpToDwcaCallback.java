@@ -13,8 +13,6 @@
  */
 package org.gbif.crawler.camtrapdp.converter;
 
-import jdk.jpackage.internal.Log;
-
 import org.gbif.api.model.crawler.FinishReason;
 import org.gbif.api.model.crawler.ProcessState;
 import org.gbif.api.model.registry.Dataset;
