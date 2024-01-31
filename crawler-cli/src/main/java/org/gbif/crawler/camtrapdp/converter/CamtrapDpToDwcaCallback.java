@@ -39,6 +39,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -257,7 +259,7 @@ public class CamtrapDpToDwcaCallback
 
       setContactFieldFromJsonNode(contributorNode, "firstName", node -> contact.setFirstName(node.asText()));
       setContactFieldFromJsonNode(contributorNode, "lastName", node -> contact.setLastName(node.asText()));
-      setContactFieldFromJsonNode(contributorNode, "path", node -> contact.addHomepage(URI.create(node.asText())));
+      setContactFieldFromJsonNode(contributorNode, "path", node -> setUserIdOrHomepage(node, contact));
       setContactFieldFromJsonNode(contributorNode, "email", node -> contact.addEmail(node.asText()));
       setContactFieldFromJsonNode(contributorNode, "role", node -> contact.setType(mapRoleToContactType(node.asText())));
       setContactFieldFromJsonNode(contributorNode, "title", node -> contact.setOrganization(node.asText()));
@@ -267,6 +269,17 @@ public class CamtrapDpToDwcaCallback
     }
 
     return contacts;
+  }
+
+  // Sets "orcid.org" URLs as a user id, otherwise as a homepage
+  private static void setUserIdOrHomepage(JsonNode pathNode, Contact contact) {
+    String path = pathNode.asText();
+
+    if (path.contains("orcid.org")) {
+      contact.addUserId(path);
+    } else {
+      contact.addHomepage(URI.create(path));
+    }
   }
 
   private static void setContactFieldFromJsonNode(JsonNode contributorNode, String fieldName, Consumer<JsonNode> valueConsumer) {
