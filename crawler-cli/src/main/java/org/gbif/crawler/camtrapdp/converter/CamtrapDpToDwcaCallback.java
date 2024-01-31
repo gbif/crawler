@@ -15,7 +15,9 @@ package org.gbif.crawler.camtrapdp.converter;
 
 import org.gbif.api.model.crawler.FinishReason;
 import org.gbif.api.model.crawler.ProcessState;
+import org.gbif.api.model.registry.Contact;
 import org.gbif.api.model.registry.Dataset;
+import org.gbif.api.vocabulary.ContactType;
 import org.gbif.api.vocabulary.EndpointType;
 import org.gbif.api.vocabulary.License;
 import org.gbif.common.messaging.AbstractMessageCallback;
@@ -32,11 +34,16 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 
@@ -61,6 +68,18 @@ import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_OCCURREN
 @AllArgsConstructor
 public class CamtrapDpToDwcaCallback
   extends AbstractMessageCallback<CamtrapDpDownloadFinishedMessage> {
+
+  private static final Map<String, ContactType> ROLE_MAPPING;
+
+  static {
+    // Initialize the role mapping once
+    ROLE_MAPPING = new HashMap<>();
+    ROLE_MAPPING.put("principalInvestigator", ContactType.PRINCIPAL_INVESTIGATOR);
+    ROLE_MAPPING.put("rightsHolder", ContactType.OWNER);
+    ROLE_MAPPING.put("publisher", ContactType.DISTRIBUTOR);
+    ROLE_MAPPING.put("contributor", ContactType.CONTENT_PROVIDER);
+    ROLE_MAPPING.put("contact", ContactType.POINT_OF_CONTACT);
+  }
 
   protected static final ObjectMapper MAPPER = new ObjectMapper();
 
@@ -199,6 +218,11 @@ public class CamtrapDpToDwcaCallback
                           "License not found for camtrapDP dataset " + datasetKey));
       log.info("License {} found for camtrapDP dataset {}", license.name(), datasetKey);
       dataset.setLicense(license);
+
+      // read the contributors
+      List<Contact> contacts = readContributors(dpInput);
+      dataset.setContacts(contacts);
+
       datasetClient.update(dataset);
 
       recreateDirectory(dwcaOutput.toFile());
@@ -219,6 +243,56 @@ public class CamtrapDpToDwcaCallback
     }
 
     return Optional.empty();
+  }
+
+  @SneakyThrows
+  private static List<Contact> readContributors(Path unpackedDpPath) {
+    List<Contact> contacts = new ArrayList<>();
+
+    File dataPackage = Paths.get(unpackedDpPath.toString(), "datapackage.json").toFile();
+    JsonNode root = MAPPER.readTree(dataPackage);
+
+    for (JsonNode contributorNode : root.path("contributors")) {
+      Contact contact = new Contact();
+
+      setContactFieldFromJsonNode(contributorNode, "firstName", node -> contact.setFirstName(node.asText()));
+      setContactFieldFromJsonNode(contributorNode, "lastName", node -> contact.setLastName(node.asText()));
+      setContactFieldFromJsonNode(contributorNode, "path", node -> setUserIdOrHomepage(node, contact));
+      setContactFieldFromJsonNode(contributorNode, "email", node -> contact.addEmail(node.asText()));
+      setContactFieldFromJsonNode(contributorNode, "role", node -> contact.setType(mapRoleToContactType(node.asText())));
+      setContactFieldFromJsonNode(contributorNode, "title", node -> contact.setOrganization(node.asText()));
+      setContactFieldFromJsonNode(contributorNode, "organization", node -> contact.setOrganization(node.asText()));
+
+      contacts.add(contact);
+    }
+
+    return contacts;
+  }
+
+  // Sets "orcid.org" URLs as a user id, otherwise as a homepage
+  private static void setUserIdOrHomepage(JsonNode pathNode, Contact contact) {
+    String path = pathNode.asText();
+
+    if (path.contains("orcid.org")) {
+      contact.addUserId(path);
+    } else {
+      try {
+        contact.addHomepage(URI.create(path));
+      } catch (Exception e) {
+        log.info("Invalid URL [{}]. Reason: {}", path, e.getMessage());
+      }
+    }
+  }
+
+  private static void setContactFieldFromJsonNode(JsonNode contributorNode, String fieldName, Consumer<JsonNode> valueConsumer) {
+    JsonNode fieldNode = contributorNode.get(fieldName);
+    if (fieldNode != null) {
+      valueConsumer.accept(fieldNode);
+    }
+  }
+
+  private static ContactType mapRoleToContactType(String camtrapContributorRole) {
+    return ROLE_MAPPING.getOrDefault(camtrapContributorRole, ContactType.POINT_OF_CONTACT);
   }
 
   /**
