@@ -39,8 +39,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -278,7 +276,11 @@ public class CamtrapDpToDwcaCallback
     if (path.contains("orcid.org")) {
       contact.addUserId(path);
     } else {
-      contact.addHomepage(URI.create(path));
+      try {
+        contact.addHomepage(URI.create(path));
+      } catch (Exception e) {
+        log.info("Invalid URL [{}]. Reason: {}", path, e.getMessage());
+      }
     }
   }
 
