@@ -39,6 +39,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -61,13 +63,11 @@ import static org.gbif.crawler.common.ZookeeperUtils.createOrUpdate;
 import static org.gbif.crawler.constants.CrawlerNodePaths.FINISHED_REASON;
 import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_OCCURRENCE;
 
-/**
- * Callback which is called when the {@link CamtrapDpDownloadFinishedMessage} is received.
- */
+/** Callback which is called when the {@link CamtrapDpDownloadFinishedMessage} is received. */
 @Slf4j
 @AllArgsConstructor
 public class CamtrapDpToDwcaCallback
-  extends AbstractMessageCallback<CamtrapDpDownloadFinishedMessage> {
+    extends AbstractMessageCallback<CamtrapDpDownloadFinishedMessage> {
 
   private static final Map<String, ContactType> ROLE_MAPPING;
 
@@ -94,36 +94,33 @@ public class CamtrapDpToDwcaCallback
       toDwca(message);
       notifyNextStep(message);
     } catch (Exception ex) {
-      log.warn("Mark datasetKey {} as FINISHED and finish reason is ABORT. {}", message.getDatasetUuid(), ex.getMessage());
+      log.warn(
+          "Mark datasetKey {} as FINISHED and finish reason is ABORT. {}",
+          message.getDatasetUuid(),
+          ex.getMessage());
       createOrUpdate(curator, message.getDatasetUuid(), FINISHED_REASON, FinishReason.ABORT);
-      createOrUpdate(curator, message.getDatasetUuid(), PROCESS_STATE_OCCURRENCE, ProcessState.FINISHED);
+      createOrUpdate(
+          curator, message.getDatasetUuid(), PROCESS_STATE_OCCURRENCE, ProcessState.FINISHED);
     }
   }
 
-  /**
-   * Path/File to the compressed file.
-   */
+  /** Path/File to the compressed file. */
   private Path compressedFilePath(String datasetKey, Integer attempt) {
-    return Paths.get(config.archiveRepository.toString(), datasetKey, datasetKey + "." + attempt + ".camtrapdp");
+    return Paths.get(
+        config.archiveRepository.toString(), datasetKey, datasetKey + "." + attempt + ".camtrapdp");
   }
 
-  /**
-   * Path/Directory where the file is decompressed.
-   */
+  /** Path/Directory where the file is decompressed. */
   private Path unpackedDpPath(String datasetKey) {
     return Paths.get(config.unpackedDpRepository.toString(), datasetKey);
   }
 
-  /**
-   * Path where the DwC-A ois generated.
-   */
+  /** Path where the DwC-A ois generated. */
   private Path unpackedDwcaRepository(String datasetKey) {
     return Paths.get(config.unpackedDwcaRepository.toString(), datasetKey);
   }
 
-  /**
-   * Unpacks the CamtrapDP into the target directory.
-   */
+  /** Unpacks the CamtrapDP into the target directory. */
   @SneakyThrows
   private void decompress(CamtrapDpDownloadFinishedMessage message) {
     log.info("Decompressing archive for datasetKey {} ...", message.getDatasetUuid());
@@ -134,9 +131,7 @@ public class CamtrapDpToDwcaCallback
     log.info("Decompressing is finihed, datasetKey {} ...", message.getDatasetUuid());
   }
 
-  /**
-   * Deletes a directory recursively if it exists.
-   */
+  /** Deletes a directory recursively if it exists. */
   private static void recreateDirectory(File directory) {
     if (directory.exists()) {
       FileUtils.deleteDirectoryRecursively(directory);
@@ -144,9 +139,7 @@ public class CamtrapDpToDwcaCallback
     directory.mkdirs();
   }
 
-  /**
-   * Line-by-line consumes a InputStream.
-   */
+  /** Line-by-line consumes a InputStream. */
   @SneakyThrows
   private void streamInputStream(InputStream inputStream, Consumer<String> consumer) {
     try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
@@ -156,9 +149,7 @@ public class CamtrapDpToDwcaCallback
     }
   }
 
-  /**
-   * Execute the Camtraptor from the Docker Container.
-   */
+  /** Execute the Camtraptor from the Docker Container. */
   private void executeCamtraptorToDwc(Path dpInput, Path dwcaOutput, Dataset dataset) {
     log.info("Executing camtraptor-to-dwca image...");
     try {
@@ -185,7 +176,8 @@ public class CamtrapDpToDwcaCallback
       streamInputStream(process.getErrorStream(), log::warn);
 
       if (exitValue != 0) {
-        log.error("Failed to convert CamtrapDP {} to DWCA, exit status {}", dataset.getKey(), exitValue);
+        log.error(
+            "Failed to convert CamtrapDP {} to DWCA, exit status {}", dataset.getKey(), exitValue);
         throw new RuntimeException("Camtraptor failed with status " + exitValue);
       }
     } catch (IOException | InterruptedException e) {
@@ -194,12 +186,12 @@ public class CamtrapDpToDwcaCallback
     }
   }
 
-  /**
-   * Calls the Camtraptor Service to transform the data package into DwC-A.
-   */
+  /** Calls the Camtraptor Service to transform the data package into DwC-A. */
   private void toDwca(CamtrapDpDownloadFinishedMessage message) {
-    try (MDC.MDCCloseable ignored1 = MDC.putCloseable("datasetKey", message.getDatasetUuid().toString());
-         MDC.MDCCloseable ignored2 = MDC.putCloseable("attempt", String.valueOf(message.getAttempt()))) {
+    try (MDC.MDCCloseable ignored1 =
+            MDC.putCloseable("datasetKey", message.getDatasetUuid().toString());
+        MDC.MDCCloseable ignored2 =
+            MDC.putCloseable("attempt", String.valueOf(message.getAttempt()))) {
 
       decompress(message);
 
@@ -209,26 +201,26 @@ public class CamtrapDpToDwcaCallback
       Path dpInput = unpackedDpPath(datasetKey);
       Path dwcaOutput = unpackedDwcaRepository(datasetKey);
 
-      // read the license and update it in the dataset
-      License license =
-          readLicense(dpInput)
-              .orElseThrow(
-                  () ->
-                      new IllegalArgumentException(
-                          "License not found for camtrapDP dataset " + datasetKey));
-      log.info("License {} found for camtrapDP dataset {}", license.name(), datasetKey);
-      dataset.setLicense(license);
-
-      // read the contributors
-      List<Contact> contacts = readContributors(dpInput);
-      dataset.setContacts(contacts);
-
-      datasetClient.update(dataset);
+      updateLicense(dpInput, dataset);
+      updateContacts(dpInput, dataset);
 
       recreateDirectory(dwcaOutput.toFile());
 
       executeCamtraptorToDwc(dpInput, dwcaOutput, dataset);
     }
+  }
+
+  private void updateLicense(Path dpInput, Dataset dataset) {
+    // read the license and update it in the dataset
+    License license =
+        readLicense(dpInput)
+            .orElseThrow(
+                () ->
+                    new IllegalArgumentException(
+                        "License not found for camtrapDP dataset " + dataset.getKey()));
+    log.info("License {} found for camtrapDP dataset {}", license.name(), dataset.getKey());
+    dataset.setLicense(license);
+    datasetClient.update(dataset);
   }
 
   @SneakyThrows
@@ -245,6 +237,20 @@ public class CamtrapDpToDwcaCallback
     return Optional.empty();
   }
 
+  private void updateContacts(Path dpInput, Dataset dataset) {
+    // read the contributors
+    List<Contact> contributors = readContributors(dpInput);
+
+    // replace contacts
+    for (Contact contact : dataset.getContacts()) {
+      datasetClient.deleteContact(dataset.getKey(), contact.getKey());
+    }
+
+    for (Contact contributor : contributors) {
+      datasetClient.addContact(dataset.getKey(), contributor);
+    }
+  }
+
   @SneakyThrows
   private static List<Contact> readContributors(Path unpackedDpPath) {
     List<Contact> contacts = new ArrayList<>();
@@ -255,13 +261,20 @@ public class CamtrapDpToDwcaCallback
     for (JsonNode contributorNode : root.path("contributors")) {
       Contact contact = new Contact();
 
-      setContactFieldFromJsonNode(contributorNode, "firstName", node -> contact.setFirstName(node.asText()));
-      setContactFieldFromJsonNode(contributorNode, "lastName", node -> contact.setLastName(node.asText()));
-      setContactFieldFromJsonNode(contributorNode, "path", node -> setUserIdOrHomepage(node, contact));
-      setContactFieldFromJsonNode(contributorNode, "email", node -> contact.addEmail(node.asText()));
-      setContactFieldFromJsonNode(contributorNode, "role", node -> contact.setType(mapRoleToContactType(node.asText())));
-      setContactFieldFromJsonNode(contributorNode, "title", node -> contact.setOrganization(node.asText()));
-      setContactFieldFromJsonNode(contributorNode, "organization", node -> contact.setOrganization(node.asText()));
+      setContactFieldFromJsonNode(
+          contributorNode, "firstName", node -> contact.setFirstName(node.asText()));
+      setContactFieldFromJsonNode(
+          contributorNode, "lastName", node -> contact.setLastName(node.asText()));
+      setContactFieldFromJsonNode(
+          contributorNode, "path", node -> setUserIdOrHomepage(node, contact));
+      setContactFieldFromJsonNode(
+          contributorNode, "email", node -> contact.addEmail(node.asText()));
+      setContactFieldFromJsonNode(
+          contributorNode, "role", node -> contact.setType(mapRoleToContactType(node.asText())));
+      setContactFieldFromJsonNode(
+          contributorNode, "title", node -> contact.setOrganization(node.asText()));
+      setContactFieldFromJsonNode(
+          contributorNode, "organization", node -> contact.setOrganization(node.asText()));
 
       contacts.add(contact);
     }
@@ -276,15 +289,12 @@ public class CamtrapDpToDwcaCallback
     if (path.contains("orcid.org")) {
       contact.addUserId(path);
     } else {
-      try {
-        contact.addHomepage(URI.create(path));
-      } catch (Exception e) {
-        log.info("Invalid URL [{}]. Reason: {}", path, e.getMessage());
-      }
+      contact.addHomepage(URI.create(path));
     }
   }
 
-  private static void setContactFieldFromJsonNode(JsonNode contributorNode, String fieldName, Consumer<JsonNode> valueConsumer) {
+  private static void setContactFieldFromJsonNode(
+      JsonNode contributorNode, String fieldName, Consumer<JsonNode> valueConsumer) {
     JsonNode fieldNode = contributorNode.get(fieldName);
     if (fieldNode != null) {
       valueConsumer.accept(fieldNode);
@@ -295,28 +305,24 @@ public class CamtrapDpToDwcaCallback
     return ROLE_MAPPING.getOrDefault(camtrapContributorRole, ContactType.POINT_OF_CONTACT);
   }
 
-  /**
-   * Creates and sends a message to the next step: DwC-A validation.
-   */
+  /** Creates and sends a message to the next step: DwC-A validation. */
   @SneakyThrows
   private void notifyNextStep(CamtrapDpDownloadFinishedMessage message) {
     log.info("Notify next step");
     publisher.send(createOutgoingMessage(message));
   }
 
-  /**
-   * Builds the message to be sent to the next processing stage: DwC-A validation.
-   */
+  /** Builds the message to be sent to the next processing stage: DwC-A validation. */
   private DwcaDownloadFinishedMessage createOutgoingMessage(
-    CamtrapDpDownloadFinishedMessage message) {
+      CamtrapDpDownloadFinishedMessage message) {
     return new DwcaDownloadFinishedMessage(
-      message.getDatasetUuid(),
-      message.getSource(),
-      message.getAttempt(),
-      new Date(),
-      true,
-      EndpointType.DWC_ARCHIVE,
-      message.getPlatform());
+        message.getDatasetUuid(),
+        message.getSource(),
+        message.getAttempt(),
+        new Date(),
+        true,
+        EndpointType.DWC_ARCHIVE,
+        message.getPlatform());
   }
 
   public String getRouting() {
