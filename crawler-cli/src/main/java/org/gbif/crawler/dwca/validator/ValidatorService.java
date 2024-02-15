@@ -150,7 +150,7 @@ public class ValidatorService extends DwcaService {
             ? ProcessState.FINISHED
             : ProcessState.EMPTY;
 
-        ProcessState coreState = report.getGenericReport() == null ? ProcessState.EMPTY : ProcessState.FINISHED;
+        ProcessState checklistState = validationReport.isValid() ? ProcessState.RUNNING : ProcessState.FINISHED;
 
         // For metadata, occurrence and sampling event datasets, there is no further processing by crawler.
         //    Mark them as finished.
@@ -176,7 +176,7 @@ public class ValidatorService extends DwcaService {
             break;
           case CHECKLIST:
             createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_OCCURRENCE, occurrenceState);
-            createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_CHECKLIST, ProcessState.RUNNING);
+            createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_CHECKLIST, checklistState);
             createOrUpdate(curator, report.getDatasetKey(), PROCESS_STATE_SAMPLE, occurrenceState);
             break;
           default:

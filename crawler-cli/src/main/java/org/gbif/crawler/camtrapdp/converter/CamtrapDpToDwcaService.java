@@ -46,7 +46,7 @@ public class CamtrapDpToDwcaService extends AbstractIdleService {
 
   @Override
   protected void startUp() throws Exception {
-    log.info("Started crawler-camtrapdp-to-dwca service with parameters : {}", config);
+    log.info("Started crawler-camtrapdp-to-dwca service");
     // Prefetch is one, since this is a long-running process.
     listener = new MessageListener(config.messaging.getConnectionParameters(), 1);
     publisher = new DefaultMessagePublisher(config.messaging.getConnectionParameters());
@@ -55,9 +55,9 @@ public class CamtrapDpToDwcaService extends AbstractIdleService {
     DatasetClient datasetClient =
         new ClientBuilder()
             .withUrl(config.registry.wsUrl)
+            .withCredentials(config.registry.user, config.registry.password)
             .withObjectMapper(JacksonJsonObjectMapperProvider.getObjectMapperWithBuilderSupport())
             .build(DatasetClient.class);
-
 
     CamtrapDpToDwcaCallback callback =
         new CamtrapDpToDwcaCallback(config, curator, publisher, datasetClient);
