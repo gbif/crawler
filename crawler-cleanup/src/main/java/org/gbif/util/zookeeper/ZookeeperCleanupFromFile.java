@@ -40,7 +40,7 @@ public class ZookeeperCleanupFromFile {
   private static final String DEV_ZK =
       "c3zk1.gbif-dev.org:2181,c3zk2.gbif-dev.org:2181,c3zk3.gbif-dev.org:2181";
   private static final String DEV2_ZK =
-      "sc4n1.gbif.org:31228,sc4n2.gbif.org:31228,sc4n3.gbif.org:31228";
+      "gbif-zookeeper-server-default-0.gbif-zookeeper-server-default.gbif-develop.svc.cluster.local:2282,gbif-zookeeper-server-default-1.gbif-zookeeper-server-default.gbif-develop.svc.cluster.local:2282,gbif-zookeeper-server-default-2.gbif-zookeeper-server-default.gbif-develop.svc.cluster.local:2282";
 
   private ZookeeperCleanupFromFile() {}
 
