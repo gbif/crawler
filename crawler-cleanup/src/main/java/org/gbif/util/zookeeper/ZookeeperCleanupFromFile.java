@@ -36,7 +36,7 @@ public class ZookeeperCleanupFromFile {
   private static final String PROD_ZK =
       "c5zk1.gbif.org:2181,c5zk2.gbif.org:2181,c5zk3.gbif.org:2181";
   private static final String UAT_ZK =
-      "c4zk1.gbif-uat.org:2181,c4zk2.gbif-uat.org:2181,c4zk3.gbif-uat.org:2181";
+      "gbif-zookeeper-server-default-0.gbif-zookeeper-server-default.uat.svc.cluster.local:2282,gbif-zookeeper-server-default-1.gbif-zookeeper-server-default.uat.svc.cluster.local:2282,gbif-zookeeper-server-default-2.gbif-zookeeper-server-default.uat.svc.cluster.local:2282,gbif-zookeeper-server-default-3.gbif-zookeeper-server-default.uat.svc.cluster.local:2282,gbif-zookeeper-server-default-4.gbif-zookeeper-server-default.uat.svc.cluster.local:2282";
   private static final String DEV_ZK =
       "c3zk1.gbif-dev.org:2181,c3zk2.gbif-dev.org:2181,c3zk3.gbif-dev.org:2181";
   private static final String DEV2_ZK =
@@ -52,31 +52,33 @@ public class ZookeeperCleanupFromFile {
       System.exit(1);
     }
 
-    String path = null;
-    String zkPath = null;
-    if (args[1].equals(PROD)) {
-      path = PROD_PATH;
-      zkPath = PROD_ZK;
-    } else if (args[1].equals(UAT)) {
-      path = UAT_PATH;
-      zkPath = UAT_ZK;
-    } else if (args[1].equals(DEV)) {
-      path = DEV_PATH;
-      zkPath = DEV_ZK;
-    } else if (args[1].equals(DEV2)) {
-      path = DEV2_PATH;
-      zkPath = DEV2_ZK;
-    }
-
-    if (path == null) {
-      LOG.error("Environment must be one of: prod, uat, or dev");
-      System.exit(1);
+    String path;
+    String zkPath;
+    switch (args[1]) {
+      case PROD:
+        path = PROD_PATH;
+        zkPath = PROD_ZK;
+        break;
+      case UAT:
+        path = UAT_PATH;
+        zkPath = UAT_ZK;
+        break;
+      case DEV:
+        path = DEV_PATH;
+        zkPath = DEV_ZK;
+        break;
+      case DEV2:
+        path = DEV2_PATH;
+        zkPath = DEV2_ZK;
+        break;
+      default:
+        throw new IllegalArgumentException("Environment must be one of: prod, uat, or dev");
     }
 
     List<String> keys = HueCsvReader.readKeys(args[0]);
     ZookeeperCleaner zkCleaner = new ZookeeperCleaner(zkPath);
     for (String key : keys) {
-      LOG.debug("Deleting [{}]", path + key);
+      LOG.debug("Deleting [{}{}]", path, key);
       zkCleaner.clean(path + key, false);
     }
 
