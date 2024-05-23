@@ -15,7 +15,6 @@ package org.gbif.util.zookeeper;
 
 import java.io.IOException;
 
-import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

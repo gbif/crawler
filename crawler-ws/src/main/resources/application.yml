@@ -1,5 +1,12 @@
 # application.yml
-
+spring:
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.elasticsearch.ElasticsearchRestClientAutoConfiguration
+  application:
+    name: crawler-ws
+  cloud:
+    zookeeper:
+      enabled: false
 crawler:
   crawl:
     namespace: @crawler.crawl.namespace@
