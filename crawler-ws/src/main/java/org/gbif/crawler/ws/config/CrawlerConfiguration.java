@@ -33,8 +33,6 @@ import org.springframework.security.web.SecurityFilterChain;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-
 import static com.google.common.base.Preconditions.checkArgument;
 
 /** A basic class for setting up the injection to enable metrics. */
@@ -94,15 +92,11 @@ public class CrawlerConfiguration {
     return Executors.newFixedThreadPool(threadCount);
   }
 
-  @Configuration
-  public static class WebMvcConfig implements WebMvcConfigurer {
-
-    /**
-     * Disables authentication and adds default cors filter.
-     */
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-      return SecurityUtils.noAuthFilter(http);
-    }
+  /**
+   * Disables authentication and adds default cors filter.
+   */
+  @Bean
+  public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    return SecurityUtils.noAuthFilter(http);
   }
 }
