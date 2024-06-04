@@ -13,6 +13,8 @@
  */
 package org.gbif.crawler.ws.config;
 
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
 import org.gbif.api.service.crawler.DatasetProcessService;
 import org.gbif.crawler.DatasetProcessServiceImpl;
 import org.gbif.ws.json.JacksonJsonObjectMapperProvider;
@@ -57,7 +59,7 @@ public class CrawlerConfiguration {
 
   @Bean
   public ObjectMapper crawlerObjectMapper() {
-    return JacksonJsonObjectMapperProvider.getObjectMapper();
+    return JacksonJsonObjectMapperProvider.getObjectMapper().registerModule(new JavaTimeModule());
   }
 
   @Bean
