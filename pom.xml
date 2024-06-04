@@ -338,11 +338,6 @@
         <version>${jackson.version}</version>
       </dependency>
       <dependency>
-        <groupId>com.fasterxml.jackson.datatype</groupId>
-        <artifactId>jackson-datatype-jsr31</artifactId>
-        <version>${jackson.version}</version>
-      </dependency>
-      <dependency>
         <groupId>joda-time</groupId>
         <artifactId>joda-time</artifactId>
         <version>${joda-time.version}</version>
