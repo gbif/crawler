@@ -16,7 +16,6 @@ package org.gbif.crawler.ws.config;
 import org.gbif.api.service.crawler.DatasetProcessService;
 import org.gbif.crawler.DatasetProcessServiceImpl;
 import org.gbif.ws.json.JacksonJsonObjectMapperProvider;
-import org.gbif.ws.security.SecurityUtils;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -28,8 +27,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.web.SecurityFilterChain;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -92,11 +89,4 @@ public class CrawlerConfiguration {
     return Executors.newFixedThreadPool(threadCount);
   }
 
-  /**
-   * Disables authentication and adds default cors filter.
-   */
-  @Bean
-  public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-    return SecurityUtils.noAuthFilter(http);
-  }
 }
