@@ -284,7 +284,8 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
    * @return
    */
   private static boolean isDarwinCoreArchive(Endpoint endpoint) {
-    return EndpointType.DWC_ARCHIVE == endpoint.getType() || EndpointType.EML == endpoint.getType();
+    return EndpointType.DWC_ARCHIVE == endpoint.getType() || EndpointType.EML == endpoint.getType() ||
+           EndpointType.BIOM_1_0 == endpoint.getType() || EndpointType.BIOM_2_1 == endpoint.getType();
   }
 
   /**
