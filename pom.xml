@@ -10,7 +10,7 @@
 
   <groupId>org.gbif.crawler</groupId>
   <artifactId>crawler-motherpom</artifactId>
-  <version>1.23-SNAPSHOT</version>
+  <version>1.26-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>Crawler :: Mother POM</name>
@@ -53,7 +53,7 @@
     <gbif-occurrence.version>0.195.4</gbif-occurrence.version>
     <gbif-parsers.version>0.59</gbif-parsers.version>
     <gbif-postal-service.version>1.8.0</gbif-postal-service.version>
-    <gbif-registry.version>3.95.16</gbif-registry.version>
+    <gbif-registry.version>3.96.18</gbif-registry.version>
     <gbif-wrangler.version>0.4</gbif-wrangler.version>
     <gbif-pipelines.version>2.12.13</gbif-pipelines.version>
     <gbif-metrics.version>0.36</gbif-metrics.version>
