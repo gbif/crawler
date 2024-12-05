@@ -55,7 +55,7 @@
     <gbif-registry.version>4.0.1</gbif-registry.version>
     <gbif-wrangler.version>1.0.0</gbif-wrangler.version>
     <gbif-pipelines.version>2.19.0-SNAPSHOT</gbif-pipelines.version>
-    <gbif-metrics.version>1.9.0-SNAPSHOT</gbif-metrics.version>
+    <gbif-metrics.version>2.0.0</gbif-metrics.version>
 
     <spring-boot.version>2.3.12.RELEASE</spring-boot.version>
     <spring-cloud-zookeeper.version>2.2.5.RELEASE</spring-cloud-zookeeper.version>
