@@ -47,7 +47,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.inject.Inject;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.gbif.crawler.constants.CrawlerNodePaths.ABCDA_CRAWL;
@@ -104,7 +103,7 @@ public class DatasetProcessServiceImpl implements DatasetProcessService {
    * @param mapper to deserialize CrawlJob JSON back into an object
    * @param executor to run the thread pool
    */
-  @Inject
+
   public DatasetProcessServiceImpl(
       CuratorFramework curator, ObjectMapper mapper, Executor executor) {
     this.curator = checkNotNull(curator, "curator can't be null");
