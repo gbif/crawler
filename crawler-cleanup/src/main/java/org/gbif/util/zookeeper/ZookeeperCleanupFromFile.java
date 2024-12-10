@@ -28,8 +28,10 @@ public class ZookeeperCleanupFromFile {
   private static final String UAT = "uat";
   private static final String DEV = "dev";
   private static final String DEV2 = "dev2";
+  private static final String UAT2 = "uat2";
   private static final String PROD_PATH = "/prod_crawler/crawls/";
   private static final String UAT_PATH = "/uat_crawler/crawls/";
+  private static final String UAT2_PATH = "/uat2_crawler/crawls/";
   private static final String DEV_PATH = "/dev_crawler/crawls/";
   private static final String DEV2_PATH = "/dev2_crawler/crawls/";
   private static final String PROD_ZK =
@@ -40,6 +42,8 @@ public class ZookeeperCleanupFromFile {
       "c3zk1.gbif-dev.org:2181,c3zk2.gbif-dev.org:2181,c3zk3.gbif-dev.org:2181";
   private static final String DEV2_ZK =
       "gbif-zookeeper-server-default-0.gbif-zookeeper-server-default.gbif-develop.svc.cluster.local:2282,gbif-zookeeper-server-default-1.gbif-zookeeper-server-default.gbif-develop.svc.cluster.local:2282,gbif-zookeeper-server-default-2.gbif-zookeeper-server-default.gbif-develop.svc.cluster.local:2282";
+  private static final String UAT2_ZK =
+      "c8n1.gbif.org:31930,c8n2.gbif.org:31930,c8n3.gbif.org:31930,c8n5.gbif.org:31930,c8n9.gbif.org:31930";
 
   private ZookeeperCleanupFromFile() {}
 
@@ -70,8 +74,12 @@ public class ZookeeperCleanupFromFile {
         path = DEV2_PATH;
         zkPath = DEV2_ZK;
         break;
+      case UAT2:
+        path = UAT2_PATH;
+        zkPath = UAT2_ZK;
+        break;
       default:
-        throw new IllegalArgumentException("Environment must be one of: prod, uat, or dev");
+        throw new IllegalArgumentException("Environment must be one of: prod, uat, dev, dev2 or uat2");
     }
 
     List<String> keys = HueCsvReader.readKeys(args[0]);
