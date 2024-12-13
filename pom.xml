@@ -54,7 +54,7 @@
     <gbif-postal-service.version>1.8.1</gbif-postal-service.version>
     <gbif-registry.version>4.0.1</gbif-registry.version>
     <gbif-wrangler.version>1.0.0</gbif-wrangler.version>
-    <gbif-pipelines.version>2.19.0-SNAPSHOT</gbif-pipelines.version>
+    <gbif-pipelines.version>3.0.0</gbif-pipelines.version>
     <gbif-metrics.version>2.0.0</gbif-metrics.version>
 
     <spring-boot.version>2.3.12.RELEASE</spring-boot.version>
