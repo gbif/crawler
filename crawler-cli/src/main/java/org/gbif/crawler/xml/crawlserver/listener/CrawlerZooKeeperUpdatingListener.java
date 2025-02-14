@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 
 import static org.gbif.crawler.common.ZookeeperUtils.createOrUpdate;
 import static org.gbif.crawler.common.ZookeeperUtils.updateDate;
@@ -60,6 +61,7 @@ public class CrawlerZooKeeperUpdatingListener<CTX extends CrawlContext>
 
   static {
     MAPPER.registerModule(new GuavaModule());
+    MAPPER.registerModule(new Jdk8Module()); // Support for Optional<Long>
   }
 
   private final CrawlConfiguration configuration;
