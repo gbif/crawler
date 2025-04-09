@@ -13,12 +13,14 @@
  */
 package org.gbif.crawler.common;
 
+import java.io.IOException;
+
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
-import org.apache.curator.retry.BoundedExponentialBackoffRetry;
+import org.apache.curator.retry.ExponentialBackoffRetry;
 
 import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -51,7 +53,7 @@ public class ZooKeeperConfiguration {
       names = "--zk-sleep-time",
       description = "Initial amount of time to wait between retries in ms")
   @Min(1)
-  public int baseSleepTime = 1_000;
+  public int baseSleepTime = 1000;
 
   @Parameter(names = "--zk-max-retries", description = "Max number of times to retry")
   @Min(1)
@@ -63,13 +65,14 @@ public class ZooKeeperConfiguration {
    * it when the object has been validated.
    *
    * @return started CuratorFramework
+   * @throws IOException if connection fails
    */
   @JsonIgnore
-  public CuratorFramework getCuratorFramework() {
+  public CuratorFramework getCuratorFramework() throws IOException {
     CuratorFramework curator =
         CuratorFrameworkFactory.builder()
             .namespace(namespace)
-            .retryPolicy(new BoundedExponentialBackoffRetry(baseSleepTime, baseSleepTime * 10, maxRetries))
+            .retryPolicy(new ExponentialBackoffRetry(baseSleepTime, maxRetries))
             .connectString(connectionString)
             .build();
     curator.start();
