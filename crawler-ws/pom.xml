@@ -171,7 +171,7 @@
     <dependency>
       <groupId>io.micrometer</groupId>
       <artifactId>micrometer-registry-prometheus</artifactId>
-      <version>${micrometer.version}</version>
+      <scope>runtime</scope>
     </dependency>
 
     <!-- GBIF dependencies -->
