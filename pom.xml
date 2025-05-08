@@ -33,7 +33,6 @@
 
   <properties>
     <java.version>11</java.version>
-    <java.version>11</java.version>
     <release.tagNameBase>crawler</release.tagNameBase>
 
     <amqp-client.version>4.8.0</amqp-client.version>
