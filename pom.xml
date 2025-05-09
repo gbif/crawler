@@ -66,7 +66,7 @@
     <gbif-pipelines.version>3.0.0</gbif-pipelines.version>
     <gbif-metrics.version>2.0.0</gbif-metrics.version>
 
-    <spring-boot.version>2.3.12.RELEASE</spring-boot.version>
+    <spring-boot.version>2.5.12</spring-boot.version>
     <spring-cloud-zookeeper.version>2.2.5.RELEASE</spring-cloud-zookeeper.version>
     <spring-cloud-openfeign.version>2.2.10.RELEASE</spring-cloud-openfeign.version>
     <spring-boot-admin.version>2.2.4</spring-boot-admin.version>
