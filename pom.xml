@@ -94,7 +94,7 @@
     <slf4j.version>1.7.30</slf4j.version>
     <stax.version>1.0-2</stax.version>
     <stax2.version>4.0.0</stax2.version>
-    <validation-api.version>2.0.1.Final</validation-api.version>
+    <jakarta.validation-api.version>3.0.2</jakarta.validation-api.version>
     <woodstox.version>4.4.1</woodstox.version>
     <yammer-metrics.version>2.2.0</yammer-metrics.version>
     <zookeeper.version>3.8.3</zookeeper.version>
@@ -439,9 +439,9 @@
         <version>${guava.version}</version>
       </dependency>
       <dependency>
-        <groupId>javax.validation</groupId>
-        <artifactId>validation-api</artifactId>
-        <version>${validation-api.version}</version>
+        <groupId>jakarta.validation</groupId>
+        <artifactId>jakarta.validation-api</artifactId>
+        <version>${jakarta.validation-api.version}</version>
       </dependency>
       <dependency>
         <groupId>com.rabbitmq</groupId>
