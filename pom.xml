@@ -95,6 +95,7 @@
     <stax.version>1.0-2</stax.version>
     <stax2.version>4.0.0</stax2.version>
     <jakarta.validation-api.version>3.0.2</jakarta.validation-api.version>
+    <hibernate-validator.version>8.0.1.Final</hibernate-validator.version>
     <woodstox.version>4.4.1</woodstox.version>
     <yammer-metrics.version>2.2.0</yammer-metrics.version>
     <zookeeper.version>3.8.3</zookeeper.version>
@@ -442,6 +443,11 @@
         <groupId>jakarta.validation</groupId>
         <artifactId>jakarta.validation-api</artifactId>
         <version>${jakarta.validation-api.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.hibernate.validator</groupId>
+        <artifactId>hibernate-validator</artifactId>
+        <version>${hibernate-validator.version}</version>
       </dependency>
       <dependency>
         <groupId>com.rabbitmq</groupId>
