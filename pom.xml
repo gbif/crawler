@@ -104,7 +104,7 @@
     <commons-digester.version>3.2</commons-digester.version>
     <commons-lang.version>2.6</commons-lang.version>
     <commons-io.version>2.7</commons-io.version>
-    <avro.version>1.8.2</avro.version>
+    <avro.version>1.11.4</avro.version>
     <log4j-api.version>2.16.0</log4j-api.version>
     <log4j-to-slf4j.version>2.3</log4j-to-slf4j.version>
 
