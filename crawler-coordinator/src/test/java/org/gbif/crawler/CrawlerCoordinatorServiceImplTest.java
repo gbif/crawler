@@ -181,6 +181,7 @@ public class CrawlerCoordinatorServiceImplTest {
   public void testValidation1() {
     when(datasetService.get(uuid)).thenReturn(dataset);
     when(datasetService.get(uuid)).thenReturn(null);
+    when(pipelinesHistoryClient.getRunningExecutionKey(uuid)).thenReturn(null);
     IllegalArgumentException exception =
         assertThrows(IllegalArgumentException.class, () -> service.initiateCrawl(uuid, 5, Platform.ALL));
     assertTrue(exception.getMessage().contains("does not exist"));
@@ -189,6 +190,7 @@ public class CrawlerCoordinatorServiceImplTest {
   @Test
   public void testValidation2() throws Exception {
     when(datasetService.get(uuid)).thenReturn(dataset);
+    when(pipelinesHistoryClient.getRunningExecutionKey(uuid)).thenReturn(null);
     curator.create().forPath("/crawls/" + uuid.toString());
     AlreadyCrawlingException exception =
         assertThrows(AlreadyCrawlingException.class, () -> service.initiateCrawl(uuid, 5, Platform.ALL));
@@ -198,6 +200,7 @@ public class CrawlerCoordinatorServiceImplTest {
   @Test
   public void testValidation3() {
     when(datasetService.get(uuid)).thenReturn(dataset);
+    when(pipelinesHistoryClient.getRunningExecutionKey(uuid)).thenReturn(null);
     IllegalArgumentException exception =
         assertThrows(IllegalArgumentException.class, () -> service.initiateCrawl(uuid, 5, Platform.ALL));
     assertTrue(exception.getMessage().contains("endpoints"));
@@ -206,6 +209,7 @@ public class CrawlerCoordinatorServiceImplTest {
   @Test
   public void testValidation4() {
     when(datasetService.get(uuid)).thenReturn(dataset);
+    when(pipelinesHistoryClient.getRunningExecutionKey(uuid)).thenReturn(null);
     Endpoint endpoint = new Endpoint();
     endpoint.setType(EndpointType.TAPIR);
     dataset.getEndpoints().add(endpoint);
@@ -218,6 +222,7 @@ public class CrawlerCoordinatorServiceImplTest {
   @Test
   public void testValidation5() {
     when(datasetService.get(uuid)).thenReturn(dataset);
+    when(pipelinesHistoryClient.getRunningExecutionKey(uuid)).thenReturn(null);
     Endpoint endpoint = new Endpoint();
     endpoint.setType(EndpointType.TAPIR);
     dataset.getEndpoints().add(endpoint);
@@ -236,6 +241,7 @@ public class CrawlerCoordinatorServiceImplTest {
     mockResponse.setResults(Collections.singletonList(DatasetProcessStatus.builder().datasetKey(uuid).crawlJob(mockJob).build()));
     when(datasetProcessStatusService.listDatasetProcessStatus(any(), any())).thenReturn(mockResponse);
     when(datasetService.get(uuid)).thenReturn(dataset);
+    when(pipelinesHistoryClient.getRunningExecutionKey(uuid)).thenReturn(null);
     URI url = URI.create("http://gbif.org/index.html");
     Endpoint endpoint = new Endpoint();
     endpoint.setType(EndpointType.TAPIR);
@@ -259,5 +265,14 @@ public class CrawlerCoordinatorServiceImplTest {
 
     bytes = curator.getData().forPath("/crawls/" + uuid + "/" + CrawlerNodePaths.DECLARED_COUNT);
     assertEquals("1234", new String(bytes, StandardCharsets.UTF_8));
+  }
+
+  @Test
+  public void testPipelinesExecutionRunning() throws Exception {
+    when(pipelinesHistoryClient.getRunningExecutionKey(uuid)).thenReturn(1L);
+    service.initiateCrawl(uuid, 5, Platform.ALL);
+
+    List<String> children = curator.getChildren().forPath("/crawls");
+    assertTrue(children.isEmpty());
   }
 }
