@@ -42,6 +42,9 @@ import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.RetryOneTime;
 import org.apache.curator.test.TestingServer;
 import org.apache.curator.utils.ZKPaths;
+
+import org.gbif.registry.ws.client.pipelines.PipelinesHistoryClient;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -67,6 +70,7 @@ public class CrawlerCoordinatorServiceImplTest {
   @Mock private DatasetService datasetService;
   @Mock private DatasetProcessStatusService datasetProcessStatusService;
   @Mock private MetadataSynchronizer metadataSynchronizer;
+  @Mock private PipelinesHistoryClient pipelinesHistoryClient;
   private CuratorFramework curator;
   private CrawlerCoordinatorServiceImpl service;
   private UUID uuid = UUID.randomUUID();
@@ -85,7 +89,13 @@ public class CrawlerCoordinatorServiceImplTest {
     curator.start();
     ZKPaths.mkdirs(curator.getZookeeperClient().getZooKeeper(), "/crawler/crawls");
 
-    service = new CrawlerCoordinatorServiceImpl(curator, datasetService, datasetProcessStatusService, metadataSynchronizer);
+    service =
+        new CrawlerCoordinatorServiceImpl(
+            curator,
+            datasetService,
+            datasetProcessStatusService,
+            metadataSynchronizer,
+            pipelinesHistoryClient);
     dataset.setType(DatasetType.OCCURRENCE);
   }
 
