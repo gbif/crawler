@@ -37,6 +37,8 @@ import org.apache.curator.framework.CuratorFramework;
 
 import com.google.common.util.concurrent.AbstractIdleService;
 
+import org.gbif.registry.ws.client.pipelines.PipelinesHistoryClient;
+
 /** This services starts the Crawler Coordinator by listening for messages. */
 public class CoordinatorService extends AbstractIdleService {
 
@@ -59,6 +61,7 @@ public class CoordinatorService extends AbstractIdleService {
     DatasetService datasetService = configuration.registry.newClientBuilder().build(DatasetClient.class);
     DatasetProcessStatusService datasetProcessStatusService = configuration.registry.newClientBuilder().build(DatasetProcessStatusClient.class);
     InstallationService installationService = configuration.registry.newClientBuilder().build(InstallationClient.class);
+    PipelinesHistoryClient pipelinesHistoryClient = configuration.registry.newClientBuilder().build(PipelinesHistoryClient.class);
 
     HttpClientFactory clientFactory = new HttpClientFactory(30, TimeUnit.SECONDS);
     MetadataSynchronizerImpl metadataSynchronizer =
@@ -71,7 +74,12 @@ public class CoordinatorService extends AbstractIdleService {
         new BiocaseMetadataSynchronizer(clientFactory.provideHttpClient()));
 
     CrawlerCoordinatorService coord =
-        new CrawlerCoordinatorServiceImpl(curator, datasetService, datasetProcessStatusService, metadataSynchronizer);
+        new CrawlerCoordinatorServiceImpl(
+            curator,
+            datasetService,
+            datasetProcessStatusService,
+            metadataSynchronizer,
+            pipelinesHistoryClient);
     MessageCallback<StartCrawlMessage> callback = new StartCrawlMessageCallback(coord);
 
     listener = new MessageListener(configuration.messaging.getConnectionParameters());

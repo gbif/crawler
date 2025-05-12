@@ -46,6 +46,9 @@ import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.queue.DistributedPriorityQueue;
 import org.apache.curator.framework.recipes.queue.QueueBuilder;
 import org.apache.zookeeper.data.Stat;
+
+import org.gbif.registry.ws.client.pipelines.PipelinesHistoryClient;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -108,6 +111,7 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
   private final DatasetProcessStatusService datasetProcessStatusService;
   private final MetadataSynchronizer metadataSynchronizer;
   private final CrawlerCoordinatorServiceMetrics metrics = new CrawlerCoordinatorServiceMetrics();
+  private final PipelinesHistoryClient pipelinesHistoryClient;
 
   /**
    * Creates a CrawlerCoordinatorService for a specific ZooKeeper instance, pointing to a remote
@@ -121,12 +125,14 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
       CuratorFramework curator,
       DatasetService datasetService,
       DatasetProcessStatusService datasetProcessStatusService,
-      MetadataSynchronizer metadataSynchronizer) {
+      MetadataSynchronizer metadataSynchronizer,
+      PipelinesHistoryClient pipelinesHistoryClient) {
     this.curator = checkNotNull(curator, "curator can't be null");
     this.datasetService = checkNotNull(datasetService, "datasetService can't be null");
     this.datasetProcessStatusService = checkNotNull(datasetProcessStatusService, "datasetProcessStatusService can't be null");
     this.metadataSynchronizer =
         checkNotNull(metadataSynchronizer, "metadataSynchronizer can't be null");
+    this.pipelinesHistoryClient = pipelinesHistoryClient;
 
     xmlQueue = buildQueue(curator, XML_CRAWL);
     dwcaQueue = buildQueue(curator, DWCA_CRAWL);
@@ -137,6 +143,15 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
   @Override
   public void initiateCrawl(UUID datasetKey, int priority, Platform platform) {
     MDC.put("datasetKey", datasetKey.toString());
+
+    Long pipelinesExecutionId = pipelinesHistoryClient.getRunningExecutionKey(datasetKey);
+    if (pipelinesExecutionId != null) {
+      LOG.info(
+          "Aborted crawl initiation for dataset {} because there is a pipelines execution running with id {}",
+          datasetKey,
+          pipelinesExecutionId);
+      return;
+    }
 
     metrics.timerStart();
     try {
