@@ -75,7 +75,7 @@ public class CoordinatorCleanupService extends AbstractScheduledService {
     try {
       statuses = service.getRunningDatasetProcesses();
       LOG.debug("All DatasetProcessStatuses retrieved: {}", statuses);
-    } catch (ServiceUnavailableException e) {
+    } catch (RuntimeException e) {
       LOG.warn("Caught exception while trying to retrieve all running datasets, will try again", e);
       return;
     }
