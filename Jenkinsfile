@@ -11,7 +11,10 @@ pipeline {
     skipStagesAfterUnstable()
     timestamps()
   }
-   parameters {
+  triggers {
+    snapshotDependencies()
+  }
+  parameters {
     separator(name: "release_separator", sectionHeader: "Release Main Project Parameters")
     booleanParam(name: 'RELEASE', defaultValue: false, description: 'Do a Maven release')
     string(name: 'RELEASE_VERSION', defaultValue: '', description: 'Release version (optional)')
@@ -33,7 +36,7 @@ pipeline {
         withMaven(globalMavenSettingsConfig: 'org.jenkinsci.plugins.configfiles.maven.GlobalMavenSettingsConfig1387378707709',
                     mavenSettingsConfig: 'org.jenkinsci.plugins.configfiles.maven.MavenSettingsConfig1396361652540',
                     traceability: true) {
-            sh 'mvn -B -Djetty.port=$JETTY_PORT clean verify package install dependency:analyze -Pgbif-dev,secrets-dev -U'
+            sh 'mvn -B -Djetty.port=$JETTY_PORT clean verify package install deploy dependency:analyze -Pgbif-dev,secrets-dev -U'
         }
       }
     }
