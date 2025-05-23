@@ -36,7 +36,7 @@ pipeline {
         withMaven(globalMavenSettingsConfig: 'org.jenkinsci.plugins.configfiles.maven.GlobalMavenSettingsConfig1387378707709',
                     mavenSettingsConfig: 'org.jenkinsci.plugins.configfiles.maven.MavenSettingsConfig1396361652540',
                     traceability: true) {
-            sh 'mvn -B -Djetty.port=$JETTY_PORT clean verify package install deploy dependency:analyze -Pgbif-dev,secrets-dev -U'
+            sh 'mvn -B -Djetty.port=$JETTY_PORT clean verify package install dependency:analyze -Pgbif-dev,secrets-dev -U'
         }
       }
     }
