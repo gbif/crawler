@@ -35,7 +35,7 @@ public class ZookeeperCleanupFromFile {
   private static final String UAT2_PATH = "/uat2_crawler/crawls/";
   private static final String DEV_PATH = "/dev_crawler/crawls/";
   private static final String DEV2_PATH = "/dev2_crawler/crawls/";
-  private static final String TEST_PATH = "/test_crawler/crawls/";
+  private static final String TEST_PATH = "/uat_crawler/crawls/";
   private static final String PROD_ZK =
       "c5zk1.gbif.org:2181,c5zk2.gbif.org:2181,c5zk3.gbif.org:2181";
   private static final String UAT_ZK =
