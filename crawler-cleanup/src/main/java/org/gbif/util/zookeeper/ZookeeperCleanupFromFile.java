@@ -29,11 +29,13 @@ public class ZookeeperCleanupFromFile {
   private static final String DEV = "dev";
   private static final String DEV2 = "dev2";
   private static final String UAT2 = "uat2";
+  private static final String TEST = "test";
   private static final String PROD_PATH = "/prod_crawler/crawls/";
   private static final String UAT_PATH = "/uat_crawler/crawls/";
   private static final String UAT2_PATH = "/uat2_crawler/crawls/";
   private static final String DEV_PATH = "/dev_crawler/crawls/";
   private static final String DEV2_PATH = "/dev2_crawler/crawls/";
+  private static final String TEST_PATH = "/test_crawler/crawls/";
   private static final String PROD_ZK =
       "c5zk1.gbif.org:2181,c5zk2.gbif.org:2181,c5zk3.gbif.org:2181";
   private static final String UAT_ZK =
@@ -44,6 +46,8 @@ public class ZookeeperCleanupFromFile {
       "gbif-zookeeper-server-default-0.gbif-zookeeper-server-default.gbif-develop.svc.cluster.local:2282,gbif-zookeeper-server-default-1.gbif-zookeeper-server-default.gbif-develop.svc.cluster.local:2282,gbif-zookeeper-server-default-2.gbif-zookeeper-server-default.gbif-develop.svc.cluster.local:2282";
   private static final String UAT2_ZK =
       "c8n1.gbif.org:31930,c8n2.gbif.org:31930,c8n3.gbif.org:31930,c8n5.gbif.org:31930,c8n9.gbif.org:31930";
+  private static final String TEST_ZK =
+      "c6n8.gbif-test.org:31706,c6n7.gbif-test.org:31706,c5n8.gbif-test.org:31706";
 
   private ZookeeperCleanupFromFile() {}
 
@@ -77,6 +81,10 @@ public class ZookeeperCleanupFromFile {
       case UAT2:
         path = UAT2_PATH;
         zkPath = UAT2_ZK;
+        break;
+      case TEST:
+        path = TEST_PATH;
+        zkPath = TEST_ZK;
         break;
       default:
         throw new IllegalArgumentException("Environment must be one of: prod, uat, dev, dev2 or uat2");
