@@ -210,13 +210,16 @@ public class CamtrapDpToDwcaCallback
 
   private void updateLicense(Path dpInput, Dataset dataset) {
     // read the license and update it in the dataset
-    License license =
-        readLicense(dpInput)
-            .orElseThrow(
-                () ->
-                    new IllegalArgumentException(
-                        "License not found for camtrapDP dataset " + dataset.getKey()));
-    log.info("License {} found for camtrapDP dataset {}", license.name(), dataset.getKey());
+    Optional<License> licenseOptional = readLicense(dpInput);
+    License license;
+    if (licenseOptional.isPresent()) {
+      log.info("License {} found for camtrapDP dataset {}", licenseOptional.get().name(), dataset.getKey());
+      license = licenseOptional.get();
+    } else {
+      log.error("License not found for camtrapDP dataset {}", dataset.getKey());
+      license = License.UNSPECIFIED;
+    }
+
     dataset.setLicense(license);
     datasetClient.update(dataset);
   }
@@ -226,9 +229,9 @@ public class CamtrapDpToDwcaCallback
     File dataPackage = Paths.get(unpackedDpPath.toString(), "datapackage.json").toFile();
 
     JsonNode root = MAPPER.readTree(dataPackage);
-    for (JsonNode licenseNode : root.get("licenses")) {
-      if ("data".equals(licenseNode.get("scope").asText())) {
-        return License.fromString(licenseNode.get("name").asText());
+    for (JsonNode licenseNode : root.path("licenses")) {
+      if ("data".equals(licenseNode.path("scope").asText(null))) {
+        return License.fromString(licenseNode.path("name").asText(null));
       }
     }
 
