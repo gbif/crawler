@@ -211,17 +211,14 @@ public class CamtrapDpToDwcaCallback
   private void updateLicense(Path dpInput, Dataset dataset) {
     // read the license and update it in the dataset
     Optional<License> licenseOptional = readLicense(dpInput);
-    License license;
     if (licenseOptional.isPresent()) {
       log.info("License {} found for camtrapDP dataset {}", licenseOptional.get().name(), dataset.getKey());
-      license = licenseOptional.get();
+      dataset.setLicense(licenseOptional.get());
+      datasetClient.update(dataset);
     } else {
       log.error("License not found for camtrapDP dataset {}", dataset.getKey());
-      license = License.UNSPECIFIED;
+      throw new IllegalArgumentException("License not found for camtrapDP dataset " + dataset.getKey());
     }
-
-    dataset.setLicense(license);
-    datasetClient.update(dataset);
   }
 
   @SneakyThrows
