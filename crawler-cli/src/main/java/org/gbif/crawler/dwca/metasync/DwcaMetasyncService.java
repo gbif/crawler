@@ -150,7 +150,7 @@ public class DwcaMetasyncService extends DwcaService {
     private void updateDwcaData(Dataset dataset, Archive archive) {
       Dataset.DwcA dwcA = fromArchive(archive);
       LOG.info("Updating existing dataset {} with DwC-A metadata: {}", dataset.getKey(), dwcA.getCoreType());
-      if (dataset.getDwca() != null) {
+      if (dataset.getDwca() == null) {
         dataset.setDwca(dwcA);
         datasetService.createDwcaData(dataset.getKey(), dwcA);
       } else {
