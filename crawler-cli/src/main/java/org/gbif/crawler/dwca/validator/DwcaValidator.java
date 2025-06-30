@@ -74,9 +74,7 @@ public class DwcaValidator {
           DatasetType.SAMPLING_EVENT, DwcTerm.eventID);
 
   private static final Map<DatasetType, DwcTerm> DATASET_OCCURRENCE_CORE_ID =
-    ImmutableMap.of(
-      DatasetType.OCCURRENCE, DwcTerm.occurrenceID,
-      DatasetType.MATERIAL_ENTITY, DwcTerm.materialEntityID);
+    ImmutableMap.of(DatasetType.OCCURRENCE, DwcTerm.occurrenceID);
 
   // limit the number of checked records to protect against memory exhaustion
   private static final int MAX_RECORDS = 2000000;

@@ -13,8 +13,6 @@
  */
 package org.gbif.crawler.ws.config;
 
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-
 import org.gbif.api.service.crawler.DatasetProcessService;
 import org.gbif.crawler.DatasetProcessServiceImpl;
 import org.gbif.ws.json.JacksonJsonObjectMapperProvider;
@@ -31,6 +29,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import static com.google.common.base.Preconditions.checkArgument;
 

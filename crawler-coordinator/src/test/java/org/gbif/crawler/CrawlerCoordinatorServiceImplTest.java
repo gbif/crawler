@@ -26,6 +26,7 @@ import org.gbif.api.vocabulary.EndpointType;
 import org.gbif.common.messaging.api.messages.Platform;
 import org.gbif.crawler.constants.CrawlerNodePaths;
 import org.gbif.crawler.metasync.api.MetadataSynchronizer;
+import org.gbif.registry.ws.client.pipelines.PipelinesHistoryClient;
 
 import java.io.IOException;
 import java.net.URI;
@@ -42,9 +43,6 @@ import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.RetryOneTime;
 import org.apache.curator.test.TestingServer;
 import org.apache.curator.utils.ZKPaths;
-
-import org.gbif.registry.ws.client.pipelines.PipelinesHistoryClient;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

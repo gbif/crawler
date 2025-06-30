@@ -30,14 +30,13 @@ import org.gbif.crawler.metasync.util.HttpClientFactory;
 import org.gbif.registry.ws.client.DatasetClient;
 import org.gbif.registry.ws.client.DatasetProcessStatusClient;
 import org.gbif.registry.ws.client.InstallationClient;
+import org.gbif.registry.ws.client.pipelines.PipelinesHistoryClient;
 
 import java.util.concurrent.TimeUnit;
 
 import org.apache.curator.framework.CuratorFramework;
 
 import com.google.common.util.concurrent.AbstractIdleService;
-
-import org.gbif.registry.ws.client.pipelines.PipelinesHistoryClient;
 
 /** This services starts the Crawler Coordinator by listening for messages. */
 public class CoordinatorService extends AbstractIdleService {

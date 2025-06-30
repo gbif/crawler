@@ -13,7 +13,6 @@
  */
 package org.gbif.crawler.coordinatorcleanup;
 
-import org.gbif.api.exception.ServiceUnavailableException;
 import org.gbif.api.model.crawler.DatasetProcessStatus;
 import org.gbif.api.model.crawler.ProcessState;
 import org.gbif.api.service.crawler.DatasetProcessService;

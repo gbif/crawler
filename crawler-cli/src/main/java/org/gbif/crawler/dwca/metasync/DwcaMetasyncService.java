@@ -40,6 +40,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
@@ -129,6 +130,35 @@ public class DwcaMetasyncService extends DwcaService {
       }
     }
 
+    /**
+     * Converts an Archive to a Dataset.DwcA object.
+     *
+     * @param archive the Archive to convert
+     * @return a Dataset.DwcA object representing the archive
+     */
+    private static Dataset.DwcA fromArchive(Archive archive) {
+      Dataset.DwcA dwca = new Dataset.DwcA();
+      dwca.setCoreType(archive.getCore().getRowType().qualifiedName());
+      if (dwca.getExtensions() != null) {
+        dwca.setExtensions(archive.getExtensions().stream()
+          .map(ext -> ext.getRowType().qualifiedName())
+          .collect(Collectors.toList()));
+      }
+      return dwca;
+    }
+
+    private void updateDwcaData(Dataset dataset, Archive archive) {
+      Dataset.DwcA dwcA = fromArchive(archive);
+      LOG.info("Updating existing dataset {} with DwC-A metadata: {}", dataset.getKey(), dwcA.getCoreType());
+      if (dataset.getDwca() != null) {
+        dataset.setDwca(dwcA);
+        datasetService.createDwcaData(dataset.getKey(), dwcA);
+      } else {
+        datasetService.updateDwcaData(dataset.getKey(), dwcA);
+      }
+
+    }
+
     private void handleMessageInternal(DwcaValidationFinishedMessage message, UUID datasetKey)
         throws IOException {
       // https://github.com/gbif/portal-feedback/issues/2138
@@ -156,6 +186,7 @@ public class DwcaMetasyncService extends DwcaService {
       } else {
         archive = DwcFiles.fromLocation(new File(unpackDirectory, datasetKey.toString()).toPath());
         metaFile = archive.getMetadataLocationFile();
+        updateDwcaData(dataset, archive);
       }
 
       if (metaFile != null && metaFile.exists()) {
@@ -167,7 +198,7 @@ public class DwcaMetasyncService extends DwcaService {
       // Metadata-only datasets can't have constituents
       Map<String, UUID> constituents;
       if (DatasetType.METADATA == dataset.getType()) {
-        constituents = new HashMap();
+        constituents = new HashMap<>();
       } else {
         // process dataset constituents
         constituents = processConstituents(dataset, archive);

@@ -31,6 +31,7 @@ import org.gbif.api.vocabulary.EndpointType;
 import org.gbif.common.messaging.api.messages.Platform;
 import org.gbif.crawler.constants.CrawlerNodePaths;
 import org.gbif.crawler.metasync.api.MetadataSynchronizer;
+import org.gbif.registry.ws.client.pipelines.PipelinesHistoryClient;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -46,9 +47,6 @@ import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.queue.DistributedPriorityQueue;
 import org.apache.curator.framework.recipes.queue.QueueBuilder;
 import org.apache.zookeeper.data.Stat;
-
-import org.gbif.registry.ws.client.pipelines.PipelinesHistoryClient;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
