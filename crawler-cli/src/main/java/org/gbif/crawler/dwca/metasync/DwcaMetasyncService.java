@@ -139,7 +139,7 @@ public class DwcaMetasyncService extends DwcaService {
     private static Dataset.DwcA fromArchive(Archive archive) {
       Dataset.DwcA dwca = new Dataset.DwcA();
       dwca.setCoreType(archive.getCore().getRowType().qualifiedName());
-      if (dwca.getExtensions() != null) {
+      if (archive.getExtensions() != null) {
         dwca.setExtensions(archive.getExtensions().stream()
           .map(ext -> ext.getRowType().qualifiedName())
           .collect(Collectors.toList()));
