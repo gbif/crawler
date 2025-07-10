@@ -29,6 +29,7 @@ import org.gbif.crawler.constants.CrawlerNodePaths;
 import org.gbif.crawler.dwca.DwcaConfiguration;
 import org.gbif.crawler.dwca.DwcaService;
 import org.gbif.dwc.Archive;
+import org.gbif.dwc.ArchiveFile;
 import org.gbif.dwc.DwcFiles;
 
 import java.io.File;
@@ -37,6 +38,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -46,6 +48,11 @@ import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.atomic.DistributedAtomicLong;
 import org.apache.curator.retry.RetryNTimes;
+
+import org.gbif.dwc.record.Record;
+import org.gbif.dwc.record.StarRecord;
+import org.gbif.utils.file.ClosableIterator;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -141,10 +148,28 @@ public class DwcaMetasyncService extends DwcaService {
       dwca.setCoreType(archive.getCore().getRowType().qualifiedName());
       if (archive.getExtensions() != null) {
         dwca.setExtensions(archive.getExtensions().stream()
-          .map(ext -> ext.getRowType().qualifiedName())
-          .collect(Collectors.toList()));
+            .filter(DwcaValidationFinishedMessageCallback::hasRecords)
+            .map(ext -> ext.getRowType().qualifiedName())
+            .collect(Collectors.toList()));
       }
       return dwca;
+    }
+
+    /**
+     * Checks if the given archive file has any records.
+     *
+     * @param archive the archive file to check
+     * @return true if the archive has records, false otherwise
+     */
+    private static boolean hasRecords(ArchiveFile archive) {
+      try {
+        try (ClosableIterator<Record> it = archive.iterator()) {
+          return it.hasNext();
+        }
+      } catch (Exception e) {
+        LOG.error("Failed to check for records in archive", e);
+        return false;
+      }
     }
 
     private void updateDwcaData(Dataset dataset, Archive archive) {
