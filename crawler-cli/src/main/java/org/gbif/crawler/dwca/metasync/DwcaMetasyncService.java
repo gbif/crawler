@@ -211,7 +211,7 @@ public class DwcaMetasyncService extends DwcaService {
       } else {
         archive = DwcFiles.fromLocation(new File(unpackDirectory, datasetKey.toString()).toPath());
         metaFile = archive.getMetadataLocationFile();
-        updateDwcaData(dataset, archive);
+        //updateDwcaData(dataset, archive);
       }
 
       if (metaFile != null && metaFile.exists()) {
