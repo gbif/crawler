@@ -38,7 +38,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -50,7 +49,6 @@ import org.apache.curator.framework.recipes.atomic.DistributedAtomicLong;
 import org.apache.curator.retry.RetryNTimes;
 
 import org.gbif.dwc.record.Record;
-import org.gbif.dwc.record.StarRecord;
 import org.gbif.utils.file.ClosableIterator;
 
 import org.slf4j.Logger;
@@ -172,7 +170,6 @@ public class DwcaMetasyncService extends DwcaService {
       }
     }
 
-    /*
     private void updateDwcaData(Dataset dataset, Archive archive) {
       Dataset.DwcA dwcA = fromArchive(archive);
       LOG.info("Updating existing dataset {} with DwC-A metadata: {}", dataset.getKey(), dwcA.getCoreType());
@@ -184,8 +181,6 @@ public class DwcaMetasyncService extends DwcaService {
       }
 
     }
-    */
-
 
     private void handleMessageInternal(DwcaValidationFinishedMessage message, UUID datasetKey)
         throws IOException {
@@ -214,7 +209,7 @@ public class DwcaMetasyncService extends DwcaService {
       } else {
         archive = DwcFiles.fromLocation(new File(unpackDirectory, datasetKey.toString()).toPath());
         metaFile = archive.getMetadataLocationFile();
-        //updateDwcaData(dataset, archive);
+        updateDwcaData(dataset, archive);
       }
 
       if (metaFile != null && metaFile.exists()) {
