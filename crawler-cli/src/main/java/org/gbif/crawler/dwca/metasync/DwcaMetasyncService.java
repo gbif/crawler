@@ -172,6 +172,7 @@ public class DwcaMetasyncService extends DwcaService {
       }
     }
 
+    /*
     private void updateDwcaData(Dataset dataset, Archive archive) {
       Dataset.DwcA dwcA = fromArchive(archive);
       LOG.info("Updating existing dataset {} with DwC-A metadata: {}", dataset.getKey(), dwcA.getCoreType());
@@ -183,6 +184,8 @@ public class DwcaMetasyncService extends DwcaService {
       }
 
     }
+    */
+
 
     private void handleMessageInternal(DwcaValidationFinishedMessage message, UUID datasetKey)
         throws IOException {
