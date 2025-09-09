@@ -22,7 +22,7 @@ import java.util.UUID;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.queue.QueueConsumer;
 
-import static org.gbif.crawler.constants.CrawlerNodePaths.CAMETRAPDP_CRAWL;
+import static org.gbif.crawler.constants.CrawlerNodePaths.CAMTRAPDP_CRAWL;
 import static org.gbif.crawler.constants.CrawlerNodePaths.QUEUED_CRAWLS;
 import static org.gbif.crawler.constants.CrawlerNodePaths.RUNNING_CRAWLS;
 import static org.gbif.crawler.constants.CrawlerNodePaths.buildPath;
@@ -34,7 +34,7 @@ import static org.gbif.crawler.constants.CrawlerNodePaths.buildPath;
 public class DownloaderService extends CrawlServerBaseService<CamtrapDpConfiguration> {
 
   public DownloaderService(CamtrapDpConfiguration config) {
-    super(buildPath(CAMETRAPDP_CRAWL, QUEUED_CRAWLS), buildPath(CAMETRAPDP_CRAWL, RUNNING_CRAWLS), config);
+    super(buildPath(CAMTRAPDP_CRAWL, QUEUED_CRAWLS), buildPath(CAMTRAPDP_CRAWL, RUNNING_CRAWLS), config);
   }
 
   @Override

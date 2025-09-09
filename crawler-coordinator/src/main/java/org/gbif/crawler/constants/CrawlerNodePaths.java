@@ -33,7 +33,8 @@ public class CrawlerNodePaths {
   public static final String XML_CRAWL = "xml";
   public static final String DWCA_CRAWL = "dwca";
   public static final String ABCDA_CRAWL = "abcda";
-  public static final String CAMETRAPDP_CRAWL = "camtrapdp";
+  public static final String CAMTRAPDP_CRAWL = "camtrapdp";
+  public static final String DWC_DP_CRAWL = "dwcdp";
   public static final String STARTED_CRAWLING = "startedCrawling";
   public static final String FINISHED_CRAWLING = "finishedCrawling";
   public static final String FINISHED_REASON = "finishedReason";

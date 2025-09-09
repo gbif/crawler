@@ -61,7 +61,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.gbif.api.vocabulary.TagName.CRAWL_ATTEMPT;
 import static org.gbif.api.vocabulary.TagName.DECLARED_COUNT;
 import static org.gbif.crawler.constants.CrawlerNodePaths.ABCDA_CRAWL;
-import static org.gbif.crawler.constants.CrawlerNodePaths.CAMETRAPDP_CRAWL;
+import static org.gbif.crawler.constants.CrawlerNodePaths.CAMTRAPDP_CRAWL;
 import static org.gbif.crawler.constants.CrawlerNodePaths.CRAWL_INFO;
 import static org.gbif.crawler.constants.CrawlerNodePaths.DWCA_CRAWL;
 import static org.gbif.crawler.constants.CrawlerNodePaths.QUEUED_CRAWLS;
@@ -135,7 +135,7 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
     xmlQueue = buildQueue(curator, XML_CRAWL);
     dwcaQueue = buildQueue(curator, DWCA_CRAWL);
     abcdaQueue = buildQueue(curator, ABCDA_CRAWL);
-    camtrapDpQueue = buildQueue(curator, CAMETRAPDP_CRAWL);
+    camtrapDpQueue = buildQueue(curator, CAMTRAPDP_CRAWL);
   }
 
   @Override

@@ -50,7 +50,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.gbif.crawler.constants.CrawlerNodePaths.ABCDA_CRAWL;
-import static org.gbif.crawler.constants.CrawlerNodePaths.CAMETRAPDP_CRAWL;
+import static org.gbif.crawler.constants.CrawlerNodePaths.CAMTRAPDP_CRAWL;
 import static org.gbif.crawler.constants.CrawlerNodePaths.CRAWL_CONTEXT;
 import static org.gbif.crawler.constants.CrawlerNodePaths.CRAWL_INFO;
 import static org.gbif.crawler.constants.CrawlerNodePaths.DECLARED_COUNT;
@@ -245,7 +245,7 @@ public class DatasetProcessServiceImpl implements DatasetProcessService {
 
   @Override
   public List<DatasetProcessStatus> getPendingCamtrapDpDatasetProcesses() {
-    List<UUID> pendingCrawlUuids = getPendingCrawlUuids(CAMETRAPDP_CRAWL);
+    List<UUID> pendingCrawlUuids = getPendingCrawlUuids(CAMTRAPDP_CRAWL);
     return getDatasetProcessStatuses(pendingCrawlUuids);
   }
 
