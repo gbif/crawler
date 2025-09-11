@@ -64,6 +64,7 @@ import static org.gbif.crawler.constants.CrawlerNodePaths.ABCDA_CRAWL;
 import static org.gbif.crawler.constants.CrawlerNodePaths.CAMTRAPDP_CRAWL;
 import static org.gbif.crawler.constants.CrawlerNodePaths.CRAWL_INFO;
 import static org.gbif.crawler.constants.CrawlerNodePaths.DWCA_CRAWL;
+import static org.gbif.crawler.constants.CrawlerNodePaths.DWC_DP_CRAWL;
 import static org.gbif.crawler.constants.CrawlerNodePaths.QUEUED_CRAWLS;
 import static org.gbif.crawler.constants.CrawlerNodePaths.RUNNING_CRAWLS;
 import static org.gbif.crawler.constants.CrawlerNodePaths.XML_CRAWL;
@@ -105,6 +106,7 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
   private final DistributedPriorityQueue<UUID> dwcaQueue;
   private final DistributedPriorityQueue<UUID> abcdaQueue;
   private final DistributedPriorityQueue<UUID> camtrapDpQueue;
+  private final DistributedPriorityQueue<UUID> dwcDpQueue;
   private final DatasetService datasetService;
   private final DatasetProcessStatusService datasetProcessStatusService;
   private final MetadataSynchronizer metadataSynchronizer;
@@ -136,6 +138,7 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
     dwcaQueue = buildQueue(curator, DWCA_CRAWL);
     abcdaQueue = buildQueue(curator, ABCDA_CRAWL);
     camtrapDpQueue = buildQueue(curator, CAMTRAPDP_CRAWL);
+    dwcDpQueue = buildQueue(curator, DWC_DP_CRAWL);
   }
 
   @Override
@@ -249,6 +252,7 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
         isAbcdArchive(endpoint.get()),
         isDarwinCoreArchive(endpoint.get()),
         isCamtrapDpArchive(endpoint.get()),
+        isDwcDpArchive(endpoint.get()),
         priority,
         dataBytes);
     LOG.info("Crawling endpoint [{}] for dataset [{}]", endpoint.get().getUrl(), datasetKey);
@@ -283,7 +287,7 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
         LOG.debug("No new declared count");
       }
     } catch (Exception e) {
-      LOG.error("Error updating declared count " + e.getMessage(), e);
+      LOG.error("Error updating declared count {}", e.getMessage(), e);
     }
 
     return declaredCount;
@@ -318,6 +322,16 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
    */
   private static boolean isCamtrapDpArchive(Endpoint endpoint) {
     return EndpointType.CAMTRAP_DP == endpoint.getType();
+  }
+
+  /**
+   * Determine if an endpoint should be handled as an DwcDP archive or not.
+   *
+   * @param endpoint
+   * @return
+   */
+  private static boolean isDwcDpArchive(Endpoint endpoint) {
+    return EndpointType.DWC_DP == endpoint.getType();
   }
 
   /**
@@ -467,6 +481,7 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
         break;
       case DWC_ARCHIVE:
       case CAMTRAP_DP:
+      case DWC_DP:
       case EML:
         break;
       default:
@@ -609,7 +624,7 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
    * @param dataBytes to put into ZooKeeper
    */
   private void queueCrawlJob(
-      UUID datasetKey, boolean isAbcda, boolean isDwca, boolean isCamtrapDp, int priority, byte[] dataBytes) {
+      UUID datasetKey, boolean isAbcda, boolean isDwca, boolean isCamtrapDp, boolean isDwcDp,int priority, byte[] dataBytes) {
     try {
       // This could in theory fail when two coordinators are running at the same time. They'll have
       // confirmed if this
@@ -628,6 +643,8 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
         dwcaQueue.put(datasetKey, priority);
       } else if (isCamtrapDp) {
         camtrapDpQueue.put(datasetKey, priority);
+      } else if (isDwcDp) {
+        dwcDpQueue.put(datasetKey, priority);
       } else {
         xmlQueue.put(datasetKey, priority);
       }
