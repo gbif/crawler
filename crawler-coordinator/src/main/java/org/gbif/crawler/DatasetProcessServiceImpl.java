@@ -55,6 +55,7 @@ import static org.gbif.crawler.constants.CrawlerNodePaths.CRAWL_CONTEXT;
 import static org.gbif.crawler.constants.CrawlerNodePaths.CRAWL_INFO;
 import static org.gbif.crawler.constants.CrawlerNodePaths.DECLARED_COUNT;
 import static org.gbif.crawler.constants.CrawlerNodePaths.DWCA_CRAWL;
+import static org.gbif.crawler.constants.CrawlerNodePaths.DWC_DP_CRAWL;
 import static org.gbif.crawler.constants.CrawlerNodePaths.FINISHED_CRAWLING;
 import static org.gbif.crawler.constants.CrawlerNodePaths.FINISHED_REASON;
 import static org.gbif.crawler.constants.CrawlerNodePaths.FRAGMENTS_EMITTED;
@@ -246,6 +247,12 @@ public class DatasetProcessServiceImpl implements DatasetProcessService {
   @Override
   public List<DatasetProcessStatus> getPendingCamtrapDpDatasetProcesses() {
     List<UUID> pendingCrawlUuids = getPendingCrawlUuids(CAMTRAPDP_CRAWL);
+    return getDatasetProcessStatuses(pendingCrawlUuids);
+  }
+
+  @Override
+  public List<DatasetProcessStatus> getPendingDwcDpDatasetProcesses() {
+    List<UUID> pendingCrawlUuids = getPendingCrawlUuids(DWC_DP_CRAWL);
     return getDatasetProcessStatuses(pendingCrawlUuids);
   }
 

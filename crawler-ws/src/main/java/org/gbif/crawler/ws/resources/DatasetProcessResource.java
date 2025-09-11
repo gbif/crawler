@@ -77,4 +77,10 @@ public class DatasetProcessResource implements DatasetProcessService {
   public List<DatasetProcessStatus> getPendingCamtrapDpDatasetProcesses() {
     return service.getPendingCamtrapDpDatasetProcesses();
   }
+
+  @GetMapping("dwcdp/pending")
+  @Override
+  public List<DatasetProcessStatus> getPendingDwcDpDatasetProcesses() {
+    return service.getPendingDwcDpDatasetProcesses();
+  }
 }
