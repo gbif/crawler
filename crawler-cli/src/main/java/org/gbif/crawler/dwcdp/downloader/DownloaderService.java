@@ -22,6 +22,7 @@ import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.queue.QueueConsumer;
 
 import org.gbif.crawler.dwcdp.DwcDpConfiguration;
+import org.gbif.registry.ws.client.DatasetClient;
 
 import static org.gbif.crawler.constants.CrawlerNodePaths.DWC_DP_CRAWL;
 import static org.gbif.crawler.constants.CrawlerNodePaths.QUEUED_CRAWLS;
@@ -41,6 +42,7 @@ public class DownloaderService extends CrawlServerBaseService<DwcDpConfiguration
   @Override
   protected QueueConsumer<UUID> newConsumer(
       CuratorFramework curator, MessagePublisher publisher, DwcDpConfiguration config) {
-    return new DwcDpCrawlConsumer(curator, publisher, config.archiveRepository, config.httpTimeout);
+    return new DwcDpCrawlConsumer(curator, publisher, config.archiveRepository, config.httpTimeout,
+                                  config.registry.newClientBuilder().build(DatasetClient.class));
   }
 }

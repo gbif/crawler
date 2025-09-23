@@ -184,7 +184,7 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
    * @see EndpointPriorityComparator
    */
   @VisibleForTesting
-  List<Endpoint> prioritySortEndpoints(List<Endpoint> endpoints) {
+  public static List<Endpoint> prioritySortEndpoints(List<Endpoint> endpoints) {
     checkNotNull(endpoints, "endpoints can't be null");
 
     // Filter out all Endpoints that we can't crawl
@@ -422,7 +422,7 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
    * @return will be present if we found an eligible endpoint
    * @see EndpointPriorityComparator
    */
-  private Optional<Endpoint> getEndpointToCrawl(Dataset dataset) {
+  public static Optional<Endpoint> getEndpointToCrawl(Dataset dataset) {
     // Are any of the endpoints eligible to be crawled
     List<Endpoint> sortedEndpoints = prioritySortEndpoints(dataset.getEndpoints());
     if (sortedEndpoints.isEmpty()) {
