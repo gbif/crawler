@@ -13,6 +13,16 @@
  */
 package org.gbif.crawler.dwca.validator;
 
+import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMap;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import javax.annotation.Nullable;
 import org.gbif.api.model.crawler.DwcaValidationReport;
 import org.gbif.api.model.crawler.GenericValidationReport;
 import org.gbif.api.model.crawler.OccurrenceValidationReport;
@@ -24,22 +34,8 @@ import org.gbif.dwc.record.StarRecord;
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.Term;
 import org.gbif.utils.file.ClosableIterator;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import javax.annotation.Nullable;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableMap;
 
 /**
  * This performs the validity checking for DwC-A for the purposes <em>of deciding if the archive is
@@ -202,7 +198,7 @@ public class DwcaValidator {
     try (ClosableIterator<Record> it = archive.getCore().iterator(true, true)) {
       while (it.hasNext()) {
         Record next = it.next();
-        if (checkOccurrenceRecord(id, next, getTriplet(next, null))) {
+        if (!checkOccurrenceRecordIfLimitNotReached(id, next, getTriplet(next, null))) {
           break;
         }
       }
@@ -227,16 +223,21 @@ public class DwcaValidator {
 
     // outer loop over core records, e.g. taxa or samples
     try (ClosableIterator<StarRecord> iterator = archive.iterator()) {
+      boolean withinLimit = true;
       while (iterator.hasNext()) {
         StarRecord star = iterator.next();
         // inner loop over extension records
         List<Record> records = star.extension(rowType);
         if (records != null) {
           for (Record ext : records) {
-            if (checkOccurrenceRecord(DwcTerm.occurrenceID, ext, getTriplet(star.core(), ext))) {
+            withinLimit = checkOccurrenceRecordIfLimitNotReached(DwcTerm.occurrenceID, ext, getTriplet(star.core(), ext));
+            if (!withinLimit) {
               break;
             }
           }
+        }
+        if (!withinLimit) {
+          break;
         }
       }
     } catch (Exception e) {
@@ -252,9 +253,14 @@ public class DwcaValidator {
   }
 
   /**
-   * @return should we continue or not
+   * @return false if the limit has been reached and we stop checking occurrence records. True
+   *     otherwise.
    */
-  private boolean checkOccurrenceRecord(Term id, Record rec, String triplet) {
+  private boolean checkOccurrenceRecordIfLimitNotReached(Term id, Record rec, String triplet) {
+    if (checkedRecords >= MAX_RECORDS) {
+      return false;
+    }
+
     checkedRecords++;
 
     // triplet can be part of both, e.g. inst and catalog number could be in the core
@@ -272,7 +278,7 @@ public class DwcaValidator {
       uniqueOccurrenceIds.add(occurrenceId);
     }
 
-    return checkedRecords == MAX_RECORDS;
+    return true;
   }
 
   /**
