@@ -24,17 +24,24 @@ import org.slf4j.LoggerFactory;
 public class ZookeeperCleanupFromFile {
 
   private static final Logger LOG = LoggerFactory.getLogger(ZookeeperCleanupFromFile.class);
+
   private static final String PROD = "prod";
-  private static final String DEV = "dev";
   private static final String TEST = "test";
+  private static final String DEV = "dev";
+  private static final String LAB = "lab";
+
   private static final String PROD_PATH = "/prod_crawler/crawls/";
-  private static final String DEV_PATH = "/dev_crawler/crawls/";;
   private static final String TEST_PATH = "/test_crawler/crawls/";
+  private static final String DEV_PATH = "/dev_crawler/crawls/";
+  private static final String LAB_PATH = "/lab_crawler/crawls/";
+
   private static final String PROD_ZK =
-      "c5zk1.gbif.org:2181,c5zk2.gbif.org:2181,c5zk3.gbif.org:2181";
+      "c8n1.gbif.org:31930,c8n2.gbif.org:31930,c8n3.gbif.org:31930,c8n5.gbif.org:31930,c8n9.gbif.org:31930";
+  private static final String TEST_ZK =
+      "c5n7.gbif-test.org:31706,c5n9.gbif-test.org:31706,c6n8.gbif-test.org:31706";
   private static final String DEV_ZK =
       "c5n7.gbif-test.org:31706,c5n9.gbif-test.org:31706,c6n8.gbif-test.org:31706";
-  private static final String TEST_ZK =
+  private static final String LAB_ZK =
       "c5n7.gbif-test.org:31706,c5n9.gbif-test.org:31706,c6n8.gbif-test.org:31706";
 
   private ZookeeperCleanupFromFile() {}
@@ -43,7 +50,7 @@ public class ZookeeperCleanupFromFile {
   public static void main(String[] args) throws IOException, InterruptedException {
     LOG.debug("ZookeeperCleanupFromFile starting");
     if (args.length != 2) {
-      LOG.error("Usage: ZookeeperCleanupFromFile <filename> <environment: prod, test or dev>");
+      LOG.error("Usage: ZookeeperCleanupFromFile <filename> <environment: prod, test, dev or lab>");
       System.exit(1);
     }
 
@@ -54,16 +61,20 @@ public class ZookeeperCleanupFromFile {
         path = PROD_PATH;
         zkPath = PROD_ZK;
         break;
-      case DEV:
-        path = DEV_PATH;
-        zkPath = DEV_ZK;
-        break;
       case TEST:
         path = TEST_PATH;
         zkPath = TEST_ZK;
         break;
+      case DEV:
+        path = DEV_PATH;
+        zkPath = DEV_ZK;
+        break;
+      case LAB:
+        path = LAB_PATH;
+        zkPath = LAB_ZK;
+        break;
       default:
-        throw new IllegalArgumentException("Environment must be one of: prod, test or dev");
+        throw new IllegalArgumentException("Environment must be one of: prod, test, dev or lab");
     }
 
     List<String> keys = HueCsvReader.readKeys(args[0]);
