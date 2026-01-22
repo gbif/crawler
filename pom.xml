@@ -86,7 +86,7 @@
     <jsr305.version>3.0.1</jsr305.version>
     <junit.version>5.6.3</junit.version>
     <hamcrest.version>2.2</hamcrest.version>
-    <logback.version>1.2.3</logback.version>
+    <logback.version>1.5.25</logback.version>
     <janino-logback.version>2.5.10</janino-logback.version>
     <logstash-logback-encoder.version>4.11</logstash-logback-encoder.version>
     <metainf-services.version>1.7</metainf-services.version>
