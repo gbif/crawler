@@ -13,8 +13,11 @@
  */
 package org.gbif.crawler.metasync.util.converter;
 
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -32,116 +35,80 @@ public class DateTimeConverterTest {
   @Test
   public void testIso8691Dates() {
     assertEquals(
-        new DateTime().withDate(2016, 1, 27).withTimeAtStartOfDay(),
-        converter.convert(DateTime.class, "2016-01-27"));
+      LocalDate.of(2016, 1, 27).atStartOfDay(ZoneId.systemDefault()).toOffsetDateTime(),
+      converter.convert(OffsetDateTime.class, "2016-01-27"));
     assertEquals(
-        new DateTime().withDate(2016, 1, 25).withTimeAtStartOfDay(),
-        converter.convert(DateTime.class, "2016-W04"));
+      LocalDate.of(2016, 1, 25).atStartOfDay(ZoneId.systemDefault()).toOffsetDateTime(),
+      converter.convert(OffsetDateTime.class, "2016-W04"));
     assertEquals(
-        new DateTime().withDate(2016, 1, 27).withTimeAtStartOfDay(),
-        converter.convert(DateTime.class, "2016-W04-3"));
+      LocalDate.of(2016, 1, 27).atStartOfDay(ZoneId.systemDefault()).toOffsetDateTime(),
+      converter.convert(OffsetDateTime.class, "2016-W04-3"));
     assertEquals(
-        new DateTime().withDate(2016, 1, 27).withTimeAtStartOfDay(),
-        converter.convert(DateTime.class, "2016-027"));
+      LocalDate.of(2016, 1, 27).atStartOfDay(ZoneId.systemDefault()).toOffsetDateTime(),
+      converter.convert(OffsetDateTime.class, "2016-027"));
     assertEquals(
-        new DateTime().withDate(2016, 1, 27).withTimeAtStartOfDay(),
-        converter.convert(DateTime.class, "20160127"));
+      LocalDate.of(2016, 1, 27).atStartOfDay(ZoneId.systemDefault()).toOffsetDateTime(),
+      converter.convert(OffsetDateTime.class, "20160127"));
 
     assertEquals(
-        new DateTime()
-            .withZone(DateTimeZone.UTC)
-            .withDate(2016, 1, 27)
-            .withTime(6, 11, 22, 0)
-            .toDate(),
-        ((DateTime) converter.convert(DateTime.class, "2016-01-27T06:11:22+00:00")).toDate());
+      OffsetDateTime.of(2016, 1, 27, 6, 11, 22, 0, ZoneOffset.UTC),
+      converter.convert(OffsetDateTime.class, "2016-01-27T06:11:22+00:00"));
     assertEquals(
-        new DateTime()
-            .withZone(DateTimeZone.UTC)
-            .withDate(2016, 1, 27)
-            .withTime(6, 11, 22, 0)
-            .toDate(),
-        ((DateTime) converter.convert(DateTime.class, "2016-01-27T06:11:22Z")).toDate());
+      OffsetDateTime.of(2016, 1, 27, 6, 11, 22, 0, ZoneOffset.UTC),
+      converter.convert(OffsetDateTime.class, "2016-01-27T06:11:22Z"));
     assertEquals(
-        new DateTime()
-            .withZone(DateTimeZone.UTC)
-            .withDate(2016, 1, 27)
-            .withTime(6, 11, 22, 0)
-            .toDate(),
-        ((DateTime) converter.convert(DateTime.class, "20160127T061122Z")).toDate());
+      OffsetDateTime.of(2016, 1, 27, 6, 11, 22, 0, ZoneOffset.UTC),
+      converter.convert(OffsetDateTime.class, "20160127T061122Z"));
 
     assertEquals(
-        new DateTime()
-            .withZone(DateTimeZone.UTC)
-            .withDate(2016, 1, 27)
-            .withTime(6, 11, 22, 0)
-            .toDate(),
-        ((DateTime) converter.convert(DateTime.class, "2016-01-27T09:11:22+03:00")).toDate());
+      OffsetDateTime.of(2016, 1, 27, 6, 11, 22, 0, ZoneOffset.UTC),
+      converter.convert(OffsetDateTime.class, "2016-01-27T09:11:22+03:00"));
     assertEquals(
-        new DateTime()
-            .withZone(DateTimeZone.UTC)
-            .withDate(2016, 1, 27)
-            .withTime(6, 11, 22, 0)
-            .toDate(),
-        ((DateTime) converter.convert(DateTime.class, "2016-01-27T03:11:22-03:00")).toDate());
+      OffsetDateTime.of(2016, 1, 27, 6, 11, 22, 0, ZoneOffset.UTC),
+      converter.convert(OffsetDateTime.class, "2016-01-27T03:11:22-03:00"));
     assertEquals(
-        new DateTime()
-            .withZone(DateTimeZone.UTC)
-            .withDate(2016, 1, 27)
-            .withTime(6, 11, 22, 0)
-            .toDate(),
-        ((DateTime) converter.convert(DateTime.class, "2016-01-27T03:11:22−03:00")).toDate());
+      OffsetDateTime.of(2016, 1, 27, 6, 11, 22, 0, ZoneOffset.UTC),
+      converter.convert(OffsetDateTime.class, "2016-01-27T03:11:22−03:00"));
 
     assertEquals(
-        new DateTime()
-            .withZone(DateTimeZone.UTC)
-            .withDate(2016, 1, 27)
-            .withTime(6, 11, 22, 0)
-            .toDate(),
-        ((DateTime) converter.convert(DateTime.class, "20160127T061122Z")).toDate());
+      OffsetDateTime.of(2016, 1, 27, 6, 11, 22, 0, ZoneOffset.UTC),
+      converter.convert(OffsetDateTime.class, "20160127T061122Z"));
   }
 
   /** Test some invalid formats, but which we are still provided with. */
   @Test
   public void testInvalidDates() {
     assertEquals(
-        new DateTime().withDate(2016, 1, 27).withTimeAtStartOfDay(),
-        converter.convert(DateTime.class, "2016/01/27"));
+      LocalDate.of(2016, 1, 27).atStartOfDay(ZoneId.systemDefault()).toOffsetDateTime(),
+      converter.convert(OffsetDateTime.class, "2016/01/27"));
     assertEquals(
-        new DateTime()
-            .withZone(DateTimeZone.UTC)
-            .withDate(2016, 1, 27)
-            .withTime(6, 11, 22, 0)
-            .toDate(),
-        ((DateTime) converter.convert(DateTime.class, "2016-01-27 06:11:22")).toDate());
+      OffsetDateTime.of(2016, 1, 27, 6, 11, 22, 0, ZoneOffset.UTC),
+      converter.convert(OffsetDateTime.class, "2016-01-27 06:11:22"));
     assertEquals(
-        new DateTime()
-            .withZone(DateTimeZone.UTC)
-            .withDate(2016, 1, 27)
-            .withTime(6, 11, 22, 0)
-            .toDate(),
-        ((DateTime) converter.convert(DateTime.class, "2016-01-27 09:11:22+0300")).toDate());
+      OffsetDateTime.of(2016, 1, 27, 6, 11, 22, 0, ZoneOffset.UTC),
+      converter.convert(OffsetDateTime.class, "2016-01-27 09:11:22+0300"));
     assertEquals(
-        new DateTime().withDate(2016, 1, 27).withTimeAtStartOfDay(),
-        converter.convert(DateTime.class, "2016-01-27TCentral Sta:ndard Time"));
+      LocalDate.of(2016, 1, 27).atStartOfDay(ZoneId.systemDefault()).toOffsetDateTime(),
+      converter.convert(OffsetDateTime.class, "2016-01-27TCentral Sta:ndard Time"));
   }
 
   /** Test some partial formats. */
   @Test
   public void testPartialDates() {
     assertEquals(
-        new DateTime().withDate(2016, 1, 1).withTimeAtStartOfDay(),
-        converter.convert(DateTime.class, "2016-01"));
+      LocalDate.of(2016, 1, 1).atStartOfDay(ZoneId.systemDefault()).toOffsetDateTime(),
+      converter.convert(OffsetDateTime.class, "2016-01"));
     assertEquals(
-        new DateTime().withDate(2016, 1, 1).withTimeAtStartOfDay(),
-        converter.convert(DateTime.class, "2016"));
+      LocalDate.of(2016, 1, 1).atStartOfDay(ZoneId.systemDefault()).toOffsetDateTime(),
+      converter.convert(OffsetDateTime.class, "2016"));
 
     assertEquals(
-        new DateTime().withDate(2016, 1, 1).withTimeAtStartOfDay(),
-        converter.convert(DateTime.class, "2016/01"));
+      LocalDate.of(2016, 1, 1).atStartOfDay(ZoneId.systemDefault()).toOffsetDateTime(),
+      converter.convert(OffsetDateTime.class, "2016/01"));
 
-    assertNull(converter.convert(DateTime.class, ":"));
-    assertNull(converter.convert(DateTime.class, ""));
-    assertNull(converter.convert(DateTime.class, "ABCDEFGHIJKM"));
-    assertNull(converter.convert(DateTime.class, "ABCD"));
+    assertNull(converter.convert(OffsetDateTime.class, ":"));
+    assertNull(converter.convert(OffsetDateTime.class, ""));
+    assertNull(converter.convert(OffsetDateTime.class, "ABCDEFGHIJKM"));
+    assertNull(converter.convert(OffsetDateTime.class, "ABCD"));
   }
 }

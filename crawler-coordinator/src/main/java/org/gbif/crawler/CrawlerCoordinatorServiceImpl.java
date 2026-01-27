@@ -34,6 +34,7 @@ import org.gbif.crawler.metasync.api.MetadataSynchronizer;
 import org.gbif.registry.ws.client.pipelines.PipelinesHistoryClient;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -53,7 +54,6 @@ import org.slf4j.MDC;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
 
@@ -346,7 +346,7 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
             .creatingParentsIfNeeded()
             .forPath(
                 CrawlerNodePaths.getCrawlInfoPath(datasetKey, CrawlerNodePaths.DECLARED_COUNT),
-                declaredCount.toString().getBytes(Charsets.UTF_8));
+                declaredCount.toString().getBytes(StandardCharsets.UTF_8));
       } catch (Exception e) {
         throw new ServiceUnavailableException("Error communicating with ZooKeeper", e);
       }

@@ -44,8 +44,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
-import com.yammer.metrics.Metrics;
-import com.yammer.metrics.core.Counter;
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.MetricRegistry;
 
 import static org.gbif.crawler.common.ZookeeperUtils.createOrUpdate;
 import static org.gbif.crawler.constants.CrawlerNodePaths.FINISHED_REASON;
@@ -83,15 +83,18 @@ public class ValidatorService extends DwcaService {
   private static class DwcaDownloadFinishedMessageCallback
       extends AbstractMessageCallback<DwcaDownloadFinishedMessage> {
 
+    private static final MetricRegistry METRIC_REGISTRY = new MetricRegistry();
+
     private final DatasetService datasetService;
     private final File archiveRepository;
     private final File unpackDirectory;
     private final MessagePublisher publisher;
     private final CuratorFramework curator;
 
-    private final Counter messageCount = Metrics.newCounter(ValidatorService.class, "messageCount");
+    private final Counter messageCount = METRIC_REGISTRY.counter(MetricRegistry.name(ValidatorService.class, "messageCount"));
+
     private final Counter failedValidations =
-        Metrics.newCounter(ValidatorService.class, "failedValidations");
+      METRIC_REGISTRY.counter(MetricRegistry.name(ValidatorService.class, "failedValidations"));
 
     private DwcaDownloadFinishedMessageCallback(
         DatasetService datasetService,

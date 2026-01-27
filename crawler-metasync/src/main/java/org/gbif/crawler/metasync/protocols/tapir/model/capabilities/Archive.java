@@ -14,10 +14,10 @@
 package org.gbif.crawler.metasync.protocols.tapir.model.capabilities;
 
 import java.net.URI;
+import java.time.OffsetDateTime;
 
 import org.apache.commons.digester3.annotations.rules.ObjectCreate;
 import org.apache.commons.digester3.annotations.rules.SetProperty;
-import org.joda.time.DateTime;
 
 import lombok.ToString;
 
@@ -35,7 +35,7 @@ public class Archive {
   private URI location;
 
   @SetProperty(pattern = BASE_PATH, attributeName = "creation")
-  private DateTime creation;
+  private OffsetDateTime creation;
 
   @SetProperty(pattern = BASE_PATH, attributeName = "compression")
   private String compression;
@@ -62,11 +62,11 @@ public class Archive {
     this.location = location;
   }
 
-  public DateTime getCreation() {
+  public OffsetDateTime getCreation() {
     return creation;
   }
 
-  public void setCreation(DateTime creation) {
+  public void setCreation(OffsetDateTime creation) {
     this.creation = creation;
   }
 

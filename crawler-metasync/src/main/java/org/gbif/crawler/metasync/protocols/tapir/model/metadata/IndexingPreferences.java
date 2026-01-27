@@ -13,17 +13,19 @@
  */
 package org.gbif.crawler.metasync.protocols.tapir.model.metadata;
 
+import java.time.Duration;
+import java.time.LocalTime;
+import java.time.OffsetTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+
 import org.apache.commons.digester3.annotations.rules.ObjectCreate;
 import org.apache.commons.digester3.annotations.rules.SetProperty;
-import org.joda.time.DateTime;
-import org.joda.time.IllegalFieldValueException;
-import org.joda.time.Period;
-import org.joda.time.format.ISODateTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import lombok.ToString;
-
 
 @ObjectCreate(pattern = "response/metadata/indexingPreferences")
 @ToString
@@ -34,15 +36,15 @@ public class IndexingPreferences {
   @SetProperty(pattern = "response/metadata/indexingPreferences", attributeName = "startTime")
   private String startTime;
 
-  private DateTime parsedStartTime;
+  private OffsetTime parsedStartTime;
 
   @SetProperty(pattern = "response/metadata/indexingPreferences", attributeName = "maxDuration")
-  private Period duration;
+  private Duration duration;
 
   @SetProperty(pattern = "response/metadata/indexingPreferences", attributeName = "frequency")
-  private Period frequency;
+  private Duration frequency;
 
-  public DateTime getParsedStartTime() {
+  public OffsetTime getParsedStartTime() {
     return parsedStartTime;
   }
 
@@ -52,26 +54,39 @@ public class IndexingPreferences {
 
   public void setStartTime(String startTime) {
     this.startTime = startTime;
+    if (startTime == null) {
+      this.parsedStartTime = null;
+      return;
+    }
+
     try {
-      parsedStartTime = ISODateTimeFormat.timeParser().parseDateTime(startTime);
-    } catch (IllegalFieldValueException ignored) {
-      LOG.debug("Could not parse time: [{}]", startTime);
+      // Try parsing time with offset first, e.g. 13:00:00+01:00 or 13:00:00Z
+      this.parsedStartTime = OffsetTime.parse(startTime, DateTimeFormatter.ISO_OFFSET_TIME);
+    } catch (DateTimeParseException e1) {
+      try {
+        // Fallback: parse local time and attach UTC offset
+        LocalTime lt = LocalTime.parse(startTime, DateTimeFormatter.ISO_TIME);
+        this.parsedStartTime = lt.atOffset(ZoneOffset.UTC);
+      } catch (DateTimeParseException e2) {
+        LOG.debug("Could not parse time: [{}]", startTime);
+        this.parsedStartTime = null;
+      }
     }
   }
 
-  public Period getDuration() {
+  public Duration getDuration() {
     return duration;
   }
 
-  public void setDuration(Period duration) {
+  public void setDuration(Duration duration) {
     this.duration = duration;
   }
 
-  public Period getFrequency() {
+  public Duration getFrequency() {
     return frequency;
   }
 
-  public void setFrequency(Period frequency) {
+  public void setFrequency(Duration frequency) {
     this.frequency = frequency;
   }
 

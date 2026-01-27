@@ -21,14 +21,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.validation.Valid;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
-
 import com.beust.jcommander.DynamicParameter;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParametersDelegate;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import lombok.ToString;
 
 @ToString
@@ -66,7 +65,8 @@ public class CrawlSchedulerConfiguration {
   @Min(1)
   public int maximumCrawls = 50;
 
-  @ParametersDelegate @Valid @NotNull
+  @ParametersDelegate @Valid
+  @NotNull
   public MessagingConfiguration messaging = new MessagingConfiguration();
 
   @DynamicParameter(

@@ -53,7 +53,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.google.common.collect.Lists;
 import com.google.common.io.Resources;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -126,7 +125,7 @@ public class RegistryUpdaterTest {
   public void testSaveUpdatedDatasets() throws Exception {
     // generate SyncResult, including a single updated Dataset
     SyncResult syncResult =
-        synchronizer.syncInstallation(installation, Lists.newArrayList(dataset));
+        synchronizer.syncInstallation(installation, List.of(dataset));
 
     // update Dataset in Registry
     updater.saveUpdatedDatasets(syncResult);
@@ -196,7 +195,7 @@ public class RegistryUpdaterTest {
 
     // perform installation sync (metadata update)
     SyncResult syncResult =
-        synchronizer.syncInstallation(installation, Lists.newArrayList(dataset));
+        synchronizer.syncInstallation(installation, List.of(dataset));
 
     // ensure updated dataset recognized as existing already
     assertEquals(1, syncResult.existingDatasets.size());
@@ -235,7 +234,7 @@ public class RegistryUpdaterTest {
 
     // generate SyncResult, including a single updated Dataset
     SyncResult syncResult =
-        synchronizer.syncInstallation(installation, Lists.newArrayList(dataset));
+        synchronizer.syncInstallation(installation, List.of(dataset));
 
     // update Dataset in Registry
     updater.saveUpdatedDatasets(syncResult);
@@ -260,14 +259,14 @@ public class RegistryUpdaterTest {
     Contact contact = new Contact();
     contact.setKey(1);
     contact.addEmail("test@gbif.org");
-    dataset.setContacts(Lists.newArrayList(contact));
+    dataset.setContacts(List.of(contact));
 
     // add single Identifier
     Identifier identifier = new Identifier();
     identifier.setKey(1);
     identifier.setType(IdentifierType.GBIF_PORTAL);
     identifier.setIdentifier("450");
-    dataset.setIdentifiers(Lists.newArrayList(identifier));
+    dataset.setIdentifiers(List.of(identifier));
 
     // add 2 MachineTags 1 with metasync.gbif.org namespace, and another not having it
     List<MachineTag> machineTags = new ArrayList<>();
@@ -289,7 +288,7 @@ public class RegistryUpdaterTest {
     Tag tag = new Tag();
     tag.setKey(1);
     tag.setValue("Invasive");
-    dataset.setTags(Lists.newArrayList(tag));
+    dataset.setTags(List.of(tag));
 
     return dataset;
   }

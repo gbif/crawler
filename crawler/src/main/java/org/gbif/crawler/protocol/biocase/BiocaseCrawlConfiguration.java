@@ -16,12 +16,11 @@ package org.gbif.crawler.protocol.biocase;
 import org.gbif.crawler.CrawlConfiguration;
 
 import java.net.URI;
+import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 import javax.annotation.concurrent.ThreadSafe;
-
-import com.google.common.base.Objects;
-import com.google.common.collect.ImmutableList;
 
 import lombok.Getter;
 import lombok.ToString;
@@ -47,8 +46,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Getter
 public class BiocaseCrawlConfiguration extends CrawlConfiguration {
 
-  public static final ImmutableList<String> VALID_SCHEMAS =
-      ImmutableList.of(
+  public static final List<String> VALID_SCHEMAS =
+      List.of(
           "http://www.tdwg.org/schemas/abcd/1.2", "http://www.tdwg.org/schemas/abcd/2.06");
 
   private final String contentNamespace;
@@ -79,13 +78,13 @@ public class BiocaseCrawlConfiguration extends CrawlConfiguration {
 
     BiocaseCrawlConfiguration other = (BiocaseCrawlConfiguration) obj;
     return super.equals(other)
-        && Objects.equal(this.contentNamespace, other.contentNamespace)
-        && Objects.equal(this.datasetTitle, other.datasetTitle);
+        && Objects.equals(this.contentNamespace, other.contentNamespace)
+        && Objects.equals(this.datasetTitle, other.datasetTitle);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(super.hashCode(), contentNamespace, datasetTitle);
+    return Objects.hash(super.hashCode(), contentNamespace, datasetTitle);
   }
 
 }

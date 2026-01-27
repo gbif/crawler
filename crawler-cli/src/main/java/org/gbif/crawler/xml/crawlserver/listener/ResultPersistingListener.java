@@ -54,9 +54,9 @@ public class ResultPersistingListener
       Optional<Integer> recordCount,
       Optional<Boolean> endOfRecords) {
     String contextString =
-        getCurrentContext().getLowerBound().or("null")
+        getCurrentContext().getLowerBound().orElse("null")
             + "-"
-            + getCurrentContext().getUpperBound().or("null");
+            + getCurrentContext().getUpperBound().orElse("null");
     if (response == null || response.isEmpty()) {
       LOG.info(
           "Received empty response for [{}] [{}] in retry [{}]",

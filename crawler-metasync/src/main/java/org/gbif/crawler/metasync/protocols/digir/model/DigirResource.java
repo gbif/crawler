@@ -14,6 +14,7 @@
 package org.gbif.crawler.metasync.protocols.digir.model;
 
 import java.net.URI;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -26,7 +27,6 @@ import org.apache.commons.digester3.annotations.rules.CallMethod;
 import org.apache.commons.digester3.annotations.rules.CallParam;
 import org.apache.commons.digester3.annotations.rules.ObjectCreate;
 import org.apache.commons.digester3.annotations.rules.SetNext;
-import org.joda.time.DateTime;
 
 import lombok.ToString;
 
@@ -67,7 +67,7 @@ public class DigirResource {
   private int numberOfRecords;
 
   @BeanPropertySetter(pattern = "response/content/metadata/provider/resource/dateLastUpdated")
-  private DateTime dateLastUpdated;
+  private OffsetDateTime dateLastUpdated;
 
   @BeanPropertySetter(pattern = "response/content/metadata/provider/resource/minQueryTermLength")
   private int minQueryTermLength;
@@ -191,11 +191,11 @@ public class DigirResource {
     this.numberOfRecords = numberOfRecords;
   }
 
-  public DateTime getDateLastUpdated() {
+  public OffsetDateTime getDateLastUpdated() {
     return dateLastUpdated;
   }
 
-  public void setDateLastUpdated(DateTime dateLastUpdated) {
+  public void setDateLastUpdated(OffsetDateTime dateLastUpdated) {
     this.dateLastUpdated = dateLastUpdated;
   }
 

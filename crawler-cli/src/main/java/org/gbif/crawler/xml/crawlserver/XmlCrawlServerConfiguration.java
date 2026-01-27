@@ -17,10 +17,9 @@ import org.gbif.crawler.common.crawlserver.CrawlServerConfiguration;
 
 import java.io.File;
 
-import javax.validation.constraints.Min;
-
 import com.beust.jcommander.Parameter;
 
+import jakarta.validation.constraints.Min;
 import lombok.ToString;
 
 @SuppressWarnings("PublicField")

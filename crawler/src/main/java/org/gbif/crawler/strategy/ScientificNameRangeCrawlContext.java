@@ -15,12 +15,14 @@ package org.gbif.crawler.strategy;
 
 import org.gbif.crawler.CrawlContext;
 
-import javax.annotation.Nullable;
-import javax.validation.constraints.Size;
+import java.util.Objects;
+import java.util.Optional;
 
-import com.google.common.base.Objects;
-import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
+
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.Size;
+import lombok.ToString;
 
 
 /**
@@ -32,6 +34,7 @@ import com.google.common.base.Preconditions;
 // TODO: We should probably just take a valid lower bound and calculate upper bound from there
 // because we can't support
 //       anything else anyway at the moment
+@ToString
 public class ScientificNameRangeCrawlContext extends CrawlContext {
 
   /**
@@ -41,7 +44,7 @@ public class ScientificNameRangeCrawlContext extends CrawlContext {
   private static final int MIN_LENGTH = 3;
 
   @Size(min = MIN_LENGTH, max = MIN_LENGTH)
-  private Optional<String> lowerBound = Optional.absent();
+  private Optional<String> lowerBound = Optional.empty();
 
   @Size(min = MIN_LENGTH, max = MIN_LENGTH)
   private Optional<String> upperBound = Optional.of("Aaa");
@@ -64,7 +67,7 @@ public class ScientificNameRangeCrawlContext extends CrawlContext {
     Preconditions.checkArgument(
         lowerBound == null || lowerBound.length() == MIN_LENGTH,
         "Lower bound needs to be either absent/null or three characters long");
-    this.lowerBound = Optional.fromNullable(lowerBound);
+    this.lowerBound = Optional.ofNullable(lowerBound);
   }
 
   public Optional<String> getUpperBound() {
@@ -75,15 +78,15 @@ public class ScientificNameRangeCrawlContext extends CrawlContext {
     Preconditions.checkArgument(
         upperBound == null || upperBound.length() == MIN_LENGTH,
         "Upper bound needs to be either absent/null or three characters long");
-    this.upperBound = Optional.fromNullable(upperBound);
+    this.upperBound = Optional.ofNullable(upperBound);
   }
 
   public void setLowerBoundAbsent() {
-    lowerBound = Optional.absent();
+    lowerBound = Optional.empty();
   }
 
   public void setUpperBoundAbsent() {
-    upperBound = Optional.absent();
+    upperBound = Optional.empty();
   }
 
   @Override
@@ -95,22 +98,14 @@ public class ScientificNameRangeCrawlContext extends CrawlContext {
       return false;
     }
     final ScientificNameRangeCrawlContext other = (ScientificNameRangeCrawlContext) obj;
-    return Objects.equal(this.getOffset(), other.getOffset())
-        && Objects.equal(this.lowerBound, other.lowerBound)
-        && Objects.equal(this.upperBound, other.upperBound);
+    return Objects.equals(this.getOffset(), other.getOffset())
+        && Objects.equals(this.lowerBound, other.lowerBound)
+        && Objects.equals(this.upperBound, other.upperBound);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(getOffset(), lowerBound, upperBound);
+    return Objects.hash(getOffset(), lowerBound, upperBound);
   }
 
-  @Override
-  public String toString() {
-    return Objects.toStringHelper(this)
-        .add("offset", getOffset())
-        .add("lowerBound", lowerBound)
-        .add("upperBound", upperBound)
-        .toString();
-  }
 }

@@ -15,9 +15,9 @@ package org.gbif.crawler.constants;
 
 import java.util.UUID;
 
-import javax.annotation.Nullable;
-
 import com.google.common.base.Joiner;
+
+import jakarta.annotation.Nullable;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

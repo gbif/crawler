@@ -35,8 +35,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
-import com.yammer.metrics.Metrics;
-import com.yammer.metrics.core.Counter;
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.MetricRegistry;
 
 import static org.gbif.crawler.common.ZookeeperUtils.createOrUpdate;
 import static org.gbif.crawler.common.ZookeeperUtils.updateCounter;
@@ -50,12 +50,17 @@ public abstract class DownloadCrawlConsumer extends CrawlConsumer {
 
   private static final Logger LOG = LoggerFactory.getLogger(DownloadCrawlConsumer.class);
 
-  private final File archiveRepository;
+  private static final MetricRegistry METRIC_REGISTRY = new MetricRegistry();
+
   private final Counter startedDownloads =
-      Metrics.newCounter(DownloaderService.class, "startedDownloads");
+    METRIC_REGISTRY.counter(MetricRegistry.name(DownloaderService.class, "startedDownloads"));
   private final Counter failedDownloads =
-      Metrics.newCounter(DownloaderService.class, "failedDownloads");
-  private final Counter notModified = Metrics.newCounter(DownloaderService.class, "notModified");
+    METRIC_REGISTRY.counter(MetricRegistry.name(DownloaderService.class, "failedDownloads"));
+  private final Counter notModified =
+    METRIC_REGISTRY.counter(MetricRegistry.name(DownloaderService.class, "notModified"));
+
+  private final File archiveRepository;
+
   private final HttpClient client;
 
   public DownloadCrawlConsumer(

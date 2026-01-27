@@ -31,6 +31,8 @@ import org.gbif.crawler.dwca.DwcaService;
 import org.gbif.dwc.Archive;
 import org.gbif.dwc.ArchiveFile;
 import org.gbif.dwc.DwcFiles;
+import org.gbif.dwc.record.Record;
+import org.gbif.utils.file.ClosableIterator;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -47,16 +49,12 @@ import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.atomic.DistributedAtomicLong;
 import org.apache.curator.retry.RetryNTimes;
-
-import org.gbif.dwc.record.Record;
-import org.gbif.utils.file.ClosableIterator;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
-import com.yammer.metrics.Metrics;
-import com.yammer.metrics.core.Counter;
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.MetricRegistry;
 
 import static org.gbif.crawler.constants.CrawlerNodePaths.PAGES_FRAGMENTED_ERROR;
 
@@ -66,6 +64,8 @@ import static org.gbif.crawler.constants.CrawlerNodePaths.PAGES_FRAGMENTED_ERROR
  * datasets within an archive and therefore knows how to process Catalogue of Life GSD information.
  */
 public class DwcaMetasyncService extends DwcaService {
+
+  private static final MetricRegistry METRIC_REGISTRY = new MetricRegistry();
 
   private static final Logger LOG = LoggerFactory.getLogger(DwcaMetasyncService.class);
   private final DwcaMetasyncConfiguration configuration;
@@ -96,15 +96,15 @@ public class DwcaMetasyncService extends DwcaService {
     private final CuratorFramework curator;
 
     private final Counter messageCount =
-        Metrics.newCounter(DwcaMetasyncService.class, "messageCount");
+      METRIC_REGISTRY.counter(MetricRegistry.name(DwcaMetasyncService.class, "messageCount"));
     private final Counter datasetsUpdated =
-        Metrics.newCounter(DwcaMetasyncService.class, "datasetsUpdated");
+      METRIC_REGISTRY.counter(MetricRegistry.name(DwcaMetasyncService.class, "datasetsUpdated"));
     private final Counter constituentsAdded =
-        Metrics.newCounter(DwcaMetasyncService.class, "constituentsAdded");
+      METRIC_REGISTRY.counter(MetricRegistry.name(DwcaMetasyncService.class, "constituentsAdded"));
     private final Counter constituentsDeleted =
-        Metrics.newCounter(DwcaMetasyncService.class, "constituentsDeleted");
+      METRIC_REGISTRY.counter(MetricRegistry.name(DwcaMetasyncService.class, "constituentsDeleted"));
     private final Counter constituentsUpdated =
-        Metrics.newCounter(DwcaMetasyncService.class, "constituentsUpdated");
+      METRIC_REGISTRY.counter(MetricRegistry.name(DwcaMetasyncService.class, "constituentsUpdated"));
 
     private DwcaValidationFinishedMessageCallback(
         DatasetService datasetService,

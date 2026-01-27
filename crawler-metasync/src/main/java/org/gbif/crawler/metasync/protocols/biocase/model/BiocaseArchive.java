@@ -14,11 +14,11 @@
 package org.gbif.crawler.metasync.protocols.biocase.model;
 
 import java.net.URI;
+import java.time.OffsetDateTime;
 
 import org.apache.commons.digester3.annotations.rules.BeanPropertySetter;
 import org.apache.commons.digester3.annotations.rules.ObjectCreate;
 import org.apache.commons.digester3.annotations.rules.SetProperty;
-import org.joda.time.DateTime;
 
 import lombok.ToString;
 
@@ -32,7 +32,7 @@ import lombok.ToString;
 public class BiocaseArchive {
 
   @SetProperty(pattern = "inventory/datasets/dataset/archives/archive", attributeName = "modified")
-  private DateTime modified;
+  private OffsetDateTime modified;
 
   @SetProperty(pattern = "inventory/datasets/dataset/archives/archive", attributeName = "fileSize")
   private int fileSize;
@@ -49,11 +49,11 @@ public class BiocaseArchive {
   @BeanPropertySetter(pattern = "inventory/datasets/dataset/archives/archive")
   private URI archiveUrl;
 
-  public DateTime getModified() {
+  public OffsetDateTime getModified() {
     return modified;
   }
 
-  public void setModified(DateTime modified) {
+  public void setModified(OffsetDateTime modified) {
     this.modified = modified;
   }
 

@@ -15,9 +15,9 @@ package org.gbif.crawler;
 
 import java.util.Optional;
 
-import javax.validation.constraints.Min;
-
 import com.google.common.base.Preconditions;
+
+import jakarta.validation.constraints.Min;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

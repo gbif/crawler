@@ -15,9 +15,9 @@ package org.gbif.crawler.protocol.digir;
 
 import org.gbif.crawler.protocol.AbstractScientificNameRangeRequestHandler;
 
-import javax.annotation.concurrent.NotThreadSafe;
+import java.util.Map;
 
-import com.google.common.collect.ImmutableMap;
+import javax.annotation.concurrent.NotThreadSafe;
 
 /**
  * This is a request handler for DiGIR queries using a range of scientific names.
@@ -41,35 +41,27 @@ public class DigirScientificNameRangeRequestHandler
   private static final String SCHEMA_LOCATION_KEY = "schemaLocation";
   private static final String RECORD_SCHEMA_LOCATION_KEY = "recordSchemaLocation";
 
-  private static final ImmutableMap<Boolean, ImmutableMap<String, String>> SCHEMA_INFOS;
+  private static final Map<Boolean, Map<String, String>> SCHEMA_INFOS;
 
   static {
-    ImmutableMap<String, String> normalDigir =
-        ImmutableMap.<String, String>builder()
-            .put(
+    Map<String, String> normalDigir =
+        Map.of(
                 SCHEMA_LOCATION_KEY,
-                "http://digir.sourceforge.net/schema/conceptual/darwin/2003/1.0/darwin2.xsd")
-            .put(
+                "http://digir.sourceforge.net/schema/conceptual/darwin/2003/1.0/darwin2.xsd",
                 RECORD_SCHEMA_LOCATION_KEY,
-                "http://digir.sourceforge.net/schema/conceptual/darwin/full/2003/1.0/darwin2full.xsd")
-            .build();
+                "http://digir.sourceforge.net/schema/conceptual/darwin/full/2003/1.0/darwin2full.xsd");
 
-    ImmutableMap<String, String> manisDigir =
-        ImmutableMap.<String, String>builder()
-            .put(SCHEMA_LOCATION_KEY, "http://bnhm.berkeley.edu/manis/DwC/darwin2jrw030315.xsd")
-            .put(
+    Map<String, String> manisDigir =
+        Map.of(SCHEMA_LOCATION_KEY, "http://bnhm.berkeley.edu/manis/DwC/darwin2jrw030315.xsd",
                 RECORD_SCHEMA_LOCATION_KEY,
-                "http://bnhm.berkeley.edu/manis/DwC/darwin2resultfull.xsd")
-            .build();
+                "http://bnhm.berkeley.edu/manis/DwC/darwin2resultfull.xsd");
 
     SCHEMA_INFOS =
-        ImmutableMap.<Boolean, ImmutableMap<String, String>>builder()
-            .put(true, manisDigir)
-            .put(false, normalDigir)
-            .build();
+        Map.of(true, manisDigir,
+            false, normalDigir);
   }
 
-  private final ImmutableMap<String, Object> defaultContext;
+  private final Map<String, Object> defaultContext;
 
   /** Initializes this request handler. */
   public DigirScientificNameRangeRequestHandler(DigirCrawlConfiguration configuration) {
@@ -77,21 +69,17 @@ public class DigirScientificNameRangeRequestHandler
         configuration.getUrl(), RANGE_TEMPLATE_LOCATION, NULL_TEMPLATE_LOCATION, REQUEST_PARAM_KEY);
 
     defaultContext =
-        ImmutableMap.<String, Object>builder()
-            .put("resource", configuration.getResourceCode())
-            .put("destination", configuration.getUrl().toString())
-            .put("maxResults", Integer.toString(MAX_RESULTS))
-            .put(
+        Map.of("resource", configuration.getResourceCode(),
+            "destination", configuration.getUrl().toString(),
+            "maxResults", Integer.toString(MAX_RESULTS),
                 SCHEMA_LOCATION_KEY,
-                SCHEMA_INFOS.get(configuration.isManis()).get(SCHEMA_LOCATION_KEY))
-            .put(
+                SCHEMA_INFOS.get(configuration.isManis()).get(SCHEMA_LOCATION_KEY),
                 RECORD_SCHEMA_LOCATION_KEY,
-                SCHEMA_INFOS.get(configuration.isManis()).get(RECORD_SCHEMA_LOCATION_KEY))
-            .build();
+                SCHEMA_INFOS.get(configuration.isManis()).get(RECORD_SCHEMA_LOCATION_KEY));
   }
 
   @Override
-  protected ImmutableMap<String, Object> getDefaultContext() {
+  protected Map<String, Object> getDefaultContext() {
     return defaultContext;
   }
 

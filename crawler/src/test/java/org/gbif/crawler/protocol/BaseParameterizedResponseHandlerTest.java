@@ -28,7 +28,6 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.io.Resources;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -49,7 +48,11 @@ public abstract class BaseParameterizedResponseHandlerTest {
   public static Stream<Arguments> getTestData(String fileName) throws IOException {
     List<Arguments> argumentsList = new ArrayList<>();
     ObjectMapper objectMapper = new ObjectMapper();
-    JsonNode root = objectMapper.readValue(Resources.getResource(fileName), JsonNode.class);
+    URL resource = BaseParameterizedResponseHandlerTest.class.getClassLoader().getResource(fileName);
+    if (resource == null) {
+      throw new IOException("Resource not found: " + fileName);
+    }
+    JsonNode root = objectMapper.readValue(resource, JsonNode.class);
 
     for (JsonNode node : root) {
       argumentsList.add(
@@ -78,7 +81,11 @@ public abstract class BaseParameterizedResponseHandlerTest {
 
     HttpResponse response = mock(HttpResponse.class, RETURNS_DEEP_STUBS);
 
-    URL resource = Resources.getResource(fileName);
+    // load resource using classloader and assert it's present
+    URL resource = BaseParameterizedResponseHandlerTest.class.getClassLoader().getResource(fileName);
+    if (resource == null) {
+      throw new IOException("Resource not found: " + fileName);
+    }
     when(response.getEntity().getContent()).thenReturn(resource.openStream());
 
     ResponseHandler<HttpResponse, ?> handler = getResponseHandler();

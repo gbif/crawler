@@ -15,9 +15,10 @@ package org.gbif.crawler.protocol.biocase;
 
 import org.gbif.crawler.protocol.AbstractScientificNameRangeRequestHandler;
 
+import java.util.Map;
+
 import javax.annotation.concurrent.NotThreadSafe;
 
-import com.google.common.collect.ImmutableMap;
 
 /**
  * This is a request handler for BioCASe queries using a range of scientific names.
@@ -42,33 +43,26 @@ public class BiocaseScientificNameRangeRequestHandler
   private static final String TITLE_KEY = "titlePath";
   private static final String SUBJECT_KEY = "subjectPath";
 
-  private static final ImmutableMap<String, ImmutableMap<String, String>> SCHEMA_INFOS;
+  private static final Map<String, Map<String, String>> SCHEMA_INFOS;
 
   static {
-    ImmutableMap<String, String> abcd12 =
-        ImmutableMap.<String, String>builder()
-            .put(TITLE_KEY, "/DataSets/DataSet/OriginalSource/SourceName")
-            .put(
+    Map<String, String> abcd12 =
+        Map.of(TITLE_KEY,
+            "/DataSets/DataSet/OriginalSource/SourceName",
                 SUBJECT_KEY,
-                "/DataSets/DataSet/Units/Unit/Identifications/Identification/TaxonIdentified/NameAuthorYearString")
-            .build();
+                "/DataSets/DataSet/Units/Unit/Identifications/Identification/TaxonIdentified/NameAuthorYearString");
 
-    ImmutableMap<String, String> abcd206 =
-        ImmutableMap.<String, String>builder()
-            .put(TITLE_KEY, "/DataSets/DataSet/Metadata/Description/Representation/Title")
-            .put(
-                SUBJECT_KEY,
-                "/DataSets/DataSet/Units/Unit/Identifications/Identification/Result/TaxonIdentified/ScientificName/FullScientificNameString")
-            .build();
+    Map<String, String> abcd206 =
+      Map.of(TITLE_KEY, "/DataSets/DataSet/Metadata/Description/Representation/Title",
+             SUBJECT_KEY,
+          "/DataSets/DataSet/Units/Unit/Identifications/Identification/Result/TaxonIdentified/ScientificName/FullScientificNameString");
 
     SCHEMA_INFOS =
-        ImmutableMap.<String, ImmutableMap<String, String>>builder()
-            .put("http://www.tdwg.org/schemas/abcd/1.2", abcd12)
-            .put("http://www.tdwg.org/schemas/abcd/2.06", abcd206)
-            .build();
+      Map.of("http://www.tdwg.org/schemas/abcd/1.2", abcd12,
+            "http://www.tdwg.org/schemas/abcd/2.06", abcd206);
   }
 
-  private final ImmutableMap<String, Object> defaultContext;
+  private final Map<String, Object> defaultContext;
 
   /** Initializes this request handler. */
   public BiocaseScientificNameRangeRequestHandler(BiocaseCrawlConfiguration configuration) {
@@ -76,18 +70,15 @@ public class BiocaseScientificNameRangeRequestHandler
         configuration.getUrl(), TEMPLATE_RANGE_LOCATION, TEMPLATE_NULL_LOCATION, REQUEST_PARAM_KEY);
 
     defaultContext =
-        ImmutableMap.<String, Object>builder()
-            .put("limit", Integer.toString(MAX_RESULTS))
-            .put("contentNamespace", configuration.getContentNamespace())
-            .put("datasetTitle", configuration.getDatasetTitle())
-            .put(TITLE_KEY, SCHEMA_INFOS.get(configuration.getContentNamespace()).get(TITLE_KEY))
-            .put(
-                SUBJECT_KEY, SCHEMA_INFOS.get(configuration.getContentNamespace()).get(SUBJECT_KEY))
-            .build();
+        Map.of("limit", Integer.toString(MAX_RESULTS),
+            "contentNamespace", configuration.getContentNamespace(),
+            "datasetTitle", configuration.getDatasetTitle(),
+            TITLE_KEY, SCHEMA_INFOS.get(configuration.getContentNamespace()).get(TITLE_KEY),
+            SUBJECT_KEY, SCHEMA_INFOS.get(configuration.getContentNamespace()).get(SUBJECT_KEY));
   }
 
   @Override
-  protected ImmutableMap<String, Object> getDefaultContext() {
+  protected Map<String, Object> getDefaultContext() {
     return defaultContext;
   }
 

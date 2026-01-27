@@ -13,13 +13,16 @@
  */
 package org.gbif.crawler.common;
 
-import com.beust.jcommander.Parameter;
-import java.time.Duration;
-import javax.validation.constraints.NotNull;
-import lombok.ToString;
 import org.gbif.cli.PropertyName;
 import org.gbif.ws.client.ClientBuilder;
 import org.gbif.ws.json.JacksonJsonObjectMapperProvider;
+
+import java.time.Duration;
+
+import com.beust.jcommander.Parameter;
+
+import jakarta.validation.constraints.NotNull;
+import lombok.ToString;
 
 /**
  * A configuration class which can be used to get all the details needed to create a writable

@@ -13,35 +13,36 @@
  */
 package org.gbif.crawler.metasync.util.converter;
 
+import java.time.Duration;
+import java.time.format.DateTimeParseException;
+
 import org.apache.commons.beanutils.Converter;
-import org.joda.time.Period;
-import org.joda.time.format.ISOPeriodFormat;
-import org.joda.time.format.PeriodFormatter;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Used by commons-digester (via commons-beanutils) to convert Strings into {@link Period}s from
- * Joda Time.
+ * Used by commons-digester (via commons-beanutils) to convert Strings into {@link Duration}.
  */
 public class PeriodConverter implements Converter {
-
-  private final PeriodFormatter formatter = ISOPeriodFormat.standard();
 
   @Override
   public Object convert(Class type, Object value) {
     checkNotNull(type, "type cannot be null");
     checkNotNull(value, "Value cannot be null");
     checkArgument(
-        type.equals(Period.class),
-        "Conversion target should be org.joda.time.Duration, but is %s",
-        type);
+      type.equals(Duration.class),
+      "Conversion target should be java.time.Duration, but is %s",
+      type);
     checkArgument(
-        String.class.isAssignableFrom(value.getClass()),
-        "Value should be a string, but is a %s",
-        value);
+      String.class.isAssignableFrom(value.getClass()),
+      "Value should be a string, but is a %s",
+      value.getClass());
 
-    return formatter.parsePeriod((String) value);
+    try {
+      return Duration.parse((String) value);
+    } catch (DateTimeParseException e) {
+      throw new IllegalArgumentException("Could not parse duration: " + value, e);
+    }
   }
 }

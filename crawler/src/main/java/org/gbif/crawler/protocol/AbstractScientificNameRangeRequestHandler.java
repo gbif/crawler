@@ -24,7 +24,6 @@ import java.util.Map;
 
 import org.apache.http.client.utils.URIBuilder;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Resources;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -110,5 +109,5 @@ public abstract class AbstractScientificNameRangeRequestHandler
     }
   }
 
-  protected abstract ImmutableMap<String, Object> getDefaultContext();
+  protected abstract Map<String, Object> getDefaultContext();
 }

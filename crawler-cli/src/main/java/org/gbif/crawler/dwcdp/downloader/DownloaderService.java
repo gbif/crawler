@@ -15,14 +15,13 @@ package org.gbif.crawler.dwcdp.downloader;
 
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.crawler.common.crawlserver.CrawlServerBaseService;
+import org.gbif.crawler.dwcdp.DwcDpConfiguration;
+import org.gbif.registry.ws.client.DatasetClient;
 
 import java.util.UUID;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.queue.QueueConsumer;
-
-import org.gbif.crawler.dwcdp.DwcDpConfiguration;
-import org.gbif.registry.ws.client.DatasetClient;
 
 import static org.gbif.crawler.constants.CrawlerNodePaths.DWC_DP_CRAWL;
 import static org.gbif.crawler.constants.CrawlerNodePaths.QUEUED_CRAWLS;

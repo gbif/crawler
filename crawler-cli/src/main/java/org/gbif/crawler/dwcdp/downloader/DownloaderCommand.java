@@ -13,15 +13,13 @@
  */
 package org.gbif.crawler.dwcdp.downloader;
 
-import com.google.common.util.concurrent.Service;
-
 import org.gbif.cli.Command;
 import org.gbif.cli.service.ServiceCommand;
-import org.gbif.crawler.camtrapdp.CamtrapDpConfiguration;
-
 import org.gbif.crawler.dwcdp.DwcDpConfiguration;
 
 import org.kohsuke.MetaInfServices;
+
+import com.google.common.util.concurrent.Service;
 
 @MetaInfServices(Command.class)
 public class DownloaderCommand extends ServiceCommand {

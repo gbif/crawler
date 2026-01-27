@@ -19,13 +19,12 @@ import org.gbif.crawler.common.crawlserver.CrawlServerConfiguration;
 
 import java.io.File;
 
-import javax.validation.Valid;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
-
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParametersDelegate;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import lombok.ToString;
 
 @ToString(callSuper = true)
@@ -33,7 +32,8 @@ public class DwcDpConfiguration extends CrawlServerConfiguration {
 
   public static final String DWC_DP_SUFFIX = ".dwcdp";
 
-  @ParametersDelegate @Valid @NotNull
+  @ParametersDelegate @Valid
+  @NotNull
   public RegistryConfiguration registry = new RegistryConfiguration();
 
   @Parameter(names = "--queue-name")

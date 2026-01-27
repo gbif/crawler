@@ -16,14 +16,13 @@ package org.gbif.crawler.protocol.tapir;
 import org.gbif.crawler.CrawlConfiguration;
 
 import java.net.URI;
+import java.util.List;
 import java.util.UUID;
 
 import javax.annotation.concurrent.ThreadSafe;
 
-import com.google.common.base.Objects;
-import com.google.common.collect.ImmutableList;
-
-import lombok.ToString;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -41,12 +40,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
  *
  * <p>This object is immutable.
  */
+@EqualsAndHashCode(callSuper = true)
 @ThreadSafe
-@ToString(callSuper = true)
+@Data
 public class TapirCrawlConfiguration extends CrawlConfiguration {
 
-  public static final ImmutableList<String> VALID_SCHEMAS =
-      ImmutableList.of(
+  public static final List<String> VALID_SCHEMAS =
+      List.of(
           "http://rs.tdwg.org/dwc/dwcore/",
           "http://rs.tdwg.org/dwc/geospatial/",
           "http://rs.tdwg.org/dwc/curatorial/",
@@ -70,24 +70,6 @@ public class TapirCrawlConfiguration extends CrawlConfiguration {
 
   public String getContentNamespace() {
     return contentNamespace;
-  }
-
-  @Override
-  public boolean equals(Object obj) {
-    if (this == obj) {
-      return true;
-    }
-    if (!(obj instanceof TapirCrawlConfiguration)) {
-      return false;
-    }
-
-    final TapirCrawlConfiguration other = (TapirCrawlConfiguration) obj;
-    return super.equals(other) && Objects.equal(this.contentNamespace, other.contentNamespace);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hashCode(super.hashCode(), contentNamespace);
   }
 
 }

@@ -39,7 +39,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Stopwatch;
-import com.google.common.base.Throwables;
 
 /**
  * This command iterates over all datasets from the registry and sends a StartCrawlMessage for each
@@ -126,7 +125,7 @@ public class CrawlEverythingCommand extends BaseCommand {
           totalCount.get(),
           scheduledCount.get());
     } catch (IOException e) {
-      throw Throwables.propagate(e); // we're hosed
+      throw new RuntimeException(e); // we're hosed
     }
   }
 

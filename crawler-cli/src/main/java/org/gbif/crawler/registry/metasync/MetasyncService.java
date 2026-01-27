@@ -31,12 +31,12 @@ import org.gbif.crawler.metasync.util.HttpClientFactory;
 import org.gbif.registry.ws.client.DatasetClient;
 import org.gbif.registry.ws.client.InstallationClient;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
 
 @SuppressWarnings("UnstableApiUsage")
@@ -119,7 +119,7 @@ public class MetasyncService extends AbstractIdleService {
     void handleSyncResult(SyncResult syncResult) {
       super.handleSyncResult(syncResult);
 
-      registryUpdater.saveSyncResultsToRegistry(ImmutableList.of(syncResult));
+      registryUpdater.saveSyncResultsToRegistry(List.of(syncResult));
     }
   }
 }

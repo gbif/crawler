@@ -41,13 +41,12 @@ import org.gbif.wrangler.lock.NoLockFactory;
 import org.gbif.wrangler.lock.zookeeper.ZooKeeperLockFactory;
 
 import java.util.List;
-
-import javax.annotation.Nullable;
+import java.util.Optional;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.http.HttpResponse;
 
-import com.google.common.base.Optional;
+import jakarta.annotation.Nullable;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -62,8 +61,8 @@ public class CrawlerBuilder {
   private ScientificNameRangeCrawlContext context;
   private RetryPolicy retryPolicy;
   private LockFactory lockFactory;
-  private Optional<Long> minDelay = Optional.absent();
-  private Optional<Long> maxDelay = Optional.absent();
+  private Optional<Long> minDelay = Optional.empty();
+  private Optional<Long> maxDelay = Optional.empty();
   private static final String LOCKING_PATH = "/lockedUrls/";
 
   public CrawlerBuilder(CrawlJob crawlJob) {

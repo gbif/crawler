@@ -16,16 +16,16 @@ package org.gbif.crawler.dwca.validator;
 import org.gbif.crawler.common.ZooKeeperConfiguration;
 import org.gbif.crawler.dwca.DwcaConfiguration;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-
 import com.beust.jcommander.ParametersDelegate;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.ToString;
 
 @ToString(callSuper = true)
 public class DwcaValidatorConfiguration extends DwcaConfiguration {
 
-  @ParametersDelegate @Valid @NotNull
+  @ParametersDelegate @Valid
+  @NotNull
   public ZooKeeperConfiguration zooKeeper = new ZooKeeperConfiguration();
 }

@@ -16,12 +16,11 @@ package org.gbif.crawler.metasync.protocols.tapir.model.metadata;
 import org.gbif.api.vocabulary.Language;
 
 import java.net.URI;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import javax.validation.constraints.NotNull;
 
 import org.apache.commons.digester3.annotations.rules.BeanPropertySetter;
 import org.apache.commons.digester3.annotations.rules.CallMethod;
@@ -29,8 +28,8 @@ import org.apache.commons.digester3.annotations.rules.CallParam;
 import org.apache.commons.digester3.annotations.rules.ObjectCreate;
 import org.apache.commons.digester3.annotations.rules.SetNext;
 import org.apache.commons.digester3.annotations.rules.SetProperty;
-import org.joda.time.DateTime;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.ToString;
 
 @ObjectCreate(pattern = "response")
@@ -65,37 +64,37 @@ public class TapirMetadata {
   private LocalizedString subjects = new LocalizedString();
 
   @BeanPropertySetter(pattern = "response/metadata/created")
-  private DateTime created;
+  private OffsetDateTime created;
 
   private IndexingPreferences indexingPreferences;
 
   @BeanPropertySetter(pattern = "response/metadata/modified")
-  private DateTime modified;
+  private OffsetDateTime modified;
 
   @BeanPropertySetter(pattern = "response/metadata/custom/identifier")
   private String identifier;
 
   @CallMethod(pattern = "response/metadata/title")
   public void addTitle(
-      @CallParam(pattern = "response/metadata/title", attributeName = "xml:lang") Language language,
-      @CallParam(pattern = "response/metadata/title") String title) {
+    @CallParam(pattern = "response/metadata/title", attributeName = "xml:lang") Language language,
+    @CallParam(pattern = "response/metadata/title") String title) {
     titles.addValue(language, title);
   }
 
   @CallMethod(pattern = "response/metadata/description")
   public void addDescription(
-      @CallParam(pattern = "response/metadata/description", attributeName = "xml:lang")
-          Language language,
-      @CallParam(pattern = "response/metadata/description") String description) {
+    @CallParam(pattern = "response/metadata/description", attributeName = "xml:lang")
+    Language language,
+    @CallParam(pattern = "response/metadata/description") String description) {
 
     descriptions.addValue(language, description);
   }
 
   @CallMethod(pattern = "response/metadata/bibliographicCitation")
   public void addBibliographicCitation(
-      @CallParam(pattern = "response/metadata/bibliographicCitation", attributeName = "xml:lang")
-          Language language,
-      @CallParam(pattern = "response/metadata/bibliographicCitation") String description) {
+    @CallParam(pattern = "response/metadata/bibliographicCitation", attributeName = "xml:lang")
+    Language language,
+    @CallParam(pattern = "response/metadata/bibliographicCitation") String description) {
 
     bibliographicCitations.addValue(language, description);
   }
@@ -107,18 +106,18 @@ public class TapirMetadata {
 
   @CallMethod(pattern = "response/metadata/rights")
   public void addRights(
-      @CallParam(pattern = "response/metadata/rights", attributeName = "xml:lang")
-          Language language,
-      @CallParam(pattern = "response/metadata/rights") String description) {
+    @CallParam(pattern = "response/metadata/rights", attributeName = "xml:lang")
+    Language language,
+    @CallParam(pattern = "response/metadata/rights") String description) {
 
     rights.addValue(language, description);
   }
 
   @CallMethod(pattern = "response/metadata/subject")
   public void addSubject(
-      @CallParam(pattern = "response/metadata/subject", attributeName = "xml:lang")
-          Language language,
-      @CallParam(pattern = "response/metadata/subject") String description) {
+    @CallParam(pattern = "response/metadata/subject", attributeName = "xml:lang")
+    Language language,
+    @CallParam(pattern = "response/metadata/subject") String description) {
 
     this.subjects.addValue(language, description);
   }
@@ -200,11 +199,11 @@ public class TapirMetadata {
     this.subjects = subjects;
   }
 
-  public DateTime getCreated() {
+  public OffsetDateTime getCreated() {
     return created;
   }
 
-  public void setCreated(DateTime created) {
+  public void setCreated(OffsetDateTime created) {
     this.created = created;
   }
 
@@ -217,11 +216,11 @@ public class TapirMetadata {
     this.indexingPreferences = indexingPreferences;
   }
 
-  public DateTime getModified() {
+  public OffsetDateTime getModified() {
     return modified;
   }
 
-  public void setModified(DateTime modified) {
+  public void setModified(OffsetDateTime modified) {
     this.modified = modified;
   }
 

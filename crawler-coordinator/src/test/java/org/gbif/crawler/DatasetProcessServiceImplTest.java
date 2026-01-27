@@ -46,7 +46,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Charsets;
 import com.google.common.base.Strings;
 import com.google.common.collect.Ordering;
 
@@ -196,7 +195,7 @@ public class DatasetProcessServiceImplTest {
           .create()
           .forPath(
               getCrawlInfoPath(uuid, DECLARED_COUNT),
-              status.getDeclaredCount().toString().getBytes(Charsets.UTF_8));
+              status.getDeclaredCount().toString().getBytes(StandardCharsets.UTF_8));
     }
 
     setCounter(getCrawlInfoPath(uuid, PAGES_CRAWLED), status.getPagesCrawled());

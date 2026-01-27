@@ -18,11 +18,10 @@ import org.gbif.crawler.common.crawlserver.CrawlServerConfiguration;
 
 import java.io.File;
 
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
-
 import com.beust.jcommander.Parameter;
 
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import lombok.ToString;
 
 @ToString(callSuper = true)

@@ -17,12 +17,11 @@ import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.crawler.common.crawlserver.CrawlServerBaseService;
 import org.gbif.crawler.constants.CrawlerNodePaths;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.queue.QueueConsumer;
-
-import com.google.common.base.Optional;
 
 /** The downloader service watches zookeeper */
 public class XmlCrawlServerService extends CrawlServerBaseService<XmlCrawlServerConfiguration> {
@@ -40,8 +39,8 @@ public class XmlCrawlServerService extends CrawlServerBaseService<XmlCrawlServer
     return new XmlCrawlConsumer(
         curator,
         publisher,
-        Optional.fromNullable(config.minLockDelay),
-        Optional.fromNullable(config.maxLockDelay),
+        Optional.ofNullable(config.minLockDelay),
+        Optional.ofNullable(config.maxLockDelay),
         config.responseArchive);
   }
 }

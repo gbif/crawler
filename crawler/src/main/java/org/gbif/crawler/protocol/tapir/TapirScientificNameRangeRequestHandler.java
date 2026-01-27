@@ -19,13 +19,12 @@ import org.gbif.crawler.strategy.ScientificNameRangeCrawlContext;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import javax.annotation.concurrent.NotThreadSafe;
 
 import org.apache.http.client.utils.URIBuilder;
-
-import com.google.common.collect.Maps;
 
 /**
  * This is a request handler for TAPIR queries using a range of scientific names.
@@ -84,7 +83,7 @@ public class TapirScientificNameRangeRequestHandler
 
   /** @return The atoms for the TAPIR request */
   private Map<String, String> buildTapirRequestParameters(ScientificNameRangeCrawlContext context) {
-    Map<String, String> params = Maps.newLinkedHashMap();
+    Map<String, String> params = new LinkedHashMap<>();
 
     params.put("limit", String.valueOf(MAX_RESULTS));
 

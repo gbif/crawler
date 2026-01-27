@@ -26,6 +26,8 @@ import org.gbif.crawler.metasync.util.converter.UriConverter;
 
 import java.io.IOException;
 import java.net.URI;
+import java.time.Duration;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,8 +41,6 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.util.EntityUtils;
-import org.joda.time.DateTime;
-import org.joda.time.Period;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
@@ -70,7 +70,7 @@ public abstract class BaseProtocolHandler implements MetadataProtocolHandler {
    * @return new Contacts that do not exist in the existing Contacts already
    */
   protected List<Contact> matchContacts(
-      Iterable<Contact> existingContacts, Iterable<Contact> newContacts) {
+    Iterable<Contact> existingContacts, Iterable<Contact> newContacts) {
     List<Contact> resultList = new ArrayList<>();
     for (Contact newContact : newContacts) {
       boolean found = false;
@@ -117,15 +117,15 @@ public abstract class BaseProtocolHandler implements MetadataProtocolHandler {
       // Everything but HTTP status 200 is an error
       if (response.getStatusLine().getStatusCode() != 200) {
         LOG.debug(
-            "Received HTTP code[{}] cause[{}] for request: {}",
-            response.getStatusLine().getStatusCode(),
-            response.getStatusLine().getReasonPhrase(),
-            uri);
+          "Received HTTP code[{}] cause[{}] for request: {}",
+          response.getStatusLine().getStatusCode(),
+          response.getStatusLine().getReasonPhrase(),
+          uri);
         String cause =
-            String.format(
-                "Received HTTP code[%d], phrase[%s]",
-                response.getStatusLine().getStatusCode(),
-                response.getStatusLine().getReasonPhrase());
+          String.format(
+            "Received HTTP code[%d], phrase[%s]",
+            response.getStatusLine().getStatusCode(),
+            response.getStatusLine().getReasonPhrase());
         throw new MetadataException(cause, ErrorCode.HTTP_ERROR);
       }
 
@@ -148,19 +148,19 @@ public abstract class BaseProtocolHandler implements MetadataProtocolHandler {
    */
   protected Digester newDigester(final Class<?> clazz) {
     DigesterLoader loader =
-        newLoader(
-            new FromAnnotationsRuleModule() {
+      newLoader(
+        new FromAnnotationsRuleModule() {
 
-              @Override
-              protected void configureRules() {
-                bindRulesFrom(clazz);
-              }
-            });
+          @Override
+          protected void configureRules() {
+            bindRulesFrom(clazz);
+          }
+        });
 
     loader.setNamespaceAware(true);
-    ConvertUtils.register(new DateTimeConverter(), DateTime.class);
+    ConvertUtils.register(new DateTimeConverter(), OffsetDateTime.class);
     ConvertUtils.register(new LanguageConverter(), Language.class);
-    ConvertUtils.register(new PeriodConverter(), Period.class);
+    ConvertUtils.register(new PeriodConverter(), Duration.class);
     ConvertUtils.register(new UriConverter(), URI.class);
     return loader.newDigester();
   }

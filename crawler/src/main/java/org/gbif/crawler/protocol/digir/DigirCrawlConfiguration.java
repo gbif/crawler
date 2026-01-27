@@ -16,11 +16,10 @@ package org.gbif.crawler.protocol.digir;
 import org.gbif.crawler.CrawlConfiguration;
 
 import java.net.URI;
+import java.util.Objects;
 import java.util.UUID;
 
 import javax.annotation.concurrent.ThreadSafe;
-
-import com.google.common.base.Objects;
 
 import lombok.ToString;
 
@@ -77,13 +76,13 @@ public class DigirCrawlConfiguration extends CrawlConfiguration {
 
     final DigirCrawlConfiguration other = (DigirCrawlConfiguration) obj;
     return super.equals(other)
-        && Objects.equal(this.resourceCode, other.resourceCode)
-        && Objects.equal(this.manis, other.manis);
+        && Objects.equals(this.resourceCode, other.resourceCode)
+        && Objects.equals(this.manis, other.manis);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(super.hashCode(), resourceCode, manis);
+    return Objects.hash(super.hashCode(), resourceCode, manis);
   }
 
 }

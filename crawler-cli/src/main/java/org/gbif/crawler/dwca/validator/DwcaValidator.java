@@ -13,16 +13,6 @@
  */
 package org.gbif.crawler.dwca.validator;
 
-import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableMap;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import javax.annotation.Nullable;
 import org.gbif.api.model.crawler.DwcaValidationReport;
 import org.gbif.api.model.crawler.GenericValidationReport;
 import org.gbif.api.model.crawler.OccurrenceValidationReport;
@@ -34,8 +24,21 @@ import org.gbif.dwc.record.StarRecord;
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.Term;
 import org.gbif.utils.file.ClosableIterator;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Strings;
+
+import jakarta.annotation.Nullable;
 
 /**
  * This performs the validity checking for DwC-A for the purposes <em>of deciding if the archive is
@@ -65,12 +68,12 @@ public class DwcaValidator {
 
   // The mapping of dataset type to primary key term in the core
   private static final Map<DatasetType, DwcTerm> DATASET_TYPE_CORE_ID =
-      ImmutableMap.of(
+    Map.of(
           DatasetType.CHECKLIST, DwcTerm.taxonID,
           DatasetType.SAMPLING_EVENT, DwcTerm.eventID);
 
   private static final Map<DatasetType, DwcTerm> DATASET_OCCURRENCE_CORE_ID =
-    ImmutableMap.of(DatasetType.OCCURRENCE, DwcTerm.occurrenceID);
+    Map.of(DatasetType.OCCURRENCE, DwcTerm.occurrenceID);
 
   // limit the number of checked records to protect against memory exhaustion
   private static final int MAX_RECORDS = 2000000;

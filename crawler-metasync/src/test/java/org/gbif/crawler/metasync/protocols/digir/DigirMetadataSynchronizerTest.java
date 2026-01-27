@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.http.HttpResponse;
@@ -41,7 +42,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.google.common.collect.Lists;
 import com.google.common.io.Resources;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -128,7 +128,7 @@ public class DigirMetadataSynchronizerTest {
 
     when(client.execute(any(HttpGet.class))).thenReturn(prepareResponse(200, "digir/test2.xml"));
     SyncResult syncResult =
-        synchronizer.syncInstallation(installation, Lists.newArrayList(dataset));
+        synchronizer.syncInstallation(installation, List.of(dataset));
     assertEquals(1, syncResult.deletedDatasets.size());
     assertTrue(syncResult.existingDatasets.isEmpty());
     assertEquals(1, syncResult.addedDatasets.size());
@@ -144,7 +144,7 @@ public class DigirMetadataSynchronizerTest {
 
     when(client.execute(any(HttpGet.class))).thenReturn(prepareResponse(200, "digir/test2.xml"));
     SyncResult syncResult =
-        synchronizer.syncInstallation(installation, Lists.newArrayList(dataset));
+        synchronizer.syncInstallation(installation, List.of(dataset));
     assertTrue(syncResult.deletedDatasets.isEmpty());
     assertEquals(1, syncResult.existingDatasets.size());
     assertTrue(syncResult.addedDatasets.isEmpty());

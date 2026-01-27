@@ -23,13 +23,13 @@ import org.gbif.crawler.CrawlContext;
 import org.gbif.crawler.CrawlListener;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Charsets;
 import com.google.common.primitives.Bytes;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -86,7 +86,7 @@ public class MessagingCrawlListener<CTX extends CrawlContext>
             configuration.getDatasetKey(),
             configuration.getAttempt(),
             retry,
-            req.getBytes(Charsets.UTF_8),
+            req.getBytes(StandardCharsets.UTF_8),
             lastContext.toString());
     sendMessageSilently(msg);
   }

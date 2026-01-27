@@ -28,14 +28,13 @@ import org.gbif.crawler.xml.crawlserver.listener.ResultPersistingListener;
 
 import java.io.File;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.http.HttpResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.base.Optional;
 
 class XmlCrawlConsumer extends CrawlConsumer {
   private static final Logger LOG = LoggerFactory.getLogger(XmlCrawlConsumer.class);

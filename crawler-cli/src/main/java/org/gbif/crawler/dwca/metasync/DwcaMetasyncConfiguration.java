@@ -16,11 +16,10 @@ package org.gbif.crawler.dwca.metasync;
 import org.gbif.crawler.common.ZooKeeperConfiguration;
 import org.gbif.crawler.dwca.DwcaConfiguration;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-
 import com.beust.jcommander.ParametersDelegate;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.ToString;
 
 @ToString(callSuper = true)

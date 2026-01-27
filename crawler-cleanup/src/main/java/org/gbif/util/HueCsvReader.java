@@ -24,14 +24,12 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.ImmutableSet;
-
 /** A simple file reader for CSV files that are the result of Hue queries. */
 public class HueCsvReader {
 
   private static final Logger LOG = LoggerFactory.getLogger(HueCsvReader.class);
   private static final Set<String> HEADER_FIELDS =
-      ImmutableSet.of("id", "dataset_id", "key", "dataset_key");
+      Set.of("id", "dataset_id", "key", "dataset_key");
 
   /**
    * Read the CSV file export from a Hue query for keys (e.g. select key from occurrence where xxx

@@ -15,9 +15,6 @@ package org.gbif.crawler.common;
 
 import java.io.IOException;
 
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
-
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.ExponentialBackoffRetry;
@@ -25,6 +22,8 @@ import org.apache.curator.retry.ExponentialBackoffRetry;
 import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import lombok.ToString;
 
 /**

@@ -23,6 +23,7 @@ import org.gbif.common.messaging.api.messages.DwcDpDownloadFinishedMessage;
 import org.gbif.common.messaging.api.messages.Platform;
 import org.gbif.crawler.CrawlerCoordinatorServiceImpl;
 import org.gbif.crawler.common.DownloadCrawlConsumer;
+import org.gbif.crawler.dwcdp.DwcDpConfiguration;
 
 import java.io.File;
 import java.util.Date;
@@ -30,9 +31,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.apache.curator.framework.CuratorFramework;
-
-import org.gbif.crawler.dwcdp.DwcDpConfiguration;
-import org.gbif.registry.ws.client.DatasetClient;
 
 /**
  * Consumer of the crawler queue that runs the actual DwcDp archive download and emits a
