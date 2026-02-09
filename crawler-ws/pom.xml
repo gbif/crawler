@@ -71,7 +71,6 @@
           <excludes>
             <!-- This is where the exclusion occurs -->
             <exclude>**/application.yml</exclude>
-            <exclude>**/bootstrap.yml</exclude>
           </excludes>
           <archive>
             <manifest>
@@ -141,10 +140,6 @@
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-actuator</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.cloud</groupId>
-      <artifactId>spring-cloud-starter-bootstrap</artifactId>
     </dependency>
     <dependency>
       <groupId>org.springframework.cloud</groupId>
