@@ -84,17 +84,6 @@
     </plugins>
   </build>
 
-  <repositories>
-    <repository>
-      <id>gbif-thirdparty</id>
-      <url>https://repository.gbif.org/</url>
-    </repository>
-    <repository>
-      <id>gbif-all</id>
-      <url>https://repository.gbif.org/content/groups/gbif</url>
-    </repository>
-  </repositories>
-
   <dependencyManagement>
     <dependencies>
       <dependency>

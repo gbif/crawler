@@ -142,6 +142,13 @@
     <module>crawler-ws-client</module>
   </modules>
 
+  <repositories>
+    <repository>
+      <id>gbif-all</id>
+      <url>https://repository.gbif.org/content/groups/gbif</url>
+    </repository>
+  </repositories>
+
   <!--
     Fix versions of certain dependencies here, which can be included
     by sub modules by declaring only the groupId and artifactId. The
