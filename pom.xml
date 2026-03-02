@@ -83,7 +83,7 @@
     <!-- Match the GBIF http-client! -->
     <httpcore.version>4.4.16</httpcore.version>
     <!-- Match the version used by gbif-cli -->
-    <jackson.version>2.19.4</jackson.version>
+    <jackson.version>2.21.1</jackson.version>
     <jcommander.version>1.60</jcommander.version>
     <jsr305.version>3.0.2</jsr305.version>
     <junit.version>5.12.2</junit.version>
