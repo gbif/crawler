@@ -1,9 +1,9 @@
-package org.gbif.crawler.coldp.metasync;
+package org.gbif.crawler.dwcdp.metasync;
 
 import org.gbif.api.service.registry.DatasetService;
 import org.gbif.api.vocabulary.MetadataType;
-import org.gbif.common.messaging.api.messages.ColDpDownloadFinishedMessage;
-import org.gbif.crawler.coldp.ColDpConfiguration;
+import org.gbif.common.messaging.api.messages.DwcDpDownloadFinishedMessage;
+import org.gbif.crawler.dwcdp.DwcDpConfiguration;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -29,6 +29,9 @@ import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_CHECKLIST;
 import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_OCCURRENCE;
 import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_SAMPLE;
@@ -42,7 +45,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 @ExtendWith(MockitoExtension.class)
-class ColDpMetasyncCallbackTest {
+class DwcDpMetasyncCallbackTest {
+
+  private static final ObjectMapper MAPPER = new ObjectMapper();
 
   @TempDir java.nio.file.Path tempDir;
 
@@ -70,13 +75,13 @@ class ColDpMetasyncCallbackTest {
   }
 
   @Test
-  void forwardsYamlMetadataToRegistryAndMarksCrawlFinished() throws Exception {
+  void forwardsDatapackageMetadataToRegistryAndMarksCrawlFinished() throws Exception {
     UUID datasetKey = UUID.randomUUID();
-    createArchiveWithYamlOnly(datasetKey, 2);
+    createArchiveWithDatapackageOnly(datasetKey, 2);
 
-    ColDpMetasyncCallback callback =
-        new ColDpMetasyncCallback(
-            datasetService, tempDir.toFile(), curator, new ColDpMetadataDocumentConverter());
+    DwcDpMetasyncCallback callback =
+        new DwcDpMetasyncCallback(
+            datasetService, tempDir.toFile(), curator, new DwcDpMetadataDocumentConverter());
 
     callback.handleMessage(buildMessage(datasetKey, 2));
 
@@ -84,57 +89,53 @@ class ColDpMetasyncCallbackTest {
     ArgumentCaptor<String> jsonCaptor = ArgumentCaptor.forClass(String.class);
     verify(datasetService)
         .insertMetadata(
-            eq(datasetKey),
-            rawDocumentCaptor.capture(),
-            jsonCaptor.capture(),
-            eq(MetadataType.COLDP));
+            eq(datasetKey), rawDocumentCaptor.capture(), jsonCaptor.capture(), eq(MetadataType.DWC_DP));
     verifyNoMoreInteractions(datasetService);
 
     String rawDocument =
         new String(rawDocumentCaptor.getValue().readAllBytes(), StandardCharsets.UTF_8);
     String json = jsonCaptor.getValue();
-    assertTrue(rawDocument.contains("title: Sample Checklist"));
-    assertTrue(rawDocument.contains("contact:"));
-    assertTrue(json.contains("\"title\":\"Sample Checklist\""));
-    assertTrue(json.contains("\"doi\":\"10.15468/2zjeva\""));
-    assertTrue(json.contains("\"email\":\"jane@example.org\""));
-    assertTrue(json.contains("\"organisation\":\"GBIF\""));
+    JsonNode rawTree = MAPPER.readTree(rawDocument);
+    JsonNode contentTree = MAPPER.readTree(json);
+    assertEquals("Sample DwcDP", rawTree.path("name").asText());
+    assertEquals("CC0-1.0", rawTree.path("license").asText());
+    assertEquals("Sample DwcDP", contentTree.path("name").asText());
+    assertEquals("https://doi.org/10.15468/sample", contentTree.path("id").asText());
+    assertEquals("jane@example.org", contentTree.path("contributors").get(0).path("email").asText());
 
     assertCrawlFinished(datasetKey);
   }
 
   @Test
-  void forwardsYamlAndEmlToRegistryWhenEmlPresent() throws Exception {
+  void forwardsDatapackageAndEmlToRegistryWhenEmlPresent() throws Exception {
     UUID datasetKey = UUID.randomUUID();
-    createArchiveWithYamlAndEml(datasetKey, 1);
+    createArchiveWithDatapackageAndEml(datasetKey, 1);
 
-    ColDpMetasyncCallback callback =
-        new ColDpMetasyncCallback(
-            datasetService, tempDir.toFile(), curator, new ColDpMetadataDocumentConverter());
+    DwcDpMetasyncCallback callback =
+        new DwcDpMetasyncCallback(
+            datasetService, tempDir.toFile(), curator, new DwcDpMetadataDocumentConverter());
 
     callback.handleMessage(buildMessage(datasetKey, 1));
 
     InOrder ordered = inOrder(datasetService);
 
-    ArgumentCaptor<InputStream> yamlStreamCaptor = ArgumentCaptor.forClass(InputStream.class);
-    ArgumentCaptor<String> yamlJsonCaptor = ArgumentCaptor.forClass(String.class);
+    ArgumentCaptor<InputStream> dpStreamCaptor = ArgumentCaptor.forClass(InputStream.class);
+    ArgumentCaptor<String> dpJsonCaptor = ArgumentCaptor.forClass(String.class);
     ordered
         .verify(datasetService)
         .insertMetadata(
-            eq(datasetKey),
-            yamlStreamCaptor.capture(),
-            yamlJsonCaptor.capture(),
-            eq(MetadataType.COLDP));
+            eq(datasetKey), dpStreamCaptor.capture(), dpJsonCaptor.capture(), eq(MetadataType.DWC_DP));
 
     ArgumentCaptor<InputStream> emlStreamCaptor = ArgumentCaptor.forClass(InputStream.class);
     ordered
         .verify(datasetService)
-        .insertMetadata(eq(datasetKey), emlStreamCaptor.capture(), isNull(), eq(MetadataType.EML));
+        .insertMetadata(
+            eq(datasetKey), emlStreamCaptor.capture(), isNull(), eq(MetadataType.EML));
 
     ordered.verifyNoMoreInteractions();
 
-    String yamlJson = yamlJsonCaptor.getValue();
-    assertTrue(yamlJson.contains("\"title\":\"Sample Checklist\""));
+    String dpJson = dpJsonCaptor.getValue();
+    assertTrue(dpJson.contains("\"name\":\"Sample DwcDP\""));
 
     String emlContent =
         new String(emlStreamCaptor.getValue().readAllBytes(), StandardCharsets.UTF_8);
@@ -161,29 +162,30 @@ class ColDpMetasyncCallbackTest {
             StandardCharsets.UTF_8));
   }
 
-  private ColDpDownloadFinishedMessage buildMessage(UUID datasetKey, int attempt) {
-    return new ColDpDownloadFinishedMessage(
+  private DwcDpDownloadFinishedMessage buildMessage(UUID datasetKey, int attempt) {
+    return new DwcDpDownloadFinishedMessage(
         datasetKey,
         URI.create("https://example.org/archive.zip"),
         attempt,
         new Date(),
         true,
-        org.gbif.api.vocabulary.EndpointType.COLDP,
+        org.gbif.api.vocabulary.EndpointType.DWC_DP,
+        null,
         org.gbif.common.messaging.api.messages.Platform.ALL);
   }
 
-  private File createArchiveWithYamlOnly(UUID datasetKey, int attempt) throws Exception {
+  private File createArchiveWithDatapackageOnly(UUID datasetKey, int attempt) throws Exception {
     File archive = prepareArchiveFile(datasetKey, attempt);
     try (ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(archive))) {
-      writeYamlEntry(zos);
+      writeDatapackageEntry(zos);
     }
     return archive;
   }
 
-  private File createArchiveWithYamlAndEml(UUID datasetKey, int attempt) throws Exception {
+  private File createArchiveWithDatapackageAndEml(UUID datasetKey, int attempt) throws Exception {
     File archive = prepareArchiveFile(datasetKey, attempt);
     try (ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(archive))) {
-      writeYamlEntry(zos);
+      writeDatapackageEntry(zos);
       zos.putNextEntry(new ZipEntry("eml.xml"));
       zos.write(
           """
@@ -204,37 +206,25 @@ class ColDpMetasyncCallbackTest {
     File datasetDirectory = tempDir.resolve(datasetKey.toString()).toFile();
     datasetDirectory.mkdirs();
     return new File(
-        datasetDirectory, datasetKey + "." + attempt + ColDpConfiguration.COLDP_SUFFIX);
+        datasetDirectory, datasetKey + "." + attempt + DwcDpConfiguration.DWC_DP_SUFFIX);
   }
 
-  private void writeYamlEntry(ZipOutputStream zos) throws Exception {
-    zos.putNextEntry(new ZipEntry("metadata.yaml"));
+  private void writeDatapackageEntry(ZipOutputStream zos) throws Exception {
+    zos.putNextEntry(new ZipEntry("datapackage.json"));
     zos.write(
         """
-        title: Sample Checklist
-        description: Example description
-        doi: 10.15468/2zjeva
-        issued: 2026-01-13
-        version: v1
-        license: CC0-1.0
-        url: https://example.org/checklist
-        logo: https://example.org/logo.png
-        identifier:
-          col: 1010
-          gbif: abc-123
-        contact:
-          given: Jane
-          family: Doe
-          email: jane@example.org
-        creator:
-          given: Alice
-          family: Author
-        editor:
-          given: Ed
-          family: Itor
-        publisher:
-          organisation: GBIF
-        notes: Additional notes
+        {
+          "id": "https://doi.org/10.15468/sample",
+          "name": "Sample DwcDP",
+          "license": "CC0-1.0",
+          "contributors": [
+            {
+              "title": "Jane Doe",
+              "email": "jane@example.org",
+              "role": "publisher"
+            }
+          ]
+        }
         """
             .getBytes(StandardCharsets.UTF_8));
     zos.closeEntry();
