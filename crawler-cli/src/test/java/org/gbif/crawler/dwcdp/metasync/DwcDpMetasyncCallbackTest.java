@@ -89,7 +89,7 @@ class DwcDpMetasyncCallbackTest {
     ArgumentCaptor<String> jsonCaptor = ArgumentCaptor.forClass(String.class);
     verify(datasetService)
         .insertMetadata(
-            eq(datasetKey), rawDocumentCaptor.capture(), jsonCaptor.capture(), eq(MetadataType.DWC_DP));
+            eq(datasetKey), rawDocumentCaptor.capture().readAllBytes(), jsonCaptor.capture(), eq(MetadataType.DWC_DP));
     verifyNoMoreInteractions(datasetService);
 
     String rawDocument =
@@ -124,13 +124,13 @@ class DwcDpMetasyncCallbackTest {
     ordered
         .verify(datasetService)
         .insertMetadata(
-            eq(datasetKey), dpStreamCaptor.capture(), dpJsonCaptor.capture(), eq(MetadataType.DWC_DP));
+            eq(datasetKey), dpStreamCaptor.capture().readAllBytes(), dpJsonCaptor.capture(), eq(MetadataType.DWC_DP));
 
     ArgumentCaptor<InputStream> emlStreamCaptor = ArgumentCaptor.forClass(InputStream.class);
     ordered
         .verify(datasetService)
         .insertMetadata(
-            eq(datasetKey), emlStreamCaptor.capture(), isNull(), eq(MetadataType.EML));
+            eq(datasetKey), emlStreamCaptor.capture().readAllBytes(), isNull(), eq(MetadataType.EML));
 
     ordered.verifyNoMoreInteractions();
 
