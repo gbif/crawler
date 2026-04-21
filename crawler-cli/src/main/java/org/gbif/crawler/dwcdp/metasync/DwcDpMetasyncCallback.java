@@ -53,14 +53,14 @@ public class DwcDpMetasyncCallback extends AbstractMessageCallback<DwcDpDownload
 
         DwcDpMetadataDocument dp = result.getDatapackageDocument();
         try (var s = dp.rawDocumentStream()) {
-          datasetService.insertMetadata(datasetKey, s, dp.getContentJson(), dp.getMetadataType());
+          datasetService.insertMetadata(datasetKey, s.readAllBytes(), dp.getContentJson(), dp.getMetadataType());
         }
 
         if (result.hasEml()) {
           DwcDpMetadataDocument eml = result.getEmlDocument();
           try (var s = eml.rawDocumentStream()) {
             datasetService.insertMetadata(
-                datasetKey, s, eml.getContentJson(), eml.getMetadataType());
+                datasetKey, s.readAllBytes(), eml.getContentJson(), eml.getMetadataType());
           }
           LOG.info(
               "Forwarded DwcDP datapackage and EML metadata to registry for dataset [{}]",
