@@ -53,14 +53,14 @@ public class ColDpMetasyncCallback extends AbstractMessageCallback<ColDpDownload
 
         ColDpMetadataDocument fmt = result.getFormatDocument();
         try (var s = fmt.rawDocumentStream()) {
-          datasetService.insertMetadata(datasetKey, s, fmt.getContentJson(), fmt.getMetadataType());
+          datasetService.insertMetadata(datasetKey, s.readAllBytes(), fmt.getContentJson(), fmt.getMetadataType());
         }
 
         if (result.hasEml()) {
           ColDpMetadataDocument eml = result.getEmlDocument();
           try (var s = eml.rawDocumentStream()) {
             datasetService.insertMetadata(
-                datasetKey, s, eml.getContentJson(), eml.getMetadataType());
+                datasetKey, s.readAllBytes(), eml.getContentJson(), eml.getMetadataType());
           }
           LOG.info(
               "Forwarded COLDP format document and EML metadata to registry for dataset [{}]",

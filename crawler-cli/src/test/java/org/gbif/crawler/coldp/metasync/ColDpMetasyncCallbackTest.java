@@ -80,7 +80,7 @@ class ColDpMetasyncCallbackTest {
 
     callback.handleMessage(buildMessage(datasetKey, 2));
 
-    ArgumentCaptor<InputStream> rawDocumentCaptor = ArgumentCaptor.forClass(InputStream.class);
+    ArgumentCaptor<byte[]> rawDocumentCaptor = ArgumentCaptor.forClass(byte[].class);
     ArgumentCaptor<String> jsonCaptor = ArgumentCaptor.forClass(String.class);
     verify(datasetService)
         .insertMetadata(
@@ -91,7 +91,7 @@ class ColDpMetasyncCallbackTest {
     verifyNoMoreInteractions(datasetService);
 
     String rawDocument =
-        new String(rawDocumentCaptor.getValue().readAllBytes(), StandardCharsets.UTF_8);
+        new String(rawDocumentCaptor.getValue(), StandardCharsets.UTF_8);
     String json = jsonCaptor.getValue();
     assertTrue(rawDocument.contains("title: Sample Checklist"));
     assertTrue(rawDocument.contains("contact:"));
@@ -116,7 +116,7 @@ class ColDpMetasyncCallbackTest {
 
     InOrder ordered = inOrder(datasetService);
 
-    ArgumentCaptor<InputStream> yamlStreamCaptor = ArgumentCaptor.forClass(InputStream.class);
+    ArgumentCaptor<byte[]> yamlStreamCaptor = ArgumentCaptor.forClass(byte[].class);
     ArgumentCaptor<String> yamlJsonCaptor = ArgumentCaptor.forClass(String.class);
     ordered
         .verify(datasetService)
@@ -126,7 +126,7 @@ class ColDpMetasyncCallbackTest {
             yamlJsonCaptor.capture(),
             eq(MetadataType.COLDP));
 
-    ArgumentCaptor<InputStream> emlStreamCaptor = ArgumentCaptor.forClass(InputStream.class);
+    ArgumentCaptor<byte[]> emlStreamCaptor = ArgumentCaptor.forClass(byte[].class);
     ordered
         .verify(datasetService)
         .insertMetadata(eq(datasetKey), emlStreamCaptor.capture(), isNull(), eq(MetadataType.EML));
@@ -137,7 +137,7 @@ class ColDpMetasyncCallbackTest {
     assertTrue(yamlJson.contains("\"title\":\"Sample Checklist\""));
 
     String emlContent =
-        new String(emlStreamCaptor.getValue().readAllBytes(), StandardCharsets.UTF_8);
+        new String(emlStreamCaptor.getValue(), StandardCharsets.UTF_8);
     assertTrue(emlContent.contains("<title>Sample EML Dataset</title>"));
 
     assertCrawlFinished(datasetKey);

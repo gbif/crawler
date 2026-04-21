@@ -7,7 +7,6 @@ import org.gbif.crawler.dwcdp.DwcDpConfiguration;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
@@ -85,15 +84,15 @@ class DwcDpMetasyncCallbackTest {
 
     callback.handleMessage(buildMessage(datasetKey, 2));
 
-    ArgumentCaptor<InputStream> rawDocumentCaptor = ArgumentCaptor.forClass(InputStream.class);
+    ArgumentCaptor<byte[]> rawDocumentCaptor = ArgumentCaptor.forClass(byte[].class);
     ArgumentCaptor<String> jsonCaptor = ArgumentCaptor.forClass(String.class);
     verify(datasetService)
         .insertMetadata(
-            eq(datasetKey), rawDocumentCaptor.capture().readAllBytes(), jsonCaptor.capture(), eq(MetadataType.DWC_DP));
+            eq(datasetKey), rawDocumentCaptor.capture(), jsonCaptor.capture(), eq(MetadataType.DWC_DP));
     verifyNoMoreInteractions(datasetService);
 
     String rawDocument =
-        new String(rawDocumentCaptor.getValue().readAllBytes(), StandardCharsets.UTF_8);
+        new String(rawDocumentCaptor.getValue(), StandardCharsets.UTF_8);
     String json = jsonCaptor.getValue();
     JsonNode rawTree = MAPPER.readTree(rawDocument);
     JsonNode contentTree = MAPPER.readTree(json);
@@ -119,18 +118,18 @@ class DwcDpMetasyncCallbackTest {
 
     InOrder ordered = inOrder(datasetService);
 
-    ArgumentCaptor<InputStream> dpStreamCaptor = ArgumentCaptor.forClass(InputStream.class);
+    ArgumentCaptor<byte[]> dpStreamCaptor = ArgumentCaptor.forClass(byte[].class);
     ArgumentCaptor<String> dpJsonCaptor = ArgumentCaptor.forClass(String.class);
     ordered
         .verify(datasetService)
         .insertMetadata(
-            eq(datasetKey), dpStreamCaptor.capture().readAllBytes(), dpJsonCaptor.capture(), eq(MetadataType.DWC_DP));
+            eq(datasetKey), dpStreamCaptor.capture(), dpJsonCaptor.capture(), eq(MetadataType.DWC_DP));
 
-    ArgumentCaptor<InputStream> emlStreamCaptor = ArgumentCaptor.forClass(InputStream.class);
+    ArgumentCaptor<byte[]> emlStreamCaptor = ArgumentCaptor.forClass(byte[].class);
     ordered
         .verify(datasetService)
         .insertMetadata(
-            eq(datasetKey), emlStreamCaptor.capture().readAllBytes(), isNull(), eq(MetadataType.EML));
+            eq(datasetKey), emlStreamCaptor.capture(), isNull(), eq(MetadataType.EML));
 
     ordered.verifyNoMoreInteractions();
 
@@ -138,7 +137,7 @@ class DwcDpMetasyncCallbackTest {
     assertTrue(dpJson.contains("\"name\":\"Sample DwcDP\""));
 
     String emlContent =
-        new String(emlStreamCaptor.getValue().readAllBytes(), StandardCharsets.UTF_8);
+        new String(emlStreamCaptor.getValue(), StandardCharsets.UTF_8);
     assertTrue(emlContent.contains("<title>Sample EML Dataset</title>"));
 
     assertCrawlFinished(datasetKey);
