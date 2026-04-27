@@ -30,14 +30,6 @@ public class ColDpConfiguration extends CrawlServerConfiguration {
   @NotNull
   public File archiveRepository;
 
-  @Parameter(names = "--unpacked-coldp-repository") // is this necessary?
-  @NotNull
-  public File unpackedColDpRepository;
-
-  @Parameter(names = "--docker-image")
-  @NotNull
-  public String dockerImage;
-
   @Parameter(names = "--http-timeout", description = "Timeout for HTTP calls, milliseconds")
   @Min(1_000)
   @PropertyName("httpTimeout")
