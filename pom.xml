@@ -53,7 +53,7 @@
 
     <dwc-api.version>2.1.8</dwc-api.version>
     <dwca-io.version>3.0.1</dwca-io.version>
-    <gbif-api.version>2.4.5-SNAPSHOT</gbif-api.version>
+    <gbif-api.version>2.4.5-coldp-SNAPSHOT</gbif-api.version>
     <gbif-cli.version>3.0.1</gbif-cli.version>
     <gbif-common-ws.version>2.1.1</gbif-common-ws.version>
     <gbif-common.version>0.60</gbif-common.version>
@@ -186,6 +186,12 @@
         <groupId>org.gbif</groupId>
         <artifactId>gbif-wrangler</artifactId>
         <version>${gbif-wrangler.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.gbif</groupId>
@@ -634,13 +640,6 @@
         <artifactId>janino</artifactId>
         <version>${janino.version}</version>
         <scope>runtime</scope>
-      </dependency>
-
-      <!-- Spring Boot Admin -->
-      <dependency>
-        <groupId>de.codecentric</groupId>
-        <artifactId>spring-boot-admin-starter-client</artifactId>
-        <version>${spring-boot-admin.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

@@ -70,7 +70,7 @@ public class ColDpMetadataDocumentConverter {
     JsonNode tree = isYaml ? yamlMapper.readTree(formatBytes) : jsonMapper.readTree(formatBytes);
     String contentJson = jsonMapper.writeValueAsString(tree);
     ColDpMetadataDocument formatDocument =
-        new ColDpMetadataDocument(formatBytes, contentJson, MetadataType.COLDP);
+        new ColDpMetadataDocument(formatBytes, contentJson, MetadataType.COL_DP);
 
     ColDpMetadataDocument emlDocument =
         emlBytes != null ? new ColDpMetadataDocument(emlBytes, null, MetadataType.EML) : null;

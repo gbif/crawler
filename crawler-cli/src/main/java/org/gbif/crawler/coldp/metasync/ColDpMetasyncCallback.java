@@ -2,7 +2,7 @@ package org.gbif.crawler.coldp.metasync;
 
 import org.gbif.api.model.crawler.FinishReason;
 import org.gbif.api.model.crawler.ProcessState;
-import org.gbif.api.service.registry.DatasetService;
+import org.gbif.crawler.common.OkHttpRegistryMetadataClient;
 import org.gbif.common.messaging.AbstractMessageCallback;
 import org.gbif.common.messaging.api.messages.ColDpDownloadFinishedMessage;
 import org.gbif.crawler.coldp.ColDpConfiguration;
@@ -25,17 +25,17 @@ public class ColDpMetasyncCallback extends AbstractMessageCallback<ColDpDownload
 
   private static final Logger LOG = LoggerFactory.getLogger(ColDpMetasyncCallback.class);
 
-  private final DatasetService datasetService;
+  private final OkHttpRegistryMetadataClient registryClient;
   private final File archiveRepository;
   private final CuratorFramework curator;
   private final ColDpMetadataDocumentConverter converter;
 
   public ColDpMetasyncCallback(
-      DatasetService datasetService,
+      OkHttpRegistryMetadataClient registryClient,
       File archiveRepository,
       CuratorFramework curator,
       ColDpMetadataDocumentConverter converter) {
-    this.datasetService = datasetService;
+    this.registryClient = registryClient;
     this.archiveRepository = archiveRepository;
     this.curator = curator;
     this.converter = converter;
@@ -52,20 +52,18 @@ public class ColDpMetasyncCallback extends AbstractMessageCallback<ColDpDownload
         ColDpMetadataExtractionResult result = converter.extractDocuments(archive);
 
         ColDpMetadataDocument fmt = result.getFormatDocument();
-        try (var s = fmt.rawDocumentStream()) {
-          datasetService.insertMetadata(datasetKey, s.readAllBytes(), fmt.getContentJson(), fmt.getMetadataType());
-        }
 
         if (result.hasEml()) {
           ColDpMetadataDocument eml = result.getEmlDocument();
-          try (var s = eml.rawDocumentStream()) {
-            datasetService.insertMetadata(
-                datasetKey, s.readAllBytes(), eml.getContentJson(), eml.getMetadataType());
+          try (var doc = eml.rawDocumentStream()) {
+            registryClient.insertMetadata(
+                datasetKey, doc.readAllBytes(), fmt.getContentJson(), eml.getMetadataType());
           }
           LOG.info(
-              "Forwarded COLDP format document and EML metadata to registry for dataset [{}]",
+              "Forwarded EML metadata to registry for dataset [{}]",
               datasetKey);
         } else {
+          registryClient.insertMetadata(datasetKey, fmt.getContentJson().getBytes(java.nio.charset.StandardCharsets.UTF_8), fmt.getContentJson(), fmt.getMetadataType());
           LOG.info(
               "Forwarded COLDP format document metadata to registry for dataset [{}]", datasetKey);
         }

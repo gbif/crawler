@@ -1,6 +1,6 @@
 package org.gbif.crawler.dwcdp.metasync;
 
-import org.gbif.api.service.registry.DatasetService;
+import org.gbif.crawler.common.OkHttpRegistryMetadataClient;
 import org.gbif.api.vocabulary.MetadataType;
 import org.gbif.common.messaging.api.messages.DwcDpDownloadFinishedMessage;
 import org.gbif.crawler.dwcdp.DwcDpConfiguration;
@@ -24,7 +24,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -38,8 +37,6 @@ import static org.gbif.crawler.constants.CrawlerNodePaths.getCrawlInfoPath;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
@@ -50,7 +47,7 @@ class DwcDpMetasyncCallbackTest {
 
   @TempDir java.nio.file.Path tempDir;
 
-  @Mock private DatasetService datasetService;
+  @Mock private OkHttpRegistryMetadataClient registryClient;
 
   private TestingServer server;
   private CuratorFramework curator;
@@ -80,16 +77,16 @@ class DwcDpMetasyncCallbackTest {
 
     DwcDpMetasyncCallback callback =
         new DwcDpMetasyncCallback(
-            datasetService, tempDir.toFile(), curator, new DwcDpMetadataDocumentConverter());
+            registryClient, tempDir.toFile(), curator, new DwcDpMetadataDocumentConverter());
 
     callback.handleMessage(buildMessage(datasetKey, 2));
 
     ArgumentCaptor<byte[]> rawDocumentCaptor = ArgumentCaptor.forClass(byte[].class);
     ArgumentCaptor<String> jsonCaptor = ArgumentCaptor.forClass(String.class);
-    verify(datasetService)
+    verify(registryClient)
         .insertMetadata(
             eq(datasetKey), rawDocumentCaptor.capture(), jsonCaptor.capture(), eq(MetadataType.DWC_DP));
-    verifyNoMoreInteractions(datasetService);
+    verifyNoMoreInteractions(registryClient);
 
     String rawDocument =
         new String(rawDocumentCaptor.getValue(), StandardCharsets.UTF_8);
@@ -112,26 +109,16 @@ class DwcDpMetasyncCallbackTest {
 
     DwcDpMetasyncCallback callback =
         new DwcDpMetasyncCallback(
-            datasetService, tempDir.toFile(), curator, new DwcDpMetadataDocumentConverter());
+            registryClient, tempDir.toFile(), curator, new DwcDpMetadataDocumentConverter());
 
     callback.handleMessage(buildMessage(datasetKey, 1));
 
-    InOrder ordered = inOrder(datasetService);
-
-    ArgumentCaptor<byte[]> dpStreamCaptor = ArgumentCaptor.forClass(byte[].class);
-    ArgumentCaptor<String> dpJsonCaptor = ArgumentCaptor.forClass(String.class);
-    ordered
-        .verify(datasetService)
-        .insertMetadata(
-            eq(datasetKey), dpStreamCaptor.capture(), dpJsonCaptor.capture(), eq(MetadataType.DWC_DP));
-
     ArgumentCaptor<byte[]> emlStreamCaptor = ArgumentCaptor.forClass(byte[].class);
-    ordered
-        .verify(datasetService)
+    ArgumentCaptor<String> dpJsonCaptor = ArgumentCaptor.forClass(String.class);
+    verify(registryClient)
         .insertMetadata(
-            eq(datasetKey), emlStreamCaptor.capture(), isNull(), eq(MetadataType.EML));
-
-    ordered.verifyNoMoreInteractions();
+            eq(datasetKey), emlStreamCaptor.capture(), dpJsonCaptor.capture(), eq(MetadataType.EML));
+    verifyNoMoreInteractions(registryClient);
 
     String dpJson = dpJsonCaptor.getValue();
     assertTrue(dpJson.contains("\"name\":\"Sample DwcDP\""));

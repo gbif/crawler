@@ -1,13 +1,12 @@
 package org.gbif.crawler.coldp.metasync;
 
-import org.gbif.api.service.registry.DatasetService;
+import org.gbif.crawler.common.OkHttpRegistryMetadataClient;
 import org.gbif.api.vocabulary.MetadataType;
 import org.gbif.common.messaging.api.messages.ColDpDownloadFinishedMessage;
 import org.gbif.crawler.coldp.ColDpConfiguration;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
@@ -25,7 +24,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -36,8 +34,6 @@ import static org.gbif.crawler.constants.CrawlerNodePaths.getCrawlInfoPath;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
@@ -46,7 +42,7 @@ class ColDpMetasyncCallbackTest {
 
   @TempDir java.nio.file.Path tempDir;
 
-  @Mock private DatasetService datasetService;
+  @Mock private OkHttpRegistryMetadataClient registryClient;
 
   private TestingServer server;
   private CuratorFramework curator;
@@ -76,25 +72,25 @@ class ColDpMetasyncCallbackTest {
 
     ColDpMetasyncCallback callback =
         new ColDpMetasyncCallback(
-            datasetService, tempDir.toFile(), curator, new ColDpMetadataDocumentConverter());
+            registryClient, tempDir.toFile(), curator, new ColDpMetadataDocumentConverter());
 
     callback.handleMessage(buildMessage(datasetKey, 2));
 
     ArgumentCaptor<byte[]> rawDocumentCaptor = ArgumentCaptor.forClass(byte[].class);
     ArgumentCaptor<String> jsonCaptor = ArgumentCaptor.forClass(String.class);
-    verify(datasetService)
+    verify(registryClient)
         .insertMetadata(
             eq(datasetKey),
             rawDocumentCaptor.capture(),
             jsonCaptor.capture(),
-            eq(MetadataType.COLDP));
-    verifyNoMoreInteractions(datasetService);
+            eq(MetadataType.COL_DP));
+    verifyNoMoreInteractions(registryClient);
 
     String rawDocument =
         new String(rawDocumentCaptor.getValue(), StandardCharsets.UTF_8);
     String json = jsonCaptor.getValue();
-    assertTrue(rawDocument.contains("title: Sample Checklist"));
-    assertTrue(rawDocument.contains("contact:"));
+    assertTrue(rawDocument.contains("\"title\":\"Sample Checklist\""));
+    assertTrue(rawDocument.contains("\"contact\":"));
     assertTrue(json.contains("\"title\":\"Sample Checklist\""));
     assertTrue(json.contains("\"doi\":\"10.15468/2zjeva\""));
     assertTrue(json.contains("\"email\":\"jane@example.org\""));
@@ -110,28 +106,19 @@ class ColDpMetasyncCallbackTest {
 
     ColDpMetasyncCallback callback =
         new ColDpMetasyncCallback(
-            datasetService, tempDir.toFile(), curator, new ColDpMetadataDocumentConverter());
+            registryClient, tempDir.toFile(), curator, new ColDpMetadataDocumentConverter());
 
     callback.handleMessage(buildMessage(datasetKey, 1));
 
-    InOrder ordered = inOrder(datasetService);
-
-    ArgumentCaptor<byte[]> yamlStreamCaptor = ArgumentCaptor.forClass(byte[].class);
+    ArgumentCaptor<byte[]> emlStreamCaptor = ArgumentCaptor.forClass(byte[].class);
     ArgumentCaptor<String> yamlJsonCaptor = ArgumentCaptor.forClass(String.class);
-    ordered
-        .verify(datasetService)
+    verify(registryClient)
         .insertMetadata(
             eq(datasetKey),
-            yamlStreamCaptor.capture(),
+            emlStreamCaptor.capture(),
             yamlJsonCaptor.capture(),
-            eq(MetadataType.COLDP));
-
-    ArgumentCaptor<byte[]> emlStreamCaptor = ArgumentCaptor.forClass(byte[].class);
-    ordered
-        .verify(datasetService)
-        .insertMetadata(eq(datasetKey), emlStreamCaptor.capture(), isNull(), eq(MetadataType.EML));
-
-    ordered.verifyNoMoreInteractions();
+            eq(MetadataType.EML));
+    verifyNoMoreInteractions(registryClient);
 
     String yamlJson = yamlJsonCaptor.getValue();
     assertTrue(yamlJson.contains("\"title\":\"Sample Checklist\""));

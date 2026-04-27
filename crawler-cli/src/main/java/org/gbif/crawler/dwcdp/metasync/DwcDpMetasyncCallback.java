@@ -2,7 +2,7 @@ package org.gbif.crawler.dwcdp.metasync;
 
 import org.gbif.api.model.crawler.FinishReason;
 import org.gbif.api.model.crawler.ProcessState;
-import org.gbif.api.service.registry.DatasetService;
+import org.gbif.crawler.common.OkHttpRegistryMetadataClient;
 import org.gbif.common.messaging.AbstractMessageCallback;
 import org.gbif.common.messaging.api.messages.DwcDpDownloadFinishedMessage;
 import org.gbif.crawler.dwcdp.DwcDpConfiguration;
@@ -25,17 +25,17 @@ public class DwcDpMetasyncCallback extends AbstractMessageCallback<DwcDpDownload
 
   private static final Logger LOG = LoggerFactory.getLogger(DwcDpMetasyncCallback.class);
 
-  private final DatasetService datasetService;
+  private final OkHttpRegistryMetadataClient registryClient;
   private final File archiveRepository;
   private final CuratorFramework curator;
   private final DwcDpMetadataDocumentConverter converter;
 
   public DwcDpMetasyncCallback(
-      DatasetService datasetService,
+      OkHttpRegistryMetadataClient registryClient,
       File archiveRepository,
       CuratorFramework curator,
       DwcDpMetadataDocumentConverter converter) {
-    this.datasetService = datasetService;
+    this.registryClient = registryClient;
     this.archiveRepository = archiveRepository;
     this.curator = curator;
     this.converter = converter;
@@ -52,20 +52,21 @@ public class DwcDpMetasyncCallback extends AbstractMessageCallback<DwcDpDownload
         DwcDpMetadataExtractionResult result = converter.extractDocuments(archive);
 
         DwcDpMetadataDocument dp = result.getDatapackageDocument();
-        try (var s = dp.rawDocumentStream()) {
-          datasetService.insertMetadata(datasetKey, s.readAllBytes(), dp.getContentJson(), dp.getMetadataType());
-        }
 
         if (result.hasEml()) {
           DwcDpMetadataDocument eml = result.getEmlDocument();
-          try (var s = eml.rawDocumentStream()) {
-            datasetService.insertMetadata(
-                datasetKey, s.readAllBytes(), eml.getContentJson(), eml.getMetadataType());
+
+          try (var doc = eml.rawDocumentStream()) {
+            registryClient.insertMetadata(
+                datasetKey, doc.readAllBytes(), dp.getContentJson(), eml.getMetadataType());
           }
           LOG.info(
-              "Forwarded DwcDP datapackage and EML metadata to registry for dataset [{}]",
+              "Forwarded EML metadata to registry for dataset [{}]",
               datasetKey);
         } else {
+          try (var doc = dp.rawDocumentStream()) {
+            registryClient.insertMetadata(datasetKey, doc.readAllBytes(), dp.getContentJson(), dp.getMetadataType());
+          }
           LOG.info(
               "Forwarded DwcDP datapackage metadata to registry for dataset [{}]", datasetKey);
         }

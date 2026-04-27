@@ -1,9 +1,8 @@
 package org.gbif.crawler.coldp.metasync;
 
-import org.gbif.api.service.registry.DatasetService;
+import org.gbif.crawler.common.OkHttpRegistryMetadataClient;
 import org.gbif.common.messaging.MessageListener;
 import org.gbif.common.messaging.api.messages.ColDpDownloadFinishedMessage;
-import org.gbif.registry.ws.client.DatasetClient;
 
 import org.apache.curator.framework.CuratorFramework;
 
@@ -24,10 +23,10 @@ public class ColDpMetasyncService extends AbstractIdleService {
     listener = new MessageListener(config.messaging.getConnectionParameters(), 1);
     curator = config.zooKeeper.getCuratorFramework();
 
-    DatasetService datasetService = config.registry.newClientBuilder().build(DatasetClient.class);
+    OkHttpRegistryMetadataClient registryClient = new OkHttpRegistryMetadataClient(config.registry);
     ColDpMetasyncCallback callback =
         new ColDpMetasyncCallback(
-            datasetService, config.archiveRepository, curator, new ColDpMetadataDocumentConverter());
+            registryClient, config.archiveRepository, curator, new ColDpMetadataDocumentConverter());
 
     listener.listen(
         config.queueName, ColDpDownloadFinishedMessage.ROUTING_KEY, config.poolSize, callback);

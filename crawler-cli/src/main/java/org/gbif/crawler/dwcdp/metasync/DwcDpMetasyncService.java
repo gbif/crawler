@@ -1,9 +1,8 @@
 package org.gbif.crawler.dwcdp.metasync;
 
-import org.gbif.api.service.registry.DatasetService;
+import org.gbif.crawler.common.OkHttpRegistryMetadataClient;
 import org.gbif.common.messaging.MessageListener;
 import org.gbif.common.messaging.api.messages.DwcDpDownloadFinishedMessage;
-import org.gbif.registry.ws.client.DatasetClient;
 
 import org.apache.curator.framework.CuratorFramework;
 
@@ -24,10 +23,10 @@ public class DwcDpMetasyncService extends AbstractIdleService {
     listener = new MessageListener(config.messaging.getConnectionParameters(), 1);
     curator = config.zooKeeper.getCuratorFramework();
 
-    DatasetService datasetService = config.registry.newClientBuilder().build(DatasetClient.class);
+    OkHttpRegistryMetadataClient registryClient = new OkHttpRegistryMetadataClient(config.registry);
     DwcDpMetasyncCallback callback =
         new DwcDpMetasyncCallback(
-            datasetService, config.archiveRepository, curator, new DwcDpMetadataDocumentConverter());
+            registryClient, config.archiveRepository, curator, new DwcDpMetadataDocumentConverter());
 
     listener.listen(
         config.queueName, DwcDpDownloadFinishedMessage.ROUTING_KEY, config.poolSize, callback);
