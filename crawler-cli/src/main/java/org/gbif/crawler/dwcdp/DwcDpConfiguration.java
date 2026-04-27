@@ -43,10 +43,6 @@ public class DwcDpConfiguration extends CrawlServerConfiguration {
   @NotNull
   public File archiveRepository;
 
-  @Parameter(names = "--unpacked-dp-repository")
-  @NotNull
-  public File unpackedDpRepository;
-
   @Parameter(names = "--http-timeout", description = "Timeout for HTTP calls, milliseconds")
   @Min(1_000)
   @PropertyName("httpTimeout")
