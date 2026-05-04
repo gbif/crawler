@@ -1,15 +1,15 @@
 package org.gbif.crawler.dwcdp.metasync;
 
+import org.gbif.common.messaging.api.MessagePublisher;
+import org.gbif.common.messaging.api.messages.DwcDpMetadataSyncFinishedMessage;
+import org.gbif.common.messaging.api.messages.DwcDpValidationFinishedMessage;
 import org.gbif.crawler.common.OkHttpRegistryMetadataClient;
 import org.gbif.api.vocabulary.MetadataType;
-import org.gbif.common.messaging.api.messages.DwcDpDownloadFinishedMessage;
 import org.gbif.crawler.dwcdp.DwcDpConfiguration;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.util.Date;
 import java.util.UUID;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -18,6 +18,9 @@ import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.RetryOneTime;
 import org.apache.curator.test.TestingServer;
+
+import org.gbif.dp.analysis.api.DatapackageAnalysisResult;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -48,6 +51,7 @@ class DwcDpMetasyncCallbackTest {
   @TempDir java.nio.file.Path tempDir;
 
   @Mock private OkHttpRegistryMetadataClient registryClient;
+  @Mock private MessagePublisher publisher;
 
   private TestingServer server;
   private CuratorFramework curator;
@@ -77,9 +81,9 @@ class DwcDpMetasyncCallbackTest {
 
     DwcDpMetasyncCallback callback =
         new DwcDpMetasyncCallback(
-            registryClient, tempDir.toFile(), curator, new DwcDpMetadataDocumentConverter());
+            registryClient, tempDir.toFile(), curator, publisher, new DwcDpMetadataDocumentConverter());
 
-    callback.handleMessage(buildMessage(datasetKey, 2));
+    callback.handleMessage(buildMessage(datasetKey, 2, true, new DatapackageAnalysisResult(null)));
 
     ArgumentCaptor<byte[]> rawDocumentCaptor = ArgumentCaptor.forClass(byte[].class);
     ArgumentCaptor<String> jsonCaptor = ArgumentCaptor.forClass(String.class);
@@ -99,6 +103,7 @@ class DwcDpMetasyncCallbackTest {
     assertEquals("https://doi.org/10.15468/sample", contentTree.path("id").asText());
     assertEquals("jane@example.org", contentTree.path("contributors").get(0).path("email").asText());
 
+    assertMetadataSyncFinishedPublished(datasetKey, 2);
     assertCrawlFinished(datasetKey);
   }
 
@@ -109,9 +114,9 @@ class DwcDpMetasyncCallbackTest {
 
     DwcDpMetasyncCallback callback =
         new DwcDpMetasyncCallback(
-            registryClient, tempDir.toFile(), curator, new DwcDpMetadataDocumentConverter());
+            registryClient, tempDir.toFile(), curator, publisher, new DwcDpMetadataDocumentConverter());
 
-    callback.handleMessage(buildMessage(datasetKey, 1));
+    callback.handleMessage(buildMessage(datasetKey, 1, true, new DatapackageAnalysisResult(null)));
 
     ArgumentCaptor<byte[]> emlStreamCaptor = ArgumentCaptor.forClass(byte[].class);
     ArgumentCaptor<String> dpJsonCaptor = ArgumentCaptor.forClass(String.class);
@@ -127,7 +132,18 @@ class DwcDpMetasyncCallbackTest {
         new String(emlStreamCaptor.getValue(), StandardCharsets.UTF_8);
     assertTrue(emlContent.contains("<title>Sample EML Dataset</title>"));
 
+    assertMetadataSyncFinishedPublished(datasetKey, 1);
     assertCrawlFinished(datasetKey);
+  }
+
+  private void assertMetadataSyncFinishedPublished(UUID datasetKey, int attempt) throws Exception {
+    ArgumentCaptor<DwcDpMetadataSyncFinishedMessage> messageCaptor =
+        ArgumentCaptor.forClass(DwcDpMetadataSyncFinishedMessage.class);
+    verify(publisher).send(messageCaptor.capture(), eq(true));
+
+    DwcDpMetadataSyncFinishedMessage message = messageCaptor.getValue();
+    assertEquals(datasetKey, message.getDatasetUuid());
+    assertEquals(attempt, message.getAttempt());
   }
 
   private void assertCrawlFinished(UUID datasetKey) throws Exception {
@@ -148,16 +164,12 @@ class DwcDpMetasyncCallbackTest {
             StandardCharsets.UTF_8));
   }
 
-  private DwcDpDownloadFinishedMessage buildMessage(UUID datasetKey, int attempt) {
-    return new DwcDpDownloadFinishedMessage(
+  private DwcDpValidationFinishedMessage buildMessage(UUID datasetKey, int attempt, Boolean valid, DatapackageAnalysisResult datapackageAnalysisResult) {
+    return new DwcDpValidationFinishedMessage(
         datasetKey,
-        URI.create("https://example.org/archive.zip"),
         attempt,
-        new Date(),
-        true,
-        org.gbif.api.vocabulary.EndpointType.DWC_DP,
-        null,
-        org.gbif.common.messaging.api.messages.Platform.ALL);
+        valid,
+        datapackageAnalysisResult);
   }
 
   private File createArchiveWithDatapackageOnly(UUID datasetKey, int attempt) throws Exception {

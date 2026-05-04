@@ -2,9 +2,11 @@ package org.gbif.crawler.dwcdp.metasync;
 
 import org.gbif.api.model.crawler.FinishReason;
 import org.gbif.api.model.crawler.ProcessState;
+import org.gbif.common.messaging.api.MessagePublisher;
+import org.gbif.common.messaging.api.messages.DwcDpMetadataSyncFinishedMessage;
+import org.gbif.common.messaging.api.messages.DwcDpValidationFinishedMessage;
 import org.gbif.crawler.common.OkHttpRegistryMetadataClient;
 import org.gbif.common.messaging.AbstractMessageCallback;
-import org.gbif.common.messaging.api.messages.DwcDpDownloadFinishedMessage;
 import org.gbif.crawler.dwcdp.DwcDpConfiguration;
 
 import java.io.File;
@@ -21,28 +23,31 @@ import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_CHECKLIS
 import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_OCCURRENCE;
 import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_SAMPLE;
 
-public class DwcDpMetasyncCallback extends AbstractMessageCallback<DwcDpDownloadFinishedMessage> {
+public class DwcDpMetasyncCallback extends AbstractMessageCallback<DwcDpValidationFinishedMessage> {
 
   private static final Logger LOG = LoggerFactory.getLogger(DwcDpMetasyncCallback.class);
 
   private final OkHttpRegistryMetadataClient registryClient;
   private final File archiveRepository;
   private final CuratorFramework curator;
+  private final MessagePublisher publisher;
   private final DwcDpMetadataDocumentConverter converter;
 
   public DwcDpMetasyncCallback(
       OkHttpRegistryMetadataClient registryClient,
       File archiveRepository,
       CuratorFramework curator,
+      MessagePublisher publisher,
       DwcDpMetadataDocumentConverter converter) {
     this.registryClient = registryClient;
     this.archiveRepository = archiveRepository;
     this.curator = curator;
+    this.publisher = publisher;
     this.converter = converter;
   }
 
   @Override
-  public void handleMessage(DwcDpDownloadFinishedMessage message) {
+  public void handleMessage(DwcDpValidationFinishedMessage message) {
     UUID datasetKey = message.getDatasetUuid();
     try (MDC.MDCCloseable ignored1 = MDC.putCloseable("datasetKey", datasetKey.toString());
         MDC.MDCCloseable ignored2 =
@@ -71,6 +76,8 @@ public class DwcDpMetasyncCallback extends AbstractMessageCallback<DwcDpDownload
               "Forwarded DwcDP datapackage metadata to registry for dataset [{}]", datasetKey);
         }
 
+        // Notify downstream consumers only after metadata was accepted by the registry.
+        publisher.send(new DwcDpMetadataSyncFinishedMessage(datasetKey, message.getAttempt()), true);
         markFinished(datasetKey);
       } catch (Exception e) {
         LOG.error("Exception caught during DwcDP metadata sync [{}]", datasetKey, e);

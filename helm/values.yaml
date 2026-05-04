@@ -1,0 +1,304 @@
+image:
+  # Override `repository` per environment to point at your registry (e.g. docker.gbif.org).
+  # `tag` should match the appVersion in Chart.yaml or the snapshot/release tag pushed by CI.
+  repository: docker.gbif.org
+  name: crawler-cli
+  tag: 2.0.11-DpToMetadata-SNAPSHOT
+  pullPolicy: IfNotPresent
+
+# -Xmx omitted on purpose: MaxRAMPercentage scales heap to the container memory limit below.
+jvmOptions: "-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -Xms256m"
+
+rabbit:
+  host: localhost
+  port: 5672
+  vhost: /
+  username: guest
+  password: guest
+  createSecret: false
+  credentialsSecret: crawler-rabbitmq-credentials
+
+zooKeeper:
+  connectionString: localhost:2181
+  namespace: crawler
+  sleepTime: 1000
+  maxRetries: 3
+
+registry:
+  wsUrl: http://localhost:8080
+  username: changeme
+  password: changeme
+  createSecret: false
+  credentialsSecret: crawler-registry-credentials
+
+commands:
+  scheduler:
+    enabled: false
+    workloadKind: Deployment
+    command: scheduler
+    configSections:
+      messaging: true
+      zooKeeper: false
+      registry: false
+    config:
+      crawlerWsUrl: http://crawler-ws:8080
+      registryWsUrl: http://registry:8080
+      supportedTypes: []
+  coordinator:
+    enabled: false
+    workloadKind: Deployment
+    command: coordinator
+    config:
+      queueName: crawler_coordinator
+      poolSize: 1
+  crawlserver:
+    enabled: false
+    workloadKind: Deployment
+    command: crawlserver
+    config:
+      poolSize: 1
+  downloader:
+    enabled: false
+    workloadKind: Deployment
+    command: downloader
+    config:
+      archiveRepository: /data/dwca
+      poolSize: 1
+      httpTimeout: 600000
+    volumeMounts:
+      - name: dwca
+        mountPath: /data/dwca
+  abcdadownloader:
+    enabled: false
+    workloadKind: Deployment
+    command: abcdadownloader
+    config:
+      archiveRepository: /data/abcda
+      poolSize: 1
+      httpTimeout: 600000
+    volumeMounts:
+      - name: abcda
+        mountPath: /data/abcda
+  camtrapdpdownloader:
+    enabled: false
+    workloadKind: Deployment
+    command: camtrapdpdownloader
+    config:
+      archiveRepository: /data/camtrapdp
+      unpackedDpRepository: /data/camtrapdp-unpacked
+      unpackedDwcaRepository: /data/camtrapdp-dwca
+      dockerImage: gbif/camtrap-dp-to-dwca:latest
+      queueName: camtrapdp.download
+      poolSize: 1
+      httpTimeout: 600000
+    volumeMounts:
+      - name: camtrapdp
+        mountPath: /data/camtrapdp
+      - name: camtrapdp-unpacked
+        mountPath: /data/camtrapdp-unpacked
+      - name: camtrapdp-dwca
+        mountPath: /data/camtrapdp-dwca
+  camtrapdptodwca:
+    enabled: false
+    workloadKind: Deployment
+    command: camtrapdptodwca
+    config:
+      archiveRepository: /data/camtrapdp
+      unpackedDpRepository: /data/camtrapdp-unpacked
+      unpackedDwcaRepository: /data/camtrapdp-dwca
+      dockerImage: gbif/camtrap-dp-to-dwca:latest
+      queueName: camtrapdp.converter
+      poolSize: 1
+    volumeMounts:
+      - name: camtrapdp
+        mountPath: /data/camtrapdp
+      - name: camtrapdp-unpacked
+        mountPath: /data/camtrapdp-unpacked
+      - name: camtrapdp-dwca
+        mountPath: /data/camtrapdp-dwca
+  validator:
+    enabled: false
+    workloadKind: Deployment
+    command: validator
+    config:
+      archiveRepository: /data/dwca
+      unpackedRepository: /data/dwca-unpacked
+      poolSize: 1
+    volumeMounts:
+      - name: dwca
+        mountPath: /data/dwca
+      - name: dwca-unpacked
+        mountPath: /data/dwca-unpacked
+  dwca-metasync:
+    enabled: false
+    workloadKind: Deployment
+    command: dwca-metasync
+    config:
+      archiveRepository: /data/dwca
+      unpackedRepository: /data/dwca-unpacked
+      poolSize: 1
+    volumeMounts:
+      - name: dwca
+        mountPath: /data/dwca
+      - name: dwca-unpacked
+        mountPath: /data/dwca-unpacked
+  dwcdpdownloader:
+    enabled: true
+    workloadKind: Deployment
+    command: dwcdpdownloader
+    replicaCount: 1
+    config:
+      archiveRepository: /data/dwcdp
+      queueName: dwcdp.download
+      poolSize: 1
+      httpTimeout: 600000
+    volumeMounts:
+      - name: dwcdp
+        mountPath: /data/dwcdp
+  coldpdownloader:
+    enabled: true
+    workloadKind: Deployment
+    command: coldpdownloader
+    replicaCount: 1
+    config:
+      archiveRepository: /data/coldp
+      queueName: coldp.download
+      poolSize: 1
+      httpTimeout: 600000
+    volumeMounts:
+      - name: coldp
+        mountPath: /data/coldp
+  dwcdp-metasync:
+    enabled: true
+    workloadKind: Deployment
+    command: dwcdp-metasync
+    replicaCount: 1
+    config:
+      archiveRepository: /data/dwcdp
+      queueName: dwcdp.metasync
+      poolSize: 1
+    volumeMounts:
+      - name: dwcdp
+        mountPath: /data/dwcdp
+  coldp-metasync:
+    enabled: true
+    workloadKind: Deployment
+    command: coldp-metasync
+    replicaCount: 1
+    config:
+      archiveRepository: /data/coldp
+      queueName: coldp.metasync
+      poolSize: 1
+    volumeMounts:
+      - name: coldp
+        mountPath: /data/coldp
+  metasync:
+    enabled: false
+    workloadKind: Deployment
+    command: metasync
+    configSections:
+      messaging: true
+      zooKeeper: false
+      registry: true
+    config:
+      queueName: metasync
+      threadCount: 1
+      dryRun: false
+  coordinatorcleanup:
+    enabled: false
+    workloadKind: Deployment
+    command: coordinatorcleanup
+    config:
+      wsUrl: http://crawler-ws:8080
+      httpTimeout: 600000
+      pipelinesOnlyMode: false
+  startcrawl:
+    enabled: false
+    workloadKind: Job
+    command: startcrawl
+    configSections:
+      messaging: true
+      zooKeeper: false
+      registry: false
+    config:
+      datasetUuid: 00000000-0000-0000-0000-000000000000
+      priority: 0
+  crawleverything:
+    enabled: false
+    workloadKind: Job
+    command: crawleverything
+    configSections:
+      messaging: true
+      zooKeeper: false
+      registry: false
+    config:
+      registryWsUrl: http://registry:8080
+  metasynceverything:
+    enabled: false
+    workloadKind: Job
+    command: metasynceverything
+    configSections:
+      messaging: true
+      zooKeeper: false
+      registry: false
+    config:
+      registryWsUrl: http://registry:8080
+  pusheml:
+    enabled: false
+    workloadKind: Job
+    command: pusheml
+    configSections:
+      messaging: false
+      zooKeeper: false
+      registry: true
+    config:
+      unpackedRepository: /data/unpacked
+    volumeMounts:
+      - name: unpacked
+        mountPath: /data/unpacked
+
+volumes:
+  # Downloader and metasync pairs must use the same backing volume in real environments.
+  # Override these with nfs or persistentVolumeClaim values for shared storage.
+  dwcdp:
+    emptyDir: {}
+  coldp:
+    emptyDir: {}
+  dwca:
+    emptyDir: {}
+  dwca-unpacked:
+    emptyDir: {}
+  abcda:
+    emptyDir: {}
+  camtrapdp:
+    emptyDir: {}
+  camtrapdp-unpacked:
+    emptyDir: {}
+  camtrapdp-dwca:
+    emptyDir: {}
+  unpacked:
+    emptyDir: {}
+
+# Ephemeral storage limits protect the node from runaway writes to the container
+# writable layer. Real archive data goes to mounted volumes (NFS/PVC) which are
+# not counted against ephemeral-storage.
+resources:
+  requests:
+    memory: 512Mi
+    cpu: 250m
+    ephemeral-storage: 256Mi
+  limits:
+    memory: 3Gi
+    cpu: 2000m
+    ephemeral-storage: 2Gi
+
+# Resources for short-lived init containers (e.g. wait-for-rabbitmq).
+initContainerResources:
+  requests:
+    memory: 16Mi
+    cpu: 10m
+    ephemeral-storage: 32Mi
+  limits:
+    memory: 64Mi
+    cpu: 100m
+    ephemeral-storage: 64Mi
