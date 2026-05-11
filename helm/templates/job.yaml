@@ -16,16 +16,26 @@ spec:
       # The crawler-cli only talks to RabbitMQ, ZooKeeper and the Registry HTTP API,
       # so it does not need a Kubernetes API token mounted into the pod.
       automountServiceAccountToken: false
+      {{- with $.Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       restartPolicy: Never
       containers:
         - name: {{ $name }}
           image: "{{ $.Values.image.repository }}/{{ $.Values.image.name }}:{{ $.Values.image.tag }}"
           imagePullPolicy: {{ $.Values.image.pullPolicy }}
+          {{- with $.Values.containerSecurityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           env:
             - name: JVM_OPTIONS
               value: {{ $.Values.jvmOptions | quote }}
             - name: CRAWLER_COMMAND
               value: {{ $command.command | quote }}
+            - name: LOG_LEVEL
+              value: {{ $.Values.log.level | quote }}
             - name: INCLUDE_MESSAGING
               value: {{ ternary (index $sections "messaging") true (hasKey $sections "messaging") | quote }}
             - name: INCLUDE_ZOOKEEPER
@@ -73,8 +83,11 @@ spec:
                 secretKeyRef:
                   name: {{ $.Values.registry.credentialsSecret }}
                   key: password
-          {{- if $command.volumeMounts }}
           volumeMounts:
+            - name: logback-config
+              mountPath: /app/config/logback.xml
+              subPath: logback.xml
+          {{- if $command.volumeMounts }}
             {{- range $mount := $command.volumeMounts }}
             - name: {{ $mount.name }}
               mountPath: {{ $mount.mountPath }}
@@ -85,11 +98,19 @@ spec:
           {{- end }}
           resources:
             {{- toYaml (default $.Values.resources $command.resources) | nindent 12 }}
-      {{- if $command.volumeMounts }}
       volumes:
+        - name: logback-config
+          configMap:
+            name: {{ $.Release.Name }}-logback
+      {{- if $command.volumeMounts }}
         {{- range $mount := $command.volumeMounts }}
         - name: {{ $mount.name }}
-          {{- toYaml (index $.Values.volumes $mount.name) | nindent 10 }}
+          {{- $vol := index $.Values.volumes $mount.name }}
+          {{- if and $vol (gt (len (keys $vol)) 0) }}
+          {{- toYaml $vol | nindent 10 }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
         {{- end }}
       {{- end }}
 ---

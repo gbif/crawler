@@ -62,6 +62,28 @@ mvn clean install
 6. Once all these crawling tasks are complete for any particular dataset, the crawl is noticed by the Cleanup process.
    The result is persisted to the Registry, and all state in ZooKeeper is removed.
 
+### Darwin Core Data Package flow
+
+Darwin Core Data Package processing uses the crawler CLI together with the separate
+[dwc-dp-analyser-service](https://github.com/gbif/dwc-dp-analyser-service/tree/dev):
+
+1. `dwcdpdownloader` reads DwC-DP crawl jobs from ZooKeeper, downloads archives to shared storage, and publishes
+   `DwcDpDownloadFinishedMessage`.
+2. `dwc-dp-analyser-service` is deployed from its own repository/chart. It consumes the download-finished message,
+   validates the archive, and publishes `DwcDpValidationFinishedMessage`.
+3. `dwcdp-metasync` consumes `DwcDpValidationFinishedMessage`, forwards metadata to the Registry, marks crawl state in
+   ZooKeeper, and publishes `DwcDpMetadataSyncFinishedMessage` on success.
+
+The downloader, validator, and metasync services must use compatible archive paths backed by the same shared storage
+(normally NFS in shared environments).
+
+### Catalogue of Life Data Package flow
+
+1. `coldpdownloader` reads CoL-DP crawl jobs from ZooKeeper, downloads archives to shared storage, and publishes
+   `ColDpDownloadFinishedMessage`.
+2. `coldp-metasync` consumes `ColDpDownloadFinishedMessage`, forwards metadata to the Registry, and marks crawl state in
+   ZooKeeper.
+
 ## CLI targets
 ### scheduler
 * Publishes `StartCrawlMessage` messages (routing key: "crawl.start").
@@ -89,6 +111,16 @@ mvn clean install
 * Publishes `DwcaDownloadFinishedMessage` (routing key: "crawl.dwca.download.finished") on successful conversion
   of the data package to DwC-A format.
 
+### dwcdpdownloader (Darwin Core Data Package)
+* DwC-DP crawl server that listens to a ZooKeeper queue for Darwin Core Data Package crawl jobs.
+* Downloads the archive to shared storage.
+* Publishes `DwcDpDownloadFinishedMessage` on success.
+
+### coldpdownloader (Catalogue of Life Data Package)
+* CoL-DP crawl server that listens to a ZooKeeper queue for Catalogue of Life Data Package crawl jobs.
+* Downloads the archive to shared storage.
+* Publishes `ColDpDownloadFinishedMessage` on success.
+
 ### validator (DwC-A)
 * Listens to `DwcaDownloadFinishedMessage` messages.
 * Publishes `DwcaValidationFinishedMessage` (routing key: "crawl.dwca.validation.finished") on success.
@@ -97,9 +129,76 @@ mvn clean install
 * Listens to `DwcaValidationFinishedMessage` messages.
 * Publishes `DwcaMetasyncFinishedMessage` (routing key: "crawl.dwca.metasync.finished") on success.
 
+### dwcdp-metasync (Darwin Core Data Package)
+* Listens to `DwcDpValidationFinishedMessage` messages published by the separate DWC-DP analyser service.
+* Reads the downloaded DwC-DP archive from shared storage.
+* Forwards datapackage/EML metadata to the Registry.
+* Publishes `DwcDpMetadataSyncFinishedMessage` on success.
+
+### coldp-metasync (Catalogue of Life Data Package)
+* Listens to `ColDpDownloadFinishedMessage` messages.
+* Reads the downloaded CoL-DP archive from shared storage.
+* Forwards CoL-DP metadata to the Registry.
+
 ### metasynceverything
 * Publishes `StartMetasyncMessage` messages (routing key: "metasync.start").
 
 ### metasync
 * Listen to `StartMetasyncMessage` messages.
 * Supported protocols are: DiGIR, TAPIR and BioCASe.
+
+## Docker image
+
+The root `Dockerfile` builds one reusable `crawler-cli` image. The image can run any CLI target by setting
+`CRAWLER_COMMAND`.
+
+The container entrypoint generates the CLI YAML configuration at startup from environment variables and command-specific
+Helm values, then runs:
+
+```shell
+java -jar /app/crawler-cli.jar "$CRAWLER_COMMAND" --conf /app/.tmp/crawler.yaml
+```
+
+Explicit container arguments override the environment-driven command path, which is useful for debugging or one-off
+manual runs.
+
+## Kubernetes and Helm
+
+The Helm chart in `helm/` is the preferred Kubernetes deployment structure. Commands are declared in
+`helm/values.yaml` under `commands`.
+
+Long-running listeners should use `workloadKind: Deployment`, for example:
+
+```yaml
+commands:
+  dwcdp-metasync:
+    enabled: true
+    workloadKind: Deployment
+    command: dwcdp-metasync
+    config:
+      archiveRepository: /data/dwcdp
+      queueName: dwcdp.metasync
+      poolSize: 1
+    volumeMounts:
+      - name: dwcdp
+        mountPath: /data/dwcdp
+```
+
+One-off commands should use `workloadKind: Job`, for example:
+
+```yaml
+commands:
+  startcrawl:
+    enabled: true
+    workloadKind: Job
+    command: startcrawl
+    config:
+      datasetUuid: 00000000-0000-0000-0000-000000000000
+      priority: 0
+```
+
+Use existing Kubernetes Secrets for RabbitMQ and Registry credentials in shared environments. The `createSecret` values
+are intended for development convenience only.
+
+Archive handoff requires shared storage. For production-like deployments, override the default `emptyDir` volumes with
+NFS or another shared volume type so downloaders, validators, and metasync services see the same archive files.

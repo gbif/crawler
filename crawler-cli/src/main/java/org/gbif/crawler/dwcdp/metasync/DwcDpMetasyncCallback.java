@@ -52,6 +52,13 @@ public class DwcDpMetasyncCallback extends AbstractMessageCallback<DwcDpValidati
     try (MDC.MDCCloseable ignored1 = MDC.putCloseable("datasetKey", datasetKey.toString());
         MDC.MDCCloseable ignored2 =
             MDC.putCloseable("attempt", String.valueOf(message.getAttempt()))) {
+      if (Boolean.FALSE.equals(message.isValid())) {
+        LOG.warn("Invalid DwcDP for dataset [{}], skipping metadata sync", datasetKey);
+        createOrUpdate(curator, datasetKey, FINISHED_REASON, FinishReason.ABORT);
+        markFinished(datasetKey);
+        return;
+      }
+
       try {
         File archive = resolveArchive(datasetKey, message.getAttempt());
         DwcDpMetadataExtractionResult result = converter.extractDocuments(archive);

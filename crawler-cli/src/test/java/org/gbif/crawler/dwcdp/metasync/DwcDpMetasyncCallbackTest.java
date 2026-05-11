@@ -1,5 +1,6 @@
 package org.gbif.crawler.dwcdp.metasync;
 
+import org.gbif.api.model.crawler.FinishReason;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.DwcDpMetadataSyncFinishedMessage;
 import org.gbif.common.messaging.api.messages.DwcDpValidationFinishedMessage;
@@ -33,6 +34,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import static org.gbif.crawler.constants.CrawlerNodePaths.FINISHED_REASON;
 import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_CHECKLIST;
 import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_OCCURRENCE;
 import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_SAMPLE;
@@ -83,7 +85,7 @@ class DwcDpMetasyncCallbackTest {
         new DwcDpMetasyncCallback(
             registryClient, tempDir.toFile(), curator, publisher, new DwcDpMetadataDocumentConverter());
 
-    callback.handleMessage(buildMessage(datasetKey, 2, true, new DatapackageAnalysisResult(null)));
+    callback.handleMessage(buildMessage(datasetKey, 2, true, new DatapackageAnalysisResult(null, null, null)));
 
     ArgumentCaptor<byte[]> rawDocumentCaptor = ArgumentCaptor.forClass(byte[].class);
     ArgumentCaptor<String> jsonCaptor = ArgumentCaptor.forClass(String.class);
@@ -116,7 +118,7 @@ class DwcDpMetasyncCallbackTest {
         new DwcDpMetasyncCallback(
             registryClient, tempDir.toFile(), curator, publisher, new DwcDpMetadataDocumentConverter());
 
-    callback.handleMessage(buildMessage(datasetKey, 1, true, new DatapackageAnalysisResult(null)));
+    callback.handleMessage(buildMessage(datasetKey, 1, true, new DatapackageAnalysisResult(null, null, null)));
 
     ArgumentCaptor<byte[]> emlStreamCaptor = ArgumentCaptor.forClass(byte[].class);
     ArgumentCaptor<String> dpJsonCaptor = ArgumentCaptor.forClass(String.class);
@@ -133,6 +135,25 @@ class DwcDpMetasyncCallbackTest {
     assertTrue(emlContent.contains("<title>Sample EML Dataset</title>"));
 
     assertMetadataSyncFinishedPublished(datasetKey, 1);
+    assertCrawlFinished(datasetKey);
+  }
+
+  @Test
+  void skipsMetadataSyncWhenValidationMessageIsInvalid() throws Exception {
+    UUID datasetKey = UUID.randomUUID();
+
+    DwcDpMetasyncCallback callback =
+        new DwcDpMetasyncCallback(
+            registryClient, tempDir.toFile(), curator, publisher, new DwcDpMetadataDocumentConverter());
+
+    callback.handleMessage(buildMessage(datasetKey, 2, false, new DatapackageAnalysisResult(null, null, null)));
+
+    verifyNoMoreInteractions(registryClient, publisher);
+    assertEquals(
+        FinishReason.ABORT.name(),
+        new String(
+            curator.getData().forPath(getCrawlInfoPath(datasetKey, FINISHED_REASON)),
+            StandardCharsets.UTF_8));
     assertCrawlFinished(datasetKey);
   }
 

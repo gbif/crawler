@@ -1,0 +1,39 @@
+services:
+  zookeeper:
+    image: zookeeper:3.8
+    container_name: local-zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOO_MY_ID: 1
+      ZOO_PORT: 2181
+      # Allow `ruok` health checks via the four-letter-words API.
+      ZOO_4LW_COMMANDS_WHITELIST: "ruok,stat,mntr,conf"
+    healthcheck:
+      test: ["CMD-SHELL", "echo ruok | nc -w 2 localhost 2181 | grep -q imok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - crawler-local
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: local-rabbitmq
+    ports:
+      - "5672:5672"   # AMQP port
+      - "15672:15672" # Management UI (http://localhost:15672, guest/guest)
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - crawler-local
+
+networks:
+  crawler-local:
+    driver: bridge

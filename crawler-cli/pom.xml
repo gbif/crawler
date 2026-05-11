@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.gbif.crawler</groupId>
     <artifactId>crawler-motherpom</artifactId>
-    <version>2.0.11-DpToMetadata-SNAPSHOT</version>
+    <version>2.0.11-SNAPSHOT</version>
   </parent>
 
   <artifactId>crawler-cli</artifactId>
@@ -183,6 +183,11 @@
     <dependency>
       <groupId>org.gbif</groupId>
       <artifactId>gbif-wrangler</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.gbif</groupId>
+      <artifactId>dwc-dp-analyser-service-api</artifactId>
+      <version>${dwc-dp-analyser.version}</version>
     </dependency>
     <dependency>
       <groupId>org.gbif.common</groupId>

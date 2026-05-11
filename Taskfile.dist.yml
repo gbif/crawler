@@ -7,6 +7,7 @@ version: '3'
 #   task local                                  # bring up RabbitMQ + ZooKeeper for local dev
 #   task package                                # build the crawler-cli fat jar (skip tests)
 #   IMAGE=crawler-cli:dev task docker:build     # build a single-arch local image
+#   CRAWLER_UID=2001 CRAWLER_GID=2001 task docker:build   # match GBIF dev NFS + helm values-dev
 #   task docker:run:local                       # run the image against the local stack;
 #                                               # defaults to dwcdp-metasync with archives
 #                                               # under ~/data/dwcdp. Override DATA_DIR and
@@ -20,6 +21,12 @@ version: '3'
 
 vars:
   IMAGE: '{{.IMAGE | default "crawler-cli:latest"}}'
+  # Docker Hub by default for developer machines. CI sets BASE_REGISTRY=third-party
+  # so the Dockerfile pulls from the GBIF mirror instead.
+  BASE_REGISTRY: '{{.BASE_REGISTRY | default "docker.io"}}'
+  # Must match Dockerfile defaults unless you align with Helm podSecurityContext (GBIF dev NFS uses 2001).
+  CRAWLER_UID: '{{.CRAWLER_UID | default "1000"}}'
+  CRAWLER_GID: '{{.CRAWLER_GID | default "1000"}}'
   CONTAINER_CLI:
     sh: which docker 2>/dev/null || which podman 2>/dev/null || echo "docker"
 
@@ -42,7 +49,7 @@ tasks:
   docker:build:
     desc: Build a single-arch image for local use (host architecture)
     cmds:
-      - '{{.CONTAINER_CLI}} build -t {{.IMAGE}} .'
+      - '{{.CONTAINER_CLI}} build --build-arg BASE_REGISTRY={{.BASE_REGISTRY}} --build-arg CRAWLER_UID={{.CRAWLER_UID}} --build-arg CRAWLER_GID={{.CRAWLER_GID}} -t {{.IMAGE}} .'
 
   docker:push:dist:
     desc: Build + push multi-arch (amd64 + arm64) manifest. Reads version from crawler-cli/pom.xml.
@@ -54,12 +61,12 @@ tasks:
         sh: mvn -pl crawler-cli help:evaluate -Dexpression=project.version -q -DforceStdout
       FULL_IMAGE: '{{.REGISTRY}}/crawler-cli:{{.POM_VERSION}}'
     cmds:
-      - '{{.CONTAINER_CLI}} build --platform linux/amd64 -t {{.FULL_IMAGE}}-amd64 .'
-      - '{{.CONTAINER_CLI}} build --platform linux/arm64 -t {{.FULL_IMAGE}}-arm64 .'
+      - '{{.CONTAINER_CLI}} build --build-arg BASE_REGISTRY={{.BASE_REGISTRY}} --build-arg CRAWLER_UID={{.CRAWLER_UID}} --build-arg CRAWLER_GID={{.CRAWLER_GID}} --platform linux/amd64 -t {{.FULL_IMAGE}}-amd64 .'
+      - '{{.CONTAINER_CLI}} build --build-arg BASE_REGISTRY={{.BASE_REGISTRY}} --build-arg CRAWLER_UID={{.CRAWLER_UID}} --build-arg CRAWLER_GID={{.CRAWLER_GID}} --platform linux/arm64 -t {{.FULL_IMAGE}}-arm64 .'
       - '{{.CONTAINER_CLI}} push {{.FULL_IMAGE}}-amd64'
       - '{{.CONTAINER_CLI}} push {{.FULL_IMAGE}}-arm64'
-      - '{{.CONTAINER_CLI}} manifest create {{.FULL_IMAGE}} {{.FULL_IMAGE}}-amd64 {{.FULL_IMAGE}}-arm64'
-      - '{{.CONTAINER_CLI}} manifest push {{.FULL_IMAGE}}'
+      - '{{.CONTAINER_CLI}} image rm {{.FULL_IMAGE}} || true'
+      - '{{.CONTAINER_CLI}} buildx imagetools create -t {{.FULL_IMAGE}} {{.FULL_IMAGE}}-amd64 {{.FULL_IMAGE}}-arm64'
 
   docker:run:
     desc: Run a single CLI command in the local image. CRAWLER_COMMAND defaults to dwcdp-metasync.
