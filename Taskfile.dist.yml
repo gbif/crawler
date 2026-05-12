@@ -97,10 +97,10 @@ tasks:
       Examples:
         task docker:run:local
         DATA_DIR=coldp CRAWLER_COMMAND=coldp-metasync   task docker:run:local
-        DATA_DIR=dwcdp CRAWLER_COMMAND=dwcdpdownloader  task docker:run:local
         DATA_DIR=dwca  CRAWLER_COMMAND=downloader       task docker:run:local
         DATA_DIR=abcda CRAWLER_COMMAND=abcdadownloader  task docker:run:local
-      Multi-volume commands (validator, dwca-metasync, camtrapdp*) need a custom
+      Commands that need extra repository paths or multiple mounts
+      (dwcdpdownloader, validator, dwca-metasync, camtrapdp*) need a custom
       docker:run invocation — see README.
     vars:
       DATA_DIR: '{{.DATA_DIR | default "dwcdp"}}'

@@ -59,15 +59,14 @@ To run the packaged image instead of running the CLI from your IDE, `Taskfile.di
 ````shell
 task docker:run:local                                                         # dwcdp-metasync, ~/data/dwcdp
 DATA_DIR=coldp CRAWLER_COMMAND=coldp-metasync   task docker:run:local         # coldp-metasync, ~/data/coldp
-DATA_DIR=dwcdp CRAWLER_COMMAND=dwcdpdownloader  task docker:run:local
 DATA_DIR=dwca  CRAWLER_COMMAND=downloader       task docker:run:local
 DATA_DIR=abcda CRAWLER_COMMAND=abcdadownloader  task docker:run:local
 ````
 
 `DATA_DIR` should match the `archiveRepository` name in [`helm/values.yaml`](helm/values.yaml). Commands that require
-multiple shared volumes (`validator`, `dwca-metasync`, `camtrapdp*`) are not covered by `docker:run:local`; for those,
-call `docker:run` directly with the appropriate `ARCHIVE_REPOSITORY` / `IN_CONTAINER_PATH`, or run the CLI from your
-IDE against the local stack.
+multiple shared volumes or extra repository paths (`dwcdpdownloader`, `validator`, `dwca-metasync`, `camtrapdp*`) are
+not covered by `docker:run:local`; for those, call `docker:run` directly with the appropriate mounts/config, or run the
+CLI from your IDE against the local stack.
 
 ### Building and pushing the image (multi-arch)
 

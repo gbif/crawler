@@ -160,12 +160,15 @@ commands:
     replicaCount: 1
     config:
       archiveRepository: /data/dwcdp
+      unpackedDpRepository: /data/dwcdp-unpacked
       queueName: dwcdp-download
       poolSize: 1
       httpTimeout: 600000
     volumeMounts:
       - name: dwcdp
         mountPath: /data/dwcdp
+      - name: dwcdp-unpacked
+        mountPath: /data/dwcdp-unpacked
   coldpdownloader:
     enabled: true
     workloadKind: Deployment
@@ -274,6 +277,7 @@ volumes:
   # When a volume entry is empty, the chart falls back to `emptyDir: {}`. This avoids
   # Helm's deep-merge producing two volume types when the override file specifies one.
   dwcdp: {}
+  dwcdp-unpacked: {}
   coldp: {}
   dwca: {}
   dwca-unpacked: {}

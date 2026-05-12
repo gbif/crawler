@@ -77,6 +77,10 @@ volumes:
     nfs:
       server: nfs.example.org
       path: /export/crawler/dwcdp
+  dwcdp-unpacked:
+    nfs:
+      server: nfs.example.org
+      path: /export/crawler/dwcdp-unpacked
   coldp:
     nfs:
       server: nfs.example.org

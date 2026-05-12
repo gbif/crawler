@@ -41,7 +41,12 @@ public class DownloaderService extends CrawlServerBaseService<DwcDpConfiguration
   @Override
   protected QueueConsumer<UUID> newConsumer(
       CuratorFramework curator, MessagePublisher publisher, DwcDpConfiguration config) {
-    return new DwcDpCrawlConsumer(curator, publisher, config.archiveRepository, config.httpTimeout,
-                                  config.registry.newClientBuilder().build(DatasetClient.class));
+    return new DwcDpCrawlConsumer(
+        curator,
+        publisher,
+        config.archiveRepository,
+        config.unpackedDpRepository,
+        config.httpTimeout,
+        config.registry.newClientBuilder().build(DatasetClient.class));
   }
 }
