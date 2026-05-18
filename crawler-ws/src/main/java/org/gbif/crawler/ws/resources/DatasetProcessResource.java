@@ -83,4 +83,10 @@ public class DatasetProcessResource implements DatasetProcessService {
   public List<DatasetProcessStatus> getPendingDwcDpDatasetProcesses() {
     return service.getPendingDwcDpDatasetProcesses();
   }
+
+  @GetMapping("coldp/pending")
+  @Override
+  public List<DatasetProcessStatus> getPendingColDpDatasetProcesses() {
+    return service.getPendingColDpDatasetProcesses();
+  }
 }

@@ -127,6 +127,15 @@ public class DatasetProcessServiceImplTest {
         .creatingParentsIfNeeded()
         .forPath(buildPath(XML_CRAWL, CrawlerNodePaths.QUEUED_CRAWLS));
 
+    curator
+        .create()
+        .creatingParentsIfNeeded()
+        .forPath(buildPath(CrawlerNodePaths.COL_DP_CRAWL, CrawlerNodePaths.RUNNING_CRAWLS));
+    curator
+        .create()
+        .creatingParentsIfNeeded()
+        .forPath(buildPath(CrawlerNodePaths.COL_DP_CRAWL, CrawlerNodePaths.QUEUED_CRAWLS));
+
     for (int i = 0; i < 10; i++) {
       UUID uuid = UUID.randomUUID();
       setupTestCrawl(uuid);

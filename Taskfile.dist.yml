@@ -1,0 +1,130 @@
+version: '3'
+
+# Convenience tasks for the crawler-cli image.
+# Install Task: https://taskfile.dev/installation/
+#
+# Common usage:
+#   task local                                  # bring up RabbitMQ + ZooKeeper for local dev
+#   task package                                # build the crawler-cli fat jar (skip tests)
+#   IMAGE=crawler-cli:dev task docker:build     # build a single-arch local image
+#   CRAWLER_UID=2001 CRAWLER_GID=2001 task docker:build   # match GBIF dev NFS + helm values-dev
+#   task docker:run:local                       # run the image against the local stack;
+#                                               # defaults to dwcdp-metasync with archives
+#                                               # under ~/data/dwcdp. Override DATA_DIR and
+#                                               # CRAWLER_COMMAND for any other single-volume
+#                                               # CLI command (e.g. coldp-metasync, downloader,
+#                                               # abcdadownloader, dwcdpdownloader, ...).
+#   REGISTRY=docker.gbif.org task docker:push:dist
+#                                               # build + push multi-arch (amd64 + arm64) manifest
+#                                               # required because macOS=arm64 but the GBIF
+#                                               # cluster nodes are amd64.
+
+vars:
+  IMAGE: '{{.IMAGE | default "crawler-cli:latest"}}'
+  # Docker Hub by default for developer machines. CI sets BASE_REGISTRY=third-party
+  # so the Dockerfile pulls from the GBIF mirror instead.
+  BASE_REGISTRY: '{{.BASE_REGISTRY | default "docker.io"}}'
+  # Must match Dockerfile defaults unless you align with Helm podSecurityContext (GBIF dev NFS uses 2001).
+  CRAWLER_UID: '{{.CRAWLER_UID | default "1000"}}'
+  CRAWLER_GID: '{{.CRAWLER_GID | default "1000"}}'
+  CONTAINER_CLI:
+    sh: which docker 2>/dev/null || which podman 2>/dev/null || echo "docker"
+
+tasks:
+  clean:
+    desc: Run mvn clean
+    cmds:
+      - mvn clean
+
+  package:
+    desc: Build the crawler-cli fat jar (skip tests)
+    cmds:
+      - mvn -pl crawler-cli -am -DskipTests package
+
+  verify:
+    desc: Run the full Maven verify lifecycle (with tests)
+    cmds:
+      - mvn verify
+
+  docker:build:
+    desc: Build a single-arch image for local use (host architecture)
+    cmds:
+      - '{{.CONTAINER_CLI}} build --build-arg BASE_REGISTRY={{.BASE_REGISTRY}} --build-arg CRAWLER_UID={{.CRAWLER_UID}} --build-arg CRAWLER_GID={{.CRAWLER_GID}} -t {{.IMAGE}} .'
+
+  docker:push:dist:
+    desc: Build + push multi-arch (amd64 + arm64) manifest. Reads version from crawler-cli/pom.xml.
+    prompt: Do you want to build and push the multi-arch image to {{.REGISTRY}}?
+    requires:
+      vars: [REGISTRY]
+    vars:
+      POM_VERSION:
+        sh: mvn -pl crawler-cli help:evaluate -Dexpression=project.version -q -DforceStdout
+      FULL_IMAGE: '{{.REGISTRY}}/crawler-cli:{{.POM_VERSION}}'
+    cmds:
+      - '{{.CONTAINER_CLI}} build --build-arg BASE_REGISTRY={{.BASE_REGISTRY}} --build-arg CRAWLER_UID={{.CRAWLER_UID}} --build-arg CRAWLER_GID={{.CRAWLER_GID}} --platform linux/amd64 -t {{.FULL_IMAGE}}-amd64 .'
+      - '{{.CONTAINER_CLI}} build --build-arg BASE_REGISTRY={{.BASE_REGISTRY}} --build-arg CRAWLER_UID={{.CRAWLER_UID}} --build-arg CRAWLER_GID={{.CRAWLER_GID}} --platform linux/arm64 -t {{.FULL_IMAGE}}-arm64 .'
+      - '{{.CONTAINER_CLI}} push {{.FULL_IMAGE}}-amd64'
+      - '{{.CONTAINER_CLI}} push {{.FULL_IMAGE}}-arm64'
+      - '{{.CONTAINER_CLI}} image rm {{.FULL_IMAGE}} || true'
+      - '{{.CONTAINER_CLI}} buildx imagetools create -t {{.FULL_IMAGE}} {{.FULL_IMAGE}}-amd64 {{.FULL_IMAGE}}-arm64'
+
+  docker:run:
+    desc: Run a single CLI command in the local image. CRAWLER_COMMAND defaults to dwcdp-metasync.
+    requires:
+      vars: [ARCHIVE_REPOSITORY]
+    vars:
+      IN_CONTAINER_PATH: '{{.IN_CONTAINER_PATH | default "/data/dwcdp"}}'
+    cmds:
+      # --add-host makes host.docker.internal resolve to the host gateway on Linux too,
+      # not just on Docker Desktop, so the same defaults work for every developer.
+      - '{{.CONTAINER_CLI}} run --rm
+          --add-host=host.docker.internal:host-gateway
+          -v {{.ARCHIVE_REPOSITORY}}:{{.IN_CONTAINER_PATH}}
+          -e CRAWLER_COMMAND={{.CRAWLER_COMMAND | default "dwcdp-metasync"}}
+          -e RABBIT_HOST={{.RABBIT_HOST | default "host.docker.internal"}}
+          -e RABBIT_PORT={{.RABBIT_PORT | default "5672"}}
+          -e RABBIT_USER={{.RABBIT_USER | default "guest"}}
+          -e RABBIT_PASSWORD={{.RABBIT_PASSWORD | default "guest"}}
+          -e ZOOKEEPER_CONNECTION_STRING={{.ZOOKEEPER_CONNECTION_STRING | default "host.docker.internal:2181"}}
+          -e REGISTRY_WS_URL={{.REGISTRY_WS_URL | default "http://host.docker.internal:8080"}}
+          {{.IMAGE}}'
+
+  docker:run:local:
+    desc: |
+      Run any single-volume CLI command in the local image with archives under
+      ~/data/{DATA_DIR}, mounted at /data/{DATA_DIR}. Defaults to dwcdp-metasync.
+      DATA_DIR should match the archiveRepository name in helm/values.yaml.
+      Examples:
+        task docker:run:local
+        DATA_DIR=coldp CRAWLER_COMMAND=coldp-metasync   task docker:run:local
+        DATA_DIR=dwca  CRAWLER_COMMAND=downloader       task docker:run:local
+        DATA_DIR=abcda CRAWLER_COMMAND=abcdadownloader  task docker:run:local
+      Commands that need extra repository paths or multiple mounts
+      (dwcdpdownloader, validator, dwca-metasync, camtrapdp*) need a custom
+      docker:run invocation — see README.
+    vars:
+      DATA_DIR: '{{.DATA_DIR | default "dwcdp"}}'
+      CRAWLER_COMMAND: '{{.CRAWLER_COMMAND | default "dwcdp-metasync"}}'
+    cmds:
+      - mkdir -p {{.HOME}}/data/{{.DATA_DIR}}
+      - task: docker:run
+        vars:
+          CRAWLER_COMMAND: '{{.CRAWLER_COMMAND}}'
+          ARCHIVE_REPOSITORY: '{{.HOME}}/data/{{.DATA_DIR}}'
+          IN_CONTAINER_PATH: '/data/{{.DATA_DIR}}'
+
+  local:
+    desc: Bring up RabbitMQ + ZooKeeper via docker-compose.local.yml
+    cmds:
+      - '{{.CONTAINER_CLI}} compose -f docker-compose.local.yml up -d'
+
+  local:down:
+    desc: Tear down the local RabbitMQ + ZooKeeper stack
+    cmds:
+      - '{{.CONTAINER_CLI}} compose -f docker-compose.local.yml down'
+
+  dist:
+    desc: Build the jar and push the multi-arch image
+    cmds:
+      - task: package
+      - task: docker:push:dist

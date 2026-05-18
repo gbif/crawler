@@ -61,6 +61,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.gbif.crawler.constants.CrawlerNodePaths.COL_DP_CRAWL;
+import static org.gbif.crawler.constants.CrawlerNodePaths.QUEUED_CRAWLS;
+import static org.gbif.crawler.constants.CrawlerNodePaths.buildPath;
 
 @ExtendWith(MockitoExtension.class)
 public class CrawlerCoordinatorServiceImplTest {
@@ -131,7 +134,7 @@ public class CrawlerCoordinatorServiceImplTest {
     endpoint6.setType(EndpointType.BIOCASE_XML_ARCHIVE);
     endpoints.add(endpoint6);
 
-    List<Endpoint> sortedEndpoints = service.prioritySortEndpoints(endpoints);
+    List<Endpoint> sortedEndpoints = CrawlerCoordinatorServiceImpl.prioritySortEndpoints(endpoints);
 
     assertEquals(5, sortedEndpoints.size());
     assertThat(sortedEndpoints, contains(endpoint1, endpoint6, endpoint4, endpoint3, endpoint5));
@@ -152,7 +155,7 @@ public class CrawlerCoordinatorServiceImplTest {
     endpoint2.setType(EndpointType.DWC_ARCHIVE);
     endpoints.add(endpoint2);
 
-    List<Endpoint> sortedEndpoints = service.prioritySortEndpoints(endpoints);
+    List<Endpoint> sortedEndpoints = CrawlerCoordinatorServiceImpl.prioritySortEndpoints(endpoints);
 
     assertEquals(2, sortedEndpoints.size());
     assertThat(sortedEndpoints, contains(endpoint1, endpoint2));
@@ -163,14 +166,14 @@ public class CrawlerCoordinatorServiceImplTest {
     endpoint1.setCreated(new Date(now));
     endpoint2.setCreated(new Date(now - 100000));
 
-    sortedEndpoints = service.prioritySortEndpoints(endpoints);
+    sortedEndpoints = CrawlerCoordinatorServiceImpl.prioritySortEndpoints(endpoints);
     assertEquals(2, sortedEndpoints.size());
     assertThat(sortedEndpoints, contains(endpoint2, endpoint1));
     assertEquals(endpoint2, sortedEndpoints.get(0));
 
     // now add created dates
     endpoint1.setCreated(new Date(now - 200000));
-    sortedEndpoints = service.prioritySortEndpoints(endpoints);
+    sortedEndpoints = CrawlerCoordinatorServiceImpl.prioritySortEndpoints(endpoints);
     assertThat(sortedEndpoints, contains(endpoint1, endpoint2));
     assertEquals(endpoint1, sortedEndpoints.get(0));
   }
@@ -272,5 +275,26 @@ public class CrawlerCoordinatorServiceImplTest {
 
     List<String> children = curator.getChildren().forPath("/crawls");
     assertTrue(children.isEmpty());
+  }
+
+  @Test
+  public void testScheduleColdDp() throws Exception {
+    when(metadataSynchronizer.getDatasetCount(any(), any())).thenReturn(null);
+    PagingResponse<DatasetProcessStatus> mockResponse = new PagingResponse<>();
+    mockResponse.setResults(Collections.emptyList());
+    when(datasetProcessStatusService.listDatasetProcessStatus(any(), any())).thenReturn(mockResponse);
+    when(datasetService.get(uuid)).thenReturn(dataset);
+    when(pipelinesHistoryClient.getRunningExecutionKey(uuid)).thenReturn(null);
+
+    Endpoint endpoint = new Endpoint();
+    endpoint.setType(EndpointType.COLDP);
+    endpoint.setUrl(URI.create("https://example.org/archive.zip"));
+    dataset.getEndpoints().add(endpoint);
+
+    service.initiateCrawl(uuid, 5, Platform.ALL);
+
+    List<String> queued = curator.getChildren().forPath(buildPath(COL_DP_CRAWL, QUEUED_CRAWLS));
+    assertEquals(1, queued.size());
+    assertEquals(uuid.toString(), curator.getChildren().forPath("/crawls").get(0));
   }
 }

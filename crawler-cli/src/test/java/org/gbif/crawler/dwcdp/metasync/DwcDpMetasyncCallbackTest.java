@@ -1,0 +1,251 @@
+package org.gbif.crawler.dwcdp.metasync;
+
+import org.gbif.api.model.crawler.FinishReason;
+import org.gbif.common.messaging.api.MessagePublisher;
+import org.gbif.common.messaging.api.messages.DwcDpMetadataSyncFinishedMessage;
+import org.gbif.common.messaging.api.messages.DwcDpValidationFinishedMessage;
+import org.gbif.crawler.common.OkHttpRegistryMetadataClient;
+import org.gbif.api.vocabulary.MetadataType;
+import org.gbif.crawler.dwcdp.DwcDpConfiguration;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.UUID;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.curator.retry.RetryOneTime;
+import org.apache.curator.test.TestingServer;
+
+import org.gbif.dp.analysis.api.DatapackageAnalysisResult;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import static org.gbif.crawler.constants.CrawlerNodePaths.FINISHED_REASON;
+import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_CHECKLIST;
+import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_OCCURRENCE;
+import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_SAMPLE;
+import static org.gbif.crawler.constants.CrawlerNodePaths.getCrawlInfoPath;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+
+@ExtendWith(MockitoExtension.class)
+class DwcDpMetasyncCallbackTest {
+
+  private static final ObjectMapper MAPPER = new ObjectMapper();
+
+  @TempDir java.nio.file.Path tempDir;
+
+  @Mock private OkHttpRegistryMetadataClient registryClient;
+  @Mock private MessagePublisher publisher;
+
+  private TestingServer server;
+  private CuratorFramework curator;
+
+  @BeforeEach
+  void setUp() throws Exception {
+    server = new TestingServer();
+    curator =
+        CuratorFrameworkFactory.builder()
+            .connectString(server.getConnectString())
+            .namespace("crawler")
+            .retryPolicy(new RetryOneTime(1))
+            .build();
+    curator.start();
+  }
+
+  @AfterEach
+  void tearDown() throws Exception {
+    curator.close();
+    server.close();
+  }
+
+  @Test
+  void forwardsDatapackageMetadataToRegistryAndMarksCrawlFinished() throws Exception {
+    UUID datasetKey = UUID.randomUUID();
+    createArchiveWithDatapackageOnly(datasetKey, 2);
+
+    DwcDpMetasyncCallback callback =
+        new DwcDpMetasyncCallback(
+            registryClient, tempDir.toFile(), curator, publisher, new DwcDpMetadataDocumentConverter());
+
+    callback.handleMessage(buildMessage(datasetKey, 2, true, new DatapackageAnalysisResult(null, null, null)));
+
+    ArgumentCaptor<byte[]> rawDocumentCaptor = ArgumentCaptor.forClass(byte[].class);
+    ArgumentCaptor<String> jsonCaptor = ArgumentCaptor.forClass(String.class);
+    verify(registryClient)
+        .insertMetadata(
+            eq(datasetKey), rawDocumentCaptor.capture(), jsonCaptor.capture(), eq(MetadataType.DWC_DP));
+    verifyNoMoreInteractions(registryClient);
+
+    String rawDocument =
+        new String(rawDocumentCaptor.getValue(), StandardCharsets.UTF_8);
+    String json = jsonCaptor.getValue();
+    JsonNode rawTree = MAPPER.readTree(rawDocument);
+    JsonNode contentTree = MAPPER.readTree(json);
+    assertEquals("Sample DwcDP", rawTree.path("name").asText());
+    assertEquals("CC0-1.0", rawTree.path("license").asText());
+    assertEquals("Sample DwcDP", contentTree.path("name").asText());
+    assertEquals("https://doi.org/10.15468/sample", contentTree.path("id").asText());
+    assertEquals("jane@example.org", contentTree.path("contributors").get(0).path("email").asText());
+
+    assertMetadataSyncFinishedPublished(datasetKey, 2);
+    assertCrawlFinished(datasetKey);
+  }
+
+  @Test
+  void forwardsDatapackageAndEmlToRegistryWhenEmlPresent() throws Exception {
+    UUID datasetKey = UUID.randomUUID();
+    createArchiveWithDatapackageAndEml(datasetKey, 1);
+
+    DwcDpMetasyncCallback callback =
+        new DwcDpMetasyncCallback(
+            registryClient, tempDir.toFile(), curator, publisher, new DwcDpMetadataDocumentConverter());
+
+    callback.handleMessage(buildMessage(datasetKey, 1, true, new DatapackageAnalysisResult(null, null, null)));
+
+    ArgumentCaptor<byte[]> emlStreamCaptor = ArgumentCaptor.forClass(byte[].class);
+    ArgumentCaptor<String> dpJsonCaptor = ArgumentCaptor.forClass(String.class);
+    verify(registryClient)
+        .insertMetadata(
+            eq(datasetKey), emlStreamCaptor.capture(), dpJsonCaptor.capture(), eq(MetadataType.EML));
+    verifyNoMoreInteractions(registryClient);
+
+    String dpJson = dpJsonCaptor.getValue();
+    assertTrue(dpJson.contains("\"name\":\"Sample DwcDP\""));
+
+    String emlContent =
+        new String(emlStreamCaptor.getValue(), StandardCharsets.UTF_8);
+    assertTrue(emlContent.contains("<title>Sample EML Dataset</title>"));
+
+    assertMetadataSyncFinishedPublished(datasetKey, 1);
+    assertCrawlFinished(datasetKey);
+  }
+
+  @Test
+  void skipsMetadataSyncWhenValidationMessageIsInvalid() throws Exception {
+    UUID datasetKey = UUID.randomUUID();
+
+    DwcDpMetasyncCallback callback =
+        new DwcDpMetasyncCallback(
+            registryClient, tempDir.toFile(), curator, publisher, new DwcDpMetadataDocumentConverter());
+
+    callback.handleMessage(buildMessage(datasetKey, 2, false, new DatapackageAnalysisResult(null, null, null)));
+
+    verifyNoMoreInteractions(registryClient, publisher);
+    assertEquals(
+        FinishReason.ABORT.name(),
+        new String(
+            curator.getData().forPath(getCrawlInfoPath(datasetKey, FINISHED_REASON)),
+            StandardCharsets.UTF_8));
+    assertCrawlFinished(datasetKey);
+  }
+
+  private void assertMetadataSyncFinishedPublished(UUID datasetKey, int attempt) throws Exception {
+    ArgumentCaptor<DwcDpMetadataSyncFinishedMessage> messageCaptor =
+        ArgumentCaptor.forClass(DwcDpMetadataSyncFinishedMessage.class);
+    verify(publisher).send(messageCaptor.capture(), eq(true));
+
+    DwcDpMetadataSyncFinishedMessage message = messageCaptor.getValue();
+    assertEquals(datasetKey, message.getDatasetUuid());
+    assertEquals(attempt, message.getAttempt());
+  }
+
+  private void assertCrawlFinished(UUID datasetKey) throws Exception {
+    assertEquals(
+        "FINISHED",
+        new String(
+            curator.getData().forPath(getCrawlInfoPath(datasetKey, PROCESS_STATE_OCCURRENCE)),
+            StandardCharsets.UTF_8));
+    assertEquals(
+        "FINISHED",
+        new String(
+            curator.getData().forPath(getCrawlInfoPath(datasetKey, PROCESS_STATE_CHECKLIST)),
+            StandardCharsets.UTF_8));
+    assertEquals(
+        "FINISHED",
+        new String(
+            curator.getData().forPath(getCrawlInfoPath(datasetKey, PROCESS_STATE_SAMPLE)),
+            StandardCharsets.UTF_8));
+  }
+
+  private DwcDpValidationFinishedMessage buildMessage(UUID datasetKey, int attempt, Boolean valid, DatapackageAnalysisResult datapackageAnalysisResult) {
+    return new DwcDpValidationFinishedMessage(
+        datasetKey,
+        attempt,
+        valid,
+        datapackageAnalysisResult);
+  }
+
+  private File createArchiveWithDatapackageOnly(UUID datasetKey, int attempt) throws Exception {
+    File archive = prepareArchiveFile(datasetKey, attempt);
+    try (ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(archive))) {
+      writeDatapackageEntry(zos);
+    }
+    return archive;
+  }
+
+  private File createArchiveWithDatapackageAndEml(UUID datasetKey, int attempt) throws Exception {
+    File archive = prepareArchiveFile(datasetKey, attempt);
+    try (ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(archive))) {
+      writeDatapackageEntry(zos);
+      zos.putNextEntry(new ZipEntry("eml.xml"));
+      zos.write(
+          """
+          <?xml version="1.0" encoding="UTF-8"?>
+          <eml:eml xmlns:eml="eml://ecoinformatics.org/eml-2.1.1">
+            <dataset>
+              <title>Sample EML Dataset</title>
+            </dataset>
+          </eml:eml>
+          """
+              .getBytes(StandardCharsets.UTF_8));
+      zos.closeEntry();
+    }
+    return archive;
+  }
+
+  private File prepareArchiveFile(UUID datasetKey, int attempt) {
+    File datasetDirectory = tempDir.resolve(datasetKey.toString()).toFile();
+    datasetDirectory.mkdirs();
+    return new File(
+        datasetDirectory, datasetKey + "." + attempt + DwcDpConfiguration.DWC_DP_SUFFIX);
+  }
+
+  private void writeDatapackageEntry(ZipOutputStream zos) throws Exception {
+    zos.putNextEntry(new ZipEntry("datapackage.json"));
+    zos.write(
+        """
+        {
+          "id": "https://doi.org/10.15468/sample",
+          "name": "Sample DwcDP",
+          "license": "CC0-1.0",
+          "contributors": [
+            {
+              "title": "Jane Doe",
+              "email": "jane@example.org",
+              "role": "publisher"
+            }
+          ]
+        }
+        """
+            .getBytes(StandardCharsets.UTF_8));
+    zos.closeEntry();
+  }
+}
