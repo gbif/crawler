@@ -1,0 +1,185 @@
+# Template for a second Helm values file.
+# Copy to `helm/values-dev.yaml`, replace hosts/paths/tags with your environment, create Secrets, then:
+#
+#   cp helm/values-dev.yaml.example helm/values-dev.yaml
+#   helm upgrade --install crawler-cli ./helm -f helm/values-dev.yaml -n <namespace>
+#
+# Keys omitted here keep the defaults from ./values.yaml.
+
+image:
+  repository: docker.io
+  name: crawler-cli
+  tag: 1.0.0-example
+  pullPolicy: IfNotPresent
+
+# Align with the uid/gid of the `crawler` user in your image (Dockerfile defaults: 1000) and with shared volume ownership on the nodes.
+podSecurityContext:
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+
+# Create Secrets before install (do not put real passwords in this file):
+#   kubectl -n crawler create secret generic crawler-rabbitmq-credentials \
+#     --from-literal=username=... --from-literal=password=...
+#   kubectl -n crawler create secret generic crawler-registry-credentials \
+#     --from-literal=username=... --from-literal=password=...
+rabbit:
+  host: rabbitmq.crawler.svc.cluster.local
+  port: 5672
+  vhost: /crawler
+  createSecret: false
+  credentialsSecret: crawler-rabbitmq-credentials
+
+zooKeeper:
+  connectionString: zk-0.zookeeper.crawler.svc.cluster.local:2181,zk-1.zookeeper.crawler.svc.cluster.local:2181
+  namespace: crawler_dev
+  sleepTime: 1000
+  maxRetries: 3
+
+registry:
+  wsUrl: https://registry-api.example.org/v1/
+  createSecret: false
+  credentialsSecret: crawler-registry-credentials
+
+# Optional: ship logs to Logstash UDP. Replace host with your collector; remove this block for console-only (values.yaml default).
+log:
+  level: INFO
+  logback:
+    config: |-
+      <configuration>
+        <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+          <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>%d{HH:mm:ss} %-5level %logger{36} - %msg%n</pattern>
+          </encoder>
+        </appender>
+        <appender name="LOGSTASH" class="net.logstash.logback.appender.LogstashUdpSocketAppender">
+          <host>logstash.logging.svc.cluster.local</host>
+          <port>5000</port>
+          <layout class="net.logstash.logback.layout.LogstashLayout">
+            <customFields>{"environment":"dev","class":"crawl","service":"crawler-cli-${CRAWLER_COMMAND:-unknown}"}</customFields>
+          </layout>
+        </appender>
+
+        <logger name="org.apache.zookeeper" level="WARN"/>
+        <logger name="org.apache.http" level="WARN"/>
+        <logger name="com.netflix.curator.framework" level="WARN"/>
+        <logger name="com.google.inject.internal.ProxyFactory" level="ERROR"/>
+
+        <root level="${LOG_LEVEL:-INFO}">
+          <appender-ref ref="LOGSTASH"/>
+          <appender-ref ref="CONSOLE"/>
+        </root>
+      </configuration>
+
+# Shared NFS (or other volume sources) — replace server/path with your storage layout.
+volumes:
+  dwcdp:
+    nfs:
+      server: nfs.example.org
+      path: /export/crawler/dwcdp
+  dwcdp-unpacked:
+    nfs:
+      server: nfs.example.org
+      path: /export/crawler/dwcdp-unpacked
+  coldp:
+    nfs:
+      server: nfs.example.org
+      path: /export/crawler/coldp
+  dwca:
+    nfs:
+      server: nfs.example.org
+      path: /export/crawler/dwca
+  dwca-unpacked:
+    nfs:
+      server: nfs.example.org
+      path: /export/crawler/dwca-unpacked
+  abcda:
+    nfs:
+      server: nfs.example.org
+      path: /export/crawler/abcda
+  camtrapdp:
+    nfs:
+      server: nfs.example.org
+      path: /export/crawler/camtrapdp
+  camtrapdp-unpacked:
+    nfs:
+      server: nfs.example.org
+      path: /export/crawler/camtrapdp-unpacked
+  camtrapdp-dwca:
+    nfs:
+      server: nfs.example.org
+      path: /export/crawler/camtrapdp-dwca
+  unpacked:
+    nfs:
+      server: nfs.example.org
+      path: /export/crawler/unpacked
+
+# Toggles and dev-only URLs — replace in-cluster / public URLs with yours.
+commands:
+  dwcdpdownloader:
+    enabled: true
+  coldpdownloader:
+    enabled: true
+  dwcdp-metasync:
+    enabled: true
+  coldp-metasync:
+    enabled: true
+
+  downloader:
+    config:
+      queueName: dwca-validator
+  validator:
+    config: {}
+  dwca-metasync:
+    config: {}
+
+  abcdadownloader:
+    config: {}
+
+  camtrapdpdownloader:
+    config:
+      dockerImage: example.org/camtrap-dp-to-dwca:1.0.0
+  camtrapdptodwca:
+    config:
+      dockerImage: example.org/camtrap-dp-to-dwca:1.0.0
+
+  scheduler:
+    config:
+      crawlerWsUrl: http://crawler-ws.crawler.svc.cluster.local:8080
+      registryWsUrl: https://registry-api.example.org/v1/
+      supportedTypes: []
+  coordinator:
+    config:
+      queueName: crawler_coordinator
+  crawlserver:
+    config: {}
+
+  metasync:
+    config:
+      queueName: metasync
+
+  coordinatorcleanup:
+    config:
+      wsUrl: http://crawler-ws.crawler.svc.cluster.local:8080
+
+  startcrawl:
+    config:
+      datasetUuid: 00000000-0000-0000-0000-000000000000
+      priority: 0
+  crawleverything:
+    config:
+      registryWsUrl: https://registry-api.example.org/v1/
+  metasynceverything:
+    config:
+      registryWsUrl: https://registry-api.example.org/v1/
+  pusheml:
+    config:
+      unpackedRepository: /data/unpacked
+
+resources:
+  requests:
+    memory: 512Mi
+    cpu: 250m
+  limits:
+    memory: 2Gi
+    cpu: 1000m

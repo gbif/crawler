@@ -1,0 +1,134 @@
+{{- range $name, $command := .Values.commands }}
+{{- if and $command.enabled (eq (default "Deployment" $command.workloadKind) "Deployment") }}
+{{- $sections := default dict $command.configSections }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $name }}
+  labels:
+    app: {{ $name }}
+spec:
+  replicas: {{ default 1 $command.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ $name }}
+  template:
+    metadata:
+      labels:
+        app: {{ $name }}
+    spec:
+      # The crawler-cli only talks to RabbitMQ, ZooKeeper and the Registry HTTP API,
+      # so it does not need a Kubernetes API token mounted into the pod.
+      automountServiceAccountToken: false
+      {{- with $.Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      initContainers:
+        - name: wait-for-rabbitmq
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - i=0; while [ $i -lt 12 ]; do nc -z {{ $.Values.rabbit.host }} {{ $.Values.rabbit.port }} && exit 0; i=$((i+1)); sleep 5; done; exit 1
+          resources:
+            {{- toYaml $.Values.initContainerResources | nindent 12 }}
+      containers:
+        - name: {{ $name }}
+          image: "{{ $.Values.image.repository }}/{{ $.Values.image.name }}:{{ $.Values.image.tag }}"
+          imagePullPolicy: {{ $.Values.image.pullPolicy }}
+          {{- with $.Values.containerSecurityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          env:
+            - name: JVM_OPTIONS
+              value: {{ $.Values.jvmOptions | quote }}
+            - name: CRAWLER_COMMAND
+              value: {{ $command.command | quote }}
+            - name: LOG_LEVEL
+              value: {{ $.Values.log.level | quote }}
+            - name: INCLUDE_MESSAGING
+              value: {{ ternary (index $sections "messaging") true (hasKey $sections "messaging") | quote }}
+            - name: INCLUDE_ZOOKEEPER
+              value: {{ ternary (index $sections "zooKeeper") true (hasKey $sections "zooKeeper") | quote }}
+            - name: INCLUDE_REGISTRY
+              value: {{ ternary (index $sections "registry") true (hasKey $sections "registry") | quote }}
+            {{- if $command.config }}
+            - name: CRAWLER_EXTRA_CONFIG_YAML
+              value: |
+                {{- toYaml $command.config | nindent 16 }}
+            {{- end }}
+            - name: RABBIT_HOST
+              value: {{ $.Values.rabbit.host | quote }}
+            - name: RABBIT_PORT
+              value: {{ $.Values.rabbit.port | quote }}
+            - name: RABBIT_VHOST
+              value: {{ $.Values.rabbit.vhost | quote }}
+            - name: RABBIT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Values.rabbit.credentialsSecret }}
+                  key: username
+            - name: RABBIT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Values.rabbit.credentialsSecret }}
+                  key: password
+            - name: ZOOKEEPER_CONNECTION_STRING
+              value: {{ $.Values.zooKeeper.connectionString | quote }}
+            - name: ZOOKEEPER_NAMESPACE
+              value: {{ $.Values.zooKeeper.namespace | quote }}
+            - name: ZOOKEEPER_SLEEP_TIME
+              value: {{ $.Values.zooKeeper.sleepTime | quote }}
+            - name: ZOOKEEPER_MAX_RETRIES
+              value: {{ $.Values.zooKeeper.maxRetries | quote }}
+            - name: REGISTRY_WS_URL
+              value: {{ $.Values.registry.wsUrl | quote }}
+            - name: REGISTRY_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Values.registry.credentialsSecret }}
+                  key: username
+            - name: REGISTRY_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Values.registry.credentialsSecret }}
+                  key: password
+            {{- range $env := $command.extraEnv }}
+            - name: {{ $env.name }}
+              value: {{ $env.value | quote }}
+            {{- end }}
+          volumeMounts:
+            - name: logback-config
+              mountPath: /app/config/logback.xml
+              subPath: logback.xml
+          {{- if $command.volumeMounts }}
+            {{- range $mount := $command.volumeMounts }}
+            - name: {{ $mount.name }}
+              mountPath: {{ $mount.mountPath }}
+              {{- if hasKey $mount "readOnly" }}
+              readOnly: {{ $mount.readOnly }}
+              {{- end }}
+            {{- end }}
+          {{- end }}
+          resources:
+            {{- toYaml (default $.Values.resources $command.resources) | nindent 12 }}
+      volumes:
+        - name: logback-config
+          configMap:
+            name: {{ $.Release.Name }}-logback
+      {{- if $command.volumeMounts }}
+        {{- range $mount := $command.volumeMounts }}
+        - name: {{ $mount.name }}
+          {{- $vol := index $.Values.volumes $mount.name }}
+          {{- if and $vol (gt (len (keys $vol)) 0) }}
+          {{- toYaml $vol | nindent 10 }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+        {{- end }}
+      {{- end }}
+---
+{{- end }}
+{{- end }}

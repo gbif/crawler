@@ -45,6 +45,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 import org.apache.curator.framework.CuratorFramework;
@@ -67,6 +68,7 @@ import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_OCCURREN
 public class CamtrapDpToDwcaCallback
     extends AbstractMessageCallback<CamtrapDpDownloadFinishedMessage> {
 
+  private static final String DATAPACKAGE_JSON = "datapackage.json";
   private static final Map<String, ContactType> ROLE_MAPPING;
 
   static {
@@ -125,16 +127,67 @@ public class CamtrapDpToDwcaCallback
     String datasetKey = message.getDatasetUuid().toString();
     File compressedFile = compressedFilePath(datasetKey, message.getAttempt()).toFile();
     File target = unpackedDpPath(datasetKey).toFile();
-    CompressionUtil.decompressFile(target, compressedFile, true);
+    File temp = Paths.get(config.unpackedDpRepository.toString(), datasetKey + ".tmp").toFile();
+    File backup = Paths.get(config.unpackedDpRepository.toString(), datasetKey + ".bak").toFile();
+
+    recreateDirectory(temp);
+    CompressionUtil.decompressFile(temp, compressedFile, true);
+    validateUnpackedDp(message.getDatasetUuid(), temp);
+    promoteTempDirectory(message.getDatasetUuid(), temp, target, backup);
     log.info("Decompressing is finihed, datasetKey {} ...", message.getDatasetUuid());
   }
 
   /** Deletes a directory recursively if it exists. */
-  private static void recreateDirectory(File directory) {
+  private static void recreateDirectory(File directory) throws IOException {
     if (directory.exists()) {
       FileUtils.deleteDirectoryRecursively(directory);
     }
-    directory.mkdirs();
+    if (!directory.mkdirs() && !directory.isDirectory()) {
+      throw new IOException("Unable to create directory " + directory);
+    }
+  }
+
+  private static void validateUnpackedDp(UUID datasetKey, File unpackedDirectory) throws IOException {
+    File dataPackage = Paths.get(unpackedDirectory.toString(), DATAPACKAGE_JSON).toFile();
+    if (!dataPackage.isFile()) {
+      throw new IOException(
+          "Unpacked CamtrapDP archive for dataset "
+              + datasetKey
+              + " does not contain "
+              + DATAPACKAGE_JSON);
+    }
+  }
+
+  private static void promoteTempDirectory(
+      UUID datasetKey, File tempDirectory, File targetDirectory, File backupDirectory) throws IOException {
+    if (backupDirectory.exists()) {
+      FileUtils.deleteDirectoryRecursively(backupDirectory);
+    }
+
+    boolean movedCurrentToBackup = false;
+    try {
+      if (targetDirectory.exists()) {
+        Files.move(targetDirectory.toPath(), backupDirectory.toPath());
+        movedCurrentToBackup = true;
+      }
+      Files.move(tempDirectory.toPath(), targetDirectory.toPath());
+      if (movedCurrentToBackup && backupDirectory.exists()) {
+        FileUtils.deleteDirectoryRecursively(backupDirectory);
+      }
+    } catch (IOException e) {
+      if (tempDirectory.exists()) {
+        FileUtils.deleteDirectoryRecursively(tempDirectory);
+      }
+      if (movedCurrentToBackup && backupDirectory.exists() && !targetDirectory.exists()) {
+        try {
+          Files.move(backupDirectory.toPath(), targetDirectory.toPath());
+        } catch (IOException restoreException) {
+          e.addSuppressed(restoreException);
+        }
+      }
+      throw new IOException(
+          "Unable to promote unpacked CamtrapDP directory for dataset " + datasetKey, e);
+    }
   }
 
   /** Line-by-line consumes a InputStream. */
@@ -185,6 +238,7 @@ public class CamtrapDpToDwcaCallback
   }
 
   /** Calls the Camtraptor Service to transform the data package into DwC-A. */
+  @SneakyThrows
   private void toDwca(CamtrapDpDownloadFinishedMessage message) {
     try (MDC.MDCCloseable ignored1 =
             MDC.putCloseable("datasetKey", message.getDatasetUuid().toString());
@@ -223,7 +277,7 @@ public class CamtrapDpToDwcaCallback
 
   @SneakyThrows
   private static Optional<License> readLicense(Path unpackedDpPath) {
-    File dataPackage = Paths.get(unpackedDpPath.toString(), "datapackage.json").toFile();
+    File dataPackage = Paths.get(unpackedDpPath.toString(), DATAPACKAGE_JSON).toFile();
 
     JsonNode root = MAPPER.readTree(dataPackage);
     for (JsonNode licenseNode : root.path("licenses")) {
@@ -253,7 +307,7 @@ public class CamtrapDpToDwcaCallback
   private static List<Contact> readContributors(Path unpackedDpPath) {
     List<Contact> contacts = new ArrayList<>();
 
-    File dataPackage = Paths.get(unpackedDpPath.toString(), "datapackage.json").toFile();
+    File dataPackage = Paths.get(unpackedDpPath.toString(), DATAPACKAGE_JSON).toFile();
     JsonNode root = MAPPER.readTree(dataPackage);
 
     for (JsonNode contributorNode : root.path("contributors")) {

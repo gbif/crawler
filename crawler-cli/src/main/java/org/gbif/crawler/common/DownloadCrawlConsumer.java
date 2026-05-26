@@ -70,7 +70,7 @@ public abstract class DownloadCrawlConsumer extends CrawlConsumer {
       int httpTimeout) {
     super(curator, publisher);
     this.archiveRepository = archiveRepository;
-    if (!archiveRepository.exists() && !archiveRepository.isDirectory()) {
+    if (!archiveRepository.exists() || !archiveRepository.isDirectory()) {
       throw new IllegalArgumentException(
           "Archive repository needs to be an existing directory: "
               + archiveRepository.getAbsolutePath());
@@ -121,6 +121,7 @@ public abstract class DownloadCrawlConsumer extends CrawlConsumer {
               new File(datasetDirectory, datasetKey + "." + crawlJob.getAttempt() + getSuffix())
                   .toPath(),
               localFile.toPath());
+          afterSuccessfulDownload(datasetKey, crawlJob, localFile);
           success(datasetKey, crawlJob);
         } else {
           failed(datasetKey);
@@ -193,6 +194,13 @@ public abstract class DownloadCrawlConsumer extends CrawlConsumer {
   }
 
   protected abstract DatasetBasedMessage createFinishedMessage(CrawlJob crawlJob);
+
+  /**
+   * Hook for archive types that need extra work immediately after a successful download, before the
+   * "download finished" message is published.
+   */
+  protected void afterSuccessfulDownload(UUID datasetKey, CrawlJob crawlJob, File localFile)
+      throws IOException {}
 
   protected abstract String getSuffix();
 

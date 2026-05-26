@@ -62,6 +62,7 @@ import static org.gbif.api.vocabulary.TagName.CRAWL_ATTEMPT;
 import static org.gbif.api.vocabulary.TagName.DECLARED_COUNT;
 import static org.gbif.crawler.constants.CrawlerNodePaths.ABCDA_CRAWL;
 import static org.gbif.crawler.constants.CrawlerNodePaths.CAMTRAPDP_CRAWL;
+import static org.gbif.crawler.constants.CrawlerNodePaths.COL_DP_CRAWL;
 import static org.gbif.crawler.constants.CrawlerNodePaths.CRAWL_INFO;
 import static org.gbif.crawler.constants.CrawlerNodePaths.DWCA_CRAWL;
 import static org.gbif.crawler.constants.CrawlerNodePaths.DWC_DP_CRAWL;
@@ -107,6 +108,7 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
   private final DistributedPriorityQueue<UUID> abcdaQueue;
   private final DistributedPriorityQueue<UUID> camtrapDpQueue;
   private final DistributedPriorityQueue<UUID> dwcDpQueue;
+  private final DistributedPriorityQueue<UUID> colDpQueue;
   private final DatasetService datasetService;
   private final DatasetProcessStatusService datasetProcessStatusService;
   private final MetadataSynchronizer metadataSynchronizer;
@@ -139,6 +141,7 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
     abcdaQueue = buildQueue(curator, ABCDA_CRAWL);
     camtrapDpQueue = buildQueue(curator, CAMTRAPDP_CRAWL);
     dwcDpQueue = buildQueue(curator, DWC_DP_CRAWL);
+    colDpQueue = buildQueue(curator, COL_DP_CRAWL);
   }
 
   @Override
@@ -253,6 +256,7 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
         isDarwinCoreArchive(endpoint.get()),
         isCamtrapDpArchive(endpoint.get()),
         isDwcDpArchive(endpoint.get()),
+        isColDpArchive(endpoint.get()),
         priority,
         dataBytes);
     LOG.info("Crawling endpoint [{}] for dataset [{}]", endpoint.get().getUrl(), datasetKey);
@@ -332,6 +336,16 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
    */
   private static boolean isDwcDpArchive(Endpoint endpoint) {
     return EndpointType.DWC_DP == endpoint.getType();
+  }
+
+  /**
+   * Determine if an endpoint should be handled as an COLDP archive or not.
+   *
+   * @param endpoint
+   * @return
+   */
+  private static boolean isColDpArchive(Endpoint endpoint) {
+    return EndpointType.COLDP == endpoint.getType();
   }
 
   /**
@@ -483,6 +497,7 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
       case CAMTRAP_DP:
       case DWC_DP:
       case EML:
+      case COLDP:
         break;
       default:
         // This should never happen as it should've been caught earlier in the process
@@ -624,7 +639,7 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
    * @param dataBytes to put into ZooKeeper
    */
   private void queueCrawlJob(
-      UUID datasetKey, boolean isAbcda, boolean isDwca, boolean isCamtrapDp, boolean isDwcDp,int priority, byte[] dataBytes) {
+      UUID datasetKey, boolean isAbcda, boolean isDwca, boolean isCamtrapDp, boolean isDwcDp, boolean isColDp, int priority, byte[] dataBytes) {
     try {
       // This could in theory fail when two coordinators are running at the same time. They'll have
       // confirmed if this
@@ -645,6 +660,8 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
         camtrapDpQueue.put(datasetKey, priority);
       } else if (isDwcDp) {
         dwcDpQueue.put(datasetKey, priority);
+      } else if (isColDp) {
+        colDpQueue.put(datasetKey, priority);
       } else {
         xmlQueue.put(datasetKey, priority);
       }
