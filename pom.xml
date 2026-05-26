@@ -59,7 +59,7 @@
     <gbif-common.version>0.60</gbif-common.version>
     <gbif-httputils.version>1.3</gbif-httputils.version>
     <gbif-parsers.version>0.67</gbif-parsers.version>
-    <gbif-postal-service.version>2.1.6</gbif-postal-service.version>
+    <gbif-postal-service.version>2.1.7</gbif-postal-service.version>
     <gbif-registry.version>4.2.21</gbif-registry.version>
     <gbif-wrangler.version>1.0.0</gbif-wrangler.version>
     <dwc-dp-analyser.version>0.0.3</dwc-dp-analyser.version>
