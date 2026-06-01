@@ -5,6 +5,7 @@ import org.gbif.api.model.crawler.ProcessState;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.DwcDpMetadataSyncFinishedMessage;
 import org.gbif.common.messaging.api.messages.DwcDpValidationFinishedMessage;
+import org.gbif.common.messaging.api.messages.PipelinesBalancerMessage;
 import org.gbif.crawler.common.OkHttpRegistryMetadataClient;
 import org.gbif.common.messaging.AbstractMessageCallback;
 import org.gbif.crawler.dwcdp.DwcDpConfiguration;
@@ -17,6 +18,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import static org.gbif.crawler.common.ZookeeperUtils.createOrUpdate;
 import static org.gbif.crawler.constants.CrawlerNodePaths.FINISHED_REASON;
 import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_CHECKLIST;
@@ -26,6 +29,8 @@ import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_SAMPLE;
 public class DwcDpMetasyncCallback extends AbstractMessageCallback<DwcDpValidationFinishedMessage> {
 
   private static final Logger LOG = LoggerFactory.getLogger(DwcDpMetasyncCallback.class);
+
+  private static final ObjectMapper MAPPER = new ObjectMapper();
 
   private final OkHttpRegistryMetadataClient registryClient;
   private final File archiveRepository;
@@ -84,7 +89,11 @@ public class DwcDpMetasyncCallback extends AbstractMessageCallback<DwcDpValidati
         }
 
         // Notify downstream consumers only after metadata was accepted by the registry.
-        publisher.send(new DwcDpMetadataSyncFinishedMessage(datasetKey, message.getAttempt()), true);
+        PipelinesBalancerMessage wrapper = new PipelinesBalancerMessage(
+          DwcDpMetadataSyncFinishedMessage.class.getSimpleName(),
+          MAPPER.writeValueAsString(new DwcDpMetadataSyncFinishedMessage(datasetKey, message.getAttempt())
+        ));
+        publisher.send(wrapper, true);
         markFinished(datasetKey);
       } catch (Exception e) {
         LOG.error("Exception caught during DwcDP metadata sync [{}]", datasetKey, e);
