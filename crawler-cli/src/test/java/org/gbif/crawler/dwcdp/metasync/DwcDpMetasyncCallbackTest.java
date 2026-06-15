@@ -4,6 +4,7 @@ import org.gbif.api.model.crawler.FinishReason;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.DwcDpMetadataSyncFinishedMessage;
 import org.gbif.common.messaging.api.messages.DwcDpValidationFinishedMessage;
+import org.gbif.common.messaging.api.messages.PipelinesBalancerMessage;
 import org.gbif.crawler.common.OkHttpRegistryMetadataClient;
 import org.gbif.api.vocabulary.MetadataType;
 import org.gbif.crawler.dwcdp.DwcDpConfiguration;
@@ -158,11 +159,16 @@ class DwcDpMetasyncCallbackTest {
   }
 
   private void assertMetadataSyncFinishedPublished(UUID datasetKey, int attempt) throws Exception {
-    ArgumentCaptor<DwcDpMetadataSyncFinishedMessage> messageCaptor =
-        ArgumentCaptor.forClass(DwcDpMetadataSyncFinishedMessage.class);
-    verify(publisher).send(messageCaptor.capture(), eq(true));
+    ArgumentCaptor<PipelinesBalancerMessage> wrapperCaptor =
+        ArgumentCaptor.forClass(PipelinesBalancerMessage.class);
+    verify(publisher).send(wrapperCaptor.capture(), eq(true));
 
-    DwcDpMetadataSyncFinishedMessage message = messageCaptor.getValue();
+    PipelinesBalancerMessage wrapper = wrapperCaptor.getValue();
+    assertEquals(
+        DwcDpMetadataSyncFinishedMessage.class.getSimpleName(), wrapper.getMessageClass());
+
+    DwcDpMetadataSyncFinishedMessage message =
+        MAPPER.readValue(wrapper.getPayload(), DwcDpMetadataSyncFinishedMessage.class);
     assertEquals(datasetKey, message.getDatasetUuid());
     assertEquals(attempt, message.getAttempt());
   }
