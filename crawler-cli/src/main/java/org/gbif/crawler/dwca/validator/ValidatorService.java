@@ -19,10 +19,12 @@ import org.gbif.api.model.crawler.ProcessState;
 import org.gbif.api.model.registry.Dataset;
 import org.gbif.api.service.registry.DatasetService;
 import org.gbif.api.vocabulary.DatasetType;
+import org.gbif.api.vocabulary.EndpointType;
 import org.gbif.common.messaging.AbstractMessageCallback;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.DwcaDownloadFinishedMessage;
 import org.gbif.common.messaging.api.messages.DwcaValidationFinishedMessage;
+import org.gbif.crawler.CrawlerCoordinatorServiceImpl;
 import org.gbif.crawler.dwca.DwcaConfiguration;
 import org.gbif.crawler.dwca.DwcaService;
 import org.gbif.dwc.Archive;
@@ -133,9 +135,23 @@ public class ValidatorService extends DwcaService {
                 .toPath();
         final Path destinationDir = new File(unpackDirectory, datasetKey.toString()).toPath();
 
-        //Use the destinationDir assuming it was decompressed already
+        // CamtrapDP datasets reach the validator already converted and unpacked into the
+        // destination directory by the CamtrapDP->DwC-A converter; they have no .dwca of their own.
+        // A .dwca sitting in the archive repository for such a dataset is a stale leftover from a
+        // previous DwC-A crawl. Decompressing it would overwrite the freshly converted archive,
+        // so we must validate the unpacked directory instead. Decide from the dataset's prioritised
+        // endpoint - the same signal the coordinator routed the crawl on - rather than guessing
+        // from the presence of a .dwca file.
+        boolean preConvertedArchive =
+            CrawlerCoordinatorServiceImpl.getEndpointToCrawl(dataset)
+                .map(endpoint -> EndpointType.CAMTRAP_DP == endpoint.getType())
+                .orElse(false);
+
+        final Path archivePath =
+            !preConvertedArchive && dwcaFile.toFile().exists() ? dwcaFile : destinationDir;
+
         DwcaValidationReport validationReport =
-            prepareAndRunValidation(dataset, dwcaFile.toFile().exists()? dwcaFile : destinationDir, destinationDir);
+            prepareAndRunValidation(dataset, archivePath, destinationDir);
         if (validationReport.isValid()) {
           createOrUpdate(curator, datasetKey, FINISHED_REASON, FinishReason.NORMAL);
         } else {
