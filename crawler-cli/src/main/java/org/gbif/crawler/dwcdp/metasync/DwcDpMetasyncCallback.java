@@ -13,7 +13,11 @@ import org.gbif.crawler.dwcdp.DwcDpConfiguration;
 import java.io.File;
 import java.util.UUID;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+
 import org.apache.curator.framework.CuratorFramework;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -89,10 +93,7 @@ public class DwcDpMetasyncCallback extends AbstractMessageCallback<DwcDpValidati
         }
 
         // Notify downstream consumers only after metadata was accepted by the registry.
-        PipelinesBalancerMessage wrapper = new PipelinesBalancerMessage(
-          DwcDpMetadataSyncFinishedMessage.class.getSimpleName(),
-          MAPPER.writeValueAsString(new DwcDpMetadataSyncFinishedMessage(datasetKey, message.getAttempt())
-        ));
+        PipelinesBalancerMessage wrapper = createWrapperMessage(message, dp);
         publisher.send(wrapper, true);
         markFinished(datasetKey);
       } catch (Exception e) {
@@ -101,6 +102,33 @@ public class DwcDpMetasyncCallback extends AbstractMessageCallback<DwcDpValidati
         markFinished(datasetKey);
       }
     }
+  }
+
+  private static @NonNull PipelinesBalancerMessage createWrapperMessage(
+    DwcDpValidationFinishedMessage message,
+    DwcDpMetadataDocument dp
+  ) throws JsonProcessingException {
+
+    JsonNode root = MAPPER.readTree(dp.getContentJson());
+    JsonNode resources = root.path("resources");
+
+    boolean containsOccurrences = false;
+    boolean containsEvents = false;
+
+    for (JsonNode resource : resources) {
+      String name = resource.path("name").asText("");
+      if (name.equalsIgnoreCase("occurrence")) {
+        containsOccurrences = true;
+      }
+      if (name.equalsIgnoreCase("event")) {
+        containsEvents = true;
+      }
+    }
+
+    return new PipelinesBalancerMessage(
+      DwcDpMetadataSyncFinishedMessage.class.getSimpleName(),
+      MAPPER.writeValueAsString(new DwcDpMetadataSyncFinishedMessage(message.getDatasetUuid(), message.getAttempt(), containsOccurrences, containsEvents)
+    ));
   }
 
   private File resolveArchive(UUID datasetKey, int attempt) {
