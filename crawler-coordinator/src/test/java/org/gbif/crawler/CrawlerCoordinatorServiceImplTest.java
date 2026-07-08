@@ -54,6 +54,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import static org.gbif.api.vocabulary.TagName.CONCEPTUAL_SCHEMA;
 import static org.gbif.api.vocabulary.TagName.DECLARED_COUNT;
+import static org.gbif.crawler.constants.CrawlerNodePaths.COL_DP_CRAWL;
+import static org.gbif.crawler.constants.CrawlerNodePaths.QUEUED_CRAWLS;
+import static org.gbif.crawler.constants.CrawlerNodePaths.buildPath;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -61,9 +64,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
-import static org.gbif.crawler.constants.CrawlerNodePaths.COL_DP_CRAWL;
-import static org.gbif.crawler.constants.CrawlerNodePaths.QUEUED_CRAWLS;
-import static org.gbif.crawler.constants.CrawlerNodePaths.buildPath;
 
 @ExtendWith(MockitoExtension.class)
 public class CrawlerCoordinatorServiceImplTest {

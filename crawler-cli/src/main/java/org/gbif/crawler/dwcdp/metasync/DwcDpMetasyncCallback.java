@@ -1,23 +1,39 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.gbif.crawler.dwcdp.metasync;
 
 import org.gbif.api.model.crawler.FinishReason;
 import org.gbif.api.model.crawler.ProcessState;
+import org.gbif.common.messaging.AbstractMessageCallback;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.DwcDpMetadataSyncFinishedMessage;
 import org.gbif.common.messaging.api.messages.DwcDpValidationFinishedMessage;
 import org.gbif.common.messaging.api.messages.PipelinesBalancerMessage;
 import org.gbif.crawler.common.OkHttpRegistryMetadataClient;
-import org.gbif.common.messaging.AbstractMessageCallback;
 import org.gbif.crawler.dwcdp.DwcDpConfiguration;
 
 import java.io.File;
 import java.util.UUID;
 
 import org.apache.curator.framework.CuratorFramework;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import static org.gbif.crawler.common.ZookeeperUtils.createOrUpdate;
@@ -89,10 +105,7 @@ public class DwcDpMetasyncCallback extends AbstractMessageCallback<DwcDpValidati
         }
 
         // Notify downstream consumers only after metadata was accepted by the registry.
-        PipelinesBalancerMessage wrapper = new PipelinesBalancerMessage(
-          DwcDpMetadataSyncFinishedMessage.class.getSimpleName(),
-          MAPPER.writeValueAsString(new DwcDpMetadataSyncFinishedMessage(datasetKey, message.getAttempt())
-        ));
+        PipelinesBalancerMessage wrapper = createWrapperMessage(message, dp);
         publisher.send(wrapper, true);
         markFinished(datasetKey);
       } catch (Exception e) {
@@ -101,6 +114,33 @@ public class DwcDpMetasyncCallback extends AbstractMessageCallback<DwcDpValidati
         markFinished(datasetKey);
       }
     }
+  }
+
+  private static @NonNull PipelinesBalancerMessage createWrapperMessage(
+    DwcDpValidationFinishedMessage message,
+    DwcDpMetadataDocument dp
+  ) throws JsonProcessingException {
+
+    JsonNode root = MAPPER.readTree(dp.getContentJson());
+    JsonNode resources = root.path("resources");
+
+    boolean containsOccurrences = false;
+    boolean containsEvents = false;
+
+    for (JsonNode resource : resources) {
+      String name = resource.path("name").asText("");
+      if (name.equalsIgnoreCase("occurrence")) {
+        containsOccurrences = true;
+      }
+      if (name.equalsIgnoreCase("event")) {
+        containsEvents = true;
+      }
+    }
+
+    return new PipelinesBalancerMessage(
+      DwcDpMetadataSyncFinishedMessage.class.getSimpleName(),
+      MAPPER.writeValueAsString(new DwcDpMetadataSyncFinishedMessage(message.getDatasetUuid(), message.getAttempt(), containsOccurrences, containsEvents)
+    ));
   }
 
   private File resolveArchive(UUID datasetKey, int attempt) {
