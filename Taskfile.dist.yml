@@ -28,7 +28,16 @@ vars:
   CRAWLER_UID: '{{.CRAWLER_UID | default "1000"}}'
   CRAWLER_GID: '{{.CRAWLER_GID | default "1000"}}'
   CONTAINER_CLI:
-    sh: which docker 2>/dev/null || which podman 2>/dev/null || echo "docker"
+    sh: |
+      if command -v podman >/dev/null 2>&1; then
+        echo podman
+      elif docker --version 2>/dev/null | grep -qi podman; then
+        echo podman
+      elif command -v docker >/dev/null 2>&1; then
+        echo docker
+      else
+        echo docker
+      fi
 
 tasks:
   clean:
@@ -66,7 +75,15 @@ tasks:
       - '{{.CONTAINER_CLI}} push {{.FULL_IMAGE}}-amd64'
       - '{{.CONTAINER_CLI}} push {{.FULL_IMAGE}}-arm64'
       - '{{.CONTAINER_CLI}} image rm {{.FULL_IMAGE}} || true'
-      - '{{.CONTAINER_CLI}} buildx imagetools create -t {{.FULL_IMAGE}} {{.FULL_IMAGE}}-amd64 {{.FULL_IMAGE}}-arm64'
+      - |
+        if [ "{{.CONTAINER_CLI}}" = "podman" ]; then
+          {{.CONTAINER_CLI}} manifest create {{.FULL_IMAGE}}
+          {{.CONTAINER_CLI}} manifest add {{.FULL_IMAGE}} {{.FULL_IMAGE}}-amd64
+          {{.CONTAINER_CLI}} manifest add {{.FULL_IMAGE}} {{.FULL_IMAGE}}-arm64
+          {{.CONTAINER_CLI}} manifest push {{.FULL_IMAGE}}
+        else
+          {{.CONTAINER_CLI}} buildx imagetools create -t {{.FULL_IMAGE}} {{.FULL_IMAGE}}-amd64 {{.FULL_IMAGE}}-arm64
+        fi
 
   docker:run:
     desc: Run a single CLI command in the local image. CRAWLER_COMMAND defaults to dwcdp-metasync.
