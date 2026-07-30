@@ -151,6 +151,26 @@ class DwcDpMetasyncCallbackTest {
   }
 
   @Test
+  void eventAndMaterialResources_markDatasetAsContainingOccurrences() throws Exception {
+    UUID datasetKey = UUID.randomUUID();
+    createArchiveWithEventAndMaterialResources(datasetKey, 1);
+
+    DwcDpMetasyncCallback callback =
+        new DwcDpMetasyncCallback(
+            registryClient, tempDir.toFile(), curator, publisher, new DwcDpMetadataDocumentConverter());
+    callback.handleMessage(buildMessage(datasetKey, 1, true, new DatapackageAnalysisResult(null, null, null)));
+
+    ArgumentCaptor<PipelinesBalancerMessage> wrapperCaptor =
+        ArgumentCaptor.forClass(PipelinesBalancerMessage.class);
+    verify(publisher).send(wrapperCaptor.capture(), eq(true));
+    DwcDpMetadataSyncFinishedMessage published =
+        MAPPER.readValue(wrapperCaptor.getValue().getPayload(), DwcDpMetadataSyncFinishedMessage.class);
+
+    assertTrue(published.isContainsEvents());
+    assertTrue(published.isContainsOccurrences());
+  }
+
+  @Test
   void skipsMetadataSyncWhenValidationMessageIsInvalid() throws Exception {
     UUID datasetKey = UUID.randomUUID();
 
@@ -231,6 +251,26 @@ class DwcDpMetasyncCallbackTest {
               <title>Sample EML Dataset</title>
             </dataset>
           </eml:eml>
+          """
+              .getBytes(StandardCharsets.UTF_8));
+      zos.closeEntry();
+    }
+    return archive;
+  }
+
+  private File createArchiveWithEventAndMaterialResources(UUID datasetKey, int attempt)
+      throws Exception {
+    File archive = prepareArchiveFile(datasetKey, attempt);
+    try (ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(archive))) {
+      zos.putNextEntry(new ZipEntry("datapackage.json"));
+      zos.write(
+          """
+          {
+            "id": "https://doi.org/10.15468/sample",
+            "name": "Sample DwcDP",
+            "license": "CC0-1.0",
+            "resources": [{"name":"event"},{"name":"material"}]
+          }
           """
               .getBytes(StandardCharsets.UTF_8));
       zos.closeEntry();
