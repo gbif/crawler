@@ -57,8 +57,10 @@ tasks:
 
   docker:build:
     desc: Build a single-arch image for local use (host architecture)
+    vars:
+      MAVEN_UPDATE_SNAPSHOTS: '{{.MAVEN_UPDATE_SNAPSHOTS | default "false"}}'
     cmds:
-      - '{{.CONTAINER_CLI}} build --build-arg BASE_REGISTRY={{.BASE_REGISTRY}} --build-arg CRAWLER_UID={{.CRAWLER_UID}} --build-arg CRAWLER_GID={{.CRAWLER_GID}} -t {{.IMAGE}} .'
+      - '{{.CONTAINER_CLI}} build --build-arg BASE_REGISTRY={{.BASE_REGISTRY}} --build-arg CRAWLER_UID={{.CRAWLER_UID}} --build-arg CRAWLER_GID={{.CRAWLER_GID}} --build-arg MAVEN_UPDATE_SNAPSHOTS={{.MAVEN_UPDATE_SNAPSHOTS}} -t {{.IMAGE}} .'
 
   docker:push:dist:
     desc: Build + push multi-arch (amd64 + arm64) manifest. Reads version from crawler-cli/pom.xml.
@@ -69,9 +71,10 @@ tasks:
       POM_VERSION:
         sh: mvn -pl crawler-cli help:evaluate -Dexpression=project.version -q -DforceStdout
       FULL_IMAGE: '{{.REGISTRY}}/crawler-cli:{{.POM_VERSION}}'
+      MAVEN_UPDATE_SNAPSHOTS: '{{.MAVEN_UPDATE_SNAPSHOTS | default "false"}}'
     cmds:
-      - '{{.CONTAINER_CLI}} build --build-arg BASE_REGISTRY={{.BASE_REGISTRY}} --build-arg CRAWLER_UID={{.CRAWLER_UID}} --build-arg CRAWLER_GID={{.CRAWLER_GID}} --platform linux/amd64 -t {{.FULL_IMAGE}}-amd64 .'
-      - '{{.CONTAINER_CLI}} build --build-arg BASE_REGISTRY={{.BASE_REGISTRY}} --build-arg CRAWLER_UID={{.CRAWLER_UID}} --build-arg CRAWLER_GID={{.CRAWLER_GID}} --platform linux/arm64 -t {{.FULL_IMAGE}}-arm64 .'
+      - '{{.CONTAINER_CLI}} build --build-arg BASE_REGISTRY={{.BASE_REGISTRY}} --build-arg CRAWLER_UID={{.CRAWLER_UID}} --build-arg CRAWLER_GID={{.CRAWLER_GID}} --build-arg MAVEN_UPDATE_SNAPSHOTS={{.MAVEN_UPDATE_SNAPSHOTS}} --platform linux/amd64 -t {{.FULL_IMAGE}}-amd64 .'
+      - '{{.CONTAINER_CLI}} build --build-arg BASE_REGISTRY={{.BASE_REGISTRY}} --build-arg CRAWLER_UID={{.CRAWLER_UID}} --build-arg CRAWLER_GID={{.CRAWLER_GID}} --build-arg MAVEN_UPDATE_SNAPSHOTS={{.MAVEN_UPDATE_SNAPSHOTS}} --platform linux/arm64 -t {{.FULL_IMAGE}}-arm64 .'
       - '{{.CONTAINER_CLI}} push {{.FULL_IMAGE}}-amd64'
       - '{{.CONTAINER_CLI}} push {{.FULL_IMAGE}}-arm64'
       - '{{.CONTAINER_CLI}} image rm {{.FULL_IMAGE}} || true'

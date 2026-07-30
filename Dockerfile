@@ -5,11 +5,13 @@ ARG MAVEN_UPDATE_SNAPSHOTS=false
 
 # Build stage
 FROM ${BASE_REGISTRY}/maven:3-eclipse-temurin-17 AS build
+ARG MAVEN_UPDATE_SNAPSHOTS
 WORKDIR /build
 COPY . .
 
 RUN --mount=type=cache,target=/root/.m2 \
     if [ "$MAVEN_UPDATE_SNAPSHOTS" = "true" ]; then \
+      echo "Building with updated snapshots!"; \
       mvn -pl crawler-cli -am -DskipTests -U package; \
     else \
       mvn -pl crawler-cli -am -DskipTests package; \
@@ -19,12 +21,11 @@ RUN --mount=type=cache,target=/root/.m2 \
 FROM ${BASE_REGISTRY}/eclipse-temurin:17-jre
 LABEL authors="gbif"
 
-# Reuse existing group/user if UID/GID 1000 already exists in the base image
-# (e.g. Ubuntu 24.04+ ships a default 'ubuntu' user/group at 1000). We keep
-# 1000:1000 fixed to match GBIF dev NFS mount ownership, so we rename rather
-# than fail — renaming is safe since nothing else depends on the old name.
-ARG CRAWLER_GID=1000
-ARG CRAWLER_UID=1000
+# Non-root user inside the image. Defaults suit typical local builds; GBIF dev NFS expects
+# uid/gid 2001 — build with: --build-arg CRAWLER_UID=2001 --build-arg CRAWLER_GID=2001
+# so this matches Helm podSecurityContext when using shared storage (e.g. GBIF dev NFS uid/gid 2001)
+ARG CRAWLER_GID=2001
+ARG CRAWLER_UID=2001
 RUN if getent group ${CRAWLER_GID} > /dev/null; then \
         groupmod -n crawler $(getent group ${CRAWLER_GID} | cut -d: -f1); \
     else \

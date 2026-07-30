@@ -187,7 +187,7 @@
     <dependency>
       <groupId>org.gbif</groupId>
       <artifactId>dwc-dp-analyser-service-api</artifactId>
-      <version>${dwc-dp-analyser.version}</version>
+      <version>${dwc-dp-analyser-service.version}</version>
     </dependency>
     <dependency>
       <groupId>org.gbif.common</groupId>
