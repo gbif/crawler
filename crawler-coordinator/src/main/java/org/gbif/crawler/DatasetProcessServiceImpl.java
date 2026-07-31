@@ -330,8 +330,10 @@ public class DatasetProcessServiceImpl implements DatasetProcessService {
       } catch (ExecutionException e) {
         Throwable cause = e.getCause();
         if (cause instanceof ServiceUnavailableException) {
-          LOG.warn("Skipping a dataset in this batch, could not retrieve its status: {}",
-                   cause.toString());
+          LOG.warn(
+            "Skipping a dataset in this batch, could not retrieve its status: {}",
+            cause.toString());
+          LOG.debug("Dataset status lookup failed", cause);
         } else {
           // Anything else is unexpected (not a known/handled ZooKeeper condition)
           LOG.warn("Unexpected error trying to retrieve dataset status", cause);
