@@ -107,7 +107,7 @@ public class DatasetProcessServiceImpl implements DatasetProcessService {
    */
 
   public DatasetProcessServiceImpl(
-      CuratorFramework curator, ObjectMapper mapper, Executor executor) {
+    CuratorFramework curator, ObjectMapper mapper, Executor executor) {
     this.curator = checkNotNull(curator, "curator can't be null");
     this.mapper = checkNotNull(mapper, "mapper can't be null");
     this.executor = checkNotNull(executor, "executor can't be null");
@@ -134,9 +134,22 @@ public class DatasetProcessServiceImpl implements DatasetProcessService {
     String path = null;
     // Here we're trying to load all information from Zookeeper into the DatasetProcessStatus object
     try {
-      // this can return an empty string which will throw an exception on mapper.readValue
-      // linked to https://github.com/gbif/crawler/issues/2
       byte[] crawlJobBytes = curator.getData().forPath(crawlPath);
+
+      // The crawl-info node can legitimately be empty for a short window: it happens when
+      // CoordinatorCleanupService is in the middle of deleting a finished crawl's ZK subtree
+      // at the same time this method reads it (checkExists() above succeeded, but the data was
+      // cleared/removed by the time we called getData()). This is expected, transient, and not
+      // an error worth a stack trace - see https://github.com/gbif/crawler/issues/2.
+      if (crawlJobBytes == null || crawlJobBytes.length == 0) {
+        LOG.warn(
+          "Crawl info node for dataset [{}] at path [{}] was empty, most likely a concurrent "
+          + "cleanup deletion; treating this dataset as not currently being processed",
+          datasetKey,
+          crawlPath);
+        return null;
+      }
+
       CrawlJob crawlJob = mapper.readValue(crawlJobBytes, CrawlJob.class);
       builder.crawlJob(crawlJob);
 
@@ -177,37 +190,37 @@ public class DatasetProcessServiceImpl implements DatasetProcessService {
 
         builder.pagesCrawled(getCounter(crawlPath, PAGES_CRAWLED).orElse(0L));
         builder.pagesFragmentedSuccessful(
-            getCounter(crawlPath, PAGES_FRAGMENTED_SUCCESSFUL).orElse(0L));
+          getCounter(crawlPath, PAGES_FRAGMENTED_SUCCESSFUL).orElse(0L));
         builder.pagesFragmentedError(getCounter(crawlPath, PAGES_FRAGMENTED_ERROR).orElse(0L));
         builder.fragmentsEmitted(getCounter(crawlPath, FRAGMENTS_EMITTED).orElse(0L));
         builder.fragmentsReceived(getCounter(crawlPath, FRAGMENTS_RECEIVED).orElse(0L));
         builder.rawOccurrencesPersistedNew(
-            getCounter(crawlPath, RAW_OCCURRENCES_PERSISTED_NEW).orElse(0L));
+          getCounter(crawlPath, RAW_OCCURRENCES_PERSISTED_NEW).orElse(0L));
         builder.rawOccurrencesPersistedUpdated(
-            getCounter(crawlPath, RAW_OCCURRENCES_PERSISTED_UPDATED).orElse(0L));
+          getCounter(crawlPath, RAW_OCCURRENCES_PERSISTED_UPDATED).orElse(0L));
         builder.rawOccurrencesPersistedUnchanged(
-            getCounter(crawlPath, RAW_OCCURRENCES_PERSISTED_UNCHANGED).orElse(0L));
+          getCounter(crawlPath, RAW_OCCURRENCES_PERSISTED_UNCHANGED).orElse(0L));
         builder.rawOccurrencesPersistedError(
-            getCounter(crawlPath, RAW_OCCURRENCES_PERSISTED_ERROR).orElse(0L));
+          getCounter(crawlPath, RAW_OCCURRENCES_PERSISTED_ERROR).orElse(0L));
         builder.fragmentsProcessed(getCounter(crawlPath, FRAGMENTS_PROCESSED).orElse(0L));
         builder.verbatimOccurrencesPersistedSuccessful(
-            getCounter(crawlPath, VERBATIM_OCCURRENCES_PERSISTED_SUCCESSFUL).orElse(0L));
+          getCounter(crawlPath, VERBATIM_OCCURRENCES_PERSISTED_SUCCESSFUL).orElse(0L));
         builder.verbatimOccurrencesPersistedError(
-            getCounter(crawlPath, VERBATIM_OCCURRENCES_PERSISTED_ERROR).orElse(0L));
+          getCounter(crawlPath, VERBATIM_OCCURRENCES_PERSISTED_ERROR).orElse(0L));
         builder.interpretedOccurrencesPersistedSuccessful(
-            getCounter(crawlPath, INTERPRETED_OCCURRENCES_PERSISTED_SUCCESSFUL).orElse(0L));
+          getCounter(crawlPath, INTERPRETED_OCCURRENCES_PERSISTED_SUCCESSFUL).orElse(0L));
         builder.interpretedOccurrencesPersistedError(
-            getCounter(crawlPath, INTERPRETED_OCCURRENCES_PERSISTED_ERROR).orElse(0L));
+          getCounter(crawlPath, INTERPRETED_OCCURRENCES_PERSISTED_ERROR).orElse(0L));
       }
 
     } catch (Exception e) {
       LOG.debug("ZooKeeper path debug info: last path:" + path + " , crawlPath:" + crawlPath, e);
       throw new ServiceUnavailableException(
-          "Error communicating with ZooKeeper, getting status for "
-              + datasetKey.toString()
-              + ": "
-              + e.getMessage(),
-          e);
+        "Error communicating with ZooKeeper, getting status for "
+        + datasetKey.toString()
+        + ": "
+        + e.getMessage(),
+        e);
     }
     return builder.build();
   }
@@ -297,7 +310,7 @@ public class DatasetProcessServiceImpl implements DatasetProcessService {
    */
   private List<DatasetProcessStatus> getDatasetProcessStatuses(Collection<UUID> queueKeys) {
     CompletionService<DatasetProcessStatus> completionService =
-        new ExecutorCompletionService<DatasetProcessStatus>(executor);
+      new ExecutorCompletionService<DatasetProcessStatus>(executor);
 
     for (final UUID queueKey : queueKeys) {
       completionService.submit(() -> getDatasetProcessStatus(queueKey));
@@ -315,12 +328,18 @@ public class DatasetProcessServiceImpl implements DatasetProcessService {
       } catch (InterruptedException ignored) {
         Thread.currentThread().interrupt();
       } catch (ExecutionException e) {
-        LOG.warn("Caught exception trying to retrieve dataset", e.getCause());
-        // TODO: Commented out because we don't fail if ZK is inconsistent for a second. On the
-        // other hand if we
-        // get only exceptions we want to capture that somehow and throw something in the end.
-        // throw new ServiceUnavailableException("Exception while getting dataset process status",
-        // e.getCause());
+        Throwable cause = e.getCause();
+        if (cause instanceof ServiceUnavailableException) {
+          LOG.warn(
+            "Skipping a dataset in this batch, could not retrieve its status: {}",
+            cause.toString());
+          LOG.debug("Dataset status lookup failed", cause);
+        } else {
+          // Anything else is unexpected (not a known/handled ZooKeeper condition)
+          LOG.warn("Unexpected error trying to retrieve dataset status", cause);
+        }
+        // Deliberately not rethrown: we tolerate a single dataset's status lookup failing rather
+        // than failing the whole batch, since ZK can be momentarily inconsistent for one dataset.
       }
     }
     return processStatuses;
@@ -335,7 +354,7 @@ public class DatasetProcessServiceImpl implements DatasetProcessService {
    */
   private Optional<Long> getCounter(String rootPath, String counter) {
     DistributedAtomicLong dal =
-        new DistributedAtomicLong(curator, rootPath + "/" + counter, counterRetryPolicy);
+      new DistributedAtomicLong(curator, rootPath + "/" + counter, counterRetryPolicy);
     try {
       return Optional.ofNullable(dal.get().preValue());
     } catch (Exception ignored) {
@@ -344,15 +363,53 @@ public class DatasetProcessServiceImpl implements DatasetProcessService {
   }
 
   private ProcessState getState(UUID datasetKey, String statePath) {
+    String path = getCrawlInfoPath(datasetKey, statePath);
+    byte[] responseData;
     try {
-      String path = getCrawlInfoPath(datasetKey, statePath);
-      if (curator.checkExists().forPath(path) != null) {
-        byte[] responseData = curator.getData().forPath(path);
-        return ProcessState.valueOf(new String(responseData, StandardCharsets.UTF_8));
+      if (curator.checkExists().forPath(path) == null) {
+        return null;
       }
+      responseData = curator.getData().forPath(path);
     } catch (Exception e) {
+      // Curator's fluent API declares `throws Exception` rather than a typed ZooKeeper
+      // exception (and org.apache.zookeeper:zookeeper is a runtime-only dependency in this
+      // module, so we can't reference KeeperException at compile time anyway). Instead of
+      // typing the exception, we distinguish the known race empirically: if the node is gone
+      // now, this was the same benign, expected concurrent-cleanup-deletion race as the
+      // crawl-info node above (see getDatasetProcessStatus); otherwise it's worth a WARN.
+      boolean nodeStillGone;
+      try {
+        nodeStillGone = curator.checkExists().forPath(path) == null;
+      } catch (Exception ignored) {
+        // Best-effort recheck only - if even this fails, fall through and just warn below.
+        nodeStillGone = false;
+      }
+
+      if (nodeStillGone) {
+        LOG.debug(
+          "Process state node for dataset [{}] at path [{}] disappeared concurrently (likely a "
+          + "concurrent cleanup deletion), treating state as unknown",
+          datasetKey, path);
+      } else {
+        LOG.warn(
+          "Could not read process state for dataset [{}] at path [{}], treating as unknown: {}",
+          datasetKey, path, e.toString());
+      }
+      return null;
     }
-    return null;
+
+    if (responseData == null || responseData.length == 0) {
+      return null;
+    }
+
+    try {
+      return ProcessState.valueOf(new String(responseData, StandardCharsets.UTF_8));
+    } catch (IllegalArgumentException e) {
+      LOG.warn(
+        "Unrecognised process state value for dataset [{}] at path [{}]: {}",
+        datasetKey, path, e.getMessage());
+      return null;
+    }
   }
 
   /**
@@ -370,11 +427,11 @@ public class DatasetProcessServiceImpl implements DatasetProcessService {
     List<Future<UUID>> futures = new ArrayList<>();
     for (final String queueIdentifier : queueIdentifiers) {
       Future<UUID> future =
-          completionService.submit(
-              () -> {
-                byte[] responseData = curator.getData().forPath(path + "/" + queueIdentifier);
-                return QueueHelper.deserializeSingle(responseData, UUID_SERIALIZER);
-              });
+        completionService.submit(
+          () -> {
+            byte[] responseData = curator.getData().forPath(path + "/" + queueIdentifier);
+            return QueueHelper.deserializeSingle(responseData, UUID_SERIALIZER);
+          });
       futures.add(future);
     }
 
@@ -386,7 +443,7 @@ public class DatasetProcessServiceImpl implements DatasetProcessService {
         Thread.currentThread().interrupt();
       } catch (ExecutionException e) {
         throw new ServiceUnavailableException(
-            "Exception while getting dataset process status", e.getCause());
+          "Exception while getting dataset process status", e.getCause());
       }
     }
     LOG.debug("Retrieved all queued dataset process statuses");
