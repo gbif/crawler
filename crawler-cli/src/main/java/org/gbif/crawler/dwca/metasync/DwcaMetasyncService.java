@@ -13,13 +13,9 @@
  */
 package org.gbif.crawler.dwca.metasync;
 
-import org.gbif.api.model.common.paging.Pageable;
-import org.gbif.api.model.common.paging.PagingRequest;
 import org.gbif.api.model.registry.Dataset;
-import org.gbif.api.model.registry.MachineTag;
 import org.gbif.api.service.registry.DatasetService;
 import org.gbif.api.vocabulary.DatasetType;
-import org.gbif.api.vocabulary.TagName;
 import org.gbif.common.messaging.AbstractMessageCallback;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.DwcaMetasyncFinishedMessage;
@@ -39,9 +35,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.Collections;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -60,8 +54,10 @@ import static org.gbif.crawler.constants.CrawlerNodePaths.PAGES_FRAGMENTED_ERROR
 
 /**
  * Service that listens to DwcaValidationFinishedMessages and puts found metadata documents into the
- * metadata repository thereby updating the registered datasets information. Is aware of constituent
- * datasets within an archive and therefore knows how to process Catalogue of Life GSD information.
+ * metadata repository thereby updating the registered datasets information. Only the metadata of
+ * the dataset itself is written. Constituent metadata files within an archive (e.g. the dataset
+ * folder of Catalogue of Life archives) are ignored and never registered as datasets, see
+ * https://github.com/gbif/crawler/issues/97
  */
 public class DwcaMetasyncService extends DwcaService {
 
@@ -99,12 +95,6 @@ public class DwcaMetasyncService extends DwcaService {
       METRIC_REGISTRY.counter(MetricRegistry.name(DwcaMetasyncService.class, "messageCount"));
     private final Counter datasetsUpdated =
       METRIC_REGISTRY.counter(MetricRegistry.name(DwcaMetasyncService.class, "datasetsUpdated"));
-    private final Counter constituentsAdded =
-      METRIC_REGISTRY.counter(MetricRegistry.name(DwcaMetasyncService.class, "constituentsAdded"));
-    private final Counter constituentsDeleted =
-      METRIC_REGISTRY.counter(MetricRegistry.name(DwcaMetasyncService.class, "constituentsDeleted"));
-    private final Counter constituentsUpdated =
-      METRIC_REGISTRY.counter(MetricRegistry.name(DwcaMetasyncService.class, "constituentsUpdated"));
 
     private DwcaValidationFinishedMessageCallback(
         DatasetService datasetService,
@@ -218,27 +208,19 @@ public class DwcaMetasyncService extends DwcaService {
         datasetsUpdated.inc();
       }
 
-      // Metadata-only datasets can't have constituents
-      Map<String, UUID> constituents;
-      if (DatasetType.METADATA == dataset.getType()) {
-        constituents = new HashMap<>();
-      } else {
-        // process dataset constituents
-        constituents = processConstituents(dataset, archive);
-      }
-
       LOG.info("Finished updating metadata from DwC-A for dataset [{}]", datasetKey);
 
       if (Platform.OCCURRENCE.equivalent(message.getPlatform())) {
         if (message.getValidationReport().isValid()) {
           // send success message
+          // constituent datasets are never registered, see https://github.com/gbif/crawler/issues/97
           publisher.send(
               new DwcaMetasyncFinishedMessage(
                   datasetKey,
                   dataset.getType(),
                   message.getSource(),
                   message.getAttempt(),
-                  constituents,
+                  Collections.emptyMap(),
                   message.getValidationReport(),
                   message.getPlatform()),
               true);
@@ -247,73 +229,6 @@ public class DwcaMetasyncService extends DwcaService {
               "Metadata processed, but not sending completion message because the archive is invalid.");
         }
       }
-    }
-
-    private Map<String, UUID> processConstituents(Dataset parent, Archive archive) {
-      Map<String, UUID> constituents = new HashMap<>();
-      // we don't expect to reach more than a few hundred constituents - so ignore paging here by
-      // using a 2000 p size
-      Pageable page = new PagingRequest(0, 2000);
-      List<Dataset> existingConstituents =
-          datasetService.listConstituents(parent.getKey(), page).getResults();
-      LOG.info(
-          "{} existing constituents registered for {}",
-          existingConstituents.size(),
-          parent.getKey());
-      Map<String, File> archiveConstituents = archive.getConstituentMetadata();
-      LOG.info(
-          "{} constituents metadata found in archive {}",
-          archiveConstituents.size(),
-          parent.getKey());
-
-      // go through each existing constituent and update its metadata or delete it from the registry
-      for (Dataset constituent : existingConstituents) {
-        try {
-          // we keep the datasetID as a tag, get it
-          String datasetId = getTagValue(constituent.getKey(), TagName.DATASET_ID);
-          if (datasetId == null) {
-            LOG.warn(
-                "Existing registered constituent {} found without a tagged datasetID. "
-                    + "Please adjust manually as we will likely be creating a new constituent dataset",
-                constituent.getKey());
-
-          } else {
-            // do we still have this constituent in the archive?
-            if (archiveConstituents.containsKey(datasetId)) {
-              // remove from archive map so we have only the new ones at the end
-              File metaFile = archiveConstituents.remove(datasetId);
-              setMetaDocument(metaFile, constituent.getKey());
-              constituentsUpdated.inc();
-              constituents.put(datasetId, constituent.getKey());
-
-            } else {
-              // constituent has been removed. Delete in registry
-              datasetService.delete(constituent.getKey());
-              constituentsDeleted.inc();
-              LOG.info(
-                  "Existing constituent with ID={} deleted, not found in archive anymore",
-                  datasetId);
-            }
-          }
-        } catch (FileNotFoundException e) {
-          LOG.error(
-              "Failed to read archive constituent metadata file for already registered dataset {}",
-              constituent.getKey(),
-              e);
-        } catch (IllegalArgumentException e) {
-          LOG.error("Constituent dataset with UUID key expected, but got [{}]", parent.getKey(), e);
-        }
-      }
-
-      // now see if there are any new constituents left and create them
-      for (Map.Entry<String, File> constituent : archiveConstituents.entrySet()) {
-        String datasetId = constituent.getKey();
-        File metaFile = constituent.getValue();
-        UUID constituentKey = addNewConstituent(parent, parent.getKey(), datasetId, metaFile);
-        constituents.put(datasetId, constituentKey);
-      }
-
-      return constituents;
     }
 
     private boolean setMetaDocument(File metaDoc, UUID datasetKey) throws FileNotFoundException {
@@ -335,75 +250,6 @@ public class DwcaMetasyncService extends DwcaService {
             e);
       }
       return false;
-    }
-
-    /**
-     * Creates a new constituent dataset of the same type as the parent in the registry which will
-     * be linked to the parent dataset and tagged with a datasetID. The metadata file will be
-     * uploaded into the repository and its information used to update the constituent dataset.
-     *
-     * @return the newly created constituent dataset key
-     */
-    private UUID addNewConstituent(
-        Dataset parent, UUID parentKey, String datasetID, File metaFile) {
-      Dataset constituent = new Dataset();
-      // use temporary required title that will get overwritten when submitting the metadata file
-      constituent.setTitle("Constituent " + datasetID + " of " + parent.getTitle());
-      constituent.setParentDatasetKey(parentKey);
-      constituent.setPublishingOrganizationKey(parent.getPublishingOrganizationKey());
-      constituent.setInstallationKey(parent.getInstallationKey());
-      constituent.setType(parent.getType());
-      constituent.setSubtype(parent.getSubtype());
-
-      try {
-        UUID key = datasetService.create(constituent);
-        LOG.info(
-            "Created new constituent {} with key {} for dataset {}", datasetID, key, parentKey);
-        constituentsAdded.inc();
-
-        MachineTag idTag =
-            MachineTag.newInstance(
-                TagName.DATASET_ID.getNamespace().getNamespace(),
-                TagName.DATASET_ID.getName(),
-                datasetID);
-        datasetService.addMachineTag(key, idTag);
-
-        setMetaDocument(metaFile, key);
-        return key;
-
-      } catch (FileNotFoundException e) {
-        LOG.warn(
-            "Failed to upload metadata file for new constituent {} of dataset {}",
-            datasetID,
-            parentKey,
-            e);
-
-      } catch (Exception e) {
-        LOG.error("Failed to create new constituent {} for dataset {}", datasetID, parentKey, e);
-      }
-
-      return null;
-    }
-
-    /**
-     * Convenience method to retrieve a single tag for a given name enum or null. If there are
-     * multiple tags with the same name only the first is returned.
-     *
-     * @param name the name to look for
-     */
-    // TODO(lfrancke): I think this is bad behavior as it usually indicates something wrong in the
-    // registry if there are
-    // multiple tags with the same name (when we expect only one) and we should rather fail fast and
-    // clean up
-    private String getTagValue(UUID datasetKey, TagName name) {
-      List<MachineTag> tags = datasetService.listMachineTags(datasetKey);
-      for (MachineTag tag : tags) {
-        if (tag.getNamespace().equals(name.getNamespace().getNamespace())
-            && name.getName().equals(tag.getName())) {
-          return tag.getValue();
-        }
-      }
-      return null;
     }
 
     private void updateZookeeper(UUID uuid) {
