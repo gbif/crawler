@@ -94,6 +94,8 @@ import static org.gbif.crawler.constants.CrawlerNodePaths.buildPath;
 public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService {
 
   public static final String METADATA_NAMESPACE = "metasync.gbif.org";
+  /** CrawlJob property holding the URL of an EML endpoint to use as the dataset's metadata. */
+  public static final String EML_URL_PROPERTY = "emlUrl";
   private static final Logger LOG = LoggerFactory.getLogger(CrawlerCoordinatorServiceImpl.class);
   private static final Comparator<Endpoint> ENDPOINT_COMPARATOR =
       Ordering.compound(
@@ -443,7 +445,34 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
       return java.util.Optional.empty();
     }
     Endpoint ep = sortedEndpoints.get(0);
+
+    // EML outranks DwC-DP and COLDP, but it carries no data. Crawl the data package instead and
+    // use the EML endpoint for metadata only, see getMetadataEndpoint.
+    if (EndpointType.EML == ep.getType()) {
+      for (Endpoint candidate : sortedEndpoints) {
+        if (usesSeparateEmlEndpoint(candidate)) {
+          return java.util.Optional.of(candidate);
+        }
+      }
+    }
     return java.util.Optional.ofNullable(ep);
+  }
+
+  /**
+   * Returns the EML endpoint to take metadata from when the crawled endpoint is a DwC-DP or COLDP
+   * data package and the dataset also has an EML endpoint.
+   */
+  public static Optional<Endpoint> getMetadataEndpoint(Dataset dataset, Endpoint crawled) {
+    if (!usesSeparateEmlEndpoint(crawled)) {
+      return java.util.Optional.empty();
+    }
+    return prioritySortEndpoints(dataset.getEndpoints()).stream()
+        .filter(e -> EndpointType.EML == e.getType() && e.getUrl() != null)
+        .findFirst();
+  }
+
+  private static boolean usesSeparateEmlEndpoint(Endpoint endpoint) {
+    return isDwcDpArchive(endpoint) || isColDpArchive(endpoint);
   }
 
   /**
@@ -510,6 +539,9 @@ public class CrawlerCoordinatorServiceImpl implements CrawlerCoordinatorService 
     }
 
     properties.put("platform", platform.name());
+
+    getMetadataEndpoint(dataset, endpoint)
+        .ifPresent(eml -> properties.put(EML_URL_PROPERTY, eml.getUrl().toString()));
 
     if (declaredCount != null) {
       properties.put("declaredCount", String.valueOf(declaredCount));

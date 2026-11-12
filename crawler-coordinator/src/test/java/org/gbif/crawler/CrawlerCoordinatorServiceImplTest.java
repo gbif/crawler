@@ -55,11 +55,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import static org.gbif.api.vocabulary.TagName.CONCEPTUAL_SCHEMA;
 import static org.gbif.api.vocabulary.TagName.DECLARED_COUNT;
 import static org.gbif.crawler.constants.CrawlerNodePaths.COL_DP_CRAWL;
+import static org.gbif.crawler.constants.CrawlerNodePaths.DWC_DP_CRAWL;
 import static org.gbif.crawler.constants.CrawlerNodePaths.QUEUED_CRAWLS;
 import static org.gbif.crawler.constants.CrawlerNodePaths.buildPath;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -176,6 +178,73 @@ public class CrawlerCoordinatorServiceImplTest {
     sortedEndpoints = CrawlerCoordinatorServiceImpl.prioritySortEndpoints(endpoints);
     assertThat(sortedEndpoints, contains(endpoint1, endpoint2));
     assertEquals(endpoint1, sortedEndpoints.get(0));
+  }
+
+  @Test
+  public void testDataPackageIsCrawledInsteadOfEml() {
+    for (EndpointType dataType : new EndpointType[] {EndpointType.DWC_DP, EndpointType.COLDP}) {
+      Endpoint eml = endpoint(EndpointType.EML, "https://example.org/eml.xml");
+      Endpoint data = endpoint(dataType, "https://example.org/archive.zip");
+      Dataset ds = new Dataset();
+      ds.getEndpoints().add(eml);
+      ds.getEndpoints().add(data);
+
+      assertEquals(data, CrawlerCoordinatorServiceImpl.getEndpointToCrawl(ds).get());
+      assertEquals(eml, CrawlerCoordinatorServiceImpl.getMetadataEndpoint(ds, data).get());
+    }
+  }
+
+  @Test
+  public void testEmlPriorityUnchangedForOtherTypes() {
+    Endpoint eml = endpoint(EndpointType.EML, "https://example.org/eml.xml");
+    Dataset emlOnly = new Dataset();
+    emlOnly.getEndpoints().add(eml);
+    assertEquals(eml, CrawlerCoordinatorServiceImpl.getEndpointToCrawl(emlOnly).get());
+    assertFalse(CrawlerCoordinatorServiceImpl.getMetadataEndpoint(emlOnly, eml).isPresent());
+
+    for (EndpointType dataType :
+        new EndpointType[] {EndpointType.DWC_ARCHIVE, EndpointType.CAMTRAP_DP}) {
+      Endpoint data = endpoint(dataType, "https://example.org/archive.zip");
+      Dataset ds = new Dataset();
+      ds.getEndpoints().add(eml);
+      ds.getEndpoints().add(data);
+
+      assertEquals(data, CrawlerCoordinatorServiceImpl.getEndpointToCrawl(ds).get());
+      assertFalse(CrawlerCoordinatorServiceImpl.getMetadataEndpoint(ds, data).isPresent());
+    }
+  }
+
+  @Test
+  public void testScheduleDwcDpWithEmlEndpoint() throws Exception {
+    when(metadataSynchronizer.getDatasetCount(any(), any())).thenReturn(null);
+    PagingResponse<DatasetProcessStatus> mockResponse = new PagingResponse<>();
+    mockResponse.setResults(Collections.emptyList());
+    when(datasetProcessStatusService.listDatasetProcessStatus(any(), any())).thenReturn(mockResponse);
+    when(datasetService.get(uuid)).thenReturn(dataset);
+    when(pipelinesHistoryClient.getRunningExecutionKey(uuid)).thenReturn(null);
+
+    dataset.getEndpoints().add(endpoint(EndpointType.EML, "https://example.org/eml.xml"));
+    dataset.getEndpoints().add(endpoint(EndpointType.DWC_DP, "https://example.org/archive.zip"));
+
+    service.initiateCrawl(uuid, 5, Platform.ALL);
+
+    List<String> queued = curator.getChildren().forPath(buildPath(DWC_DP_CRAWL, QUEUED_CRAWLS));
+    assertEquals(1, queued.size());
+
+    CrawlJob crawlJob =
+        new ObjectMapper().readValue(curator.getData().forPath("/crawls/" + uuid), CrawlJob.class);
+    assertEquals(EndpointType.DWC_DP, crawlJob.getEndpointType());
+    assertEquals(URI.create("https://example.org/archive.zip"), crawlJob.getTargetUrl());
+    assertEquals(
+        "https://example.org/eml.xml",
+        crawlJob.getProperty(CrawlerCoordinatorServiceImpl.EML_URL_PROPERTY));
+  }
+
+  private static Endpoint endpoint(EndpointType type, String url) {
+    Endpoint endpoint = new Endpoint();
+    endpoint.setType(type);
+    endpoint.setUrl(URI.create(url));
+    return endpoint;
   }
 
   @Test

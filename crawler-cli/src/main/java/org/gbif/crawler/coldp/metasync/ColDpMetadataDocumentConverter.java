@@ -30,8 +30,8 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 /**
  * Extracts metadata documents from a COLDP archive.
  *
- * <p>Always extracts the ColDP format document (metadata.json, metadata.yaml, or metadata.yml).
- * Additionally extracts {@code eml.xml} as EML when present; EML is the richer,
+ * <p>Extracts the ColDP format document (metadata.json, metadata.yaml, or metadata.yml) and
+ * {@code eml.xml} as EML, each when present; EML is the richer,
  * registry-preferred format and should be used as the primary metadata document when available.
  */
 public class ColDpMetadataDocumentConverter {
@@ -75,15 +75,13 @@ public class ColDpMetadataDocumentConverter {
       }
     }
 
-    if (formatBytes == null) {
-      throw new IOException(
-          "No metadata.yaml, metadata.yml or metadata.json found in " + archive);
+    // metadata.yaml is optional in ColDP, e.g. when the metadata comes from a separate EML endpoint
+    ColDpMetadataDocument formatDocument = null;
+    if (formatBytes != null) {
+      JsonNode tree = isYaml ? yamlMapper.readTree(formatBytes) : jsonMapper.readTree(formatBytes);
+      String contentJson = jsonMapper.writeValueAsString(tree);
+      formatDocument = new ColDpMetadataDocument(formatBytes, contentJson, MetadataType.COL_DP);
     }
-
-    JsonNode tree = isYaml ? yamlMapper.readTree(formatBytes) : jsonMapper.readTree(formatBytes);
-    String contentJson = jsonMapper.writeValueAsString(tree);
-    ColDpMetadataDocument formatDocument =
-        new ColDpMetadataDocument(formatBytes, contentJson, MetadataType.COL_DP);
 
     ColDpMetadataDocument emlDocument =
         emlBytes != null ? new ColDpMetadataDocument(emlBytes, null, MetadataType.EML) : null;

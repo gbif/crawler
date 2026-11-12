@@ -18,10 +18,9 @@ import javax.annotation.Nullable;
 /**
  * Result of extracting metadata from a COLDP archive.
  *
- * <p>The {@code formatDocument} is always present (metadata.yaml/json is the primary COLDP
- * metadata file). The {@code emlDocument} is optional — it is populated when the archive contains a
- * eml.xml (EML) file. When both are present the EML document should be treated as the primary
- * metadata by the registry, while the format document captures ColDP-specific fields.
+ * <p>Both documents are optional. The {@code formatDocument} is populated when the archive contains
+ * a metadata.yaml/json file, the {@code emlDocument} when it contains an eml.xml (EML) file. When
+ * both are present the EML document should be treated as the primary metadata by the registry, while the format document captures ColDP-specific fields.
  */
 public class ColDpMetadataExtractionResult {
 
@@ -29,13 +28,21 @@ public class ColDpMetadataExtractionResult {
   private final ColDpMetadataDocument emlDocument;
 
   public ColDpMetadataExtractionResult(
-      ColDpMetadataDocument formatDocument, @Nullable ColDpMetadataDocument emlDocument) {
+      @Nullable ColDpMetadataDocument formatDocument,
+      @Nullable ColDpMetadataDocument emlDocument) {
     this.formatDocument = formatDocument;
     this.emlDocument = emlDocument;
   }
 
+  @Nullable
   public ColDpMetadataDocument getFormatDocument() {
     return formatDocument;
+  }
+
+  /** The format document as JSON, or null when the archive has no metadata.yaml/json. */
+  @Nullable
+  public String getFormatContentJson() {
+    return formatDocument != null ? formatDocument.getContentJson() : null;
   }
 
   @Nullable

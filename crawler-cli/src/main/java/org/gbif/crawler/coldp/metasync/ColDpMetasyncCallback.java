@@ -18,9 +18,11 @@ import org.gbif.api.model.crawler.ProcessState;
 import org.gbif.common.messaging.AbstractMessageCallback;
 import org.gbif.common.messaging.api.messages.ColDpDownloadFinishedMessage;
 import org.gbif.crawler.coldp.ColDpConfiguration;
+import org.gbif.crawler.common.EndpointEml;
 import org.gbif.crawler.common.OkHttpRegistryMetadataClient;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.UUID;
 
 import org.apache.curator.framework.CuratorFramework;
@@ -64,21 +66,16 @@ public class ColDpMetasyncCallback extends AbstractMessageCallback<ColDpDownload
         File archive = resolveArchive(datasetKey, message.getAttempt());
         ColDpMetadataExtractionResult result = converter.extractDocuments(archive);
 
-        ColDpMetadataDocument fmt = result.getFormatDocument();
-
-        if (result.hasEml()) {
-          ColDpMetadataDocument eml = result.getEmlDocument();
-          try (var doc = eml.rawDocumentStream()) {
-            registryClient.insertMetadata(
-                datasetKey, doc.readAllBytes(), fmt.getContentJson(), eml.getMetadataType());
-          }
-          LOG.info(
-              "Forwarded EML metadata to registry for dataset [{}]",
-              datasetKey);
-        } else {
-          registryClient.insertMetadata(datasetKey, fmt.getContentJson().getBytes(java.nio.charset.StandardCharsets.UTF_8), fmt.getContentJson(), fmt.getMetadataType());
-          LOG.info(
-              "Forwarded COLDP format document metadata to registry for dataset [{}]", datasetKey);
+        // A separate EML endpoint takes precedence over the metadata inside the archive
+        boolean endpointEmlSent =
+            EndpointEml.insertIfPresent(
+                registryClient,
+                archive.getParentFile(),
+                datasetKey,
+                message.getAttempt(),
+                result.getFormatContentJson());
+        if (!endpointEmlSent) {
+          insertArchiveMetadata(datasetKey, result);
         }
 
         markFinished(datasetKey);
@@ -87,6 +84,30 @@ public class ColDpMetasyncCallback extends AbstractMessageCallback<ColDpDownload
         createOrUpdate(curator, datasetKey, FINISHED_REASON, FinishReason.ABORT);
         markFinished(datasetKey);
       }
+    }
+  }
+
+  private void insertArchiveMetadata(UUID datasetKey, ColDpMetadataExtractionResult result)
+      throws IOException {
+    ColDpMetadataDocument fmt = result.getFormatDocument();
+
+    if (result.hasEml()) {
+      ColDpMetadataDocument eml = result.getEmlDocument();
+      try (var doc = eml.rawDocumentStream()) {
+        registryClient.insertMetadata(
+            datasetKey, doc.readAllBytes(), result.getFormatContentJson(), eml.getMetadataType());
+      }
+      LOG.info(
+          "Forwarded EML metadata to registry for dataset [{}]",
+          datasetKey);
+    } else if (fmt == null) {
+      throw new IOException(
+          "No metadata.yaml, metadata.yml, metadata.json or eml.xml in the archive and no EML endpoint for dataset "
+              + datasetKey);
+    } else {
+      registryClient.insertMetadata(datasetKey, fmt.getContentJson().getBytes(java.nio.charset.StandardCharsets.UTF_8), fmt.getContentJson(), fmt.getMetadataType());
+      LOG.info(
+          "Forwarded COLDP format document metadata to registry for dataset [{}]", datasetKey);
     }
   }
 

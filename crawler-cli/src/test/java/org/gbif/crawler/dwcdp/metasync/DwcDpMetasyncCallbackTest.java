@@ -19,13 +19,16 @@ import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.DwcDpMetadataSyncFinishedMessage;
 import org.gbif.common.messaging.api.messages.DwcDpValidationFinishedMessage;
 import org.gbif.common.messaging.api.messages.PipelinesBalancerMessage;
+import org.gbif.crawler.common.EndpointEml;
 import org.gbif.crawler.common.OkHttpRegistryMetadataClient;
 import org.gbif.crawler.dwcdp.DwcDpConfiguration;
 import org.gbif.dp.analysis.api.DatapackageAnalysisResult;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.UUID;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -53,7 +56,9 @@ import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_SAMPLE;
 import static org.gbif.crawler.constants.CrawlerNodePaths.getCrawlInfoPath;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
@@ -147,6 +152,61 @@ class DwcDpMetasyncCallbackTest {
     assertTrue(emlContent.contains("<title>Sample EML Dataset</title>"));
 
     assertMetadataSyncFinishedPublished(datasetKey, 1);
+    assertCrawlFinished(datasetKey);
+  }
+
+  @Test
+  void forwardsEndpointEmlInsteadOfArchiveMetadataWhenDownloaded() throws Exception {
+    UUID datasetKey = UUID.randomUUID();
+    File archive = createArchiveWithDatapackageAndEml(datasetKey, 3);
+    writeEndpointEml(archive, datasetKey, 3);
+
+    DwcDpMetasyncCallback callback =
+        new DwcDpMetasyncCallback(
+            registryClient, tempDir.toFile(), curator, publisher, new DwcDpMetadataDocumentConverter());
+
+    callback.handleMessage(buildMessage(datasetKey, 3, true, new DatapackageAnalysisResult(null, null, null)));
+
+    ArgumentCaptor<byte[]> emlCaptor = ArgumentCaptor.forClass(byte[].class);
+    ArgumentCaptor<String> dpJsonCaptor = ArgumentCaptor.forClass(String.class);
+    verify(registryClient)
+        .insertMetadata(
+            eq(datasetKey), emlCaptor.capture(), dpJsonCaptor.capture(), eq(MetadataType.EML));
+    verifyNoMoreInteractions(registryClient);
+
+    assertTrue(
+        new String(emlCaptor.getValue(), StandardCharsets.UTF_8)
+            .contains("<title>Endpoint EML Dataset</title>"));
+    assertTrue(dpJsonCaptor.getValue().contains("\"name\":\"Sample DwcDP\""));
+
+    assertMetadataSyncFinishedPublished(datasetKey, 3);
+    assertCrawlFinished(datasetKey);
+  }
+
+  @Test
+  void fallsBackToArchiveMetadataWhenRegistryRejectsEndpointEml() throws Exception {
+    UUID datasetKey = UUID.randomUUID();
+    File archive = createArchiveWithDatapackageOnly(datasetKey, 4);
+    File endpointEml = writeEndpointEml(archive, datasetKey, 4);
+
+    byte[] endpointEmlBytes = Files.readAllBytes(endpointEml.toPath());
+    doThrow(new IOException("400 Bad Request"))
+        .when(registryClient)
+        .insertMetadata(eq(datasetKey), eq(endpointEmlBytes), any(), eq(MetadataType.EML));
+
+    DwcDpMetasyncCallback callback =
+        new DwcDpMetasyncCallback(
+            registryClient, tempDir.toFile(), curator, publisher, new DwcDpMetadataDocumentConverter());
+
+    callback.handleMessage(buildMessage(datasetKey, 4, true, new DatapackageAnalysisResult(null, null, null)));
+
+    verify(registryClient)
+        .insertMetadata(eq(datasetKey), eq(endpointEmlBytes), any(), eq(MetadataType.EML));
+    verify(registryClient)
+        .insertMetadata(eq(datasetKey), any(), any(), eq(MetadataType.DWC_DP));
+    verifyNoMoreInteractions(registryClient);
+
+    assertMetadataSyncFinishedPublished(datasetKey, 4);
     assertCrawlFinished(datasetKey);
   }
 
@@ -276,6 +336,21 @@ class DwcDpMetasyncCallbackTest {
       zos.closeEntry();
     }
     return archive;
+  }
+
+  private File writeEndpointEml(File archive, UUID datasetKey, int attempt) throws Exception {
+    File eml = EndpointEml.file(archive.getParentFile(), datasetKey, attempt);
+    Files.writeString(
+        eml.toPath(),
+        """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <eml:eml xmlns:eml="eml://ecoinformatics.org/eml-2.1.1">
+          <dataset>
+            <title>Endpoint EML Dataset</title>
+          </dataset>
+        </eml:eml>
+        """);
+    return eml;
   }
 
   private File prepareArchiveFile(UUID datasetKey, int attempt) {

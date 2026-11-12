@@ -16,12 +16,14 @@ package org.gbif.crawler.coldp.metasync;
 import org.gbif.api.vocabulary.MetadataType;
 import org.gbif.common.messaging.api.messages.ColDpDownloadFinishedMessage;
 import org.gbif.crawler.coldp.ColDpConfiguration;
+import org.gbif.crawler.common.EndpointEml;
 import org.gbif.crawler.common.OkHttpRegistryMetadataClient;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.Date;
 import java.util.UUID;
 import java.util.zip.ZipEntry;
@@ -40,13 +42,16 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import static org.gbif.crawler.constants.CrawlerNodePaths.FINISHED_REASON;
 import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_CHECKLIST;
 import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_OCCURRENCE;
 import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_SAMPLE;
 import static org.gbif.crawler.constants.CrawlerNodePaths.getCrawlInfoPath;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
@@ -143,6 +148,83 @@ class ColDpMetasyncCallbackTest {
     assertCrawlFinished(datasetKey);
   }
 
+  @Test
+  void forwardsEndpointEmlInsteadOfArchiveMetadataWhenDownloaded() throws Exception {
+    UUID datasetKey = UUID.randomUUID();
+    File archive = createArchiveWithYamlAndEml(datasetKey, 3);
+    Files.writeString(
+        EndpointEml.file(archive.getParentFile(), datasetKey, 3).toPath(),
+        "<eml:eml xmlns:eml=\"eml://ecoinformatics.org/eml-2.1.1\"><dataset>"
+            + "<title>Endpoint EML Dataset</title></dataset></eml:eml>");
+
+    ColDpMetasyncCallback callback =
+        new ColDpMetasyncCallback(
+            registryClient, tempDir.toFile(), curator, new ColDpMetadataDocumentConverter());
+
+    callback.handleMessage(buildMessage(datasetKey, 3));
+
+    ArgumentCaptor<byte[]> emlCaptor = ArgumentCaptor.forClass(byte[].class);
+    ArgumentCaptor<String> yamlJsonCaptor = ArgumentCaptor.forClass(String.class);
+    verify(registryClient)
+        .insertMetadata(
+            eq(datasetKey), emlCaptor.capture(), yamlJsonCaptor.capture(), eq(MetadataType.EML));
+    verifyNoMoreInteractions(registryClient);
+
+    assertTrue(
+        new String(emlCaptor.getValue(), StandardCharsets.UTF_8)
+            .contains("<title>Endpoint EML Dataset</title>"));
+    assertTrue(yamlJsonCaptor.getValue().contains("\"title\":\"Sample Checklist\""));
+
+    assertCrawlFinished(datasetKey);
+  }
+
+  @Test
+  void forwardsEndpointEmlWhenArchiveHasNoMetadataYaml() throws Exception {
+    UUID datasetKey = UUID.randomUUID();
+    File archive = createArchiveWithoutMetadata(datasetKey, 4);
+    Files.writeString(
+        EndpointEml.file(archive.getParentFile(), datasetKey, 4).toPath(),
+        "<eml:eml xmlns:eml=\"eml://ecoinformatics.org/eml-2.1.1\"><dataset>"
+            + "<title>Endpoint EML Dataset</title></dataset></eml:eml>");
+
+    ColDpMetasyncCallback callback =
+        new ColDpMetasyncCallback(
+            registryClient, tempDir.toFile(), curator, new ColDpMetadataDocumentConverter());
+
+    callback.handleMessage(buildMessage(datasetKey, 4));
+
+    ArgumentCaptor<byte[]> emlCaptor = ArgumentCaptor.forClass(byte[].class);
+    verify(registryClient)
+        .insertMetadata(eq(datasetKey), emlCaptor.capture(), isNull(), eq(MetadataType.EML));
+    verifyNoMoreInteractions(registryClient);
+
+    assertTrue(
+        new String(emlCaptor.getValue(), StandardCharsets.UTF_8)
+            .contains("<title>Endpoint EML Dataset</title>"));
+    assertCrawlFinished(datasetKey);
+    assertNull(curator.checkExists().forPath(getCrawlInfoPath(datasetKey, FINISHED_REASON)));
+  }
+
+  @Test
+  void abortsWhenThereIsNoMetadataAtAll() throws Exception {
+    UUID datasetKey = UUID.randomUUID();
+    createArchiveWithoutMetadata(datasetKey, 5);
+
+    ColDpMetasyncCallback callback =
+        new ColDpMetasyncCallback(
+            registryClient, tempDir.toFile(), curator, new ColDpMetadataDocumentConverter());
+
+    callback.handleMessage(buildMessage(datasetKey, 5));
+
+    verifyNoMoreInteractions(registryClient);
+    assertCrawlFinished(datasetKey);
+    assertEquals(
+        "ABORT",
+        new String(
+            curator.getData().forPath(getCrawlInfoPath(datasetKey, FINISHED_REASON)),
+            StandardCharsets.UTF_8));
+  }
+
   private void assertCrawlFinished(UUID datasetKey) throws Exception {
     assertEquals(
         "FINISHED",
@@ -170,6 +252,16 @@ class ColDpMetasyncCallbackTest {
         true,
         org.gbif.api.vocabulary.EndpointType.COLDP,
         org.gbif.common.messaging.api.messages.Platform.ALL);
+  }
+
+  private File createArchiveWithoutMetadata(UUID datasetKey, int attempt) throws Exception {
+    File archive = prepareArchiveFile(datasetKey, attempt);
+    try (ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(archive))) {
+      zos.putNextEntry(new ZipEntry("NameUsage.tsv"));
+      zos.write("ID\tscientificName\n1\tAbies alba\n".getBytes(StandardCharsets.UTF_8));
+      zos.closeEntry();
+    }
+    return archive;
   }
 
   private File createArchiveWithYamlOnly(UUID datasetKey, int attempt) throws Exception {

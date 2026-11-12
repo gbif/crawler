@@ -20,10 +20,12 @@ import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.DwcDpMetadataSyncFinishedMessage;
 import org.gbif.common.messaging.api.messages.DwcDpValidationFinishedMessage;
 import org.gbif.common.messaging.api.messages.PipelinesBalancerMessage;
+import org.gbif.crawler.common.EndpointEml;
 import org.gbif.crawler.common.OkHttpRegistryMetadataClient;
 import org.gbif.crawler.dwcdp.DwcDpConfiguration;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.UUID;
 
 import org.apache.curator.framework.CuratorFramework;
@@ -86,22 +88,16 @@ public class DwcDpMetasyncCallback extends AbstractMessageCallback<DwcDpValidati
 
         DwcDpMetadataDocument dp = result.getDatapackageDocument();
 
-        if (result.hasEml()) {
-          DwcDpMetadataDocument eml = result.getEmlDocument();
-
-          try (var doc = eml.rawDocumentStream()) {
-            registryClient.insertMetadata(
-                datasetKey, doc.readAllBytes(), dp.getContentJson(), eml.getMetadataType());
-          }
-          LOG.info(
-              "Forwarded EML metadata to registry for dataset [{}]",
-              datasetKey);
-        } else {
-          try (var doc = dp.rawDocumentStream()) {
-            registryClient.insertMetadata(datasetKey, doc.readAllBytes(), dp.getContentJson(), dp.getMetadataType());
-          }
-          LOG.info(
-              "Forwarded DwcDP datapackage metadata to registry for dataset [{}]", datasetKey);
+        // A separate EML endpoint takes precedence over the metadata inside the archive
+        boolean endpointEmlSent =
+            EndpointEml.insertIfPresent(
+                registryClient,
+                archive.getParentFile(),
+                datasetKey,
+                message.getAttempt(),
+                dp.getContentJson());
+        if (!endpointEmlSent) {
+          insertArchiveMetadata(datasetKey, result);
         }
 
         // Notify downstream consumers only after metadata was accepted by the registry.
@@ -113,6 +109,29 @@ public class DwcDpMetasyncCallback extends AbstractMessageCallback<DwcDpValidati
         createOrUpdate(curator, datasetKey, FINISHED_REASON, FinishReason.ABORT);
         markFinished(datasetKey);
       }
+    }
+  }
+
+  private void insertArchiveMetadata(UUID datasetKey, DwcDpMetadataExtractionResult result)
+      throws IOException {
+    DwcDpMetadataDocument dp = result.getDatapackageDocument();
+
+    if (result.hasEml()) {
+      DwcDpMetadataDocument eml = result.getEmlDocument();
+
+      try (var doc = eml.rawDocumentStream()) {
+        registryClient.insertMetadata(
+            datasetKey, doc.readAllBytes(), dp.getContentJson(), eml.getMetadataType());
+      }
+      LOG.info(
+          "Forwarded EML metadata to registry for dataset [{}]",
+          datasetKey);
+    } else {
+      try (var doc = dp.rawDocumentStream()) {
+        registryClient.insertMetadata(datasetKey, doc.readAllBytes(), dp.getContentJson(), dp.getMetadataType());
+      }
+      LOG.info(
+          "Forwarded DwcDP datapackage metadata to registry for dataset [{}]", datasetKey);
     }
   }
 
