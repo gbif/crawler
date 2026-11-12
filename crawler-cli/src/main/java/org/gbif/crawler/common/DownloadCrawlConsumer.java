@@ -25,6 +25,7 @@ import org.gbif.utils.HttpUtil;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.util.UUID;
@@ -39,6 +40,7 @@ import org.slf4j.MDC;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
 
+import static org.gbif.crawler.CrawlerCoordinatorServiceImpl.EML_URL_PROPERTY;
 import static org.gbif.crawler.common.ZookeeperUtils.createOrUpdate;
 import static org.gbif.crawler.common.ZookeeperUtils.updateCounter;
 import static org.gbif.crawler.common.ZookeeperUtils.updateDate;
@@ -119,6 +121,7 @@ public abstract class DownloadCrawlConsumer extends CrawlConsumer {
           }
         } else if (HttpUtil.success(status)) {
           if (linkAttemptFile(datasetDirectory, datasetKey, crawlJob, localFile)) {
+            downloadEndpointEml(datasetDirectory, datasetKey, crawlJob);
             afterSuccessfulDownload(datasetKey, crawlJob, localFile);
             success(datasetKey, crawlJob);
           } else {
@@ -172,6 +175,41 @@ public abstract class DownloadCrawlConsumer extends CrawlConsumer {
         + "likely already processed concurrently (e.g. a duplicate queue message)",
         attemptFile, datasetKey, crawlJob.getAttempt());
       return false;
+    }
+  }
+
+  /**
+   * Downloads the dataset's separate EML endpoint, if the coordinator put one in the crawl job
+   * (DwC-DP and COLDP only), to {@link EndpointEml#file}. Metasync then prefers it over the
+   * metadata in the archive.
+   *
+   * <p>Failure is not fatal: the data is still processed and metasync falls back to the archive's
+   * own metadata.
+   */
+  void downloadEndpointEml(File datasetDirectory, UUID datasetKey, CrawlJob crawlJob) {
+    String emlUrl = crawlJob.getProperty(EML_URL_PROPERTY);
+    if (emlUrl == null) {
+      return;
+    }
+    File emlFile = EndpointEml.file(datasetDirectory, datasetKey, crawlJob.getAttempt());
+    try {
+      LOG.info("Start download of EML endpoint from {} to {}", emlUrl, emlFile);
+      StatusLine status = client.download(URI.create(emlUrl), emlFile);
+      if (!HttpUtil.success(status)) {
+        LOG.warn(
+          "HTTP {} downloading EML endpoint [{}] for dataset [{}], using archive metadata instead",
+          status.getStatusCode(), emlUrl, datasetKey);
+        Files.deleteIfExists(emlFile.toPath());
+      }
+    } catch (Exception e) {
+      LOG.warn(
+        "Failed to download EML endpoint [{}] for dataset [{}], using archive metadata instead",
+        emlUrl, datasetKey, e);
+      try {
+        Files.deleteIfExists(emlFile.toPath());
+      } catch (IOException deleteException) {
+        LOG.warn("Unable to delete partial EML file {}", emlFile, deleteException);
+      }
     }
   }
 
