@@ -126,7 +126,6 @@ public class DwcDpMetasyncCallback extends AbstractMessageCallback<DwcDpValidati
 
     boolean containsOccurrences = false;
     boolean containsEvents = false;
-    boolean containsMaterial = false;
 
     for (JsonNode resource : resources) {
       String name = resource.path("name").asText("");
@@ -136,14 +135,7 @@ public class DwcDpMetasyncCallback extends AbstractMessageCallback<DwcDpValidati
       if (name.equalsIgnoreCase("event")) {
         containsEvents = true;
       }
-      if (name.equalsIgnoreCase("material")) {
-        containsMaterial = true;
-      }
     }
-
-    // Material records linked directly to an event become virtual occurrences during DwC-DP
-    // ingestion. They require the occurrence workflow to reach normal occurrence indexing.
-    containsOccurrences |= containsEvents && containsMaterial;
 
     return new PipelinesBalancerMessage(
       DwcDpMetadataSyncFinishedMessage.class.getSimpleName(),

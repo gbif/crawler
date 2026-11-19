@@ -26,6 +26,22 @@ pipeline {
   }
   stages {
 
+    stage('Setup') {
+      steps {
+        script {
+          // Branch-qualified version, workspace only, never committed.
+          // Example: feature/orchestration -> 2.0.15-FEATURE-ORCHESTRATION-SNAPSHOT
+          if (env.BRANCH_NAME != 'dev' && env.BRANCH_NAME != 'master' && !params.RELEASE) {
+            def suffix = env.BRANCH_NAME.replaceAll('[^a-zA-Z0-9.-]', '-').toUpperCase()
+            sh """
+              BASE_VERSION=\$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout | sed 's/-SNAPSHOT//')
+              mvn versions:set -DnewVersion=\${BASE_VERSION}-${suffix}-SNAPSHOT -DgenerateBackupPoms=false -DprocessAllModules=true
+            """
+          }
+        }
+      }
+    }
+
     stage('Maven build') {
        when {
         allOf {

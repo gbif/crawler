@@ -21,6 +21,7 @@ import org.gbif.common.messaging.api.messages.DwcDpValidationFinishedMessage;
 import org.gbif.common.messaging.api.messages.PipelinesBalancerMessage;
 import org.gbif.crawler.common.OkHttpRegistryMetadataClient;
 import org.gbif.crawler.dwcdp.DwcDpConfiguration;
+import org.gbif.dp.analysis.api.AnalysisExecution;
 import org.gbif.dp.analysis.api.DatapackageAnalysisResult;
 
 import java.io.File;
@@ -52,6 +53,7 @@ import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_OCCURREN
 import static org.gbif.crawler.constants.CrawlerNodePaths.PROCESS_STATE_SAMPLE;
 import static org.gbif.crawler.constants.CrawlerNodePaths.getCrawlInfoPath;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
@@ -97,7 +99,7 @@ class DwcDpMetasyncCallbackTest {
         new DwcDpMetasyncCallback(
             registryClient, tempDir.toFile(), curator, publisher, new DwcDpMetadataDocumentConverter());
 
-    callback.handleMessage(buildMessage(datasetKey, 2, true, new DatapackageAnalysisResult(null, null, null)));
+    callback.handleMessage(buildMessage(datasetKey, 2, true));
 
     ArgumentCaptor<byte[]> rawDocumentCaptor = ArgumentCaptor.forClass(byte[].class);
     ArgumentCaptor<String> jsonCaptor = ArgumentCaptor.forClass(String.class);
@@ -130,7 +132,7 @@ class DwcDpMetasyncCallbackTest {
         new DwcDpMetasyncCallback(
             registryClient, tempDir.toFile(), curator, publisher, new DwcDpMetadataDocumentConverter());
 
-    callback.handleMessage(buildMessage(datasetKey, 1, true, new DatapackageAnalysisResult(null, null, null)));
+    callback.handleMessage(buildMessage(datasetKey, 1, true));
 
     ArgumentCaptor<byte[]> emlStreamCaptor = ArgumentCaptor.forClass(byte[].class);
     ArgumentCaptor<String> dpJsonCaptor = ArgumentCaptor.forClass(String.class);
@@ -151,14 +153,14 @@ class DwcDpMetasyncCallbackTest {
   }
 
   @Test
-  void eventAndMaterialResources_markDatasetAsContainingOccurrences() throws Exception {
+  void eventAndMaterialResources_doNotMarkDatasetAsContainingOccurrences() throws Exception {
     UUID datasetKey = UUID.randomUUID();
     createArchiveWithEventAndMaterialResources(datasetKey, 1);
 
     DwcDpMetasyncCallback callback =
         new DwcDpMetasyncCallback(
             registryClient, tempDir.toFile(), curator, publisher, new DwcDpMetadataDocumentConverter());
-    callback.handleMessage(buildMessage(datasetKey, 1, true, new DatapackageAnalysisResult(null, null, null)));
+    callback.handleMessage(buildMessage(datasetKey, 1, true));
 
     ArgumentCaptor<PipelinesBalancerMessage> wrapperCaptor =
         ArgumentCaptor.forClass(PipelinesBalancerMessage.class);
@@ -166,8 +168,9 @@ class DwcDpMetasyncCallbackTest {
     DwcDpMetadataSyncFinishedMessage published =
         MAPPER.readValue(wrapperCaptor.getValue().getPayload(), DwcDpMetadataSyncFinishedMessage.class);
 
+    // Material is not an occurrence: only an occurrence resource sets containsOccurrences.
     assertTrue(published.isContainsEvents());
-    assertTrue(published.isContainsOccurrences());
+    assertFalse(published.isContainsOccurrences());
   }
 
   @Test
@@ -178,7 +181,7 @@ class DwcDpMetasyncCallbackTest {
         new DwcDpMetasyncCallback(
             registryClient, tempDir.toFile(), curator, publisher, new DwcDpMetadataDocumentConverter());
 
-    callback.handleMessage(buildMessage(datasetKey, 2, false, new DatapackageAnalysisResult(null, null, null)));
+    callback.handleMessage(buildMessage(datasetKey, 2, false));
 
     verifyNoMoreInteractions(registryClient, publisher);
     assertEquals(
@@ -222,12 +225,12 @@ class DwcDpMetasyncCallbackTest {
             StandardCharsets.UTF_8));
   }
 
-  private DwcDpValidationFinishedMessage buildMessage(UUID datasetKey, int attempt, Boolean valid, DatapackageAnalysisResult datapackageAnalysisResult) {
+  private DwcDpValidationFinishedMessage buildMessage(UUID datasetKey, int attempt, Boolean valid) {
     return new DwcDpValidationFinishedMessage(
         datasetKey,
         attempt,
         valid,
-        datapackageAnalysisResult);
+        new AnalysisExecution<>(new DatapackageAnalysisResult(null, null, null), null));
   }
 
   private File createArchiveWithDatapackageOnly(UUID datasetKey, int attempt) throws Exception {
