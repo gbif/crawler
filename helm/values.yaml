@@ -24,8 +24,9 @@ rabbit:
   host: localhost
   port: 5672
   vhost: /
-  username: guest
-  password: guest
+  # Only used with createSecret: true; there are no default credentials
+  username: ""
+  password: ""
   createSecret: false
   credentialsSecret: crawler-rabbitmq-credentials
 
@@ -37,8 +38,9 @@ zooKeeper:
 
 registry:
   wsUrl: http://localhost:8080
-  username: changeme
-  password: changeme
+  # Only used with createSecret: true; there are no default credentials
+  username: ""
+  password: ""
   createSecret: false
   credentialsSecret: crawler-registry-credentials
 
@@ -76,6 +78,19 @@ commands:
       archiveRepository: /data/dwca
       poolSize: 1
       httpTimeout: 600000
+      # Optional size limits (0 disables a limit), same block for all archive commands:
+      # limits:
+      #   maxDownloadBytes: 214748364800      # 200 GiB
+      #   maxUnpackedBytes: 1099511627776     # 1 TiB
+      #   maxUnpackedEntries: 10000
+      #   maxCompressionRatio: 200            # checked after 1 GiB is unpacked
+      #   maxMetadataBytes: 52428800          # 50 MiB
+      # Publisher URLs resolving to private addresses are refused; same block for the commands
+      # that fetch URLs: downloaders, crawlserver, coordinator and (registry) metasync.
+      # ColDP/DwC-DP metasync only read local archives:
+      # hostRestrictions:
+      #   allowPrivateAddresses: false
+      #   allowedHosts: [ipt.internal.example.org]
     volumeMounts:
       - name: dwca
         mountPath: /data/dwca

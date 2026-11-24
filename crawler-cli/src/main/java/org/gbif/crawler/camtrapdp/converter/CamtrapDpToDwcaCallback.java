@@ -25,6 +25,8 @@ import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.CamtrapDpDownloadFinishedMessage;
 import org.gbif.common.messaging.api.messages.DwcaDownloadFinishedMessage;
 import org.gbif.crawler.camtrapdp.CamtrapDpConfiguration;
+import org.gbif.crawler.common.ArchiveSizeChecker;
+import org.gbif.crawler.common.SizeLimitExceededException;
 import org.gbif.registry.ws.client.DatasetClient;
 import org.gbif.utils.file.CompressionUtil;
 import org.gbif.utils.file.FileUtils;
@@ -130,10 +132,18 @@ public class CamtrapDpToDwcaCallback
     File temp = Paths.get(config.unpackedDpRepository.toString(), datasetKey + ".tmp").toFile();
     File backup = Paths.get(config.unpackedDpRepository.toString(), datasetKey + ".bak").toFile();
 
+    ArchiveSizeChecker.check(compressedFile, config.limits);
     recreateDirectory(temp);
-    CompressionUtil.decompressFile(temp, compressedFile, true);
-    validateUnpackedDp(message.getDatasetUuid(), temp);
-    promoteTempDirectory(message.getDatasetUuid(), temp, target, backup);
+    try {
+      CompressionUtil.decompressFile(temp, compressedFile, true);
+      validateUnpackedDp(message.getDatasetUuid(), temp, config.limits.maxMetadataBytes);
+      promoteTempDirectory(message.getDatasetUuid(), temp, target, backup);
+    } finally {
+      // Promoted on success; otherwise don't leave a partly unpacked archive behind
+      if (temp.exists()) {
+        FileUtils.deleteDirectoryRecursively(temp);
+      }
+    }
     log.info("Decompressing is finihed, datasetKey {} ...", message.getDatasetUuid());
   }
 
@@ -147,7 +157,8 @@ public class CamtrapDpToDwcaCallback
     }
   }
 
-  private static void validateUnpackedDp(UUID datasetKey, File unpackedDirectory) throws IOException {
+  static void validateUnpackedDp(
+      UUID datasetKey, File unpackedDirectory, long maxMetadataBytes) throws IOException {
     File dataPackage = Paths.get(unpackedDirectory.toString(), DATAPACKAGE_JSON).toFile();
     if (!dataPackage.isFile()) {
       throw new IOException(
@@ -155,6 +166,11 @@ public class CamtrapDpToDwcaCallback
               + datasetKey
               + " does not contain "
               + DATAPACKAGE_JSON);
+    }
+    // datapackage.json is read whole into memory for the license and contributors
+    if (maxMetadataBytes > 0 && dataPackage.length() > maxMetadataBytes) {
+      throw new SizeLimitExceededException(
+          DATAPACKAGE_JSON + " is larger than " + maxMetadataBytes + " bytes");
     }
   }
 

@@ -27,6 +27,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import java.util.Date;
 import java.util.UUID;
 
 import org.apache.curator.framework.CuratorFramework;
@@ -64,12 +66,26 @@ public abstract class DownloadCrawlConsumer extends CrawlConsumer {
 
   private final HttpClient client;
 
+  protected final SizeLimits limits;
+
   public DownloadCrawlConsumer(
     CuratorFramework curator,
     MessagePublisher publisher,
     File archiveRepository,
     int httpTimeout) {
+    this(
+      curator, publisher, archiveRepository, httpTimeout, new SizeLimits(), new HostRestrictions());
+  }
+
+  public DownloadCrawlConsumer(
+    CuratorFramework curator,
+    MessagePublisher publisher,
+    File archiveRepository,
+    int httpTimeout,
+    SizeLimits limits,
+    HostRestrictions hostRestrictions) {
     super(curator, publisher);
+    this.limits = limits;
     this.archiveRepository = archiveRepository;
     if (!archiveRepository.exists() || !archiveRepository.isDirectory()) {
       throw new IllegalArgumentException(
@@ -81,7 +97,9 @@ public abstract class DownloadCrawlConsumer extends CrawlConsumer {
         "Archive repository directory not writable: " + archiveRepository.getAbsolutePath());
     }
 
-    client = HttpUtil.newMultithreadedClient(httpTimeout, 25, 2);
+    client =
+      SizeLimitedHttpClient.newMultithreadedClient(
+        httpTimeout, 25, 2, limits.maxDownloadBytes, hostRestrictions.dnsResolver());
   }
 
   @Override
@@ -101,6 +119,11 @@ public abstract class DownloadCrawlConsumer extends CrawlConsumer {
     // we keep the file (potentially compressed) forever and use it to retrieve the last modified
     // for conditional gets
     final File localFile = new File(datasetDirectory, datasetKey + getSuffix());
+    // Downloads go to a temporary file first, so a failed or oversized download never replaces or
+    // removes the last good archive. Unique per run, as runs for the same dataset can overlap.
+    final File downloadFile =
+      new File(
+        datasetDirectory, datasetKey + getSuffix() + "." + UUID.randomUUID() + ".download");
 
     try (MDC.MDCCloseable ignored1 = MDC.putCloseable("datasetKey", datasetKey.toString());
          MDC.MDCCloseable ignored2 =
@@ -108,8 +131,17 @@ public abstract class DownloadCrawlConsumer extends CrawlConsumer {
       // Sub-try so the MDC is still present for the exception logging.
       try {
         LOG.info("Start download of archive from {} to {}", crawlJob.getTargetUrl(), localFile);
+        Date lastModified = localFile.exists() ? new Date(localFile.lastModified()) : null;
         StatusLine status =
-          client.downloadIfModifiedSince(crawlJob.getTargetUrl().toURL(), null, localFile, true);
+          client.downloadIfModifiedSince(
+            crawlJob.getTargetUrl().toURL(), lastModified, downloadFile, true);
+        if (HttpUtil.success(status) && downloadFile.exists()) {
+          // Before the archive replaces the last one and the attempt is marked as processed
+          checkDownload(downloadFile);
+          // A rename keeps the Last-Modified time set from the server, used for the next request
+          Files.move(
+            downloadFile.toPath(), localFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        }
 
         if (status.getStatusCode() == HttpStatus.SC_NOT_MODIFIED) {
           if (linkAttemptFile(datasetDirectory, datasetKey, crawlJob, localFile)) {
@@ -134,6 +166,15 @@ public abstract class DownloadCrawlConsumer extends CrawlConsumer {
             + " from "
             + crawlJob.getTargetUrl());
         }
+      } catch (SizeLimitExceededException e) {
+        LOG.error(
+          "Archive for dataset [{}] from [{}] is too large: {}",
+          crawlJob.getDatasetKey(),
+          crawlJob.getTargetUrl(),
+          e.getMessage());
+        failed(datasetKey);
+        throw new RuntimeException(e);
+
       } catch (IOException e) {
         LOG.error(
           "Failed to download archive for dataset [{}] from [{}]",
@@ -144,6 +185,7 @@ public abstract class DownloadCrawlConsumer extends CrawlConsumer {
         throw new RuntimeException(e);
 
       } finally {
+        Files.deleteIfExists(downloadFile.toPath());
         // finished crawl
         updateDate(curator, datasetKey, CrawlerNodePaths.FINISHED_CRAWLING);
       }
@@ -159,6 +201,16 @@ public abstract class DownloadCrawlConsumer extends CrawlConsumer {
    *     or two runs racing each other) - the caller must not proceed to trigger downstream
    *     processing again in that case, see {@link #duplicateAttempt(UUID, CrawlJob)}.
    */
+  /**
+   * Checks a new download before it replaces the current archive. By default checks the unpacked
+   * size against the {@link SizeLimits}.
+   *
+   * @throws SizeLimitExceededException to reject the download
+   */
+  protected void checkDownload(File download) throws IOException {
+    ArchiveSizeChecker.check(download, limits);
+  }
+
   boolean linkAttemptFile(File datasetDirectory, UUID datasetKey, CrawlJob crawlJob, File localFile)
     throws IOException {
     File attemptFile =

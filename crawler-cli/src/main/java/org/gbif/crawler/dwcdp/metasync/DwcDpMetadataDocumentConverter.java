@@ -14,6 +14,8 @@
 package org.gbif.crawler.dwcdp.metasync;
 
 import org.gbif.api.vocabulary.MetadataType;
+import org.gbif.crawler.common.ArchiveSizeChecker;
+import org.gbif.crawler.common.SizeLimits;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,6 +41,17 @@ public class DwcDpMetadataDocumentConverter {
 
   private final ObjectMapper jsonMapper = new ObjectMapper();
 
+  private final long maxMetadataBytes;
+
+  public DwcDpMetadataDocumentConverter() {
+    this(new SizeLimits().maxMetadataBytes);
+  }
+
+  /** @param maxMetadataBytes maximum size of a metadata file in the archive, 0 for no limit */
+  public DwcDpMetadataDocumentConverter(long maxMetadataBytes) {
+    this.maxMetadataBytes = maxMetadataBytes;
+  }
+
   public DwcDpMetadataExtractionResult extractDocuments(File archive) throws IOException {
     byte[] datapackageBytes = null;
     byte[] emlBytes = null;
@@ -54,11 +67,12 @@ public class DwcDpMetadataDocumentConverter {
         String name = entry.getName().toLowerCase(Locale.ROOT);
         if (datapackageBytes == null && matchesName(name, DATAPACKAGE_NAMES)) {
           try (InputStream is = zipFile.getInputStream(entry)) {
-            datapackageBytes = is.readAllBytes();
+            datapackageBytes =
+                ArchiveSizeChecker.readAllBytes(is, maxMetadataBytes, entry.getName());
           }
         } else if (emlBytes == null && matchesName(name, EML_NAMES)) {
           try (InputStream is = zipFile.getInputStream(entry)) {
-            emlBytes = is.readAllBytes();
+            emlBytes = ArchiveSizeChecker.readAllBytes(is, maxMetadataBytes, entry.getName());
           }
         }
       }

@@ -23,6 +23,8 @@ import org.gbif.common.messaging.api.messages.DwcDpDownloadFinishedMessage;
 import org.gbif.common.messaging.api.messages.Platform;
 import org.gbif.crawler.CrawlerCoordinatorServiceImpl;
 import org.gbif.crawler.common.DownloadCrawlConsumer;
+import org.gbif.crawler.common.HostRestrictions;
+import org.gbif.crawler.common.SizeLimits;
 import org.gbif.crawler.dwcdp.DwcDpConfiguration;
 import org.gbif.utils.file.CompressionUtil;
 import org.gbif.utils.file.FileUtils;
@@ -52,8 +54,10 @@ public class DwcDpCrawlConsumer extends DownloadCrawlConsumer {
       File archiveRepository,
       File unpackedDpRepository,
       int httpTimeout,
-      DatasetService datasetService) {
-    super(curator, publisher, archiveRepository, httpTimeout);
+      DatasetService datasetService,
+      SizeLimits limits,
+      HostRestrictions hostRestrictions) {
+    super(curator, publisher, archiveRepository, httpTimeout, limits, hostRestrictions);
     this.unpackedDpRepository = unpackedDpRepository;
     if (!unpackedDpRepository.exists() || !unpackedDpRepository.isDirectory()) {
       throw new IllegalArgumentException(
@@ -90,14 +94,22 @@ public class DwcDpCrawlConsumer extends DownloadCrawlConsumer {
     File tempDirectory = new File(unpackedDpRepository, datasetKey + ".tmp");
     File backupDirectory = new File(unpackedDpRepository, datasetKey + ".bak");
 
+    // Size already checked before the download replaced the archive, see checkDownload
     recreateDirectory(tempDirectory);
     try {
-      CompressionUtil.decompressFile(tempDirectory, localFile, true);
-    } catch (RuntimeException e) {
-      throw new IOException("Unable to unpack DwcDP archive for dataset " + datasetKey, e);
+      try {
+        CompressionUtil.decompressFile(tempDirectory, localFile, true);
+      } catch (RuntimeException e) {
+        throw new IOException("Unable to unpack DwcDP archive for dataset " + datasetKey, e);
+      }
+      validateUnpackedDp(datasetKey, tempDirectory);
+      promoteTempDirectory(datasetKey, tempDirectory, targetDirectory, backupDirectory);
+    } finally {
+      // Promoted on success; otherwise don't leave a partly unpacked archive behind
+      if (tempDirectory.exists()) {
+        FileUtils.deleteDirectoryRecursively(tempDirectory);
+      }
     }
-    validateUnpackedDp(datasetKey, tempDirectory);
-    promoteTempDirectory(datasetKey, tempDirectory, targetDirectory, backupDirectory);
   }
 
   private static void recreateDirectory(File directory) throws IOException {

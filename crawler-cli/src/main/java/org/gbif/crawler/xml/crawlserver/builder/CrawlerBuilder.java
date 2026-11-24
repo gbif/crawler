@@ -18,9 +18,10 @@ import org.gbif.crawler.CrawlConfiguration;
 import org.gbif.crawler.Crawler;
 import org.gbif.crawler.CrawlerCoordinatorServiceImpl;
 import org.gbif.crawler.RequestHandler;
-import org.gbif.crawler.ResponseHandler;
 import org.gbif.crawler.RetryPolicy;
 import org.gbif.crawler.client.HttpCrawlClient;
+import org.gbif.crawler.client.PublicAddressDnsResolver;
+import org.gbif.crawler.protocol.AbstractResponseHandler;
 import org.gbif.crawler.protocol.biocase.BiocaseCrawlConfiguration;
 import org.gbif.crawler.protocol.biocase.BiocaseResponseHandler;
 import org.gbif.crawler.protocol.biocase.BiocaseScientificNameRangeRequestHandler;
@@ -45,6 +46,7 @@ import java.util.Optional;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.http.HttpResponse;
+import org.apache.http.conn.DnsResolver;
 
 import jakarta.annotation.Nullable;
 
@@ -54,7 +56,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class CrawlerBuilder {
 
   private RequestHandler<ScientificNameRangeCrawlContext, String> requestHandler;
-  private ResponseHandler<HttpResponse, List<Byte>> responseHandler;
+  private AbstractResponseHandler responseHandler;
   private CrawlConfiguration crawlConfiguration;
   private HttpCrawlClient client;
   private ScientificNameRangeStrategy strategy;
@@ -67,7 +69,6 @@ public class CrawlerBuilder {
 
   public CrawlerBuilder(CrawlJob crawlJob) {
     setupProtocolSpecifics(crawlJob);
-    setupCrawlClient();
   }
 
   public static CrawlerBuilder buildFor(CrawlJob crawlJob) {
@@ -79,6 +80,9 @@ public class CrawlerBuilder {
       lockFactory = new DynamicDelayingLockFactory(lockFactory, minDelay.get(), maxDelay.get());
     }
     Lock lock = lockFactory.makeLock(crawlConfiguration.getUrl().getHost());
+    if (client == null) {
+      client = HttpCrawlClientProvider.newHttpCrawlClient(new PublicAddressDnsResolver(List.of()));
+    }
     return new Crawler(strategy, requestHandler, responseHandler, client, retryPolicy, lock);
   }
 
@@ -94,6 +98,17 @@ public class CrawlerBuilder {
   public CrawlerBuilder withDelayedLock(long minDelay, long maxDelay) {
     this.minDelay = Optional.of(minDelay);
     this.maxDelay = Optional.of(maxDelay);
+    return this;
+  }
+
+  public CrawlerBuilder withMaxResponseBytes(long maxResponseBytes) {
+    responseHandler.setMaxResponseBytes(maxResponseBytes);
+    return this;
+  }
+
+  /** Resolves publisher host names, e.g. with a resolver that blocks internal addresses. */
+  public CrawlerBuilder withDnsResolver(DnsResolver dnsResolver) {
+    client = HttpCrawlClientProvider.newHttpCrawlClient(dnsResolver);
     return this;
   }
 
@@ -141,10 +156,6 @@ public class CrawlerBuilder {
     crawlConfiguration = job;
     requestHandler = new BiocaseScientificNameRangeRequestHandler(job);
     responseHandler = new BiocaseResponseHandler();
-  }
-
-  private void setupCrawlClient() {
-    client = HttpCrawlClientProvider.newHttpCrawlClient();
   }
 
   private void setupDigirCrawl(CrawlJob crawlJob) {

@@ -20,6 +20,7 @@ import org.gbif.crawler.exception.ProtocolException;
 import org.gbif.crawler.exception.TransportException;
 
 import java.io.IOException;
+import java.util.List;
 
 import javax.annotation.concurrent.ThreadSafe;
 import javax.net.ssl.SSLContext;
@@ -33,6 +34,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
+import org.apache.http.conn.DnsResolver;
 import org.apache.http.conn.HttpClientConnectionManager;
 import org.apache.http.conn.socket.ConnectionSocketFactory;
 import org.apache.http.conn.socket.PlainConnectionSocketFactory;
@@ -84,6 +86,23 @@ public class HttpCrawlClient implements CrawlClient<String, HttpResponse> {
    */
   public static HttpCrawlClient newInstance(
       int connectionTimeout, int maxTotalConnections, int maxTotalPerRoute) {
+    return newInstance(
+        connectionTimeout,
+        maxTotalConnections,
+        maxTotalPerRoute,
+        new PublicAddressDnsResolver(List.of()));
+  }
+
+  /**
+   * As {@link #newInstance(int, int, int)}, resolving host names with the given resolver. The
+   * default only allows public addresses; pass {@code SystemDefaultDnsResolver.INSTANCE} to allow
+   * internal hosts.
+   */
+  public static HttpCrawlClient newInstance(
+      int connectionTimeout,
+      int maxTotalConnections,
+      int maxTotalPerRoute,
+      DnsResolver dnsResolver) {
     checkArgument(connectionTimeout > 0, "connectionTimeout has to be greater than zero");
     checkArgument(maxTotalConnections > 0, "maxTotalConnections has to be greater than zero");
     checkArgument(maxTotalPerRoute > 0, "maxTotalPerRoute has to be greater than zero");
@@ -97,7 +116,7 @@ public class HttpCrawlClient implements CrawlClient<String, HttpResponse> {
             .build();
 
     PoolingHttpClientConnectionManager connectionManager =
-        new PoolingHttpClientConnectionManager(socketFactoryRegistry);
+        new PoolingHttpClientConnectionManager(socketFactoryRegistry, dnsResolver);
     connectionManager.setMaxTotal(maxTotalConnections);
     connectionManager.setDefaultMaxPerRoute(maxTotalPerRoute);
 

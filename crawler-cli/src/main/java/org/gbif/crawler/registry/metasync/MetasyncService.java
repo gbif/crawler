@@ -34,6 +34,7 @@ import org.gbif.registry.ws.client.InstallationClient;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.http.conn.DnsResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,11 +60,15 @@ public class MetasyncService extends AbstractIdleService {
 
     if (configuration.dryRun) {
       LOG.warn("Metasync dry run: the registry will not be updated.");
-      metasyncCallback = new DebugMetasyncCallback(installationService);
+      metasyncCallback =
+          new DebugMetasyncCallback(
+              installationService, configuration.hostRestrictions.dnsResolver());
     } else {
       RegistryUpdater registryUpdater =
           new RegistryUpdater(datasetService, ((MetasyncHistoryService) installationService));
-      metasyncCallback = new MetasyncCallback(registryUpdater, installationService);
+      metasyncCallback =
+          new MetasyncCallback(
+              registryUpdater, installationService, configuration.hostRestrictions.dnsResolver());
     }
 
     listener = new MessageListener(configuration.messaging.getConnectionParameters(), 1);
@@ -79,8 +84,10 @@ public class MetasyncService extends AbstractIdleService {
   private static class DebugMetasyncCallback extends AbstractMessageCallback<StartMetasyncMessage> {
     private final MetadataSynchronizer Synchronizer;
 
-    private DebugMetasyncCallback(InstallationService installationService) {
-      HttpClientFactory clientFactory = new HttpClientFactory(120, TimeUnit.MINUTES);
+    private DebugMetasyncCallback(
+        InstallationService installationService, DnsResolver dnsResolver) {
+      HttpClientFactory clientFactory =
+          new HttpClientFactory(120, TimeUnit.MINUTES, dnsResolver);
 
       MetadataSynchronizerImpl newSynchronizer = new MetadataSynchronizerImpl(installationService);
 
@@ -110,8 +117,10 @@ public class MetasyncService extends AbstractIdleService {
     private final RegistryUpdater registryUpdater;
 
     private MetasyncCallback(
-        RegistryUpdater registryUpdater, InstallationService installationService) {
-      super(installationService);
+        RegistryUpdater registryUpdater,
+        InstallationService installationService,
+        DnsResolver dnsResolver) {
+      super(installationService, dnsResolver);
       this.registryUpdater = registryUpdater;
     }
 

@@ -24,6 +24,9 @@ import org.gbif.crawler.metasync.api.SyncResult;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -39,6 +42,7 @@ import org.apache.http.message.BasicStatusLine;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -172,6 +176,40 @@ public class DigirMetadataSynchronizerTest {
   }
 
   @SuppressWarnings("UnstableApiUsage")
+  @Test
+  public void testExternalEntityIsNotResolved(@TempDir Path tempDir) throws Exception {
+    Path secret = Files.writeString(tempDir.resolve("secret.txt"), "secret");
+    String xml =
+        Resources.toString(Resources.getResource("digir/test2.xml"), StandardCharsets.UTF_8)
+            .replaceFirst(
+                "\\?>", "?><!DOCTYPE response [<!ENTITY xxe SYSTEM '" + secret.toUri() + "'>]>")
+            .replace("Distribution of benthic foraminifera", "&xxe;");
+    HttpResponse response =
+        new BasicHttpResponse(new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 200, ""));
+    response.setEntity(new ByteArrayEntity(xml.getBytes(StandardCharsets.UTF_8)));
+    when(client.execute(any(HttpGet.class))).thenReturn(response);
+
+    SyncResult syncResult = synchronizer.syncInstallation(installation, new ArrayList<>());
+    assertFalse(syncResult.addedDatasets.get(0).getTitle().contains("secret"));
+  }
+
+  @Test
+  public void testExternalDtdIsSkipped() throws Exception {
+    // Nothing listens on port 9, so loading the DTD would fail the parse
+    String xml =
+        Resources.toString(Resources.getResource("digir/test2.xml"), StandardCharsets.UTF_8)
+            .replaceFirst("\\?>", "?><!DOCTYPE response SYSTEM 'http://127.0.0.1:9/evil.dtd'>");
+    HttpResponse response =
+        new BasicHttpResponse(new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 200, ""));
+    response.setEntity(new ByteArrayEntity(xml.getBytes(StandardCharsets.UTF_8)));
+    when(client.execute(any(HttpGet.class))).thenReturn(response);
+
+    SyncResult syncResult = synchronizer.syncInstallation(installation, new ArrayList<>());
+    assertEquals(
+        "Distribution of benthic foraminifera of sediment core PS1388-3",
+        syncResult.addedDatasets.get(0).getTitle());
+  }
+
   public HttpResponse prepareResponse(int responseStatus, String fileName) throws IOException {
     HttpResponse response =
         new BasicHttpResponse(

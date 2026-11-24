@@ -16,6 +16,7 @@ package org.gbif.crawler.coldp.metasync;
 import org.gbif.cli.IgnoreProperty;
 import org.gbif.common.messaging.config.MessagingConfiguration;
 import org.gbif.crawler.common.RegistryConfiguration;
+import org.gbif.crawler.common.SizeLimits;
 import org.gbif.crawler.common.ZooKeeperConfiguration;
 
 import java.io.File;
@@ -51,4 +52,7 @@ public class ColDpMetasyncConfiguration {
   @Parameter(names = "--archive-repository")
   @NotNull
   public File archiveRepository;
+
+  @ParametersDelegate @Valid @NotNull
+  public SizeLimits limits = new SizeLimits();
 }

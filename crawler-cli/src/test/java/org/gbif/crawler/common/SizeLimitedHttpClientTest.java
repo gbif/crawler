@@ -1,0 +1,156 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.gbif.crawler.common;
+
+import org.gbif.crawler.client.PublicAddressDnsResolver.BlockedAddressException;
+import org.gbif.utils.HttpClient;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
+import java.net.URL;
+import java.nio.file.Path;
+import java.util.List;
+
+import org.apache.http.StatusLine;
+import org.apache.http.impl.conn.SystemDefaultDnsResolver;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpServer;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+public class SizeLimitedHttpClientTest {
+
+  private static final int BODY_SIZE = 10_000;
+
+  @TempDir Path tempDir;
+
+  private HttpServer server;
+
+  @BeforeEach
+  public void startServer() throws Exception {
+    server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+    // Content-Length is sent
+    server.createContext("/fixed", exchange -> respond(exchange, BODY_SIZE));
+    // Chunked, no Content-Length
+    server.createContext("/chunked", exchange -> respond(exchange, 0));
+    server.createContext(
+        "/redirect",
+        exchange -> {
+          exchange
+              .getResponseHeaders()
+              .add("Location", "http://127.0.0.1:" + server.getAddress().getPort() + "/fixed");
+          exchange.sendResponseHeaders(302, -1);
+          exchange.close();
+        });
+    server.start();
+  }
+
+  @AfterEach
+  public void stopServer() {
+    server.stop(0);
+  }
+
+  @Test
+  public void testWithinLimit() throws Exception {
+    HttpClient client = client(BODY_SIZE);
+    File file = tempDir.resolve("download").toFile();
+
+    StatusLine status = client.downloadIfModifiedSince(url("/chunked"), null, file, true);
+
+    assertEquals(200, status.getStatusCode());
+    assertEquals(BODY_SIZE, file.length());
+  }
+
+  @Test
+  public void testContentLengthOverLimit() throws Exception {
+    HttpClient client = client(BODY_SIZE - 1);
+    File file = tempDir.resolve("download").toFile();
+
+    assertThrows(
+        SizeLimitExceededException.class,
+        () -> client.downloadIfModifiedSince(url("/fixed"), null, file, true));
+  }
+
+  @Test
+  public void testChunkedOverLimit() throws Exception {
+    HttpClient client = client(BODY_SIZE - 1);
+    File file = tempDir.resolve("download").toFile();
+
+    assertThrows(
+        SizeLimitExceededException.class,
+        () -> client.downloadIfModifiedSince(url("/chunked"), null, file, true));
+  }
+
+  @Test
+  public void testNoLimit() throws Exception {
+    HttpClient client = client(0);
+    File file = tempDir.resolve("download").toFile();
+
+    client.downloadIfModifiedSince(url("/fixed"), null, file, true);
+
+    assertEquals(BODY_SIZE, file.length());
+  }
+
+  @Test
+  public void testPrivateAddressBlocked() throws Exception {
+    HttpClient client =
+        SizeLimitedHttpClient.newMultithreadedClient(
+            5_000, 2, 2, 0, new HostRestrictions().dnsResolver());
+    File file = tempDir.resolve("download").toFile();
+
+    assertThrows(
+        BlockedAddressException.class,
+        () -> client.downloadIfModifiedSince(url("/fixed"), null, file, true));
+  }
+
+  @Test
+  public void testRedirectToPrivateAddressBlocked() throws Exception {
+    HostRestrictions restrictions = new HostRestrictions();
+    restrictions.allowedHosts = List.of("localhost");
+    HttpClient client =
+        SizeLimitedHttpClient.newMultithreadedClient(5_000, 2, 2, 0, restrictions.dnsResolver());
+    File file = tempDir.resolve("download").toFile();
+    URL allowed = new URL("http://localhost:" + server.getAddress().getPort() + "/redirect");
+
+    // localhost is allowed, but the redirect goes to 127.0.0.1, which is not
+    assertThrows(
+        BlockedAddressException.class,
+        () -> client.downloadIfModifiedSince(allowed, null, file, true));
+  }
+
+  /** The test server is on localhost, so host restrictions are off. */
+  private static HttpClient client(long maxBytes) {
+    return SizeLimitedHttpClient.newMultithreadedClient(
+        5_000, 2, 2, maxBytes, SystemDefaultDnsResolver.INSTANCE);
+  }
+
+  private URL url(String path) throws Exception {
+    return new URL("http://127.0.0.1:" + server.getAddress().getPort() + path);
+  }
+
+  private static void respond(HttpExchange exchange, long length) throws IOException {
+    exchange.sendResponseHeaders(200, length);
+    try (OutputStream out = exchange.getResponseBody()) {
+      out.write(new byte[BODY_SIZE]);
+    }
+  }
+}

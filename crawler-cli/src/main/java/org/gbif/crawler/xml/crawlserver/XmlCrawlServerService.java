@@ -41,6 +41,8 @@ public class XmlCrawlServerService extends CrawlServerBaseService<XmlCrawlServer
         publisher,
         Optional.ofNullable(config.minLockDelay),
         Optional.ofNullable(config.maxLockDelay),
-        config.responseArchive);
+        config.responseArchive,
+        config.maxResponseBytes,
+        config.hostRestrictions.dnsResolver());
   }
 }

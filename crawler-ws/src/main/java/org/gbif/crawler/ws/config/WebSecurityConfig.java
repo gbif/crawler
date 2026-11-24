@@ -16,8 +16,14 @@ package org.gbif.crawler.ws.config;
 import java.util.Arrays;
 import java.util.Collections;
 
+import org.springframework.boot.actuate.autoconfigure.security.servlet.EndpointRequest;
+import org.springframework.boot.actuate.autoconfigure.web.server.ManagementPortType;
+import org.springframework.boot.actuate.health.HealthEndpoint;
+import org.springframework.boot.actuate.info.InfoEndpoint;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
+import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -32,12 +38,28 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class WebSecurityConfig {
 
   @Bean
-  public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+  public SecurityFilterChain filterChain(HttpSecurity http, Environment environment)
+      throws Exception {
+    // On a separate management port (not routed by the ingress) Spring Boot Admin gets every
+    // actuator endpoint; on the public port only health and info, as others can change or leak
+    // state.
+    boolean separateManagementPort =
+      ManagementPortType.get(environment) == ManagementPortType.DIFFERENT;
+
     http.httpBasic(AbstractHttpConfigurer::disable)
       .csrf(AbstractHttpConfigurer::disable)
       .cors(cors -> cors.configurationSource(corsConfigurationSource()))
       .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-      .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
+      .authorizeHttpRequests(
+        auth ->
+          auth
+            .requestMatchers(EndpointRequest.to(HealthEndpoint.class, InfoEndpoint.class))
+            .permitAll()
+            .requestMatchers(EndpointRequest.toAnyEndpoint())
+            .access(
+              (authentication, context) -> new AuthorizationDecision(separateManagementPort))
+            .anyRequest()
+            .permitAll());
 
     return http.build();
   }
@@ -48,15 +70,16 @@ public class WebSecurityConfig {
     CorsConfiguration configuration = new CorsConfiguration();
     configuration.setAllowedHeaders(Arrays.asList("authorization", "content-type"));
     configuration.setAllowedOrigins(Collections.singletonList("*"));
-    configuration.setAllowedMethods(
-      Arrays.asList("HEAD", "GET", "POST", "DELETE", "PUT", "OPTIONS"));
+    // The API is read-only
+    configuration.setAllowedMethods(Arrays.asList("HEAD", "GET", "OPTIONS"));
     configuration.setExposedHeaders(
       Arrays.asList(
         "Access-Control-Allow-Origin",
         "Access-Control-Allow-Methods",
         "Access-Control-Allow-Headers"));
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-    source.registerCorsConfiguration("/**", configuration);
+    // API only: actuator responses must not be readable cross-origin
+    source.registerCorsConfiguration("/dataset/**", configuration);
     return source;
   }
 }

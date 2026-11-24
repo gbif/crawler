@@ -1,0 +1,13 @@
+# Keep the build context to what the image build needs
+.git
+.idea
+*.iml
+**/target
+**/logs
+*.log
+*.hprof
+*.hprof.hwcache
+*.versionsBackup
+helm
+overview.graffle
+docker-compose*.yml
