@@ -23,6 +23,9 @@ import org.gbif.common.messaging.AbstractMessageCallback;
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.DwcaDownloadFinishedMessage;
 import org.gbif.common.messaging.api.messages.DwcaValidationFinishedMessage;
+import org.gbif.crawler.common.ArchiveSizeChecker;
+import org.gbif.crawler.common.SizeLimitExceededException;
+import org.gbif.crawler.common.SizeLimits;
 import org.gbif.crawler.dwca.DwcaConfiguration;
 import org.gbif.crawler.dwca.DwcaService;
 import org.gbif.dwc.Archive;
@@ -77,7 +80,8 @@ public class ValidatorService extends DwcaService {
             config.archiveRepository,
             config.unpackedRepository,
             publisher,
-            curator));
+            curator,
+            config.limits));
   }
 
   private static class DwcaDownloadFinishedMessageCallback
@@ -90,6 +94,7 @@ public class ValidatorService extends DwcaService {
     private final File unpackDirectory;
     private final MessagePublisher publisher;
     private final CuratorFramework curator;
+    private final SizeLimits limits;
 
     private final Counter messageCount = METRIC_REGISTRY.counter(MetricRegistry.name(ValidatorService.class, "messageCount"));
 
@@ -101,12 +106,14 @@ public class ValidatorService extends DwcaService {
         File archiveRepository,
         File unpackDirectory,
         MessagePublisher publisher,
-        CuratorFramework curator) {
+        CuratorFramework curator,
+        SizeLimits limits) {
       this.datasetService = datasetService;
       this.archiveRepository = archiveRepository;
       this.unpackDirectory = unpackDirectory;
       this.publisher = publisher;
       this.curator = curator;
+      this.limits = limits;
     }
 
     @Override
@@ -228,16 +235,26 @@ public class ValidatorService extends DwcaService {
           // not an archive so copy the file alone
           // we copy the file (instead of using the .dwca directly) in case the dataset is
           // transformed into a more concrete type eventually
+          if (limits.maxMetadataBytes > 0 && Files.size(downloadedFile) > limits.maxMetadataBytes) {
+            throw new SizeLimitExceededException(
+                "Metadata document is larger than " + limits.maxMetadataBytes + " bytes");
+          }
           Files.copy(downloadedFile, destinationPath, StandardCopyOption.REPLACE_EXISTING);
           String metadata = new String(Files.readAllBytes(destinationPath), StandardCharsets.UTF_8);
           validationReport = DwcaValidator.validate(dataset, metadata);
         } else {
+          if (downloadedFile.toFile().isFile()) {
+            ArchiveSizeChecker.check(downloadedFile.toFile(), limits);
+          }
           Archive archive = downloadedFile.toFile().isFile()? DwcFiles.fromCompressed(downloadedFile, destinationFolder) : DwcFiles.fromLocation(downloadedFile);
           validationReport = DwcaValidator.validate(dataset, archive);
         }
       } catch (UnsupportedArchiveException e) {
         LOG.warn("Invalid DwC archive for dataset [{}]", dataset.getKey(), e);
         validationReport = new DwcaValidationReport(dataset.getKey(), "Invalid Dwc archive");
+      } catch (SizeLimitExceededException e) {
+        LOG.warn("DwC archive for dataset [{}] is too large: {}", dataset.getKey(), e.getMessage());
+        validationReport = new DwcaValidationReport(dataset.getKey(), e.getMessage());
       } catch (IOException e) {
         LOG.error("IOException when reading DwC archive for dataset [{}]", dataset.getKey(), e);
         validationReport =

@@ -14,12 +14,14 @@
 package org.gbif.crawler.xml.crawlserver;
 
 import org.gbif.crawler.common.crawlserver.CrawlServerConfiguration;
+import org.gbif.crawler.protocol.AbstractResponseHandler;
 
 import java.io.File;
 
 import com.beust.jcommander.Parameter;
 
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.ToString;
 
 @SuppressWarnings("PublicField")
@@ -42,5 +44,11 @@ public class XmlCrawlServerConfiguration extends CrawlServerConfiguration {
       names = "--response-archive",
       description = "An optional directory where all the responses will be saved")
   public File responseArchive;
+
+  @Parameter(
+      names = "--max-response-bytes",
+      description = "Maximum size of a single protocol response in bytes, 0 for no limit")
+  @PositiveOrZero
+  public long maxResponseBytes = AbstractResponseHandler.DEFAULT_MAX_RESPONSE_BYTES;
 
 }

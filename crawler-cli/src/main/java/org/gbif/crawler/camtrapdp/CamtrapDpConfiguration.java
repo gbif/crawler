@@ -15,6 +15,7 @@ package org.gbif.crawler.camtrapdp;
 
 import org.gbif.cli.PropertyName;
 import org.gbif.crawler.common.RegistryConfiguration;
+import org.gbif.crawler.common.SizeLimits;
 import org.gbif.crawler.common.crawlserver.CrawlServerConfiguration;
 
 import java.io.File;
@@ -58,4 +59,7 @@ public class CamtrapDpConfiguration extends CrawlServerConfiguration {
   @Min(1_000)
   @PropertyName("httpTimeout")
   public int httpTimeout = 10 * 60 * 1_000;
+
+  @ParametersDelegate @Valid @NotNull
+  public SizeLimits limits = new SizeLimits();
 }

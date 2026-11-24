@@ -47,7 +47,7 @@ public class DwcDpMetasyncService extends AbstractIdleService {
             config.archiveRepository,
             curator,
             publisher,
-            new DwcDpMetadataDocumentConverter());
+            new DwcDpMetadataDocumentConverter(config.limits.maxMetadataBytes));
 
     listener.listen(
         config.queueName, DwcDpValidationFinishedMessage.ROUTING_KEY, config.poolSize, callback);

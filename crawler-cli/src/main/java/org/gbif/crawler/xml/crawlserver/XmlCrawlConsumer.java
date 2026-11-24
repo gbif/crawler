@@ -44,6 +44,7 @@ class XmlCrawlConsumer extends CrawlConsumer {
   private final Optional<Long> minDelay;
   private final Optional<Long> maxDelay;
   private final File responseArchive;
+  private final long maxResponseBytes;
 
   // The key used to store the count of records declared by the publisher in ZooKeeper.
   private static final String KEY_DECLARED_COUNT = "declaredCount";
@@ -63,11 +64,13 @@ class XmlCrawlConsumer extends CrawlConsumer {
       MessagePublisher publisher,
       Optional<Long> minDelay,
       Optional<Long> maxDelay,
-      File responseArchive) {
+      File responseArchive,
+      long maxResponseBytes) {
     super(curator, publisher);
     this.minDelay = minDelay;
     this.maxDelay = maxDelay;
     this.responseArchive = responseArchive;
+    this.maxResponseBytes = maxResponseBytes;
   }
 
   @Override
@@ -76,7 +79,8 @@ class XmlCrawlConsumer extends CrawlConsumer {
     CrawlerBuilder builder =
         CrawlerBuilder.buildFor(crawlJob)
             .withDefaultRetryStrategy()
-            .withScientificNameRangeCrawlContext(mode);
+            .withScientificNameRangeCrawlContext(mode)
+            .withMaxResponseBytes(maxResponseBytes);
 
     int concurrentConnections = DEFAULT_CONCURRENT_CONNECTIONS;
     if (crawlJob.getProperties().containsKey(CONCURRENT_CONNECTIONS_PROPERTY)) {

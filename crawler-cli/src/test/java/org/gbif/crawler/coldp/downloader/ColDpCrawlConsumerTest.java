@@ -17,6 +17,7 @@ import org.gbif.api.model.crawler.CrawlJob;
 import org.gbif.api.vocabulary.EndpointType;
 import org.gbif.common.messaging.api.messages.ColDpDownloadFinishedMessage;
 import org.gbif.common.messaging.api.messages.DatasetBasedMessage;
+import org.gbif.crawler.common.SizeLimits;
 
 import java.io.File;
 import java.net.URI;
@@ -34,7 +35,7 @@ class ColDpCrawlConsumerTest {
   @Test
   void createsColdDpFinishedMessage() {
     ColDpCrawlConsumer consumer =
-        new ColDpCrawlConsumer(null, null, tempDir.toFile(), 10_000);
+        new ColDpCrawlConsumer(null, null, tempDir.toFile(), 10_000, new SizeLimits());
 
     CrawlJob crawlJob =
         new CrawlJob(

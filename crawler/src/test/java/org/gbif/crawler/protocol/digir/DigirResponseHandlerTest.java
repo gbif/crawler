@@ -80,6 +80,19 @@ public class DigirResponseHandlerTest {
     assertTrue(handler.isValidState());
   }
 
+  @Test
+  public void testResponseOverLimit() throws Exception {
+    String xml = fixture();
+    int size = xml.getBytes(StandardCharsets.UTF_8).length;
+    DigirResponseHandler handler = new DigirResponseHandler();
+    handler.setMaxResponseBytes(size - 1);
+    assertThrows(ProtocolException.class, () -> handler.handleResponse(response(xml)));
+
+    handler.setMaxResponseBytes(size);
+    handler.handleResponse(response(xml));
+    assertTrue(handler.isValidState());
+  }
+
   private static String fixture() throws IOException {
     String xml =
         Resources.toString(

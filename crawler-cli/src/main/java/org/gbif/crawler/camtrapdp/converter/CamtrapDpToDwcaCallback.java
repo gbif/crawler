@@ -25,6 +25,7 @@ import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.common.messaging.api.messages.CamtrapDpDownloadFinishedMessage;
 import org.gbif.common.messaging.api.messages.DwcaDownloadFinishedMessage;
 import org.gbif.crawler.camtrapdp.CamtrapDpConfiguration;
+import org.gbif.crawler.common.ArchiveSizeChecker;
 import org.gbif.registry.ws.client.DatasetClient;
 import org.gbif.utils.file.CompressionUtil;
 import org.gbif.utils.file.FileUtils;
@@ -130,6 +131,7 @@ public class CamtrapDpToDwcaCallback
     File temp = Paths.get(config.unpackedDpRepository.toString(), datasetKey + ".tmp").toFile();
     File backup = Paths.get(config.unpackedDpRepository.toString(), datasetKey + ".bak").toFile();
 
+    ArchiveSizeChecker.check(compressedFile, config.limits);
     recreateDirectory(temp);
     CompressionUtil.decompressFile(temp, compressedFile, true);
     validateUnpackedDp(message.getDatasetUuid(), temp);

@@ -22,7 +22,9 @@ import org.gbif.common.messaging.api.messages.DatasetBasedMessage;
 import org.gbif.common.messaging.api.messages.DwcDpDownloadFinishedMessage;
 import org.gbif.common.messaging.api.messages.Platform;
 import org.gbif.crawler.CrawlerCoordinatorServiceImpl;
+import org.gbif.crawler.common.ArchiveSizeChecker;
 import org.gbif.crawler.common.DownloadCrawlConsumer;
+import org.gbif.crawler.common.SizeLimits;
 import org.gbif.crawler.dwcdp.DwcDpConfiguration;
 import org.gbif.utils.file.CompressionUtil;
 import org.gbif.utils.file.FileUtils;
@@ -52,8 +54,9 @@ public class DwcDpCrawlConsumer extends DownloadCrawlConsumer {
       File archiveRepository,
       File unpackedDpRepository,
       int httpTimeout,
-      DatasetService datasetService) {
-    super(curator, publisher, archiveRepository, httpTimeout);
+      DatasetService datasetService,
+      SizeLimits limits) {
+    super(curator, publisher, archiveRepository, httpTimeout, limits);
     this.unpackedDpRepository = unpackedDpRepository;
     if (!unpackedDpRepository.exists() || !unpackedDpRepository.isDirectory()) {
       throw new IllegalArgumentException(
@@ -91,6 +94,7 @@ public class DwcDpCrawlConsumer extends DownloadCrawlConsumer {
     File backupDirectory = new File(unpackedDpRepository, datasetKey + ".bak");
 
     recreateDirectory(tempDirectory);
+    ArchiveSizeChecker.check(localFile, limits);
     try {
       CompressionUtil.decompressFile(tempDirectory, localFile, true);
     } catch (RuntimeException e) {

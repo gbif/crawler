@@ -14,12 +14,15 @@
 package org.gbif.crawler.dwca.downloader;
 
 import org.gbif.cli.PropertyName;
+import org.gbif.crawler.common.SizeLimits;
 import org.gbif.crawler.common.crawlserver.CrawlServerConfiguration;
 
 import java.io.File;
 
 import com.beust.jcommander.Parameter;
+import com.beust.jcommander.ParametersDelegate;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.ToString;
@@ -37,4 +40,6 @@ public class DownloaderConfiguration extends CrawlServerConfiguration {
   @PropertyName("httpTimeout")
   public int httpTimeout = 30 * 60 * 1000;
 
+  @ParametersDelegate @Valid @NotNull
+  public SizeLimits limits = new SizeLimits();
 }

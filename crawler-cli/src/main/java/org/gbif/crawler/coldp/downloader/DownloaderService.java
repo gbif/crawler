@@ -36,7 +36,8 @@ public class DownloaderService extends CrawlServerBaseService<ColDpConfiguration
   @Override
   protected QueueConsumer<UUID> newConsumer(
     CuratorFramework curator, MessagePublisher publisher, ColDpConfiguration config) {
-    return new ColDpCrawlConsumer(curator, publisher, config.archiveRepository, config.httpTimeout);
+    return new ColDpCrawlConsumer(
+        curator, publisher, config.archiveRepository, config.httpTimeout, config.limits);
   }
 
 }

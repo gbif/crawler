@@ -16,6 +16,7 @@ package org.gbif.crawler.dwca;
 import org.gbif.cli.IgnoreProperty;
 import org.gbif.common.messaging.config.MessagingConfiguration;
 import org.gbif.crawler.common.RegistryConfiguration;
+import org.gbif.crawler.common.SizeLimits;
 
 import java.io.File;
 
@@ -51,4 +52,6 @@ public class DwcaConfiguration {
   @NotNull
   public File unpackedRepository;
 
+  @ParametersDelegate @Valid @NotNull
+  public SizeLimits limits = new SizeLimits();
 }

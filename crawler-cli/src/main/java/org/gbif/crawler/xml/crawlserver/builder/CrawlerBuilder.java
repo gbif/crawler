@@ -18,9 +18,9 @@ import org.gbif.crawler.CrawlConfiguration;
 import org.gbif.crawler.Crawler;
 import org.gbif.crawler.CrawlerCoordinatorServiceImpl;
 import org.gbif.crawler.RequestHandler;
-import org.gbif.crawler.ResponseHandler;
 import org.gbif.crawler.RetryPolicy;
 import org.gbif.crawler.client.HttpCrawlClient;
+import org.gbif.crawler.protocol.AbstractResponseHandler;
 import org.gbif.crawler.protocol.biocase.BiocaseCrawlConfiguration;
 import org.gbif.crawler.protocol.biocase.BiocaseResponseHandler;
 import org.gbif.crawler.protocol.biocase.BiocaseScientificNameRangeRequestHandler;
@@ -54,7 +54,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class CrawlerBuilder {
 
   private RequestHandler<ScientificNameRangeCrawlContext, String> requestHandler;
-  private ResponseHandler<HttpResponse, List<Byte>> responseHandler;
+  private AbstractResponseHandler responseHandler;
   private CrawlConfiguration crawlConfiguration;
   private HttpCrawlClient client;
   private ScientificNameRangeStrategy strategy;
@@ -94,6 +94,11 @@ public class CrawlerBuilder {
   public CrawlerBuilder withDelayedLock(long minDelay, long maxDelay) {
     this.minDelay = Optional.of(minDelay);
     this.maxDelay = Optional.of(maxDelay);
+    return this;
+  }
+
+  public CrawlerBuilder withMaxResponseBytes(long maxResponseBytes) {
+    responseHandler.setMaxResponseBytes(maxResponseBytes);
     return this;
   }
 

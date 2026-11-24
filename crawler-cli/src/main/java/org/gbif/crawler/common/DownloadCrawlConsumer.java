@@ -64,12 +64,24 @@ public abstract class DownloadCrawlConsumer extends CrawlConsumer {
 
   private final HttpClient client;
 
+  protected final SizeLimits limits;
+
   public DownloadCrawlConsumer(
     CuratorFramework curator,
     MessagePublisher publisher,
     File archiveRepository,
     int httpTimeout) {
+    this(curator, publisher, archiveRepository, httpTimeout, new SizeLimits());
+  }
+
+  public DownloadCrawlConsumer(
+    CuratorFramework curator,
+    MessagePublisher publisher,
+    File archiveRepository,
+    int httpTimeout,
+    SizeLimits limits) {
     super(curator, publisher);
+    this.limits = limits;
     this.archiveRepository = archiveRepository;
     if (!archiveRepository.exists() || !archiveRepository.isDirectory()) {
       throw new IllegalArgumentException(
@@ -81,7 +93,9 @@ public abstract class DownloadCrawlConsumer extends CrawlConsumer {
         "Archive repository directory not writable: " + archiveRepository.getAbsolutePath());
     }
 
-    client = HttpUtil.newMultithreadedClient(httpTimeout, 25, 2);
+    client =
+      SizeLimitedHttpClient.newMultithreadedClient(
+        httpTimeout, 25, 2, limits.maxDownloadBytes);
   }
 
   @Override
@@ -134,6 +148,17 @@ public abstract class DownloadCrawlConsumer extends CrawlConsumer {
             + " from "
             + crawlJob.getTargetUrl());
         }
+      } catch (SizeLimitExceededException e) {
+        LOG.error(
+          "Archive for dataset [{}] from [{}] is too large: {}",
+          crawlJob.getDatasetKey(),
+          crawlJob.getTargetUrl(),
+          e.getMessage());
+        // Don't keep the partial file: it would be taken as up to date by the next conditional GET
+        Files.deleteIfExists(localFile.toPath());
+        failed(datasetKey);
+        throw new RuntimeException(e);
+
       } catch (IOException e) {
         LOG.error(
           "Failed to download archive for dataset [{}] from [{}]",

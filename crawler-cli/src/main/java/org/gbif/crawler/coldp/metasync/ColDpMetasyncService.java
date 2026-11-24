@@ -39,7 +39,10 @@ public class ColDpMetasyncService extends AbstractIdleService {
     OkHttpRegistryMetadataClient registryClient = new OkHttpRegistryMetadataClient(config.registry);
     ColDpMetasyncCallback callback =
         new ColDpMetasyncCallback(
-            registryClient, config.archiveRepository, curator, new ColDpMetadataDocumentConverter());
+            registryClient,
+            config.archiveRepository,
+            curator,
+            new ColDpMetadataDocumentConverter(config.limits.maxMetadataBytes));
 
     listener.listen(
         config.queueName, ColDpDownloadFinishedMessage.ROUTING_KEY, config.poolSize, callback);
