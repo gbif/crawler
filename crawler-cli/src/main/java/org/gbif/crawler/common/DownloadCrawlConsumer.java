@@ -27,6 +27,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import java.util.Date;
 import java.util.UUID;
 
 import org.apache.curator.framework.CuratorFramework;
@@ -117,6 +119,9 @@ public abstract class DownloadCrawlConsumer extends CrawlConsumer {
     // we keep the file (potentially compressed) forever and use it to retrieve the last modified
     // for conditional gets
     final File localFile = new File(datasetDirectory, datasetKey + getSuffix());
+    // Downloads go to a temporary file first, so a failed or oversized download never replaces or
+    // removes the last good archive
+    final File downloadFile = new File(datasetDirectory, datasetKey + getSuffix() + ".download");
 
     try (MDC.MDCCloseable ignored1 = MDC.putCloseable("datasetKey", datasetKey.toString());
          MDC.MDCCloseable ignored2 =
@@ -124,8 +129,16 @@ public abstract class DownloadCrawlConsumer extends CrawlConsumer {
       // Sub-try so the MDC is still present for the exception logging.
       try {
         LOG.info("Start download of archive from {} to {}", crawlJob.getTargetUrl(), localFile);
+        Files.deleteIfExists(downloadFile.toPath());
+        Date lastModified = localFile.exists() ? new Date(localFile.lastModified()) : null;
         StatusLine status =
-          client.downloadIfModifiedSince(crawlJob.getTargetUrl().toURL(), null, localFile, true);
+          client.downloadIfModifiedSince(
+            crawlJob.getTargetUrl().toURL(), lastModified, downloadFile, true);
+        if (HttpUtil.success(status) && downloadFile.exists()) {
+          // A rename keeps the Last-Modified time set from the server, used for the next request
+          Files.move(
+            downloadFile.toPath(), localFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        }
 
         if (status.getStatusCode() == HttpStatus.SC_NOT_MODIFIED) {
           if (linkAttemptFile(datasetDirectory, datasetKey, crawlJob, localFile)) {
@@ -156,8 +169,6 @@ public abstract class DownloadCrawlConsumer extends CrawlConsumer {
           crawlJob.getDatasetKey(),
           crawlJob.getTargetUrl(),
           e.getMessage());
-        // Don't keep the partial file: it would be taken as up to date by the next conditional GET
-        Files.deleteIfExists(localFile.toPath());
         failed(datasetKey);
         throw new RuntimeException(e);
 
@@ -171,6 +182,7 @@ public abstract class DownloadCrawlConsumer extends CrawlConsumer {
         throw new RuntimeException(e);
 
       } finally {
+        Files.deleteIfExists(downloadFile.toPath());
         // finished crawl
         updateDate(curator, datasetKey, CrawlerNodePaths.FINISHED_CRAWLING);
       }

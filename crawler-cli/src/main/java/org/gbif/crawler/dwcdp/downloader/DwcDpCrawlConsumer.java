@@ -95,15 +95,22 @@ public class DwcDpCrawlConsumer extends DownloadCrawlConsumer {
     File tempDirectory = new File(unpackedDpRepository, datasetKey + ".tmp");
     File backupDirectory = new File(unpackedDpRepository, datasetKey + ".bak");
 
-    recreateDirectory(tempDirectory);
     ArchiveSizeChecker.check(localFile, limits);
+    recreateDirectory(tempDirectory);
     try {
-      CompressionUtil.decompressFile(tempDirectory, localFile, true);
-    } catch (RuntimeException e) {
-      throw new IOException("Unable to unpack DwcDP archive for dataset " + datasetKey, e);
+      try {
+        CompressionUtil.decompressFile(tempDirectory, localFile, true);
+      } catch (RuntimeException e) {
+        throw new IOException("Unable to unpack DwcDP archive for dataset " + datasetKey, e);
+      }
+      validateUnpackedDp(datasetKey, tempDirectory);
+      promoteTempDirectory(datasetKey, tempDirectory, targetDirectory, backupDirectory);
+    } finally {
+      // Promoted on success; otherwise don't leave a partly unpacked archive behind
+      if (tempDirectory.exists()) {
+        FileUtils.deleteDirectoryRecursively(tempDirectory);
+      }
     }
-    validateUnpackedDp(datasetKey, tempDirectory);
-    promoteTempDirectory(datasetKey, tempDirectory, targetDirectory, backupDirectory);
   }
 
   private static void recreateDirectory(File directory) throws IOException {
