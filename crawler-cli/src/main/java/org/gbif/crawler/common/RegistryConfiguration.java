@@ -42,6 +42,7 @@ public class RegistryConfiguration {
 
   @Parameter(names = "--registry-password", password = true)
   @NotNull
+  @ToString.Exclude
   public String password;
 
   /**
