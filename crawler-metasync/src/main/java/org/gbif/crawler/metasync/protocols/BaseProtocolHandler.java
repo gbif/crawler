@@ -31,6 +31,11 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.xml.XMLConstants;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
+
 import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.digester3.Digester;
 import org.apache.commons.digester3.annotations.FromAnnotationsRuleModule;
@@ -157,12 +162,30 @@ public abstract class BaseProtocolHandler implements MetadataProtocolHandler {
           }
         });
 
-    loader.setNamespaceAware(true);
     ConvertUtils.register(new DateTimeConverter(), OffsetDateTime.class);
     ConvertUtils.register(new LanguageConverter(), Language.class);
     ConvertUtils.register(new PeriodConverter(), Duration.class);
     ConvertUtils.register(new UriConverter(), URI.class);
-    return loader.newDigester();
+    return loader.newDigester(newSecureSaxParser());
+  }
+
+  /**
+   * Responses come from publisher endpoints and the parsed values are written to the registry, so
+   * external entities and DTDs must never be resolved (XXE).
+   */
+  private static SAXParser newSecureSaxParser() {
+    try {
+      SAXParserFactory factory = SAXParserFactory.newInstance();
+      factory.setNamespaceAware(true);
+      factory.setXIncludeAware(false);
+      factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+      factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+      factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+      factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+      return factory.newSAXParser();
+    } catch (ParserConfigurationException | SAXException e) {
+      throw new IllegalStateException("Unable to create a secure SAX parser", e);
+    }
   }
 
   /** @return instance of LicenseParser */
