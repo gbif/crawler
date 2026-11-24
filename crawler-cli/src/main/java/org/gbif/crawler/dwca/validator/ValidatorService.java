@@ -254,6 +254,9 @@ public class ValidatorService extends DwcaService {
         validationReport = new DwcaValidationReport(dataset.getKey(), "Invalid Dwc archive");
       } catch (SizeLimitExceededException e) {
         LOG.warn("DwC archive for dataset [{}] is too large: {}", dataset.getKey(), e.getMessage());
+        // Remove the previous crawl's files, as unpacking would have, so metasync doesn't
+        // publish them for this attempt
+        FileUtils.deleteQuietly(destinationFolder.toFile());
         validationReport = new DwcaValidationReport(dataset.getKey(), e.getMessage());
       } catch (IOException e) {
         LOG.error("IOException when reading DwC archive for dataset [{}]", dataset.getKey(), e);
