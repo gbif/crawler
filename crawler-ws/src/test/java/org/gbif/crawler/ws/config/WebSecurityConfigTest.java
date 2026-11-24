@@ -30,7 +30,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/** Configuration in src/test/resources/application.yml exposes all actuator endpoints. */
+/**
+ * Actuator on the same port as the API, e.g. if a deployment unsets the management port: only
+ * health and info are reachable. src/test/resources/application.yml exposes every endpoint.
+ */
 @SpringBootTest
 @AutoConfigureMockMvc
 public class WebSecurityConfigTest {

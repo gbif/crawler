@@ -8,10 +8,13 @@ spring:
     zookeeper:
       enabled: false
 management:
+  # Internal port for Spring Boot Admin, not to be exposed by the ingress
+  server:
+    port: 8081
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: "*"
 crawler:
   crawl:
     namespace: @crawler.crawl.namespace@

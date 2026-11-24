@@ -15,7 +15,7 @@ management:
   endpoints:
     web:
       exposure:
-        # Expose everything, as a deployment might, to check the security rules still apply
+        # As in the main application.yml
         include: "*"
 crawler:
   crawl:

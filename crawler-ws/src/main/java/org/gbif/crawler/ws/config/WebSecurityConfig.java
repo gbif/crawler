@@ -17,10 +17,13 @@ import java.util.Arrays;
 import java.util.Collections;
 
 import org.springframework.boot.actuate.autoconfigure.security.servlet.EndpointRequest;
+import org.springframework.boot.actuate.autoconfigure.web.server.ManagementPortType;
 import org.springframework.boot.actuate.health.HealthEndpoint;
 import org.springframework.boot.actuate.info.InfoEndpoint;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
+import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -35,7 +38,14 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class WebSecurityConfig {
 
   @Bean
-  public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+  public SecurityFilterChain filterChain(HttpSecurity http, Environment environment)
+      throws Exception {
+    // On a separate management port (not routed by the ingress) Spring Boot Admin gets every
+    // actuator endpoint; on the public port only health and info, as others can change or leak
+    // state.
+    boolean separateManagementPort =
+      ManagementPortType.get(environment) == ManagementPortType.DIFFERENT;
+
     http.httpBasic(AbstractHttpConfigurer::disable)
       .csrf(AbstractHttpConfigurer::disable)
       .cors(cors -> cors.configurationSource(corsConfigurationSource()))
@@ -43,11 +53,11 @@ public class WebSecurityConfig {
       .authorizeHttpRequests(
         auth ->
           auth
-            // Only health and info are public; other actuator endpoints can change or leak state
             .requestMatchers(EndpointRequest.to(HealthEndpoint.class, InfoEndpoint.class))
             .permitAll()
             .requestMatchers(EndpointRequest.toAnyEndpoint())
-            .denyAll()
+            .access(
+              (authentication, context) -> new AuthorizationDecision(separateManagementPort))
             .anyRequest()
             .permitAll());
 
