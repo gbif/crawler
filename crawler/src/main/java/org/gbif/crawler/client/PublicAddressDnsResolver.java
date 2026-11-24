@@ -81,9 +81,12 @@ public class PublicAddressDnsResolver implements DnsResolver {
       if ((b[0] & 0xfe) == 0xfc) {
         return false; // unique local fc00::/7
       }
-      if (isIpv4Embedded(b)) {
+      if ((b[0] & 0xff) == 0x20 && (b[1] & 0xff) == 0x01 && b[2] == 0 && b[3] == 0) {
+        return false; // Teredo 2001::/32, tunnels to an obfuscated IPv4 address
+      }
+      byte[] v4 = embeddedIpv4(b);
+      if (v4 != null) {
         try {
-          byte[] v4 = {b[12], b[13], b[14], b[15]};
           return isPublic(InetAddress.getByAddress(v4));
         } catch (UnknownHostException e) {
           return false;
@@ -93,18 +96,29 @@ public class PublicAddressDnsResolver implements DnsResolver {
     return true;
   }
 
-  /** IPv4-compatible ::a.b.c.d and NAT64 64:ff9b::a.b.c.d addresses. */
-  private static boolean isIpv4Embedded(byte[] b) {
-    boolean compatible = true;
-    for (int i = 0; i < 12; i++) {
-      compatible &= b[i] == 0;
+  /**
+   * The IPv4 address embedded in an IPv4-mapped ::ffff:a.b.c.d, IPv4-compatible ::a.b.c.d, NAT64
+   * 64:ff9b::a.b.c.d or 6to4 2002:a.b.c.d:: address, or null.
+   */
+  private static byte[] embeddedIpv4(byte[] b) {
+    if ((b[0] & 0xff) == 0x20 && (b[1] & 0xff) == 0x02) {
+      return new byte[] {b[2], b[3], b[4], b[5]};
     }
-    boolean nat64 = (b[0] & 0xff) == 0x00 && (b[1] & 0xff) == 0x64 && (b[2] & 0xff) == 0xff
-        && (b[3] & 0xff) == 0x9b;
+    boolean zeroPrefix = true;
+    for (int i = 0; i < 10; i++) {
+      zeroPrefix &= b[i] == 0;
+    }
+    boolean mapped = zeroPrefix && (b[10] & 0xff) == 0xff && (b[11] & 0xff) == 0xff;
+    boolean compatible = zeroPrefix && b[10] == 0 && b[11] == 0;
+    boolean nat64 =
+        (b[0] & 0xff) == 0x00
+            && (b[1] & 0xff) == 0x64
+            && (b[2] & 0xff) == 0xff
+            && (b[3] & 0xff) == 0x9b;
     for (int i = 4; nat64 && i < 12; i++) {
       nat64 = b[i] == 0;
     }
-    return compatible || nat64;
+    return mapped || compatible || nat64 ? new byte[] {b[12], b[13], b[14], b[15]} : null;
   }
 
   /** Thrown when a host resolves to an address the crawler must not connect to. */

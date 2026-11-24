@@ -15,6 +15,7 @@ package org.gbif.crawler.client;
 
 import org.gbif.crawler.client.PublicAddressDnsResolver.BlockedAddressException;
 
+import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.util.List;
 
@@ -49,16 +50,44 @@ public class PublicAddressDnsResolverTest {
         "::ffff:127.0.0.1",
         "::ffff:169.254.169.254",
         "::127.0.0.1",
-        "64:ff9b::a9fe:a9fe"
+        "64:ff9b::a9fe:a9fe",
+        "2002:7f00:1::1",
+        "2002:a9fe:a9fe::1",
+        "2001:0:4136:e378:8000:63bf:3fff:fdd2"
       })
   public void testNonPublicAddresses(String address) throws Exception {
     assertFalse(PublicAddressDnsResolver.isPublic(InetAddress.getByName(address)));
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"8.8.8.8", "130.225.43.2", "2001:4860:4860::8888", "64:ff9b::808:808"})
+  @ValueSource(
+      strings = {
+        "8.8.8.8",
+        "130.225.43.2",
+        "2001:4860:4860::8888",
+        "64:ff9b::808:808",
+        "2002:808:808::1"
+      })
   public void testPublicAddresses(String address) throws Exception {
     assertTrue(PublicAddressDnsResolver.isPublic(InetAddress.getByName(address)));
+  }
+
+  /** Native DNS lookups can return IPv4-mapped addresses as Inet6Address, not Inet4Address. */
+  @ParameterizedTest
+  @ValueSource(strings = {"127.0.0.1", "169.254.169.254", "10.0.0.1"})
+  public void testIpv4MappedInet6Address(String ipv4) throws Exception {
+    byte[] mapped = new byte[16];
+    mapped[10] = (byte) 0xff;
+    mapped[11] = (byte) 0xff;
+    System.arraycopy(InetAddress.getByName(ipv4).getAddress(), 0, mapped, 12, 4);
+    InetAddress address = Inet6Address.getByAddress(null, mapped, null);
+
+    assertTrue(address instanceof Inet6Address);
+    assertFalse(PublicAddressDnsResolver.isPublic(address));
+
+    PublicAddressDnsResolver resolver =
+        new PublicAddressDnsResolver(host -> new InetAddress[] {address}, List.of());
+    assertThrows(BlockedAddressException.class, () -> resolver.resolve("mapped.example.org"));
   }
 
   @Test
