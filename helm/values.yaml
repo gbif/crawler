@@ -24,8 +24,9 @@ rabbit:
   host: localhost
   port: 5672
   vhost: /
-  username: guest
-  password: guest
+  # Only used with createSecret: true; there are no default credentials
+  username: ""
+  password: ""
   createSecret: false
   credentialsSecret: crawler-rabbitmq-credentials
 
@@ -37,8 +38,9 @@ zooKeeper:
 
 registry:
   wsUrl: http://localhost:8080
-  username: changeme
-  password: changeme
+  # Only used with createSecret: true; there are no default credentials
+  username: ""
+  password: ""
   createSecret: false
   credentialsSecret: crawler-registry-credentials
 
