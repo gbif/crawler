@@ -28,6 +28,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -82,5 +83,15 @@ public class WebSecurityConfigTest {
                 .header("Origin", "https://example.org")
                 .header("Access-Control-Request-Method", "DELETE"))
         .andExpect(status().isForbidden());
+  }
+
+  @Test
+  public void testNoCorsOnActuator() throws Exception {
+    mockMvc
+        .perform(get("/actuator/health").header("Origin", "https://example.org"))
+        .andExpect(header().doesNotExist("Access-Control-Allow-Origin"));
+    mockMvc
+        .perform(get("/dataset/process/running").header("Origin", "https://example.org"))
+        .andExpect(header().string("Access-Control-Allow-Origin", "*"));
   }
 }

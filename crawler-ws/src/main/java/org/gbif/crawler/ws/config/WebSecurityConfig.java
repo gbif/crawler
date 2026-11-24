@@ -78,7 +78,8 @@ public class WebSecurityConfig {
         "Access-Control-Allow-Methods",
         "Access-Control-Allow-Headers"));
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-    source.registerCorsConfiguration("/**", configuration);
+    // API only: actuator responses must not be readable cross-origin
+    source.registerCorsConfiguration("/dataset/**", configuration);
     return source;
   }
 }
