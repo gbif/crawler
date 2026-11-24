@@ -14,10 +14,10 @@
 package org.gbif.crawler.dwcdp.downloader;
 
 import org.gbif.crawler.common.HostRestrictions;
-import org.gbif.crawler.common.SizeLimitExceededException;
 import org.gbif.crawler.common.SizeLimits;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.util.UUID;
 import java.util.zip.ZipEntry;
@@ -35,31 +35,37 @@ public class DwcDpCrawlConsumerTest {
   @TempDir File unpackedRepository;
 
   @Test
-  public void testOversizedArchiveLeavesNoUnpackedFiles() throws Exception {
+  public void testFailedUnpackLeavesNoTempDirectory() throws Exception {
+    // No datapackage.json, so validation fails after unpacking
+    File archive = zip("occurrence.csv");
+
+    assertThrows(
+        IOException.class,
+        () -> consumer(new SizeLimits()).afterSuccessfulDownload(UUID.randomUUID(), null, archive));
+    assertEquals(0, unpackedRepository.list().length);
+  }
+
+  private DwcDpCrawlConsumer consumer(SizeLimits limits) {
+    return new DwcDpCrawlConsumer(
+        null,
+        null,
+        archiveRepository,
+        unpackedRepository,
+        5_000,
+        null,
+        limits,
+        new HostRestrictions());
+  }
+
+  private File zip(String... names) throws IOException {
     File archive = new File(archiveRepository, "archive.dwcdp");
     try (ZipOutputStream out = new ZipOutputStream(Files.newOutputStream(archive.toPath()))) {
-      for (String name : new String[] {"datapackage.json", "occurrence.csv"}) {
+      for (String name : names) {
         out.putNextEntry(new ZipEntry(name));
         out.write("{}".getBytes());
         out.closeEntry();
       }
     }
-    SizeLimits limits = new SizeLimits();
-    limits.maxUnpackedEntries = 1;
-    DwcDpCrawlConsumer consumer =
-        new DwcDpCrawlConsumer(
-            null,
-            null,
-            archiveRepository,
-            unpackedRepository,
-            5_000,
-            null,
-            limits,
-            new HostRestrictions());
-
-    assertThrows(
-        SizeLimitExceededException.class,
-        () -> consumer.afterSuccessfulDownload(UUID.randomUUID(), null, archive));
-    assertEquals(0, unpackedRepository.list().length);
+    return archive;
   }
 }

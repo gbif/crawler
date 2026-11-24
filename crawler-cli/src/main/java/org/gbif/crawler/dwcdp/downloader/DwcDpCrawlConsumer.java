@@ -22,7 +22,6 @@ import org.gbif.common.messaging.api.messages.DatasetBasedMessage;
 import org.gbif.common.messaging.api.messages.DwcDpDownloadFinishedMessage;
 import org.gbif.common.messaging.api.messages.Platform;
 import org.gbif.crawler.CrawlerCoordinatorServiceImpl;
-import org.gbif.crawler.common.ArchiveSizeChecker;
 import org.gbif.crawler.common.DownloadCrawlConsumer;
 import org.gbif.crawler.common.HostRestrictions;
 import org.gbif.crawler.common.SizeLimits;
@@ -95,7 +94,7 @@ public class DwcDpCrawlConsumer extends DownloadCrawlConsumer {
     File tempDirectory = new File(unpackedDpRepository, datasetKey + ".tmp");
     File backupDirectory = new File(unpackedDpRepository, datasetKey + ".bak");
 
-    ArchiveSizeChecker.check(localFile, limits);
+    // Size already checked before the download replaced the archive, see checkDownload
     recreateDirectory(tempDirectory);
     try {
       try {

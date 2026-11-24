@@ -25,6 +25,8 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.UUID;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
@@ -85,6 +87,18 @@ public class DownloadCrawlConsumerSizeLimitTest {
             out.write(new byte[10_000]);
           }
         });
+    server.createContext(
+        "/twofiles.zip",
+        exchange -> {
+          exchange.sendResponseHeaders(200, 0);
+          try (ZipOutputStream out = new ZipOutputStream(exchange.getResponseBody())) {
+            for (String name : new String[] {"meta.xml", "occurrence.txt"}) {
+              out.putNextEntry(new ZipEntry(name));
+              out.write("data".getBytes(StandardCharsets.UTF_8));
+              out.closeEntry();
+            }
+          }
+        });
     server.start();
   }
 
@@ -116,7 +130,37 @@ public class DownloadCrawlConsumerSizeLimitTest {
     assertEquals(SizeLimitExceededException.class, e.getCause().getClass());
     assertEquals("good archive", Files.readString(localFile.toPath(), StandardCharsets.UTF_8));
     assertEquals(lastModified, localFile.lastModified());
-    assertFalse(new File(archiveRepository, datasetKey + SUFFIX + ".download").exists());
+    assertEquals(0, downloadFiles().length);
+  }
+
+  @Test
+  public void testArchiveOverUnpackedLimitIsNotPromoted() throws Exception {
+    UUID datasetKey = UUID.randomUUID();
+    File localFile = new File(archiveRepository, datasetKey + SUFFIX);
+    Files.writeString(localFile.toPath(), "good archive");
+    localFile.setLastModified(localFile.lastModified() - 3_600_000);
+
+    SizeLimits limits = new SizeLimits();
+    limits.maxUnpackedEntries = 1;
+    HostRestrictions hostRestrictions = new HostRestrictions();
+    hostRestrictions.allowPrivateAddresses = true;
+    TestDownloadCrawlConsumer consumer =
+        new TestDownloadCrawlConsumer(curator, archiveRepository, limits, hostRestrictions);
+    URI url = URI.create("http://127.0.0.1:" + server.getAddress().getPort() + "/twofiles.zip");
+    CrawlJob crawlJob = new CrawlJob(datasetKey, EndpointType.DWC_ARCHIVE, url, 1, null);
+
+    RuntimeException e =
+        assertThrows(RuntimeException.class, () -> consumer.crawl(datasetKey, crawlJob));
+
+    assertEquals(SizeLimitExceededException.class, e.getCause().getClass());
+    assertEquals("good archive", Files.readString(localFile.toPath(), StandardCharsets.UTF_8));
+    // The attempt is not marked as processed, so a retry with a higher limit unpacks it
+    assertFalse(new File(archiveRepository, datasetKey + ".1" + SUFFIX).exists());
+    assertEquals(0, downloadFiles().length);
+  }
+
+  private File[] downloadFiles() {
+    return archiveRepository.listFiles((dir, name) -> name.endsWith(".download"));
   }
 
   private static class TestDownloadCrawlConsumer extends DownloadCrawlConsumer {
