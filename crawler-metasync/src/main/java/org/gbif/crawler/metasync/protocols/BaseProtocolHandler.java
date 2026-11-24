@@ -162,6 +162,8 @@ public abstract class BaseProtocolHandler implements MetadataProtocolHandler {
           }
         });
 
+    // Also sets the Digester's own namespace flag, which newDigester(SAXParser) copies from here
+    loader.setNamespaceAware(true);
     ConvertUtils.register(new DateTimeConverter(), OffsetDateTime.class);
     ConvertUtils.register(new LanguageConverter(), Language.class);
     ConvertUtils.register(new PeriodConverter(), Duration.class);
@@ -181,8 +183,18 @@ public abstract class BaseProtocolHandler implements MetadataProtocolHandler {
       factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
       factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
       factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
-      factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-      return factory.newSAXParser();
+      try {
+        // Skip external DTDs instead of failing on them; Xerces-specific, so best effort
+        factory.setFeature(
+            "http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+      } catch (ParserConfigurationException | SAXException e) {
+        LOG.warn("SAX parser can't disable external DTD loading; external DTDs will be refused");
+      }
+      SAXParser parser = factory.newSAXParser();
+      // JAXP standard properties, so external DTDs and schemas are refused whatever the parser
+      parser.setProperty(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+      parser.setProperty(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
+      return parser;
     } catch (ParserConfigurationException | SAXException e) {
       throw new IllegalStateException("Unable to create a secure SAX parser", e);
     }

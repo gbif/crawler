@@ -193,6 +193,23 @@ public class DigirMetadataSynchronizerTest {
     assertFalse(syncResult.addedDatasets.get(0).getTitle().contains("secret"));
   }
 
+  @Test
+  public void testExternalDtdIsSkipped() throws Exception {
+    // Nothing listens on port 9, so loading the DTD would fail the parse
+    String xml =
+        Resources.toString(Resources.getResource("digir/test2.xml"), StandardCharsets.UTF_8)
+            .replaceFirst("\\?>", "?><!DOCTYPE response SYSTEM 'http://127.0.0.1:9/evil.dtd'>");
+    HttpResponse response =
+        new BasicHttpResponse(new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 200, ""));
+    response.setEntity(new ByteArrayEntity(xml.getBytes(StandardCharsets.UTF_8)));
+    when(client.execute(any(HttpGet.class))).thenReturn(response);
+
+    SyncResult syncResult = synchronizer.syncInstallation(installation, new ArrayList<>());
+    assertEquals(
+        "Distribution of benthic foraminifera of sediment core PS1388-3",
+        syncResult.addedDatasets.get(0).getTitle());
+  }
+
   public HttpResponse prepareResponse(int responseStatus, String fileName) throws IOException {
     HttpResponse response =
         new BasicHttpResponse(
