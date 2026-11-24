@@ -13,14 +13,18 @@
  */
 package org.gbif.crawler.xml.crawlserver;
 
+import org.gbif.crawler.common.HostRestrictions;
 import org.gbif.crawler.common.crawlserver.CrawlServerConfiguration;
 import org.gbif.crawler.protocol.AbstractResponseHandler;
 
 import java.io.File;
 
 import com.beust.jcommander.Parameter;
+import com.beust.jcommander.ParametersDelegate;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.ToString;
 
@@ -51,4 +55,6 @@ public class XmlCrawlServerConfiguration extends CrawlServerConfiguration {
   @PositiveOrZero
   public long maxResponseBytes = AbstractResponseHandler.DEFAULT_MAX_RESPONSE_BYTES;
 
+  @ParametersDelegate @Valid @NotNull
+  public HostRestrictions hostRestrictions = new HostRestrictions();
 }

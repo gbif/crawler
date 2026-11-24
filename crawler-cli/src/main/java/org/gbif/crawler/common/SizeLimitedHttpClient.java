@@ -29,16 +29,24 @@ import org.apache.http.HttpResponseInterceptor;
 import org.apache.http.ProtocolException;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.config.ConnectionConfig;
+import org.apache.http.config.Registry;
+import org.apache.http.config.RegistryBuilder;
+import org.apache.http.conn.DnsResolver;
+import org.apache.http.conn.socket.ConnectionSocketFactory;
+import org.apache.http.conn.socket.PlainConnectionSocketFactory;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.entity.HttpEntityWrapper;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.DefaultRedirectStrategy;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.protocol.HttpContext;
+import org.apache.http.ssl.SSLContexts;
 
 /**
  * Builds a {@link HttpClient} configured like {@code HttpUtil.newMultithreadedClient}, which fails
- * any response body larger than a maximum number of bytes.
+ * any response body larger than a maximum number of bytes, and resolves host names with the given
+ * {@link DnsResolver}.
  */
 public final class SizeLimitedHttpClient {
 
@@ -49,7 +57,7 @@ public final class SizeLimitedHttpClient {
    * @param maxBytes maximum response body size, 0 for no limit
    */
   public static HttpClient newMultithreadedClient(
-      int timeout, int maxConnections, int maxPerRoute, long maxBytes) {
+      int timeout, int maxConnections, int maxPerRoute, long maxBytes, DnsResolver dnsResolver) {
     RequestConfig requestConfig =
         RequestConfig.custom()
             .setSocketTimeout(timeout)
@@ -57,7 +65,13 @@ public final class SizeLimitedHttpClient {
             .setConnectionRequestTimeout(timeout)
             .build();
 
-    PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();
+    Registry<ConnectionSocketFactory> registry =
+        RegistryBuilder.<ConnectionSocketFactory>create()
+            .register("http", PlainConnectionSocketFactory.INSTANCE)
+            .register("https", new SSLConnectionSocketFactory(SSLContexts.createSystemDefault()))
+            .build();
+    PoolingHttpClientConnectionManager connectionManager =
+        new PoolingHttpClientConnectionManager(registry, dnsResolver);
     connectionManager.setDefaultConnectionConfig(
         ConnectionConfig.custom().setCharset(StandardCharsets.UTF_8).build());
     connectionManager.setMaxTotal(maxConnections);

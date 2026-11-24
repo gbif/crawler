@@ -14,6 +14,7 @@
 package org.gbif.crawler.dwca.downloader;
 
 import org.gbif.cli.PropertyName;
+import org.gbif.crawler.common.HostRestrictions;
 import org.gbif.crawler.common.SizeLimits;
 import org.gbif.crawler.common.crawlserver.CrawlServerConfiguration;
 
@@ -42,4 +43,7 @@ public class DownloaderConfiguration extends CrawlServerConfiguration {
 
   @ParametersDelegate @Valid @NotNull
   public SizeLimits limits = new SizeLimits();
+
+  @ParametersDelegate @Valid @NotNull
+  public HostRestrictions hostRestrictions = new HostRestrictions();
 }

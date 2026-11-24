@@ -33,6 +33,7 @@ import java.util.UUID;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.http.HttpResponse;
+import org.apache.http.conn.DnsResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,6 +46,7 @@ class XmlCrawlConsumer extends CrawlConsumer {
   private final Optional<Long> maxDelay;
   private final File responseArchive;
   private final long maxResponseBytes;
+  private final DnsResolver dnsResolver;
 
   // The key used to store the count of records declared by the publisher in ZooKeeper.
   private static final String KEY_DECLARED_COUNT = "declaredCount";
@@ -65,12 +67,14 @@ class XmlCrawlConsumer extends CrawlConsumer {
       Optional<Long> minDelay,
       Optional<Long> maxDelay,
       File responseArchive,
-      long maxResponseBytes) {
+      long maxResponseBytes,
+      DnsResolver dnsResolver) {
     super(curator, publisher);
     this.minDelay = minDelay;
     this.maxDelay = maxDelay;
     this.responseArchive = responseArchive;
     this.maxResponseBytes = maxResponseBytes;
+    this.dnsResolver = dnsResolver;
   }
 
   @Override
@@ -80,7 +84,8 @@ class XmlCrawlConsumer extends CrawlConsumer {
         CrawlerBuilder.buildFor(crawlJob)
             .withDefaultRetryStrategy()
             .withScientificNameRangeCrawlContext(mode)
-            .withMaxResponseBytes(maxResponseBytes);
+            .withMaxResponseBytes(maxResponseBytes)
+            .withDnsResolver(dnsResolver);
 
     int concurrentConnections = DEFAULT_CONCURRENT_CONNECTIONS;
     if (crawlJob.getProperties().containsKey(CONCURRENT_CONNECTIONS_PROPERTY)) {

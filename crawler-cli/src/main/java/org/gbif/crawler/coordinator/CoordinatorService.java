@@ -62,7 +62,9 @@ public class CoordinatorService extends AbstractIdleService {
     InstallationService installationService = configuration.registry.newClientBuilder().build(InstallationClient.class);
     PipelinesHistoryClient pipelinesHistoryClient = configuration.registry.newClientBuilder().build(PipelinesHistoryClient.class);
 
-    HttpClientFactory clientFactory = new HttpClientFactory(30, TimeUnit.SECONDS);
+    HttpClientFactory clientFactory =
+        new HttpClientFactory(
+            30, TimeUnit.SECONDS, configuration.hostRestrictions.dnsResolver());
     MetadataSynchronizerImpl metadataSynchronizer =
         new MetadataSynchronizerImpl(installationService);
     metadataSynchronizer.registerProtocolHandler(

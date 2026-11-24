@@ -15,15 +15,17 @@ package org.gbif.crawler.xml.crawlserver.util;
 
 import org.gbif.crawler.client.HttpCrawlClient;
 
+import org.apache.http.conn.DnsResolver;
+
 public class HttpCrawlClientProvider {
 
   private static final int CONNECTION_TIMEOUT_MSEC = 600000; // 10 mins
   private static final int MAX_TOTAL_CONNECTIONS = 500;
   private static final int MAX_TOTAL_PER_ROUTE = 20;
 
-  public static HttpCrawlClient newHttpCrawlClient() {
+  public static HttpCrawlClient newHttpCrawlClient(DnsResolver dnsResolver) {
     return HttpCrawlClient.newInstance(
-        CONNECTION_TIMEOUT_MSEC, MAX_TOTAL_CONNECTIONS, MAX_TOTAL_PER_ROUTE);
+        CONNECTION_TIMEOUT_MSEC, MAX_TOTAL_CONNECTIONS, MAX_TOTAL_PER_ROUTE, dnsResolver);
   }
 
   private HttpCrawlClientProvider() {

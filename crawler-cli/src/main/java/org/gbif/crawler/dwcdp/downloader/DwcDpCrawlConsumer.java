@@ -24,6 +24,7 @@ import org.gbif.common.messaging.api.messages.Platform;
 import org.gbif.crawler.CrawlerCoordinatorServiceImpl;
 import org.gbif.crawler.common.ArchiveSizeChecker;
 import org.gbif.crawler.common.DownloadCrawlConsumer;
+import org.gbif.crawler.common.HostRestrictions;
 import org.gbif.crawler.common.SizeLimits;
 import org.gbif.crawler.dwcdp.DwcDpConfiguration;
 import org.gbif.utils.file.CompressionUtil;
@@ -55,8 +56,9 @@ public class DwcDpCrawlConsumer extends DownloadCrawlConsumer {
       File unpackedDpRepository,
       int httpTimeout,
       DatasetService datasetService,
-      SizeLimits limits) {
-    super(curator, publisher, archiveRepository, httpTimeout, limits);
+      SizeLimits limits,
+      HostRestrictions hostRestrictions) {
+    super(curator, publisher, archiveRepository, httpTimeout, limits, hostRestrictions);
     this.unpackedDpRepository = unpackedDpRepository;
     if (!unpackedDpRepository.exists() || !unpackedDpRepository.isDirectory()) {
       throw new IllegalArgumentException(

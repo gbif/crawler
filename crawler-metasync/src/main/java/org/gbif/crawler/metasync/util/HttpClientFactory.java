@@ -21,6 +21,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
+import org.apache.http.conn.DnsResolver;
 import org.apache.http.conn.HttpClientConnectionManager;
 import org.apache.http.conn.socket.ConnectionSocketFactory;
 import org.apache.http.conn.socket.PlainConnectionSocketFactory;
@@ -28,6 +29,7 @@ import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.apache.http.impl.conn.SystemDefaultDnsResolver;
 import org.apache.http.ssl.SSLContexts;
 
 /**
@@ -49,12 +51,17 @@ public class HttpClientFactory {
    * timeout, ...).
    */
   public HttpClientFactory(long timeout, TimeUnit timeUnit) {
+    this(timeout, timeUnit, SystemDefaultDnsResolver.INSTANCE);
+  }
+
+  /** As above, resolving host names with the given resolver, e.g. one that blocks internal hosts. */
+  public HttpClientFactory(long timeout, TimeUnit timeUnit, DnsResolver dnsResolver) {
     long millis = TimeUnit.MILLISECONDS.convert(timeout, timeUnit);
 
     System.setProperty("sun.net.client.defaultConnectTimeout", String.valueOf(millis));
     System.setProperty("sun.net.client.defaultReadTimeout", String.valueOf(millis));
 
-    connectionManager = setupConnectionManager();
+    connectionManager = setupConnectionManager(dnsResolver);
     this.timeout = (int) millis;
   }
 
@@ -72,7 +79,7 @@ public class HttpClientFactory {
     return httpClient;
   }
 
-  private HttpClientConnectionManager setupConnectionManager() {
+  private HttpClientConnectionManager setupConnectionManager(DnsResolver dnsResolver) {
     SSLContext sslcontext = SSLContexts.createSystemDefault();
 
     Registry<ConnectionSocketFactory> socketFactoryRegistry =
@@ -82,7 +89,7 @@ public class HttpClientFactory {
             .build();
 
     PoolingHttpClientConnectionManager connectionManager =
-        new PoolingHttpClientConnectionManager(socketFactoryRegistry);
+        new PoolingHttpClientConnectionManager(socketFactoryRegistry, dnsResolver);
     connectionManager.setMaxTotal(MAX_TOTAL_CONNECTIONS);
     connectionManager.setDefaultMaxPerRoute(MAX_CONNECTIONS_PER_HOST);
 

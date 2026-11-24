@@ -19,6 +19,7 @@ import org.gbif.common.messaging.api.messages.DatasetBasedMessage;
 import org.gbif.common.messaging.api.messages.DwcaDownloadFinishedMessage;
 import org.gbif.common.messaging.api.messages.Platform;
 import org.gbif.crawler.common.DownloadCrawlConsumer;
+import org.gbif.crawler.common.HostRestrictions;
 import org.gbif.crawler.common.SizeLimits;
 import org.gbif.crawler.dwca.DwcaConfiguration;
 
@@ -39,8 +40,9 @@ public class DwcaCrawlConsumer extends DownloadCrawlConsumer {
       MessagePublisher publisher,
       File archiveRepository,
       int httpTimeout,
-      SizeLimits limits) {
-    super(curator, publisher, archiveRepository, httpTimeout, limits);
+      SizeLimits limits,
+      HostRestrictions hostRestrictions) {
+    super(curator, publisher, archiveRepository, httpTimeout, limits, hostRestrictions);
   }
 
   @Override

@@ -71,7 +71,8 @@ public abstract class DownloadCrawlConsumer extends CrawlConsumer {
     MessagePublisher publisher,
     File archiveRepository,
     int httpTimeout) {
-    this(curator, publisher, archiveRepository, httpTimeout, new SizeLimits());
+    this(
+      curator, publisher, archiveRepository, httpTimeout, new SizeLimits(), new HostRestrictions());
   }
 
   public DownloadCrawlConsumer(
@@ -79,7 +80,8 @@ public abstract class DownloadCrawlConsumer extends CrawlConsumer {
     MessagePublisher publisher,
     File archiveRepository,
     int httpTimeout,
-    SizeLimits limits) {
+    SizeLimits limits,
+    HostRestrictions hostRestrictions) {
     super(curator, publisher);
     this.limits = limits;
     this.archiveRepository = archiveRepository;
@@ -95,7 +97,7 @@ public abstract class DownloadCrawlConsumer extends CrawlConsumer {
 
     client =
       SizeLimitedHttpClient.newMultithreadedClient(
-        httpTimeout, 25, 2, limits.maxDownloadBytes);
+        httpTimeout, 25, 2, limits.maxDownloadBytes, hostRestrictions.dnsResolver());
   }
 
   @Override

@@ -41,6 +41,7 @@ public class DownloaderService extends CrawlServerBaseService<CamtrapDpConfigura
   protected QueueConsumer<UUID> newConsumer(
       CuratorFramework curator, MessagePublisher publisher, CamtrapDpConfiguration config) {
     return new CamtrapDpCrawlConsumer(
-        curator, publisher, config.archiveRepository, config.httpTimeout, config.limits);
+        curator, publisher, config.archiveRepository, config.httpTimeout, config.limits,
+        config.hostRestrictions);
   }
 }

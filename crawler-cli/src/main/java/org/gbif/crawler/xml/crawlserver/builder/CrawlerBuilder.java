@@ -45,6 +45,8 @@ import java.util.Optional;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.http.HttpResponse;
+import org.apache.http.conn.DnsResolver;
+import org.apache.http.impl.conn.SystemDefaultDnsResolver;
 
 import jakarta.annotation.Nullable;
 
@@ -67,7 +69,6 @@ public class CrawlerBuilder {
 
   public CrawlerBuilder(CrawlJob crawlJob) {
     setupProtocolSpecifics(crawlJob);
-    setupCrawlClient();
   }
 
   public static CrawlerBuilder buildFor(CrawlJob crawlJob) {
@@ -79,6 +80,9 @@ public class CrawlerBuilder {
       lockFactory = new DynamicDelayingLockFactory(lockFactory, minDelay.get(), maxDelay.get());
     }
     Lock lock = lockFactory.makeLock(crawlConfiguration.getUrl().getHost());
+    if (client == null) {
+      client = HttpCrawlClientProvider.newHttpCrawlClient(SystemDefaultDnsResolver.INSTANCE);
+    }
     return new Crawler(strategy, requestHandler, responseHandler, client, retryPolicy, lock);
   }
 
@@ -99,6 +103,12 @@ public class CrawlerBuilder {
 
   public CrawlerBuilder withMaxResponseBytes(long maxResponseBytes) {
     responseHandler.setMaxResponseBytes(maxResponseBytes);
+    return this;
+  }
+
+  /** Resolves publisher host names, e.g. with a resolver that blocks internal addresses. */
+  public CrawlerBuilder withDnsResolver(DnsResolver dnsResolver) {
+    client = HttpCrawlClientProvider.newHttpCrawlClient(dnsResolver);
     return this;
   }
 
@@ -146,10 +156,6 @@ public class CrawlerBuilder {
     crawlConfiguration = job;
     requestHandler = new BiocaseScientificNameRangeRequestHandler(job);
     responseHandler = new BiocaseResponseHandler();
-  }
-
-  private void setupCrawlClient() {
-    client = HttpCrawlClientProvider.newHttpCrawlClient();
   }
 
   private void setupDigirCrawl(CrawlJob crawlJob) {

@@ -38,6 +38,7 @@ public class DownloaderService extends CrawlServerBaseService<AbcdaConfiguration
   protected QueueConsumer<UUID> newConsumer(
       CuratorFramework curator, MessagePublisher publisher, AbcdaConfiguration config) {
     return new AbcdaCrawlConsumer(
-        curator, publisher, config.archiveRepository, config.httpTimeout, config.limits);
+        curator, publisher, config.archiveRepository, config.httpTimeout, config.limits,
+        config.hostRestrictions);
   }
 }

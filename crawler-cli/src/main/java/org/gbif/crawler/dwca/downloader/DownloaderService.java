@@ -40,6 +40,7 @@ public class DownloaderService extends CrawlServerBaseService<DownloaderConfigur
   protected QueueConsumer<UUID> newConsumer(
       CuratorFramework curator, MessagePublisher publisher, DownloaderConfiguration config) {
     return new DwcaCrawlConsumer(
-        curator, publisher, config.archiveRepository, config.httpTimeout, config.limits);
+        curator, publisher, config.archiveRepository, config.httpTimeout, config.limits,
+        config.hostRestrictions);
   }
 }

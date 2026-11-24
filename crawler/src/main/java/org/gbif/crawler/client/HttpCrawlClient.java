@@ -33,6 +33,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
+import org.apache.http.conn.DnsResolver;
 import org.apache.http.conn.HttpClientConnectionManager;
 import org.apache.http.conn.socket.ConnectionSocketFactory;
 import org.apache.http.conn.socket.PlainConnectionSocketFactory;
@@ -40,6 +41,7 @@ import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.apache.http.impl.conn.SystemDefaultDnsResolver;
 import org.apache.http.ssl.SSLContexts;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,6 +86,19 @@ public class HttpCrawlClient implements CrawlClient<String, HttpResponse> {
    */
   public static HttpCrawlClient newInstance(
       int connectionTimeout, int maxTotalConnections, int maxTotalPerRoute) {
+    return newInstance(
+        connectionTimeout, maxTotalConnections, maxTotalPerRoute, SystemDefaultDnsResolver.INSTANCE);
+  }
+
+  /**
+   * As {@link #newInstance(int, int, int)}, resolving host names with the given resolver, e.g. a
+   * {@link PublicAddressDnsResolver}.
+   */
+  public static HttpCrawlClient newInstance(
+      int connectionTimeout,
+      int maxTotalConnections,
+      int maxTotalPerRoute,
+      DnsResolver dnsResolver) {
     checkArgument(connectionTimeout > 0, "connectionTimeout has to be greater than zero");
     checkArgument(maxTotalConnections > 0, "maxTotalConnections has to be greater than zero");
     checkArgument(maxTotalPerRoute > 0, "maxTotalPerRoute has to be greater than zero");
@@ -97,7 +112,7 @@ public class HttpCrawlClient implements CrawlClient<String, HttpResponse> {
             .build();
 
     PoolingHttpClientConnectionManager connectionManager =
-        new PoolingHttpClientConnectionManager(socketFactoryRegistry);
+        new PoolingHttpClientConnectionManager(socketFactoryRegistry, dnsResolver);
     connectionManager.setMaxTotal(maxTotalConnections);
     connectionManager.setDefaultMaxPerRoute(maxTotalPerRoute);
 

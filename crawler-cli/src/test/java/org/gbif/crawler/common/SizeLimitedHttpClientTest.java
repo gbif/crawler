@@ -13,6 +13,7 @@
  */
 package org.gbif.crawler.common;
 
+import org.gbif.crawler.client.PublicAddressDnsResolver.BlockedAddressException;
 import org.gbif.utils.HttpClient;
 
 import java.io.File;
@@ -23,6 +24,7 @@ import java.net.URL;
 import java.nio.file.Path;
 
 import org.apache.http.StatusLine;
+import org.apache.http.impl.conn.SystemDefaultDnsResolver;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -59,7 +61,7 @@ public class SizeLimitedHttpClientTest {
 
   @Test
   public void testWithinLimit() throws Exception {
-    HttpClient client = SizeLimitedHttpClient.newMultithreadedClient(5_000, 2, 2, BODY_SIZE);
+    HttpClient client = client(BODY_SIZE);
     File file = tempDir.resolve("download").toFile();
 
     StatusLine status = client.downloadIfModifiedSince(url("/chunked"), null, file, true);
@@ -70,7 +72,7 @@ public class SizeLimitedHttpClientTest {
 
   @Test
   public void testContentLengthOverLimit() throws Exception {
-    HttpClient client = SizeLimitedHttpClient.newMultithreadedClient(5_000, 2, 2, BODY_SIZE - 1);
+    HttpClient client = client(BODY_SIZE - 1);
     File file = tempDir.resolve("download").toFile();
 
     assertThrows(
@@ -80,7 +82,7 @@ public class SizeLimitedHttpClientTest {
 
   @Test
   public void testChunkedOverLimit() throws Exception {
-    HttpClient client = SizeLimitedHttpClient.newMultithreadedClient(5_000, 2, 2, BODY_SIZE - 1);
+    HttpClient client = client(BODY_SIZE - 1);
     File file = tempDir.resolve("download").toFile();
 
     assertThrows(
@@ -90,12 +92,30 @@ public class SizeLimitedHttpClientTest {
 
   @Test
   public void testNoLimit() throws Exception {
-    HttpClient client = SizeLimitedHttpClient.newMultithreadedClient(5_000, 2, 2, 0);
+    HttpClient client = client(0);
     File file = tempDir.resolve("download").toFile();
 
     client.downloadIfModifiedSince(url("/fixed"), null, file, true);
 
     assertEquals(BODY_SIZE, file.length());
+  }
+
+  @Test
+  public void testPrivateAddressBlocked() throws Exception {
+    HttpClient client =
+        SizeLimitedHttpClient.newMultithreadedClient(
+            5_000, 2, 2, 0, new HostRestrictions().dnsResolver());
+    File file = tempDir.resolve("download").toFile();
+
+    assertThrows(
+        BlockedAddressException.class,
+        () -> client.downloadIfModifiedSince(url("/fixed"), null, file, true));
+  }
+
+  /** The test server is on localhost, so host restrictions are off. */
+  private static HttpClient client(long maxBytes) {
+    return SizeLimitedHttpClient.newMultithreadedClient(
+        5_000, 2, 2, maxBytes, SystemDefaultDnsResolver.INSTANCE);
   }
 
   private URL url(String path) throws Exception {
