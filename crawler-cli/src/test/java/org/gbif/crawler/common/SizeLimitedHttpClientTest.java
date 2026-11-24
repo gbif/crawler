@@ -22,6 +22,7 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.URL;
 import java.nio.file.Path;
+import java.util.List;
 
 import org.apache.http.StatusLine;
 import org.apache.http.impl.conn.SystemDefaultDnsResolver;
@@ -51,6 +52,15 @@ public class SizeLimitedHttpClientTest {
     server.createContext("/fixed", exchange -> respond(exchange, BODY_SIZE));
     // Chunked, no Content-Length
     server.createContext("/chunked", exchange -> respond(exchange, 0));
+    server.createContext(
+        "/redirect",
+        exchange -> {
+          exchange
+              .getResponseHeaders()
+              .add("Location", "http://127.0.0.1:" + server.getAddress().getPort() + "/fixed");
+          exchange.sendResponseHeaders(302, -1);
+          exchange.close();
+        });
     server.start();
   }
 
@@ -110,6 +120,21 @@ public class SizeLimitedHttpClientTest {
     assertThrows(
         BlockedAddressException.class,
         () -> client.downloadIfModifiedSince(url("/fixed"), null, file, true));
+  }
+
+  @Test
+  public void testRedirectToPrivateAddressBlocked() throws Exception {
+    HostRestrictions restrictions = new HostRestrictions();
+    restrictions.allowedHosts = List.of("localhost");
+    HttpClient client =
+        SizeLimitedHttpClient.newMultithreadedClient(5_000, 2, 2, 0, restrictions.dnsResolver());
+    File file = tempDir.resolve("download").toFile();
+    URL allowed = new URL("http://localhost:" + server.getAddress().getPort() + "/redirect");
+
+    // localhost is allowed, but the redirect goes to 127.0.0.1, which is not
+    assertThrows(
+        BlockedAddressException.class,
+        () -> client.downloadIfModifiedSince(allowed, null, file, true));
   }
 
   /** The test server is on localhost, so host restrictions are off. */

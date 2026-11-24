@@ -29,7 +29,6 @@ import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
-import org.apache.http.impl.conn.SystemDefaultDnsResolver;
 import org.apache.http.ssl.SSLContexts;
 
 /**
@@ -49,12 +48,9 @@ public class HttpClientFactory {
   /**
    * Builds a new Factory with a default timeout covering various things (connection timeout, read
    * timeout, ...).
+   *
+   * @param dnsResolver resolves host names, e.g. one that refuses internal addresses (SSRF)
    */
-  public HttpClientFactory(long timeout, TimeUnit timeUnit) {
-    this(timeout, timeUnit, SystemDefaultDnsResolver.INSTANCE);
-  }
-
-  /** As above, resolving host names with the given resolver, e.g. one that blocks internal hosts. */
   public HttpClientFactory(long timeout, TimeUnit timeUnit, DnsResolver dnsResolver) {
     long millis = TimeUnit.MILLISECONDS.convert(timeout, timeUnit);
 

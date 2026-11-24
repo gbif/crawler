@@ -20,6 +20,7 @@ import org.gbif.crawler.CrawlerCoordinatorServiceImpl;
 import org.gbif.crawler.RequestHandler;
 import org.gbif.crawler.RetryPolicy;
 import org.gbif.crawler.client.HttpCrawlClient;
+import org.gbif.crawler.client.PublicAddressDnsResolver;
 import org.gbif.crawler.protocol.AbstractResponseHandler;
 import org.gbif.crawler.protocol.biocase.BiocaseCrawlConfiguration;
 import org.gbif.crawler.protocol.biocase.BiocaseResponseHandler;
@@ -46,7 +47,6 @@ import java.util.Optional;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.http.HttpResponse;
 import org.apache.http.conn.DnsResolver;
-import org.apache.http.impl.conn.SystemDefaultDnsResolver;
 
 import jakarta.annotation.Nullable;
 
@@ -81,7 +81,7 @@ public class CrawlerBuilder {
     }
     Lock lock = lockFactory.makeLock(crawlConfiguration.getUrl().getHost());
     if (client == null) {
-      client = HttpCrawlClientProvider.newHttpCrawlClient(SystemDefaultDnsResolver.INSTANCE);
+      client = HttpCrawlClientProvider.newHttpCrawlClient(new PublicAddressDnsResolver(List.of()));
     }
     return new Crawler(strategy, requestHandler, responseHandler, client, retryPolicy, lock);
   }

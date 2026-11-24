@@ -20,6 +20,7 @@ import org.gbif.crawler.exception.ProtocolException;
 import org.gbif.crawler.exception.TransportException;
 
 import java.io.IOException;
+import java.util.List;
 
 import javax.annotation.concurrent.ThreadSafe;
 import javax.net.ssl.SSLContext;
@@ -41,7 +42,6 @@ import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
-import org.apache.http.impl.conn.SystemDefaultDnsResolver;
 import org.apache.http.ssl.SSLContexts;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -87,12 +87,16 @@ public class HttpCrawlClient implements CrawlClient<String, HttpResponse> {
   public static HttpCrawlClient newInstance(
       int connectionTimeout, int maxTotalConnections, int maxTotalPerRoute) {
     return newInstance(
-        connectionTimeout, maxTotalConnections, maxTotalPerRoute, SystemDefaultDnsResolver.INSTANCE);
+        connectionTimeout,
+        maxTotalConnections,
+        maxTotalPerRoute,
+        new PublicAddressDnsResolver(List.of()));
   }
 
   /**
-   * As {@link #newInstance(int, int, int)}, resolving host names with the given resolver, e.g. a
-   * {@link PublicAddressDnsResolver}.
+   * As {@link #newInstance(int, int, int)}, resolving host names with the given resolver. The
+   * default only allows public addresses; pass {@code SystemDefaultDnsResolver.INSTANCE} to allow
+   * internal hosts.
    */
   public static HttpCrawlClient newInstance(
       int connectionTimeout,
