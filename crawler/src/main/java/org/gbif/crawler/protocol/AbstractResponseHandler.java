@@ -71,6 +71,13 @@ public abstract class AbstractResponseHandler implements ResponseHandler<HttpRes
   private static final Logger LOG = LoggerFactory.getLogger(AbstractResponseHandler.class);
 
   private static final XMLInputFactory2 XIF = (XMLInputFactory2) XMLInputFactory.newInstance();
+
+  static {
+    // Responses come from publisher endpoints: never resolve DTDs or external entities (XXE)
+    XIF.setProperty(XMLInputFactory.SUPPORT_DTD, false);
+    XIF.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
+  }
+
   private static final XMLOutputFactory2 XOF = (XMLOutputFactory2) XMLOutputFactory.newInstance();
 
   private Optional<Integer> recordCount = Optional.empty();
