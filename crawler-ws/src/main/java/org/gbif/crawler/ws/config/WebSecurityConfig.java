@@ -16,6 +16,9 @@ package org.gbif.crawler.ws.config;
 import java.util.Arrays;
 import java.util.Collections;
 
+import org.springframework.boot.actuate.autoconfigure.security.servlet.EndpointRequest;
+import org.springframework.boot.actuate.health.HealthEndpoint;
+import org.springframework.boot.actuate.info.InfoEndpoint;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -37,7 +40,16 @@ public class WebSecurityConfig {
       .csrf(AbstractHttpConfigurer::disable)
       .cors(cors -> cors.configurationSource(corsConfigurationSource()))
       .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-      .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
+      .authorizeHttpRequests(
+        auth ->
+          auth
+            // Only health and info are public; other actuator endpoints can change or leak state
+            .requestMatchers(EndpointRequest.to(HealthEndpoint.class, InfoEndpoint.class))
+            .permitAll()
+            .requestMatchers(EndpointRequest.toAnyEndpoint())
+            .denyAll()
+            .anyRequest()
+            .permitAll());
 
     return http.build();
   }
@@ -48,8 +60,8 @@ public class WebSecurityConfig {
     CorsConfiguration configuration = new CorsConfiguration();
     configuration.setAllowedHeaders(Arrays.asList("authorization", "content-type"));
     configuration.setAllowedOrigins(Collections.singletonList("*"));
-    configuration.setAllowedMethods(
-      Arrays.asList("HEAD", "GET", "POST", "DELETE", "PUT", "OPTIONS"));
+    // The API is read-only
+    configuration.setAllowedMethods(Arrays.asList("HEAD", "GET", "OPTIONS"));
     configuration.setExposedHeaders(
       Arrays.asList(
         "Access-Control-Allow-Origin",

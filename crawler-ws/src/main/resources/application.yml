@@ -7,6 +7,11 @@ spring:
   cloud:
     zookeeper:
       enabled: false
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
 crawler:
   crawl:
     namespace: @crawler.crawl.namespace@
@@ -20,11 +25,6 @@ crawler:
     ws:
       url: @crawler.registry.ws.url@
 
-  mq:
-    host: @crawler.mq.host@
-    virtualHost: @crawler.mq.virtualHost@
-    username: @crawler.mq.username@
-    password: @crawler.mq.virtualHost@
 
 
 
