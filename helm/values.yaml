@@ -85,8 +85,9 @@ commands:
       #   maxUnpackedEntries: 10000
       #   maxCompressionRatio: 200            # checked after 1 GiB is unpacked
       #   maxMetadataBytes: 52428800          # 50 MiB
-      # Publisher URLs resolving to private addresses are refused; same block for crawlserver,
-      # coordinator and metasync:
+      # Publisher URLs resolving to private addresses are refused; same block for the commands
+      # that fetch URLs: downloaders, crawlserver, coordinator and (registry) metasync.
+      # ColDP/DwC-DP metasync only read local archives:
       # hostRestrictions:
       #   allowPrivateAddresses: false
       #   allowedHosts: [ipt.internal.example.org]

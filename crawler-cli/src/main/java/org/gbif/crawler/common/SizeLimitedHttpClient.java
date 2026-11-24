@@ -192,6 +192,15 @@ public final class SizeLimitedHttpClient {
       return read;
     }
 
+    @Override
+    public long skip(long n) throws IOException {
+      long skipped = super.skip(n);
+      if (skipped > 0) {
+        add(skipped);
+      }
+      return skipped;
+    }
+
     private void add(long read) throws SizeLimitExceededException {
       count += read;
       if (count > maxBytes) {

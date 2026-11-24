@@ -89,7 +89,7 @@ public final class ArchiveSizeChecker {
    */
   public static byte[] readAllBytes(InputStream in, long maxBytes, String name)
       throws IOException {
-    if (maxBytes <= 0) {
+    if (maxBytes <= 0 || maxBytes == Long.MAX_VALUE) {
       return in.readAllBytes();
     }
     byte[] bytes = ByteStreams.toByteArray(ByteStreams.limit(in, maxBytes + 1));

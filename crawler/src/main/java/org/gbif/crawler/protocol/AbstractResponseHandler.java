@@ -158,11 +158,14 @@ public abstract class AbstractResponseHandler implements ResponseHandler<HttpRes
       InputStream content = response.getEntity().getContent();
       bytes =
           ByteStreams.toByteArray(
-              maxResponseBytes > 0 ? ByteStreams.limit(content, maxResponseBytes + 1) : content);
+              maxResponseBytes > 0 && maxResponseBytes < Long.MAX_VALUE
+                  ? ByteStreams.limit(content, maxResponseBytes + 1)
+                  : content);
     } catch (IOException e) {
       throw new TransportException(e);
     }
-    if (maxResponseBytes > 0 && bytes.length > maxResponseBytes) {
+    if (maxResponseBytes > 0 && maxResponseBytes < Long.MAX_VALUE
+        && bytes.length > maxResponseBytes) {
       throw new ProtocolException(
           "Response larger than the limit of " + maxResponseBytes + " bytes");
     }
