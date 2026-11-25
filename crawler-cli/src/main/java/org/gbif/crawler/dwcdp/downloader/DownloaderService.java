@@ -14,6 +14,7 @@
 package org.gbif.crawler.dwcdp.downloader;
 
 import org.gbif.common.messaging.api.MessagePublisher;
+import org.gbif.crawler.common.OkHttpRegistryMetadataClient;
 import org.gbif.crawler.common.crawlserver.CrawlServerBaseService;
 import org.gbif.crawler.dwcdp.DwcDpConfiguration;
 import org.gbif.registry.ws.client.DatasetClient;
@@ -47,6 +48,7 @@ public class DownloaderService extends CrawlServerBaseService<DwcDpConfiguration
         config.archiveRepository,
         config.unpackedDpRepository,
         config.httpTimeout,
-        config.registry.newClientBuilder().build(DatasetClient.class));
+        config.registry.newClientBuilder().build(DatasetClient.class),
+        new OkHttpRegistryMetadataClient(config.registry));
   }
 }

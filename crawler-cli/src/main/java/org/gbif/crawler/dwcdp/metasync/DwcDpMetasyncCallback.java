@@ -89,15 +89,18 @@ public class DwcDpMetasyncCallback extends AbstractMessageCallback<DwcDpValidati
         DwcDpMetadataDocument dp = result.getDatapackageDocument();
 
         // A separate EML endpoint takes precedence over the metadata inside the archive
-        boolean endpointEmlSent =
-            EndpointEml.insertIfPresent(
-                registryClient,
-                archive.getParentFile(),
-                datasetKey,
-                message.getAttempt(),
-                dp.getContentJson());
-        if (!endpointEmlSent) {
-          insertArchiveMetadata(datasetKey, result);
+        File datasetDirectory = archive.getParentFile();
+        if (EndpointEml.downloadFailed(datasetDirectory, datasetKey, message.getAttempt())) {
+          LOG.warn(
+              "EML endpoint of dataset [{}] could not be downloaded, metadata left unchanged",
+              datasetKey);
+        } else if (!EndpointEml.insertIfPresent(
+            registryClient,
+            datasetDirectory,
+            datasetKey,
+            message.getAttempt(),
+            dp.getContentJson())) {
+          insertArchiveMetadata(registryClient, datasetKey, result);
         }
 
         // Notify downstream consumers only after metadata was accepted by the registry.
@@ -112,7 +115,11 @@ public class DwcDpMetasyncCallback extends AbstractMessageCallback<DwcDpValidati
     }
   }
 
-  private void insertArchiveMetadata(UUID datasetKey, DwcDpMetadataExtractionResult result)
+  /** Sends the archive's own metadata: its eml.xml if present, otherwise datapackage.json. */
+  public static void insertArchiveMetadata(
+      OkHttpRegistryMetadataClient registryClient,
+      UUID datasetKey,
+      DwcDpMetadataExtractionResult result)
       throws IOException {
     DwcDpMetadataDocument dp = result.getDatapackageDocument();
 

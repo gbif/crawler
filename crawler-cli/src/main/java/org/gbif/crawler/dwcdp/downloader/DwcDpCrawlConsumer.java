@@ -23,7 +23,11 @@ import org.gbif.common.messaging.api.messages.DwcDpDownloadFinishedMessage;
 import org.gbif.common.messaging.api.messages.Platform;
 import org.gbif.crawler.CrawlerCoordinatorServiceImpl;
 import org.gbif.crawler.common.DownloadCrawlConsumer;
+import org.gbif.crawler.common.EndpointEml;
+import org.gbif.crawler.common.OkHttpRegistryMetadataClient;
 import org.gbif.crawler.dwcdp.DwcDpConfiguration;
+import org.gbif.crawler.dwcdp.metasync.DwcDpMetadataDocumentConverter;
+import org.gbif.crawler.dwcdp.metasync.DwcDpMetasyncCallback;
 import org.gbif.utils.file.CompressionUtil;
 import org.gbif.utils.file.FileUtils;
 
@@ -33,6 +37,8 @@ import java.nio.file.Files;
 import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
+
+import javax.annotation.Nullable;
 
 import org.apache.curator.framework.CuratorFramework;
 
@@ -46,14 +52,23 @@ public class DwcDpCrawlConsumer extends DownloadCrawlConsumer {
 
   private final DatasetService datasetService;
   private final File unpackedDpRepository;
+  @Nullable private final OkHttpRegistryMetadataClient registryClient;
+  private final DwcDpMetadataDocumentConverter converter = new DwcDpMetadataDocumentConverter();
+
+  /**
+   * @param registryClient used to sync the EML endpoint when the archive was not modified; without
+   *     it an EML-only change is only picked up with the next modified archive
+   */
   public DwcDpCrawlConsumer(
       CuratorFramework curator,
       MessagePublisher publisher,
       File archiveRepository,
       File unpackedDpRepository,
       int httpTimeout,
-      DatasetService datasetService) {
+      DatasetService datasetService,
+      @Nullable OkHttpRegistryMetadataClient registryClient) {
     super(curator, publisher, archiveRepository, httpTimeout);
+    this.registryClient = registryClient;
     this.unpackedDpRepository = unpackedDpRepository;
     if (!unpackedDpRepository.exists() || !unpackedDpRepository.isDirectory()) {
       throw new IllegalArgumentException(
@@ -66,6 +81,20 @@ public class DwcDpCrawlConsumer extends DownloadCrawlConsumer {
               + unpackedDpRepository.getAbsolutePath());
     }
     this.datasetService = datasetService;
+  }
+
+  @Override
+  protected void afterNotModified(
+      UUID datasetKey, CrawlJob crawlJob, File datasetDirectory, File localFile) {
+    EndpointEml.syncForUnmodifiedArchive(
+        registryClient,
+        datasetDirectory,
+        crawlJob,
+        localFile,
+        archive -> converter.extractDocuments(archive).getDatapackageDocument().getContentJson(),
+        archive ->
+            DwcDpMetasyncCallback.insertArchiveMetadata(
+                registryClient, datasetKey, converter.extractDocuments(archive)));
   }
 
   @Override

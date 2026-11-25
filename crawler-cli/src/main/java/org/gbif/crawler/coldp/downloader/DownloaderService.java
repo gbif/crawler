@@ -15,6 +15,7 @@ package org.gbif.crawler.coldp.downloader;
 
 import org.gbif.common.messaging.api.MessagePublisher;
 import org.gbif.crawler.coldp.ColDpConfiguration;
+import org.gbif.crawler.common.OkHttpRegistryMetadataClient;
 import org.gbif.crawler.common.crawlserver.CrawlServerBaseService;
 
 import java.util.UUID;
@@ -36,7 +37,12 @@ public class DownloaderService extends CrawlServerBaseService<ColDpConfiguration
   @Override
   protected QueueConsumer<UUID> newConsumer(
     CuratorFramework curator, MessagePublisher publisher, ColDpConfiguration config) {
-    return new ColDpCrawlConsumer(curator, publisher, config.archiveRepository, config.httpTimeout);
+    return new ColDpCrawlConsumer(
+        curator,
+        publisher,
+        config.archiveRepository,
+        config.httpTimeout,
+        new OkHttpRegistryMetadataClient(config.registry));
   }
 
 }

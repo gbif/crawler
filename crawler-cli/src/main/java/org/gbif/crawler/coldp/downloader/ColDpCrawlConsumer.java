@@ -19,22 +19,59 @@ import org.gbif.common.messaging.api.messages.ColDpDownloadFinishedMessage;
 import org.gbif.common.messaging.api.messages.DatasetBasedMessage;
 import org.gbif.common.messaging.api.messages.Platform;
 import org.gbif.crawler.coldp.ColDpConfiguration;
+import org.gbif.crawler.coldp.metasync.ColDpMetadataDocumentConverter;
+import org.gbif.crawler.coldp.metasync.ColDpMetasyncCallback;
 import org.gbif.crawler.common.DownloadCrawlConsumer;
+import org.gbif.crawler.common.EndpointEml;
+import org.gbif.crawler.common.OkHttpRegistryMetadataClient;
 
 import java.io.File;
 import java.util.Date;
 import java.util.UUID;
 
+import javax.annotation.Nullable;
+
 import org.apache.curator.framework.CuratorFramework;
 
 public class ColDpCrawlConsumer extends DownloadCrawlConsumer {
+
+  @Nullable private final OkHttpRegistryMetadataClient registryClient;
+  private final ColDpMetadataDocumentConverter converter = new ColDpMetadataDocumentConverter();
 
   public ColDpCrawlConsumer(
       CuratorFramework curator,
       MessagePublisher publisher,
       File archiveRepository,
       int httpTimeout) {
+    this(curator, publisher, archiveRepository, httpTimeout, null);
+  }
+
+  /**
+   * @param registryClient used to sync the EML endpoint when the archive was not modified; without
+   *     it an EML-only change is only picked up with the next modified archive
+   */
+  public ColDpCrawlConsumer(
+      CuratorFramework curator,
+      MessagePublisher publisher,
+      File archiveRepository,
+      int httpTimeout,
+      @Nullable OkHttpRegistryMetadataClient registryClient) {
     super(curator, publisher, archiveRepository, httpTimeout);
+    this.registryClient = registryClient;
+  }
+
+  @Override
+  protected void afterNotModified(
+      UUID datasetKey, CrawlJob crawlJob, File datasetDirectory, File localFile) {
+    EndpointEml.syncForUnmodifiedArchive(
+        registryClient,
+        datasetDirectory,
+        crawlJob,
+        localFile,
+        archive -> converter.extractDocuments(archive).getFormatContentJson(),
+        archive ->
+            ColDpMetasyncCallback.insertArchiveMetadata(
+                registryClient, datasetKey, converter.extractDocuments(archive)));
   }
 
   @Override

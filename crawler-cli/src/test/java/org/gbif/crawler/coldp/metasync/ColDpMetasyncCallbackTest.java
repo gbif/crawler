@@ -206,6 +206,24 @@ class ColDpMetasyncCallbackTest {
   }
 
   @Test
+  void leavesMetadataUnchangedWhenEndpointEmlDownloadFailed() throws Exception {
+    UUID datasetKey = UUID.randomUUID();
+    File archive = createArchiveWithYamlAndEml(datasetKey, 6);
+    Files.write(
+        EndpointEml.failedMarker(archive.getParentFile(), datasetKey, 6).toPath(), new byte[0]);
+
+    ColDpMetasyncCallback callback =
+        new ColDpMetasyncCallback(
+            registryClient, tempDir.toFile(), curator, new ColDpMetadataDocumentConverter());
+
+    callback.handleMessage(buildMessage(datasetKey, 6));
+
+    verifyNoMoreInteractions(registryClient);
+    assertCrawlFinished(datasetKey);
+    assertNull(curator.checkExists().forPath(getCrawlInfoPath(datasetKey, FINISHED_REASON)));
+  }
+
+  @Test
   void abortsWhenThereIsNoMetadataAtAll() throws Exception {
     UUID datasetKey = UUID.randomUUID();
     createArchiveWithoutMetadata(datasetKey, 5);

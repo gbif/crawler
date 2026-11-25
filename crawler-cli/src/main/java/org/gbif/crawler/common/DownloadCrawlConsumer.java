@@ -28,7 +28,10 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
+import java.util.Date;
 import java.util.UUID;
+
+import javax.annotation.Nullable;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.http.HttpStatus;
@@ -110,18 +113,24 @@ public abstract class DownloadCrawlConsumer extends CrawlConsumer {
       // Sub-try so the MDC is still present for the exception logging.
       try {
         LOG.info("Start download of archive from {} to {}", crawlJob.getTargetUrl(), localFile);
+        long downloadStart = System.currentTimeMillis();
         StatusLine status =
           client.downloadIfModifiedSince(crawlJob.getTargetUrl().toURL(), null, localFile, true);
 
         if (status.getStatusCode() == HttpStatus.SC_NOT_MODIFIED) {
           if (linkAttemptFile(datasetDirectory, datasetKey, crawlJob, localFile)) {
+            // The archive is unchanged, but a separate EML endpoint may have changed on its own
+            downloadEndpointEml(
+              datasetDirectory, datasetKey, crawlJob, localFile.lastModified());
+            afterNotModified(datasetKey, crawlJob, datasetDirectory, localFile);
             notModified(datasetKey);
           } else {
             duplicateAttempt(datasetKey, crawlJob);
           }
         } else if (HttpUtil.success(status)) {
           if (linkAttemptFile(datasetDirectory, datasetKey, crawlJob, localFile)) {
-            downloadEndpointEml(datasetDirectory, datasetKey, crawlJob);
+            downloadEndpointEml(
+              datasetDirectory, datasetKey, crawlJob, lastModified(localFile, downloadStart));
             afterSuccessfulDownload(datasetKey, crawlJob, localFile);
             success(datasetKey, crawlJob);
           } else {
@@ -179,14 +188,34 @@ public abstract class DownloadCrawlConsumer extends CrawlConsumer {
   }
 
   /**
+   * The server's Last-Modified of a file just downloaded to {@code file}, or null if the server
+   * didn't send one. The HTTP client sets the file's modification time from the Last-Modified
+   * header; without the header the file keeps the time it was written, which is not before
+   * {@code downloadStart}.
+   */
+  @Nullable
+  static Long lastModified(File file, long downloadStart) {
+    long lastModified = file.lastModified();
+    return lastModified > 0 && lastModified < downloadStart ? lastModified : null;
+  }
+
+  /**
    * Downloads the dataset's separate EML endpoint, if the coordinator put one in the crawl job
    * (DwC-DP and COLDP only), to {@link EndpointEml#file}. Metasync then prefers it over the
-   * metadata in the archive.
+   * metadata in the archive. It is always downloaded, also when the archive was not modified, as
+   * the EML can change on its own.
    *
-   * <p>Failure is not fatal: the data is still processed and metasync falls back to the archive's
-   * own metadata.
+   * <p>The EML is not kept when the archive is more recent, i.e. both have a Last-Modified and the
+   * archive's is later, so metasync uses the archive's own metadata. When either Last-Modified is
+   * unknown the EML is kept.
+   *
+   * <p>Failure is not fatal: the data is still processed, but {@link EndpointEml#failedMarker} is
+   * written so metasync leaves the registry metadata unchanged for this attempt.
+   *
+   * @param archiveLastModified the archive's Last-Modified, null if unknown
    */
-  void downloadEndpointEml(File datasetDirectory, UUID datasetKey, CrawlJob crawlJob) {
+  void downloadEndpointEml(
+    File datasetDirectory, UUID datasetKey, CrawlJob crawlJob, @Nullable Long archiveLastModified) {
     String emlUrl = crawlJob.getProperty(EML_URL_PROPERTY);
     if (emlUrl == null) {
       return;
@@ -194,22 +223,41 @@ public abstract class DownloadCrawlConsumer extends CrawlConsumer {
     File emlFile = EndpointEml.file(datasetDirectory, datasetKey, crawlJob.getAttempt());
     try {
       LOG.info("Start download of EML endpoint from {} to {}", emlUrl, emlFile);
+      long downloadStart = System.currentTimeMillis();
       StatusLine status = client.download(URI.create(emlUrl), emlFile);
       if (!HttpUtil.success(status)) {
         LOG.warn(
-          "HTTP {} downloading EML endpoint [{}] for dataset [{}], using archive metadata instead",
+          "HTTP {} downloading EML endpoint [{}] for dataset [{}], metadata will not be updated",
           status.getStatusCode(), emlUrl, datasetKey);
+        emlDownloadFailed(datasetDirectory, datasetKey, crawlJob, emlFile);
+        return;
+      }
+      Long emlLastModified = lastModified(emlFile, downloadStart);
+      if (archiveLastModified != null
+          && emlLastModified != null
+          && archiveLastModified > emlLastModified) {
+        LOG.info(
+          "Archive of dataset [{}] (Last-Modified {}) is more recent than its EML endpoint "
+          + "(Last-Modified {}), using archive metadata instead",
+          datasetKey, new Date(archiveLastModified), new Date(emlLastModified));
         Files.deleteIfExists(emlFile.toPath());
       }
     } catch (Exception e) {
       LOG.warn(
-        "Failed to download EML endpoint [{}] for dataset [{}], using archive metadata instead",
+        "Failed to download EML endpoint [{}] for dataset [{}], metadata will not be updated",
         emlUrl, datasetKey, e);
-      try {
-        Files.deleteIfExists(emlFile.toPath());
-      } catch (IOException deleteException) {
-        LOG.warn("Unable to delete partial EML file {}", emlFile, deleteException);
-      }
+      emlDownloadFailed(datasetDirectory, datasetKey, crawlJob, emlFile);
+    }
+  }
+
+  private static void emlDownloadFailed(
+    File datasetDirectory, UUID datasetKey, CrawlJob crawlJob, File emlFile) {
+    File marker = EndpointEml.failedMarker(datasetDirectory, datasetKey, crawlJob.getAttempt());
+    try {
+      Files.deleteIfExists(emlFile.toPath());
+      Files.write(marker.toPath(), new byte[0]);
+    } catch (IOException e) {
+      LOG.warn("Unable to clean up EML file {} or write marker {}", emlFile, marker, e);
     }
   }
 
@@ -289,6 +337,16 @@ public abstract class DownloadCrawlConsumer extends CrawlConsumer {
    */
   protected void afterSuccessfulDownload(UUID datasetKey, CrawlJob crawlJob, File localFile)
     throws IOException {}
+
+  /**
+   * Hook called when the archive was not modified, after the dataset's EML endpoint (if any) was
+   * downloaded to {@link EndpointEml#file}. No "download finished" message is sent in this case,
+   * so archive types that take metadata from a separate EML endpoint sync it here.
+   *
+   * <p>Implementations must not throw: the crawl still finishes as not modified.
+   */
+  protected void afterNotModified(
+    UUID datasetKey, CrawlJob crawlJob, File datasetDirectory, File localFile) {}
 
   protected abstract String getSuffix();
 

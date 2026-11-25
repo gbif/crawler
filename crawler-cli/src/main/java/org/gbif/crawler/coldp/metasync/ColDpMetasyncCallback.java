@@ -67,15 +67,18 @@ public class ColDpMetasyncCallback extends AbstractMessageCallback<ColDpDownload
         ColDpMetadataExtractionResult result = converter.extractDocuments(archive);
 
         // A separate EML endpoint takes precedence over the metadata inside the archive
-        boolean endpointEmlSent =
-            EndpointEml.insertIfPresent(
-                registryClient,
-                archive.getParentFile(),
-                datasetKey,
-                message.getAttempt(),
-                result.getFormatContentJson());
-        if (!endpointEmlSent) {
-          insertArchiveMetadata(datasetKey, result);
+        File datasetDirectory = archive.getParentFile();
+        if (EndpointEml.downloadFailed(datasetDirectory, datasetKey, message.getAttempt())) {
+          LOG.warn(
+              "EML endpoint of dataset [{}] could not be downloaded, metadata left unchanged",
+              datasetKey);
+        } else if (!EndpointEml.insertIfPresent(
+            registryClient,
+            datasetDirectory,
+            datasetKey,
+            message.getAttempt(),
+            result.getFormatContentJson())) {
+          insertArchiveMetadata(registryClient, datasetKey, result);
         }
 
         markFinished(datasetKey);
@@ -87,7 +90,11 @@ public class ColDpMetasyncCallback extends AbstractMessageCallback<ColDpDownload
     }
   }
 
-  private void insertArchiveMetadata(UUID datasetKey, ColDpMetadataExtractionResult result)
+  /** Sends the archive's own metadata: its eml.xml if present, otherwise metadata.yaml/json. */
+  public static void insertArchiveMetadata(
+      OkHttpRegistryMetadataClient registryClient,
+      UUID datasetKey,
+      ColDpMetadataExtractionResult result)
       throws IOException {
     ColDpMetadataDocument fmt = result.getFormatDocument();
 

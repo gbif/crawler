@@ -156,6 +156,24 @@ class DwcDpMetasyncCallbackTest {
   }
 
   @Test
+  void leavesMetadataUnchangedButStillIngestsWhenEndpointEmlDownloadFailed() throws Exception {
+    UUID datasetKey = UUID.randomUUID();
+    File archive = createArchiveWithDatapackageAndEml(datasetKey, 5);
+    Files.write(
+        EndpointEml.failedMarker(archive.getParentFile(), datasetKey, 5).toPath(), new byte[0]);
+
+    DwcDpMetasyncCallback callback =
+        new DwcDpMetasyncCallback(
+            registryClient, tempDir.toFile(), curator, publisher, new DwcDpMetadataDocumentConverter());
+
+    callback.handleMessage(buildMessage(datasetKey, 5, true, new DatapackageAnalysisResult(null, null, null)));
+
+    verifyNoMoreInteractions(registryClient);
+    assertMetadataSyncFinishedPublished(datasetKey, 5);
+    assertCrawlFinished(datasetKey);
+  }
+
+  @Test
   void forwardsEndpointEmlInsteadOfArchiveMetadataWhenDownloaded() throws Exception {
     UUID datasetKey = UUID.randomUUID();
     File archive = createArchiveWithDatapackageAndEml(datasetKey, 3);
