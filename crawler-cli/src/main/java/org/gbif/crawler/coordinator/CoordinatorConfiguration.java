@@ -14,6 +14,7 @@
 package org.gbif.crawler.coordinator;
 
 import org.gbif.common.messaging.config.MessagingConfiguration;
+import org.gbif.crawler.common.HostRestrictions;
 import org.gbif.crawler.common.RegistryConfiguration;
 import org.gbif.crawler.common.ZooKeeperConfiguration;
 
@@ -45,4 +46,6 @@ public class CoordinatorConfiguration {
   @NotNull
   public String queueName = "crawler_coordinator";
 
+  @ParametersDelegate @Valid @NotNull
+  public HostRestrictions hostRestrictions = new HostRestrictions();
 }

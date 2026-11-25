@@ -21,6 +21,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
+import org.apache.http.conn.DnsResolver;
 import org.apache.http.conn.HttpClientConnectionManager;
 import org.apache.http.conn.socket.ConnectionSocketFactory;
 import org.apache.http.conn.socket.PlainConnectionSocketFactory;
@@ -47,14 +48,16 @@ public class HttpClientFactory {
   /**
    * Builds a new Factory with a default timeout covering various things (connection timeout, read
    * timeout, ...).
+   *
+   * @param dnsResolver resolves host names, e.g. one that refuses internal addresses (SSRF)
    */
-  public HttpClientFactory(long timeout, TimeUnit timeUnit) {
+  public HttpClientFactory(long timeout, TimeUnit timeUnit, DnsResolver dnsResolver) {
     long millis = TimeUnit.MILLISECONDS.convert(timeout, timeUnit);
 
     System.setProperty("sun.net.client.defaultConnectTimeout", String.valueOf(millis));
     System.setProperty("sun.net.client.defaultReadTimeout", String.valueOf(millis));
 
-    connectionManager = setupConnectionManager();
+    connectionManager = setupConnectionManager(dnsResolver);
     this.timeout = (int) millis;
   }
 
@@ -72,7 +75,7 @@ public class HttpClientFactory {
     return httpClient;
   }
 
-  private HttpClientConnectionManager setupConnectionManager() {
+  private HttpClientConnectionManager setupConnectionManager(DnsResolver dnsResolver) {
     SSLContext sslcontext = SSLContexts.createSystemDefault();
 
     Registry<ConnectionSocketFactory> socketFactoryRegistry =
@@ -82,7 +85,7 @@ public class HttpClientFactory {
             .build();
 
     PoolingHttpClientConnectionManager connectionManager =
-        new PoolingHttpClientConnectionManager(socketFactoryRegistry);
+        new PoolingHttpClientConnectionManager(socketFactoryRegistry, dnsResolver);
     connectionManager.setMaxTotal(MAX_TOTAL_CONNECTIONS);
     connectionManager.setDefaultMaxPerRoute(MAX_CONNECTIONS_PER_HOST);
 

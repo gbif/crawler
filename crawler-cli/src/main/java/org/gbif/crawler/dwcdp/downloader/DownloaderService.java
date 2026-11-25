@@ -47,6 +47,8 @@ public class DownloaderService extends CrawlServerBaseService<DwcDpConfiguration
         config.archiveRepository,
         config.unpackedDpRepository,
         config.httpTimeout,
-        config.registry.newClientBuilder().build(DatasetClient.class));
+        config.registry.newClientBuilder().build(DatasetClient.class),
+        config.limits,
+        config.hostRestrictions);
   }
 }

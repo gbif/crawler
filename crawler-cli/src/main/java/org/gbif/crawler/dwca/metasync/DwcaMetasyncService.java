@@ -80,28 +80,35 @@ public class DwcaMetasyncService extends DwcaService {
         "dwca-metasync",
         config.poolSize,
         new DwcaValidationFinishedMessageCallback(
-            datasetService, config.unpackedRepository, publisher, curator));
+            datasetService,
+            config.unpackedRepository,
+            publisher,
+            curator,
+            config.limits.maxMetadataBytes));
   }
 
-  private static class DwcaValidationFinishedMessageCallback
+  static class DwcaValidationFinishedMessageCallback
       extends AbstractMessageCallback<DwcaValidationFinishedMessage> {
 
     private final DatasetService datasetService;
     private final File unpackDirectory;
     private final MessagePublisher publisher;
     private final CuratorFramework curator;
+    private final long maxMetadataBytes;
 
     private final Counter messageCount =
       METRIC_REGISTRY.counter(MetricRegistry.name(DwcaMetasyncService.class, "messageCount"));
     private final Counter datasetsUpdated =
       METRIC_REGISTRY.counter(MetricRegistry.name(DwcaMetasyncService.class, "datasetsUpdated"));
 
-    private DwcaValidationFinishedMessageCallback(
+    DwcaValidationFinishedMessageCallback(
         DatasetService datasetService,
         File unpackDirectory,
         MessagePublisher publisher,
-        CuratorFramework curator) {
+        CuratorFramework curator,
+        long maxMetadataBytes) {
       this.unpackDirectory = unpackDirectory;
+      this.maxMetadataBytes = maxMetadataBytes;
       this.datasetService = datasetService;
       this.publisher = publisher;
       this.curator = curator;
@@ -172,7 +179,7 @@ public class DwcaMetasyncService extends DwcaService {
 
     }
 
-    private void handleMessageInternal(DwcaValidationFinishedMessage message, UUID datasetKey)
+    void handleMessageInternal(DwcaValidationFinishedMessage message, UUID datasetKey)
         throws IOException {
       // https://github.com/gbif/portal-feedback/issues/2138
       // The DwcaValidation doesn't check the metadata anyway, so it's OK to continue.
@@ -186,6 +193,13 @@ public class DwcaMetasyncService extends DwcaService {
         // exception, we don't know this dataset
         throw new IllegalArgumentException(
             "The requested dataset " + message.getDatasetUuid() + " is not registered");
+      }
+
+      File datasetDirectory = new File(unpackDirectory, datasetKey.toString());
+      if (!datasetDirectory.isDirectory()) {
+        // Nothing unpacked for this attempt, e.g. rejected for size; don't use older files
+        LOG.warn("No unpacked DwC-A for dataset [{}], skipping metadata update", datasetKey);
+        return;
       }
 
       // Metadata-only datasets are just a file, no DWCA.
@@ -202,7 +216,16 @@ public class DwcaMetasyncService extends DwcaService {
         updateDwcaData(dataset, archive);
       }
 
-      if (metaFile != null && metaFile.exists()) {
+      if (metaFile != null
+          && metaFile.exists()
+          && maxMetadataBytes > 0
+          && metaFile.length() > maxMetadataBytes) {
+        LOG.warn(
+            "Metadata document {} for dataset [{}] is over {} bytes, not sent to the registry",
+            metaFile,
+            datasetKey,
+            maxMetadataBytes);
+      } else if (metaFile != null && metaFile.exists()) {
         // metadata found, put into repository thereby updating the dataset
         setMetaDocument(metaFile, datasetKey);
         datasetsUpdated.inc();

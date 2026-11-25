@@ -7,6 +7,14 @@ spring:
   cloud:
     zookeeper:
       enabled: false
+management:
+  # Internal port for Spring Boot Admin, not to be exposed by the ingress
+  server:
+    port: 8081
+  endpoints:
+    web:
+      exposure:
+        include: "*"
 crawler:
   crawl:
     namespace: @crawler.crawl.namespace@
@@ -20,11 +28,6 @@ crawler:
     ws:
       url: @crawler.registry.ws.url@
 
-  mq:
-    host: @crawler.mq.host@
-    virtualHost: @crawler.mq.virtualHost@
-    username: @crawler.mq.username@
-    password: @crawler.mq.virtualHost@
 
 
 

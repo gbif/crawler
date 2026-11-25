@@ -20,6 +20,8 @@ import org.gbif.common.messaging.api.messages.DatasetBasedMessage;
 import org.gbif.common.messaging.api.messages.Platform;
 import org.gbif.crawler.coldp.ColDpConfiguration;
 import org.gbif.crawler.common.DownloadCrawlConsumer;
+import org.gbif.crawler.common.HostRestrictions;
+import org.gbif.crawler.common.SizeLimits;
 
 import java.io.File;
 import java.util.Date;
@@ -33,8 +35,10 @@ public class ColDpCrawlConsumer extends DownloadCrawlConsumer {
       CuratorFramework curator,
       MessagePublisher publisher,
       File archiveRepository,
-      int httpTimeout) {
-    super(curator, publisher, archiveRepository, httpTimeout);
+      int httpTimeout,
+      SizeLimits limits,
+      HostRestrictions hostRestrictions) {
+    super(curator, publisher, archiveRepository, httpTimeout, limits, hostRestrictions);
   }
 
   @Override
