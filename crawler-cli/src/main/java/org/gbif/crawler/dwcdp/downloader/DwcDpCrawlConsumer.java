@@ -24,7 +24,9 @@ import org.gbif.common.messaging.api.messages.Platform;
 import org.gbif.crawler.CrawlerCoordinatorServiceImpl;
 import org.gbif.crawler.common.DownloadCrawlConsumer;
 import org.gbif.crawler.common.EndpointEml;
+import org.gbif.crawler.common.HostRestrictions;
 import org.gbif.crawler.common.OkHttpRegistryMetadataClient;
+import org.gbif.crawler.common.SizeLimits;
 import org.gbif.crawler.dwcdp.DwcDpConfiguration;
 import org.gbif.crawler.dwcdp.metasync.DwcDpMetadataDocumentConverter;
 import org.gbif.crawler.dwcdp.metasync.DwcDpMetasyncCallback;
@@ -53,7 +55,29 @@ public class DwcDpCrawlConsumer extends DownloadCrawlConsumer {
   private final DatasetService datasetService;
   private final File unpackedDpRepository;
   @Nullable private final OkHttpRegistryMetadataClient registryClient;
-  private final DwcDpMetadataDocumentConverter converter = new DwcDpMetadataDocumentConverter();
+  private final DwcDpMetadataDocumentConverter converter =
+      new DwcDpMetadataDocumentConverter(limits.maxMetadataBytes);
+
+  public DwcDpCrawlConsumer(
+      CuratorFramework curator,
+      MessagePublisher publisher,
+      File archiveRepository,
+      File unpackedDpRepository,
+      int httpTimeout,
+      DatasetService datasetService,
+      SizeLimits limits,
+      HostRestrictions hostRestrictions) {
+    this(
+        curator,
+        publisher,
+        archiveRepository,
+        unpackedDpRepository,
+        httpTimeout,
+        datasetService,
+        limits,
+        hostRestrictions,
+        null);
+  }
 
   /**
    * @param registryClient used to sync the EML endpoint when the archive was not modified; without
@@ -66,8 +90,10 @@ public class DwcDpCrawlConsumer extends DownloadCrawlConsumer {
       File unpackedDpRepository,
       int httpTimeout,
       DatasetService datasetService,
+      SizeLimits limits,
+      HostRestrictions hostRestrictions,
       @Nullable OkHttpRegistryMetadataClient registryClient) {
-    super(curator, publisher, archiveRepository, httpTimeout);
+    super(curator, publisher, archiveRepository, httpTimeout, limits, hostRestrictions);
     this.registryClient = registryClient;
     this.unpackedDpRepository = unpackedDpRepository;
     if (!unpackedDpRepository.exists() || !unpackedDpRepository.isDirectory()) {
@@ -119,14 +145,22 @@ public class DwcDpCrawlConsumer extends DownloadCrawlConsumer {
     File tempDirectory = new File(unpackedDpRepository, datasetKey + ".tmp");
     File backupDirectory = new File(unpackedDpRepository, datasetKey + ".bak");
 
+    // Size already checked before the download replaced the archive, see checkDownload
     recreateDirectory(tempDirectory);
     try {
-      CompressionUtil.decompressFile(tempDirectory, localFile, true);
-    } catch (RuntimeException e) {
-      throw new IOException("Unable to unpack DwcDP archive for dataset " + datasetKey, e);
+      try {
+        CompressionUtil.decompressFile(tempDirectory, localFile, true);
+      } catch (RuntimeException e) {
+        throw new IOException("Unable to unpack DwcDP archive for dataset " + datasetKey, e);
+      }
+      validateUnpackedDp(datasetKey, tempDirectory);
+      promoteTempDirectory(datasetKey, tempDirectory, targetDirectory, backupDirectory);
+    } finally {
+      // Promoted on success; otherwise don't leave a partly unpacked archive behind
+      if (tempDirectory.exists()) {
+        FileUtils.deleteDirectoryRecursively(tempDirectory);
+      }
     }
-    validateUnpackedDp(datasetKey, tempDirectory);
-    promoteTempDirectory(datasetKey, tempDirectory, targetDirectory, backupDirectory);
   }
 
   private static void recreateDirectory(File directory) throws IOException {

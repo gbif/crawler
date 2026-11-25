@@ -20,6 +20,7 @@ import org.gbif.crawler.exception.TransportException;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
 
@@ -71,13 +72,25 @@ public abstract class AbstractResponseHandler implements ResponseHandler<HttpRes
   private static final Logger LOG = LoggerFactory.getLogger(AbstractResponseHandler.class);
 
   private static final XMLInputFactory2 XIF = (XMLInputFactory2) XMLInputFactory.newInstance();
+
+  static {
+    // Responses come from publisher endpoints: never resolve DTDs or external entities (XXE)
+    XIF.setProperty(XMLInputFactory.SUPPORT_DTD, false);
+    XIF.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
+  }
+
   private static final XMLOutputFactory2 XOF = (XMLOutputFactory2) XMLOutputFactory.newInstance();
+
+  public static final long DEFAULT_MAX_RESPONSE_BYTES = 100L * 1024 * 1024;
 
   private Optional<Integer> recordCount = Optional.empty();
   private Optional<Boolean> endOfRecords = Optional.empty();
   private Optional<Long> contentHash;
 
   private boolean validState = false;
+
+  /** Responses larger than this are rejected; 0 disables the limit. */
+  private long maxResponseBytes = DEFAULT_MAX_RESPONSE_BYTES;
 
   /**
    * This needs to be implemented by subclasses to do actual processing on the XML data. This method
@@ -100,6 +113,10 @@ public abstract class AbstractResponseHandler implements ResponseHandler<HttpRes
    * @return with the content element name
    */
   protected abstract boolean shouldHash(XMLStreamReader2 reader);
+
+  public void setMaxResponseBytes(long maxResponseBytes) {
+    this.maxResponseBytes = maxResponseBytes;
+  }
 
   @Override
   public boolean isValidState() {
@@ -138,9 +155,19 @@ public abstract class AbstractResponseHandler implements ResponseHandler<HttpRes
     // First of all we convert the response into a byte array
     byte[] bytes;
     try {
-      bytes = ByteStreams.toByteArray(response.getEntity().getContent());
+      InputStream content = response.getEntity().getContent();
+      bytes =
+          ByteStreams.toByteArray(
+              maxResponseBytes > 0 && maxResponseBytes < Long.MAX_VALUE
+                  ? ByteStreams.limit(content, maxResponseBytes + 1)
+                  : content);
     } catch (IOException e) {
       throw new TransportException(e);
+    }
+    if (maxResponseBytes > 0 && maxResponseBytes < Long.MAX_VALUE
+        && bytes.length > maxResponseBytes) {
+      throw new ProtocolException(
+          "Response larger than the limit of " + maxResponseBytes + " bytes");
     }
 
     Hasher hasher = Hashing.md5().newHasher();

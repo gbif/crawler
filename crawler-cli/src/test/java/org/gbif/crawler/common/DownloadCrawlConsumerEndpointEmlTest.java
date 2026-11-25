@@ -275,6 +275,25 @@ public class DownloadCrawlConsumerEndpointEmlTest {
     assertNull(DownloadCrawlConsumer.lastModified(new File(archiveRepository, "none"), downloadStart));
   }
 
+  @Test
+  public void testEmlOnPrivateAddressIsRefused() {
+    UUID datasetKey = UUID.randomUUID();
+
+    // the local test server is a private address, refused by the default host restrictions
+    new TestConsumer(null, false)
+        .downloadEndpointEml(
+            archiveRepository, datasetKey, crawlJob(datasetKey, baseUrl + "/eml.xml"), null);
+
+    assertFalse(EndpointEml.file(archiveRepository, datasetKey, 2).exists());
+    assertTrue(EndpointEml.downloadFailed(archiveRepository, datasetKey, 2));
+  }
+
+  private static HostRestrictions hostRestrictions(boolean allowPrivateAddresses) {
+    HostRestrictions hostRestrictions = new HostRestrictions();
+    hostRestrictions.allowPrivateAddresses = allowPrivateAddresses;
+    return hostRestrictions;
+  }
+
   private static CuratorFramework curator(TestingServer zk) {
     return CuratorFrameworkFactory.builder()
         .connectString(zk.getConnectString())
@@ -313,7 +332,17 @@ public class DownloadCrawlConsumerEndpointEmlTest {
   private class TestConsumer extends DownloadCrawlConsumer {
 
     TestConsumer(CuratorFramework curator) {
-      super(curator, null, archiveRepository, 1000);
+      this(curator, true);
+    }
+
+    TestConsumer(CuratorFramework curator, boolean allowPrivateAddresses) {
+      super(
+          curator,
+          null,
+          archiveRepository,
+          1000,
+          new SizeLimits(),
+          hostRestrictions(allowPrivateAddresses));
     }
 
     @Override

@@ -42,6 +42,8 @@ public class DownloaderService extends CrawlServerBaseService<ColDpConfiguration
         publisher,
         config.archiveRepository,
         config.httpTimeout,
+        config.limits,
+        config.hostRestrictions,
         new OkHttpRegistryMetadataClient(config.registry));
   }
 

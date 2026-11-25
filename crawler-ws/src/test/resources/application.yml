@@ -1,0 +1,30 @@
+# Test configuration, replaces the Maven-filtered main application.yml
+spring:
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.elasticsearch.ElasticsearchRestClientAutoConfiguration
+  application:
+    name: crawler-ws
+  cloud:
+    zookeeper:
+      enabled: false
+  boot:
+    admin:
+      client:
+        enabled: false
+management:
+  endpoints:
+    web:
+      exposure:
+        # As in the main application.yml
+        include: "*"
+crawler:
+  crawl:
+    namespace: crawler
+    server:
+      zk: localhost:1
+      retryAttempts: 1
+      retryDelayMs: 10
+    threadCount: 1
+  registry:
+    ws:
+      url: http://localhost:1

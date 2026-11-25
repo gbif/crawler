@@ -19,7 +19,9 @@ import org.gbif.api.vocabulary.MetadataType;
 import org.gbif.common.messaging.api.messages.ColDpDownloadFinishedMessage;
 import org.gbif.common.messaging.api.messages.DatasetBasedMessage;
 import org.gbif.crawler.common.EndpointEml;
+import org.gbif.crawler.common.HostRestrictions;
 import org.gbif.crawler.common.OkHttpRegistryMetadataClient;
+import org.gbif.crawler.common.SizeLimits;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -51,7 +53,8 @@ class ColDpCrawlConsumerTest {
   @Test
   void createsColdDpFinishedMessage() {
     ColDpCrawlConsumer consumer =
-        new ColDpCrawlConsumer(null, null, tempDir.toFile(), 10_000);
+        new ColDpCrawlConsumer(
+            null, null, tempDir.toFile(), 10_000, new SizeLimits(), new HostRestrictions());
 
     CrawlJob crawlJob =
         new CrawlJob(
@@ -71,7 +74,14 @@ class ColDpCrawlConsumerTest {
   void syncsEndpointEmlWithYamlWhenArchiveNotModified() throws Exception {
     OkHttpRegistryMetadataClient registryClient = mock(OkHttpRegistryMetadataClient.class);
     ColDpCrawlConsumer consumer =
-        new ColDpCrawlConsumer(null, null, tempDir.toFile(), 10_000, registryClient);
+        new ColDpCrawlConsumer(
+            null,
+            null,
+            tempDir.toFile(),
+            10_000,
+            new SizeLimits(),
+            new HostRestrictions(),
+            registryClient);
     UUID datasetKey = UUID.randomUUID();
     File datasetDirectory = consumer.getArchiveDirectory(tempDir.toFile(), datasetKey);
     File archive = createArchive(datasetDirectory, datasetKey);
@@ -92,7 +102,14 @@ class ColDpCrawlConsumerTest {
   void syncsYamlWhenArchiveNotModifiedAndMoreRecentThanEml() throws Exception {
     OkHttpRegistryMetadataClient registryClient = mock(OkHttpRegistryMetadataClient.class);
     ColDpCrawlConsumer consumer =
-        new ColDpCrawlConsumer(null, null, tempDir.toFile(), 10_000, registryClient);
+        new ColDpCrawlConsumer(
+            null,
+            null,
+            tempDir.toFile(),
+            10_000,
+            new SizeLimits(),
+            new HostRestrictions(),
+            registryClient);
     UUID datasetKey = UUID.randomUUID();
     File datasetDirectory = consumer.getArchiveDirectory(tempDir.toFile(), datasetKey);
     // no endpoint EML file: the downloader dropped it as the archive was more recent

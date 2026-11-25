@@ -23,7 +23,9 @@ import org.gbif.crawler.coldp.metasync.ColDpMetadataDocumentConverter;
 import org.gbif.crawler.coldp.metasync.ColDpMetasyncCallback;
 import org.gbif.crawler.common.DownloadCrawlConsumer;
 import org.gbif.crawler.common.EndpointEml;
+import org.gbif.crawler.common.HostRestrictions;
 import org.gbif.crawler.common.OkHttpRegistryMetadataClient;
+import org.gbif.crawler.common.SizeLimits;
 
 import java.io.File;
 import java.util.Date;
@@ -36,14 +38,17 @@ import org.apache.curator.framework.CuratorFramework;
 public class ColDpCrawlConsumer extends DownloadCrawlConsumer {
 
   @Nullable private final OkHttpRegistryMetadataClient registryClient;
-  private final ColDpMetadataDocumentConverter converter = new ColDpMetadataDocumentConverter();
+  private final ColDpMetadataDocumentConverter converter =
+      new ColDpMetadataDocumentConverter(limits.maxMetadataBytes);
 
   public ColDpCrawlConsumer(
       CuratorFramework curator,
       MessagePublisher publisher,
       File archiveRepository,
-      int httpTimeout) {
-    this(curator, publisher, archiveRepository, httpTimeout, null);
+      int httpTimeout,
+      SizeLimits limits,
+      HostRestrictions hostRestrictions) {
+    this(curator, publisher, archiveRepository, httpTimeout, limits, hostRestrictions, null);
   }
 
   /**
@@ -55,8 +60,10 @@ public class ColDpCrawlConsumer extends DownloadCrawlConsumer {
       MessagePublisher publisher,
       File archiveRepository,
       int httpTimeout,
+      SizeLimits limits,
+      HostRestrictions hostRestrictions,
       @Nullable OkHttpRegistryMetadataClient registryClient) {
-    super(curator, publisher, archiveRepository, httpTimeout);
+    super(curator, publisher, archiveRepository, httpTimeout, limits, hostRestrictions);
     this.registryClient = registryClient;
   }
 

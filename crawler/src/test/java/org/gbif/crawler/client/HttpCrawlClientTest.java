@@ -34,6 +34,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
@@ -190,5 +191,17 @@ public class HttpCrawlClientTest {
     when(innerResponseHandler.handleResponse(response)).thenThrow(new FatalCrawlException("FOO"));
 
     assertThrows(RuntimeException.class, () -> responseHandler.handleResponse(response));
+  }
+
+  @Test
+  public void testDefaultClientRefusesPrivateHosts() {
+    HttpCrawlClient client = HttpCrawlClient.newInstance(5_000, 2, 2);
+
+    TransportException e =
+        assertThrows(
+            TransportException.class,
+            () -> client.execute("http://127.0.0.1:9/", innerResponseHandler));
+    assertTrue(e.getCause() instanceof PublicAddressDnsResolver.BlockedAddressException);
+    client.shutdown();
   }
 }

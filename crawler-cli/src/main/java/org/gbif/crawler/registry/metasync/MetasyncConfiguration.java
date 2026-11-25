@@ -14,6 +14,7 @@
 package org.gbif.crawler.registry.metasync;
 
 import org.gbif.common.messaging.config.MessagingConfiguration;
+import org.gbif.crawler.common.HostRestrictions;
 import org.gbif.crawler.common.RegistryConfiguration;
 
 import com.beust.jcommander.Parameter;
@@ -46,4 +47,6 @@ public class MetasyncConfiguration {
   @Parameter(names = "--dry-run", description = "Run the metasync, but discard the results")
   public boolean dryRun = false;
 
+  @ParametersDelegate @Valid @NotNull
+  public HostRestrictions hostRestrictions = new HostRestrictions();
 }
